@@ -48,7 +48,8 @@ class SaveRepository @Inject constructor(
         val categories: Int,
         val saves: Int,
         val attachments: Int,
-        val tags: Int
+        val tags: Int,
+        val skippedDuplicates: Int = 0
     )
 
     data class BackupExportResult(
@@ -517,8 +518,22 @@ class SaveRepository @Inject constructor(
             categoryCount++
         }
 
+        // Restoring on top of an existing shelf must not duplicate it —
+        // the "phone + tablet, restore on both" case. Links match on URL;
+        // URL-less items on the (contentType, createdAt, title) triple.
+        // Skipped saves drop their attachments and tag links too, because
+        // their old ids never enter itemIdMap.
+        val existingUrls = mutableSetOf<String>()
+        val existingFingerprints = mutableSetOf<String>()
+        for (key in saveDao.dedupeKeys()) {
+            val url = key.url?.trim()
+            if (!url.isNullOrEmpty()) existingUrls.add(url.lowercase())
+            else existingFingerprints.add("${key.contentType}|${key.createdAt}|${key.title}")
+        }
+
         val itemIdMap = mutableMapOf<Long, Long>()
         var saveCount = 0
+        var skippedCount = 0
         for (i in 0 until saves.length()) {
             val s = saves.getJSONObject(i)
             val oldId = s.optLong("id", -1L)
@@ -542,6 +557,17 @@ class SaveRepository @Inject constructor(
                 updatedAt = s.optLong("updatedAt", System.currentTimeMillis()),
                 openedAt = s.optNullableLong("openedAt")
             )
+            val urlKey = imported.url?.trim()?.takeIf { it.isNotEmpty() }?.lowercase()
+            val fingerprint = if (urlKey == null) {
+                "${imported.contentType}|${imported.createdAt}|${imported.title}"
+            } else null
+            val isDuplicate =
+                if (urlKey != null) !existingUrls.add(urlKey)
+                else !existingFingerprints.add(fingerprint!!)
+            if (isDuplicate) {
+                skippedCount++
+                continue
+            }
             val newId = saveDao.insert(imported)
             if (oldId > 0) itemIdMap[oldId] = newId
             saveCount++
@@ -595,7 +621,8 @@ class SaveRepository @Inject constructor(
             categories = categoryCount,
             saves = saveCount,
             attachments = attachmentCount,
-            tags = tagCount
+            tags = tagCount,
+            skippedDuplicates = skippedCount
         )
     }
 

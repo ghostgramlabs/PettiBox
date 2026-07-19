@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.GridView
@@ -45,6 +46,7 @@ import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -73,12 +75,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ghostgramlabs.pettibox.BuildConfig
 import com.ghostgramlabs.pettibox.data.drive.DriveBackupFile
 import com.ghostgramlabs.pettibox.data.drive.DriveBackupManager
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
@@ -286,10 +290,10 @@ fun SettingsScreen(
             onDismiss = { showCreateCollection = false }
         )
     }
-    // Restores are additive — running one on top of an existing shelf can
-    // duplicate saves. Both restore paths funnel through this gate: empty
-    // shelf restores immediately (the new-phone case), a non-empty shelf
-    // asks first.
+    // Restores are additive (duplicates are skipped, but the merge is
+    // still worth a heads-up). Both restore paths funnel through this
+    // gate: empty shelf restores immediately (the new-phone case), a
+    // non-empty shelf asks first.
     var pendingRestore by remember { mutableStateOf<PendingRestore?>(null) }
 
     val runFileRestore: (Uri) -> Unit = { uri ->
@@ -297,9 +301,7 @@ fun SettingsScreen(
             busyLabel = "Importing backup"
             runCatching { viewModel.importBackupUri(uri) }
                 .onSuccess { result ->
-                    snackbarHostState.showSnackbar(
-                        "Restored ${result.saves} saves, ${result.categories} collections, ${result.tags} tags"
-                    )
+                    snackbarHostState.showSnackbar(restoreResultMessage(result))
                 }
                 .onFailure {
                     snackbarHostState.showSnackbar("That backup file couldn't be imported")
@@ -328,9 +330,7 @@ fun SettingsScreen(
             busyLabel = "Restoring from Google Drive"
             runCatching { viewModel.restoreFromDrive(backup.id) }
                 .onSuccess { result ->
-                    snackbarHostState.showSnackbar(
-                        "Restored ${result.saves} saves, ${result.categories} collections, ${result.tags} tags"
-                    )
+                    snackbarHostState.showSnackbar(restoreResultMessage(result))
                 }
                 .onFailure {
                     snackbarHostState.showSnackbar("Couldn't restore that backup — try again")
@@ -454,9 +454,8 @@ fun SettingsScreen(
             title = { Text("Restore on top of your shelf?") },
             text = {
                 Text(
-                    "You already have $totalSaves saves. Restoring adds everything from the backup alongside them — " +
-                        "if you've restored this backup before, that means duplicates. " +
-                        "Restore is meant for a new phone or recovering lost saves."
+                    "You already have $totalSaves saves. Restoring adds the backup's items alongside them — " +
+                        "anything already on your shelf is skipped, so nothing gets duplicated."
                 )
             },
             confirmButton = {
@@ -466,7 +465,7 @@ fun SettingsScreen(
                         is PendingRestore.FromFile -> runFileRestore(pending.uri)
                         is PendingRestore.FromDrive -> runDriveRestore(pending.backup)
                     }
-                }) { Text("Restore anyway") }
+                }) { Text("Restore") }
             },
             dismissButton = {
                 TextButton(onClick = { pendingRestore = null }) { Text("Cancel") }
@@ -482,7 +481,7 @@ fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        "Pick a backup to bring onto this device. Your current saves stay — the backup's items are added alongside them.",
+                        "Pick a backup to bring onto this device. Your current saves stay — the backup's items are added alongside them, and anything already here is skipped.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1193,6 +1192,57 @@ fun SettingsScreen(
                     Text("Export links as CSV", fontWeight = FontWeight.Bold)
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
+            SettingsSection(title = "About") {
+                Text(
+                    "Enjoying PettiBox, or ran into something odd? Either way, I'd love to hear it.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = {
+                        if (!HelpLinks.openPlayListing(ctx)) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Couldn't open the Play Store on this device")
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Rounded.Star, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Rate PettiBox", fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = {
+                        if (!HelpLinks.openSupportEmail(ctx)) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    "No email app found — write to ${HelpLinks.SUPPORT_EMAIL}"
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Rounded.Email, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Email support", fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "PettiBox ${BuildConfig.VERSION_NAME} · ${HelpLinks.SUPPORT_EMAIL}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
             // Outer NavGraph Scaffold already pads for the bottom nav, and
             // this screen's Scaffold uses WindowInsets(0) to avoid double
             // padding — so this trailing spacer just adds breathing room
@@ -1817,6 +1867,16 @@ private fun backupSummaryMessage(
     }
     val extraText = if (extras.isEmpty()) "" else ", " + extras.joinToString(", ")
     return "$prefix ${result.saves} saves, ${result.embeddedFiles} files$extraText"
+}
+
+private fun restoreResultMessage(result: SaveRepository.BackupImportResult): String {
+    if (result.saves == 0 && result.skippedDuplicates > 0) {
+        return "Everything in that backup is already on your shelf — nothing added"
+    }
+    val base = "Restored ${result.saves} saves, ${result.categories} collections, ${result.tags} tags"
+    return if (result.skippedDuplicates > 0) {
+        "$base (${result.skippedDuplicates} already on your shelf)"
+    } else base
 }
 
 private fun bookmarkImportMessage(result: SaveRepository.BookmarkImportResult): String {

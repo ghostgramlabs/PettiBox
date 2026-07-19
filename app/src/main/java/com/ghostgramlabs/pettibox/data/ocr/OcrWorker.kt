@@ -37,7 +37,7 @@ class OcrWorker @AssistedInject constructor(
         if (itemId <= 0L) return Result.failure()
 
         return runCatching {
-            val image = InputImage.fromFilePath(ctx, Uri.parse(uriStr))
+            val image = OcrImageLoader.load(ctx, Uri.parse(uriStr))
             val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
             val text = suspendCancellableCoroutine<String> { cont ->
                 recognizer.process(image)

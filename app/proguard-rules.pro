@@ -37,8 +37,14 @@
 # ── Coil ─────────────────────────────────────────────────────────────────
 -dontwarn coil.**
 
+# ── Play in-app review ───────────────────────────────────────────────────
+# review-ktx references this compile-time-only gms annotation; it never
+# ships in any artifact, so R8 just needs telling that's expected.
+-dontwarn com.google.android.gms.common.annotation.NoNullnessRewrite
+
 # ── Jsoup ────────────────────────────────────────────────────────────────
--keep class org.jsoup.** { *; }
+# Called directly (no reflection) — R8 keeps what's referenced; a blanket
+# keep only bloats the dex and blocks optimization.
 -dontwarn org.jsoup.**
 
 # ── Kotlin coroutines ────────────────────────────────────────────────────

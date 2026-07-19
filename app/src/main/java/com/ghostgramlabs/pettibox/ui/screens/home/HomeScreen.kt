@@ -1,5 +1,6 @@
 package com.ghostgramlabs.pettibox.ui.screens.home
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -68,6 +69,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -87,6 +89,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
+import com.google.android.play.core.ktx.launchReview
+import com.google.android.play.core.ktx.requestReview
+import com.google.android.play.core.review.ReviewManagerFactory
 import com.ghostgramlabs.pettibox.ui.components.CategoryChip
 import com.ghostgramlabs.pettibox.ui.components.EmptyState
 import com.ghostgramlabs.pettibox.ui.components.HelpLinks
@@ -143,6 +148,22 @@ fun HomeScreen(
     var showLinkDialog by remember { mutableStateOf(false) }
     var pendingShare by remember { mutableStateOf<IncomingShare?>(null) }
     var isImportingDiscoveredBackup by remember { mutableStateOf(false) }
+
+    // Milestone rating prompt: when the shelf crosses a save-count mark
+    // (see RatingPreferences), ask Play for the in-app review sheet. The
+    // milestone is recorded as spent before launching — Play silently
+    // no-ops when over quota, and retry-on-every-launch reads as nagging.
+    LaunchedEffect(state.totalCount) {
+        if (state.totalCount == 0 || state.showOnboarding) return@LaunchedEffect
+        val milestone = viewModel.ratingPromptDue(state.totalCount) ?: return@LaunchedEffect
+        val activity = ctx as? Activity ?: return@LaunchedEffect
+        viewModel.markRatingPrompted(milestone)
+        runCatching {
+            val manager = ReviewManagerFactory.create(activity)
+            val info = manager.requestReview()
+            manager.launchReview(activity, info)
+        }
+    }
 
     val pickImages = rememberLauncherForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10)

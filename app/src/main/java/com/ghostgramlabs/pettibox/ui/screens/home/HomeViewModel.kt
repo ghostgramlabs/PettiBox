@@ -9,6 +9,7 @@ import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.ocr.OcrWorkTags
 import com.ghostgramlabs.pettibox.data.preferences.OnboardingPreferences
+import com.ghostgramlabs.pettibox.data.preferences.RatingPreferences
 import com.ghostgramlabs.pettibox.data.preferences.ReminderPreferences
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
@@ -63,6 +64,7 @@ class HomeViewModel @Inject constructor(
     private val repo: SaveRepository,
     private val onboardingPreferences: OnboardingPreferences,
     private val reminderPreferences: ReminderPreferences,
+    private val ratingPreferences: RatingPreferences,
     private val localBackupStore: LocalBackupStore,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
@@ -222,6 +224,14 @@ class HomeViewModel @Inject constructor(
     fun clearNotificationWarning() = viewModelScope.launch {
         reminderPreferences.setNotificationsBlocked(false)
     }
+
+    // ── Milestone rating prompt (see RatingPreferences) ───────────────────
+
+    suspend fun ratingPromptDue(totalSaves: Int): Int? =
+        ratingPreferences.duePrompt(totalSaves)
+
+    suspend fun markRatingPrompted(milestone: Int) =
+        ratingPreferences.markPrompted(milestone)
 }
 
 private fun textIndexingFlow(context: Context): Flow<Boolean> = flow {

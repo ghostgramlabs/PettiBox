@@ -50,6 +50,14 @@ interface SaveDao {
     suspend fun findByUrl(url: String): SaveItemEntity?
 
     /**
+     * Identity fields of every kept row — archived included, since a
+     * restore must not resurrect a copy of something the user tucked
+     * away. Backs the duplicate-skip in backup restore.
+     */
+    @Query("SELECT url, content_type, created_at, title FROM save_items WHERE is_pending_delete = 0")
+    suspend fun dedupeKeys(): List<SaveDedupeKey>
+
+    /**
      * Every row referencing the category — archived and Undo-staged rows
      * included. This is the "is it safe to delete this collection without
      * unfiling anything" check, so it must not share the listing queries'

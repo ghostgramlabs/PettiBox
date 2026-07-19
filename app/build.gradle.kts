@@ -37,8 +37,8 @@ android {
         applicationId = "com.ghostgramlabs.pettibox"
         minSdk = 24
         targetSdk = 35
-        versionCode = 19
-        versionName = "2.0.4"
+        versionCode = 21
+        versionName = "2.0.6"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -126,10 +126,14 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     implementation("com.google.mlkit:text-recognition:16.0.1")
+    // EXIF rotation for downsampled OCR decodes (OcrImageLoader).
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     // Google Drive backup: AuthorizationClient (drive.file consent + tokens).
     // Drive REST calls are plain HttpURLConnection — no Drive SDK needed.
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+    // In-app review sheet for the save-count milestone rating prompt.
+    implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
     implementation("org.jsoup:jsoup:1.18.1")
