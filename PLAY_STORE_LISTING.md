@@ -177,7 +177,7 @@ Implementation-supported claims:
 - Bookmark import from Netscape HTML (all major browsers, Raindrop, Instapaper, Pinboard, Linkwarden, Karakeep), Raindrop CSV, Pocket CSV and plain URL lists; duplicate URLs skipped; folders map to collections.
 - CSV export of every save with a URL (title, url, folder, tags, note, created, favorite, status).
 - Link metadata fetching with YouTube thumbnail fallback.
-- Manual backup export and restore, including attachments; restores onto a non-empty library ask for confirmation.
+- Manual backup export and restore, including attachments; restores onto a non-empty library ask for confirmation and skip items already present (URL match for links, content fingerprint for the rest).
 - Automatic nightly local safety-copy flow in Settings, with optional SAF folder copy.
 - Optional Google Drive backup and restore via AuthorizationClient with the drive.file scope (app-created files only); 3 rolling copies in a "PettiBox Backups" folder.
 
@@ -193,6 +193,19 @@ Data safety positioning:
 - Link preview fetching may contact the linked website when saving URLs.
 - Backup files are user-controlled exports.
 - Google Drive backup is optional and opt-in: backups upload to the user's own Drive under the drive.file scope (the app can only access files it created). No data is sent to the developer; disconnecting stops uploads and leaves existing copies in the user's Drive.
+
+## Release Notes (What's New) — 2.0.6
+
+Keep under Play's 500-character limit:
+
+```
+IMPROVED: Restoring a backup now skips saves you already have — using PettiBox on a phone and a tablet no longer creates duplicates.
+NEW: Rate PettiBox or email support straight from Settings.
+IMPROVED: Text recognition on large photos uses far less memory, so saving big screenshots is smoother on every device.
+Bug fixes and polish.
+```
+
+Character count: 366 / 500
 
 ## Release Notes (What's New) — 2.0.4
 

@@ -60,11 +60,10 @@ Personal memories and inspiration
 PettiBox is a private bookmark manager, read it later app, link saver and screenshot organizer built to help you save now and find later.
 
 RELEASE NOTES (WHAT'S NEW)
-NEW: Import your bookmarks from Chrome, Firefox and other bookmark apps (HTML/CSV) — folders and tags carry over, duplicates are skipped.
-NEW: Automatic backup to your own Google Drive, and one-tap restore on a new phone.
-NEW: Export your links as a CSV file anytime.
-Starter collections can now be renamed, restyled or removed.
-Clearer backup settings, safer restores, and bug fixes.
+IMPROVED: Restoring a backup now skips saves you already have — using PettiBox on a phone and a tablet no longer creates duplicates.
+NEW: Rate PettiBox or email support straight from Settings.
+IMPROVED: Text recognition on large photos uses far less memory, so saving big screenshots is smoother on every device.
+Bug fixes and polish.
 
 PROMO TEXT OPTION 1
 Save anything from any app and find it later with offline OCR search.
