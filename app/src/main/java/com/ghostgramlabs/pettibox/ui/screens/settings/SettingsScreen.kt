@@ -1,5 +1,6 @@
 package com.ghostgramlabs.pettibox.ui.screens.settings
 
+import android.accounts.AccountManager
 import android.app.Activity
 import android.content.ClipData
 import android.content.Context
@@ -390,6 +391,52 @@ fun SettingsScreen(
                         "Couldn't reach Google Play services — is this device signed in to Google?"
                     )
                 }
+        }
+    }
+
+    // AuthorizationClient has no "forget this account" call — Play
+    // Services always silently reuses whichever account last granted
+    // drive.file. The only way to switch is to name a different account
+    // explicitly, so this opens Android's own account chooser (all
+    // Google accounts on the device) and authorizes against whatever the
+    // user picks there.
+    val chooseDriveAccount = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val accountName = result.data?.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
+        if (result.resultCode != Activity.RESULT_OK || accountName == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            busyLabel = "Switching Google account"
+            runCatching { viewModel.switchDriveAccount(accountName) }
+                .onSuccess { step ->
+                    busyLabel = null
+                    when (step) {
+                        SettingsViewModel.DriveConnectStep.Connected -> {
+                            snackbarHostState.showSnackbar("Google Drive connected as $accountName")
+                            uploadToDriveNow()
+                        }
+                        is SettingsViewModel.DriveConnectStep.NeedsConsent ->
+                            driveConsent.launch(
+                                IntentSenderRequest.Builder(step.pendingIntent.intentSender).build()
+                            )
+                    }
+                }
+                .onFailure {
+                    busyLabel = null
+                    snackbarHostState.showSnackbar("Couldn't switch Google account")
+                }
+        }
+    }
+
+    val switchDriveAccount: () -> Unit = {
+        runCatching {
+            chooseDriveAccount.launch(
+                AccountManager.newChooseAccountIntent(null, null, arrayOf("com.google"), null, null, null, null)
+            )
+        }.onFailure {
+            scope.launch {
+                snackbarHostState.showSnackbar("No account chooser available on this device")
+            }
         }
     }
 
@@ -908,7 +955,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Back up to your Google Drive",
-                    body = "Connect Google Drive in the Backup section and every nightly safety copy also uploads to a \"PettiBox Backups\" folder in your own Drive. PettiBox can only see files it created — never the rest of your Drive.",
+                    body = "Connect Google Drive in the Backup section and every nightly safety copy also uploads to a \"PettiBox Backups\" folder in your own Drive. PettiBox can only see files it created — never the rest of your Drive. Wrong account connected? Tap \"Switch account\" under Google Drive to pick a different one.",
                     icon = Icons.Rounded.Cloud
                 )
                 }
@@ -994,7 +1041,9 @@ fun SettingsScreen(
                         } else {
                             connectDrive()
                         }
-                    }
+                    },
+                    secondaryActionLabel = if (driveBackupStatus.enabled) "Switch account" else null,
+                    onSecondaryAction = if (driveBackupStatus.enabled) switchDriveAccount else null
                 )
                 if (driveBackupStatus.enabled && driveBackupStatus.needsReconnectAt > 0L) {
                     NoticeBanner(
@@ -1283,7 +1332,9 @@ private fun BackupDestinationRow(
     title: String,
     caption: String,
     actionLabel: String? = null,
-    onAction: (() -> Unit)? = null
+    onAction: (() -> Unit)? = null,
+    secondaryActionLabel: String? = null,
+    onSecondaryAction: (() -> Unit)? = null
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -1309,6 +1360,16 @@ private fun BackupDestinationRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (secondaryActionLabel != null && onSecondaryAction != null) {
+                Text(
+                    secondaryActionLabel,
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(top = 2.dp)
+                        .clickable(onClick = onSecondaryAction)
+                )
+            }
         }
         if (actionLabel != null && onAction != null) {
             TextButton(onClick = onAction) {

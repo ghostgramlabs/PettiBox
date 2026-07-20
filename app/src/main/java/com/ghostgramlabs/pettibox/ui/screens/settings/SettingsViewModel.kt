@@ -1,5 +1,6 @@
 package com.ghostgramlabs.pettibox.ui.screens.settings
 
+import android.accounts.Account
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -229,8 +230,8 @@ class SettingsViewModel @Inject constructor(
         data class NeedsConsent(val pendingIntent: PendingIntent) : DriveConnectStep
     }
 
-    suspend fun beginDriveConnect(): DriveConnectStep {
-        val result = driveAuth.authorize()
+    suspend fun beginDriveConnect(account: Account? = null): DriveConnectStep {
+        val result = driveAuth.authorize(account)
         val pendingIntent = result.pendingIntent
         return if (result.hasResolution() && pendingIntent != null) {
             DriveConnectStep.NeedsConsent(pendingIntent)
@@ -239,6 +240,16 @@ class SettingsViewModel @Inject constructor(
             DriveConnectStep.Connected
         }
     }
+
+    /**
+     * Authorize against a specific on-device Google account rather than
+     * whichever one Play Services silently remembers — the only way to
+     * change accounts, since AuthorizationClient has no revoke/forget
+     * call. [accountName] comes from the system account chooser Settings
+     * launches (android.accounts.AccountManager.newChooseAccountIntent).
+     */
+    suspend fun switchDriveAccount(accountName: String): DriveConnectStep =
+        beginDriveConnect(Account(accountName, "com.google"))
 
     /** Called with the consent sheet's result intent. True when the user granted access. */
     suspend fun completeDriveConnect(data: Intent?): Boolean =

@@ -1,5 +1,6 @@
 package com.ghostgramlabs.pettibox.data.drive
 
+import android.accounts.Account
 import android.content.Context
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
@@ -29,11 +30,21 @@ import javax.inject.Singleton
 class DriveAuth @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    suspend fun authorize(): AuthorizationResult =
+    /**
+     * @param account Left null for the normal connect/background-refresh
+     * path — Play Services then silently reuses whichever account last
+     * granted drive.file, with no picker. [AuthorizationClient] has no
+     * "forget this account" call, so the only way to switch accounts is
+     * to name the new one explicitly: pass the account the user picked
+     * from the system chooser (see SettingsScreen's "Switch account"),
+     * and authorization is evaluated against that account instead.
+     */
+    suspend fun authorize(account: Account? = null): AuthorizationResult =
         Identity.getAuthorizationClient(context)
             .authorize(
                 AuthorizationRequest.builder()
                     .setRequestedScopes(listOf(Scope(DRIVE_FILE_SCOPE)))
+                    .apply { if (account != null) setAccount(account) }
                     .build()
             )
             .await()
