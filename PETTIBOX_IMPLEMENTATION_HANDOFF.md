@@ -42,8 +42,8 @@ Current stack:
 Important build settings:
 
 - `applicationId = "com.ghostgramlabs.pettibox"`
-- `compileSdk = 35`
-- `targetSdk = 35`
+- `compileSdk = 36`
+- `targetSdk = 36`
 - `minSdk = 24`
 - Java/Kotlin target 17
 - Release minification and resource shrinking enabled
