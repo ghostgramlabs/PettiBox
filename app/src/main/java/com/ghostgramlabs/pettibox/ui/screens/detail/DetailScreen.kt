@@ -58,6 +58,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -413,6 +414,11 @@ fun DetailScreen(
                     onShare = { galleryItem ->
                         if (!shareGalleryItem(ctx, galleryItem, item.title)) {
                             scope.launch { snackbarHostState.showSnackbar("Couldn't share this item") }
+                        }
+                    },
+                    onOpenExternally = { galleryItem ->
+                        if (!openGalleryItemExternally(ctx, galleryItem)) {
+                            scope.launch { snackbarHostState.showSnackbar("No app on this phone can open this file") }
                         }
                     },
                     onDelete = { galleryItem ->
@@ -905,6 +911,7 @@ private fun AttachmentViewerDialog(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit,
     onShare: (GalleryItem) -> Unit,
+    onOpenExternally: (GalleryItem) -> Unit,
     onDelete: (GalleryItem) -> Unit
 ) {
     val pagerState = rememberPagerState(
@@ -913,6 +920,14 @@ private fun AttachmentViewerDialog(
     )
     val scope = rememberCoroutineScope()
     val current = items[pagerState.currentPage.coerceIn(items.indices)]
+    // (current page, page count) per PDF in the pager, for the header.
+    val pdfPages = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
+    val header = listOfNotNull(
+        pdfPages[pagerState.currentPage]
+            ?.takeIf { current.contentType() == ContentType.PDF }
+            ?.let { (page, count) -> "Page $page of $count" },
+        "${pagerState.currentPage + 1} of ${items.size}".takeIf { items.size > 1 }
+    ).joinToString(" · ")
 
     LaunchedEffect(pagerState.currentPage) {
         onSelect(pagerState.currentPage)
@@ -933,12 +948,33 @@ private fun AttachmentViewerDialog(
                     .fillMaxSize()
                     .padding(12.dp)
             ) { page ->
-                AsyncImage(
-                    model = items[page].uri,
-                    contentDescription = "$title, item ${page + 1} of ${items.size}",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
+                val pageItem = items[page]
+                when (pageItem.contentType()) {
+                    ContentType.PDF -> PdfPages(
+                        uri = pageItem.uri,
+                        title = title,
+                        onOpenExternally = { onOpenExternally(pageItem) },
+                        onPageChanged = { p, count -> pdfPages[page] = p to count },
+                        // Clear the header bar, and the Previous/Next row when shown.
+                        contentPadding = PaddingValues(top = 60.dp, bottom = if (items.size > 1) 72.dp else 16.dp)
+                    )
+                    ContentType.FILE -> PdfUnavailable(
+                        onOpenExternally = { onOpenExternally(pageItem) },
+                        message = "This file type opens in another app."
+                    )
+                    else -> {
+                        val zoom = rememberZoomState()
+                        AsyncImage(
+                            model = pageItem.uri,
+                            contentDescription = "$title, item ${page + 1} of ${items.size}",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .zoomable(zoom)
+                                .zoomTransform(zoom)
+                        )
+                    }
+                }
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -952,11 +988,17 @@ private fun AttachmentViewerDialog(
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Close")
                 }
                 Text(
-                    "${pagerState.currentPage + 1} of ${items.size}",
+                    header,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
+                val type = current.contentType()
+                if (type == ContentType.PDF || type == ContentType.FILE) {
+                    IconButton(onClick = { onOpenExternally(current) }) {
+                        Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = "Open in another app", tint = accent)
+                    }
+                }
                 IconButton(onClick = { onShare(current) }) {
                     Icon(Icons.Rounded.Share, contentDescription = "Share this item", tint = accent)
                 }
@@ -968,7 +1010,7 @@ private fun AttachmentViewerDialog(
                     }
                 }
             }
-            Row(
+            if (items.size > 1) Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -1012,14 +1054,27 @@ private fun AttachmentPreview(
             .clip(RoundedCornerShape(24.dp))
             .background(accent.copy(alpha = 0.12f))
     ) {
-        AsyncImage(
-            model = galleryItem.uri,
-            contentDescription = if (linkPreview) "Open $title in browser" else title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(onClick = onOpen)
-        )
+        if (galleryItem.contentType() == ContentType.PDF) {
+            PdfFirstPage(
+                uri = galleryItem.uri,
+                contentDescription = "Open $title",
+                // A whole portrait page would push the rest of the detail
+                // screen far down; show its top, like a photo hero.
+                modifier = Modifier
+                    .fillMaxSize()
+                    .heightIn(min = 220.dp, max = 380.dp)
+                    .clickable(onClick = onOpen)
+            )
+        } else {
+            AsyncImage(
+                model = galleryItem.uri,
+                contentDescription = if (linkPreview) "Open $title in browser" else title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(onClick = onOpen)
+            )
+        }
         if (linkPreview) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -1082,15 +1137,31 @@ private fun AttachmentPreview(
     }
 }
 
-private fun shareGalleryItem(ctx: Context, item: GalleryItem, title: String): Boolean {
+private fun GalleryItem.contentType(): ContentType =
+    runCatching { ContentType.valueOf(kind) }.getOrDefault(ContentType.FILE)
+
+/** A URI other apps can read: our private file:// paths go through the FileProvider. */
+private fun grantableUri(ctx: Context, item: GalleryItem): Uri? {
     val source = Uri.parse(item.uri)
-    val shareUri = when (source.scheme) {
-        "file" -> {
-            val file = File(source.path ?: return false)
-            FileProvider.getUriForFile(ctx, "${ctx.packageName}.fileprovider", file)
-        }
+    return when (source.scheme) {
+        "file" -> runCatching {
+            FileProvider.getUriForFile(ctx, "${ctx.packageName}.fileprovider", File(source.path ?: return null))
+        }.getOrNull()
         else -> source
     }
+}
+
+private fun openGalleryItemExternally(ctx: Context, item: GalleryItem): Boolean {
+    val uri = grantableUri(ctx, item) ?: return false
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mimeForKind(item.kind))
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    return runCatching { ctx.startActivity(Intent.createChooser(intent, "Open with")) }.isSuccess
+}
+
+private fun shareGalleryItem(ctx: Context, item: GalleryItem, title: String): Boolean {
+    val shareUri = grantableUri(ctx, item) ?: return false
     val mime = mimeForKind(item.kind)
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = mime
