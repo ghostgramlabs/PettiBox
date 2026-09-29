@@ -53,3 +53,8 @@
 }
 -dontwarn kotlinx.coroutines.**
 -dontwarn kotlinx.coroutines.flow.**
+
+# ── Readability4J ────────────────────────────────────────────────────────
+# Logs through slf4j-api with no binding on Android; the optional binder
+# class is looked up by name and legitimately absent.
+-dontwarn org.slf4j.impl.**

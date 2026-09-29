@@ -357,8 +357,11 @@ interface SaveDao {
     @Query(
         """
         SELECT s.* FROM save_items s
-        JOIN save_items_fts ON save_items_fts.rowid = s.id
-        WHERE save_items_fts MATCH :query AND s.is_pending_delete = 0
+        WHERE s.is_pending_delete = 0 AND (
+            s.id IN (SELECT rowid FROM save_items_fts WHERE save_items_fts MATCH :query)
+            -- Words inside a link's offline article copy count too.
+            OR s.id IN (SELECT rowid FROM article_copies_fts WHERE article_copies_fts MATCH :query)
+        )
         ORDER BY s.created_at DESC
         LIMIT 200
         """

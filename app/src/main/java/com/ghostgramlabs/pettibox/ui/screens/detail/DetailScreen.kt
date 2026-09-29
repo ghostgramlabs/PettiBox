@@ -92,6 +92,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import coil.compose.AsyncImage
+import com.ghostgramlabs.pettibox.data.local.ArticleCopyEntity
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
 import com.ghostgramlabs.pettibox.data.util.TimeFormat
 import com.ghostgramlabs.pettibox.domain.model.ContentType
@@ -117,6 +118,15 @@ fun DetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val item = state.item
+    val article by viewModel.article.collectAsStateWithLifecycle()
+    val readerTextZoom by viewModel.readerTextZoom.collectAsStateWithLifecycle()
+    // The full offline copy is loaded only while the reader is open.
+    var readerCopy by remember { mutableStateOf<ArticleCopyEntity?>(null) }
+    // An "Update copy" that finishes while the reader is open swaps in the new text.
+    LaunchedEffect(article?.fetchedAt) {
+        val open = readerCopy ?: return@LaunchedEffect
+        if (article?.fetchedAt != open.fetchedAt) viewModel.loadArticle()?.let { readerCopy = it }
+    }
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -646,6 +656,40 @@ fun DetailScreen(
                             )
                         }
                     }
+                    if (item.contentType == ContentType.LINK.name) {
+                        Spacer(Modifier.height(10.dp))
+                        OfflineCopyCard(
+                            url = item.url,
+                            copy = article,
+                            accent = accent,
+                            onRead = {
+                                scope.launch {
+                                    val copy = viewModel.loadArticle()
+                                    if (copy?.html.isNullOrBlank()) {
+                                        snackbarHostState.showSnackbar("Couldn't open the offline copy")
+                                    } else {
+                                        readerCopy = copy
+                                    }
+                                }
+                            },
+                            onRequest = viewModel::requestArticleCopy
+                        )
+                    }
+                }
+                readerCopy?.let { copy ->
+                    ArticleReaderDialog(
+                        title = item.title,
+                        url = item.url.orEmpty(),
+                        copy = copy,
+                        textZoom = readerTextZoom,
+                        onTextZoomChange = viewModel::setReaderTextZoom,
+                        onOpenOriginal = openOriginal,
+                        onUpdateCopy = {
+                            viewModel.requestArticleCopy()
+                            Toast.makeText(ctx, "Updating the offline copy…", Toast.LENGTH_SHORT).show()
+                        },
+                        onDismiss = { readerCopy = null }
+                    )
                 }
 
                 Spacer(Modifier.height(20.dp))

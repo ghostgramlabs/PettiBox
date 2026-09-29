@@ -7,6 +7,7 @@ import android.net.Uri
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
+import com.ghostgramlabs.pettibox.data.article.ArticleRepository
 import com.ghostgramlabs.pettibox.data.metadata.MetadataFetcher
 import com.ghostgramlabs.pettibox.data.ocr.OcrWorker
 import com.ghostgramlabs.pettibox.data.ocr.PdfTextWorker
@@ -76,6 +77,7 @@ class SaveSheetViewModel @Inject constructor(
     private val metadata: MetadataFetcher,
     private val attachmentStore: AttachmentStore,
     private val ocrPreferences: OcrPreferences,
+    private val articleRepository: ArticleRepository,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -394,6 +396,9 @@ class SaveSheetViewModel @Inject constructor(
                 PdfTextWorker.enqueue(appContext, id, ownLocalUri)
             }
         }
+        // Offline reading copy — downloads in the background, never
+        // slows the save itself.
+        if (s.contentType == ContentType.LINK) articleRepository.onLinkSaved(id, s.url)
 
         _state.value = s.copy(isSaved = true)
     }

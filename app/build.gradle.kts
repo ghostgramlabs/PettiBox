@@ -137,6 +137,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
     implementation("org.jsoup:jsoup:1.18.1")
+    // Reader-view extraction (Mozilla Readability port) for offline article copies.
+    implementation("net.dankito.readability4j:readability4j:1.0.8")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 

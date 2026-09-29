@@ -7,14 +7,17 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.app.PendingIntent
+import com.ghostgramlabs.pettibox.data.article.ArticleRepository
 import com.ghostgramlabs.pettibox.data.backup.LocalBackupWorker
 import com.ghostgramlabs.pettibox.data.bookmarks.BookmarkFileParser
 import com.ghostgramlabs.pettibox.data.drive.DriveAuth
 import com.ghostgramlabs.pettibox.data.drive.DriveBackupFile
 import com.ghostgramlabs.pettibox.data.drive.DriveBackupManager
+import com.ghostgramlabs.pettibox.data.local.ArticleStats
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.ocr.OcrWorker
 import com.ghostgramlabs.pettibox.data.ocr.PdfTextWorker
+import com.ghostgramlabs.pettibox.data.preferences.ArticlePreferences
 import com.ghostgramlabs.pettibox.data.preferences.BackupPreferences
 import com.ghostgramlabs.pettibox.data.preferences.DriveBackupStatus
 import com.ghostgramlabs.pettibox.data.preferences.LocalBackupStatus
@@ -45,6 +48,8 @@ class SettingsViewModel @Inject constructor(
     private val localBackupStore: LocalBackupStore,
     private val driveAuth: DriveAuth,
     private val driveBackupManager: DriveBackupManager,
+    private val articleRepository: ArticleRepository,
+    private val articlePreferences: ArticlePreferences,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
     val autoScanOcr: Flow<Boolean> = ocrPreferences.autoScan
@@ -58,6 +63,16 @@ class SettingsViewModel @Inject constructor(
     val collections: Flow<List<CategoryEntity>> = repo.observeCategories()
     /** Live save count — gates the "restore on top of existing saves?" confirmation. */
     val totalSaves: Flow<Int> = repo.observeTotal()
+    val keepOfflineCopies: Flow<Boolean> = articlePreferences.keepOfflineCopies
+    val offlineCopyStats: Flow<ArticleStats> = articleRepository.observeStats()
+    /** Links that have never had an offline copy — sizes the "older links" button. */
+    val linksWithoutCopy: Flow<Int> = articleRepository.observeLinksWithoutCopy()
+
+    suspend fun setKeepOfflineCopies(enabled: Boolean) = articlePreferences.setKeepOfflineCopies(enabled)
+
+    suspend fun saveCopiesForExistingLinks(): Int = articleRepository.requestForExistingLinks()
+
+    suspend fun removeAllOfflineCopies() = articleRepository.removeAll()
 
     fun hasExactAlarmPermission(): Boolean = ReminderScheduler.hasExactAlarmPermission(appContext)
 

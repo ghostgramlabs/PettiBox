@@ -35,4 +35,39 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+/**
+ * v3 → v4: offline article copies for link saves, plus their FTS index and
+ * the content-sync triggers Room would create for a fresh install. SQL is
+ * copied from schemas/4.json so Room's schema validation matches.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `article_copies` (`save_id` INTEGER NOT NULL, `status` TEXT NOT NULL, " +
+                "`html` TEXT, `text_content` TEXT, `byline` TEXT, `word_count` INTEGER NOT NULL, " +
+                "`fetched_at` INTEGER NOT NULL, `failure_reason` TEXT, PRIMARY KEY(`save_id`), " +
+                "FOREIGN KEY(`save_id`) REFERENCES `save_items`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS `article_copies_fts` USING FTS4(`text_content` TEXT, content=`article_copies`)"
+        )
+        db.execSQL(
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_article_copies_fts_BEFORE_UPDATE BEFORE UPDATE ON `article_copies` " +
+                "BEGIN DELETE FROM `article_copies_fts` WHERE `docid`=OLD.`rowid`; END"
+        )
+        db.execSQL(
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_article_copies_fts_BEFORE_DELETE BEFORE DELETE ON `article_copies` " +
+                "BEGIN DELETE FROM `article_copies_fts` WHERE `docid`=OLD.`rowid`; END"
+        )
+        db.execSQL(
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_article_copies_fts_AFTER_UPDATE AFTER UPDATE ON `article_copies` " +
+                "BEGIN INSERT INTO `article_copies_fts`(`docid`, `text_content`) VALUES (NEW.`rowid`, NEW.`text_content`); END"
+        )
+        db.execSQL(
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_article_copies_fts_AFTER_INSERT AFTER INSERT ON `article_copies` " +
+                "BEGIN INSERT INTO `article_copies_fts`(`docid`, `text_content`) VALUES (NEW.`rowid`, NEW.`text_content`); END"
+        )
+    }
+}
+
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)

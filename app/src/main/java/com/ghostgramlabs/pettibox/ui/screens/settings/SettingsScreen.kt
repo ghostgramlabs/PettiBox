@@ -29,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.automirrored.rounded.TextSnippet
 import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.Archive
@@ -49,6 +50,7 @@ import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.TouchApp
+import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -92,6 +94,7 @@ import com.ghostgramlabs.pettibox.data.preferences.LocalBackupStatus
 import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
 import com.ghostgramlabs.pettibox.data.preferences.ReminderTime
 import com.ghostgramlabs.pettibox.data.preferences.ThemeMode
+import com.ghostgramlabs.pettibox.data.local.ArticleStats
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
 import com.ghostgramlabs.pettibox.ui.components.CreateCollectionDialog
 import com.ghostgramlabs.pettibox.ui.components.EditCollectionDialog
@@ -143,6 +146,10 @@ fun SettingsScreen(
     )
     val collections by viewModel.collections.collectAsStateWithLifecycle(initialValue = emptyList())
     val totalSaves by viewModel.totalSaves.collectAsStateWithLifecycle(initialValue = 0)
+    val keepOfflineCopies by viewModel.keepOfflineCopies.collectAsStateWithLifecycle(initialValue = true)
+    val offlineCopyStats by viewModel.offlineCopyStats.collectAsStateWithLifecycle(initialValue = ArticleStats(0, 0))
+    val linksWithoutCopy by viewModel.linksWithoutCopy.collectAsStateWithLifecycle(initialValue = 0)
+    var showRemoveOfflineCopies by remember { mutableStateOf(false) }
     val morningReminderTime by viewModel.morningReminderTime
         .collectAsStateWithLifecycle(initialValue = ReminderTime(9, 0))
     val eveningReminderTime by viewModel.eveningReminderTime
@@ -203,6 +210,32 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { deletingCollection = null }) { Text("Cancel") }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
+    if (showRemoveOfflineCopies) {
+        AlertDialog(
+            onDismissRequest = { showRemoveOfflineCopies = false },
+            title = { Text("Remove offline copies?") },
+            text = {
+                Text(
+                    "Your saved links stay exactly as they are — only the article copies kept for offline reading are deleted. " +
+                        "You can save a copy again from any link."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRemoveOfflineCopies = false
+                    scope.launch {
+                        viewModel.removeAllOfflineCopies()
+                        snackbarHostState.showSnackbar("Offline copies removed")
+                    }
+                }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveOfflineCopies = false }) { Text("Cancel") }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -758,6 +791,82 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(16.dp))
+            SettingsSection(title = "Offline reading") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Rounded.MenuBook,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Save articles to read offline",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "When you save a link, keep a copy of the article's text on this phone — readable without internet, even if the page changes or disappears. Text only, so it takes little space.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = keepOfflineCopies,
+                        onCheckedChange = { enabled ->
+                            scope.launch {
+                                viewModel.setKeepOfflineCopies(enabled)
+                                snackbarHostState.showSnackbar(
+                                    if (enabled) "New links will be saved for offline reading"
+                                    else "New links won't be saved offline — you can still save one from its page"
+                                )
+                            }
+                        }
+                    )
+                }
+                if (linksWithoutCopy > 0) {
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = {
+                            scope.launch {
+                                val queued = viewModel.saveCopiesForExistingLinks()
+                                snackbarHostState.showSnackbar(
+                                    if (queued == 0) "None of your older links can be saved offline"
+                                    else "Saving $queued link${if (queued == 1) "" else "s"} in the background — keep using the app"
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Text("Save older links too ($linksWithoutCopy)", fontWeight = FontWeight.Bold)
+                    }
+                }
+                if (offlineCopyStats.count > 0) {
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "${offlineCopyStats.count} article${if (offlineCopyStats.count == 1) "" else "s"} saved · " +
+                                formatStorage(offlineCopyStats.bytes),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(onClick = { showRemoveOfflineCopies = true }) {
+                            Text("Remove all", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
             SettingsSection(title = "Reminders") {
                 Text(
                     "Default reminder times",
@@ -884,7 +993,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Find it later",
-                    body = "Search by words, source app, file type, tag, collection, or upcoming reminders. It also checks English text found inside images and PDFs.",
+                    body = "Search by words, source app, file type, tag, collection, or upcoming reminders. It also checks English text found inside images and PDFs, and the text of articles saved for offline reading.",
                     icon = Icons.Rounded.Search
                 )
                 HelpItem(
@@ -926,6 +1035,21 @@ fun SettingsScreen(
                     icon = Icons.Rounded.AccessTime
                 )
                 HelpItem(
+                    title = "Read links offline",
+                    body = "When you save a link, PettiBox keeps a copy of the article's text. Open the save and tap \"Read offline\" — it works with no internet, even if the page is later changed or taken down. The copy is made in the background whenever you're online. Videos and social posts (YouTube, Instagram, X) don't have copies. Turn this off, or save older links too, under Offline reading above.",
+                    icon = Icons.AutoMirrored.Rounded.MenuBook
+                )
+                HelpItem(
+                    title = "\"No offline copy\"?",
+                    body = "Some pages can't be copied: paywalled or login-only articles, pages that no longer exist, and very long pages. Tap \"Try again\" on the save — or \"Open original\" to read it on the web.",
+                    icon = Icons.AutoMirrored.Rounded.MenuBook
+                )
+                HelpItem(
+                    title = "Zoom pictures, read PDFs",
+                    body = "Tap a picture to open it full screen, then pinch or double-tap to zoom and drag to look around. PDFs open right inside PettiBox: scroll through the pages, pinch to zoom, or tap the open-in-app icon to use another PDF app.",
+                    icon = Icons.Rounded.ZoomIn
+                )
+                HelpItem(
                     title = "Text recognition is optional",
                     body = "Auto-scan makes English screenshots and PDFs searchable. Other languages may be partial. Large PDFs are indexed for the first 30 pages to keep the app fast.",
                     icon = Icons.AutoMirrored.Rounded.TextSnippet
@@ -940,7 +1064,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Back up your shelf",
-                    body = "Every backup always keeps a copy on this phone; connect Google Drive (and optionally an extra folder) to send the same copy there too. \"Back up now\" fills every destination in one tap.",
+                    body = "Every backup always keeps a copy on this phone; connect Google Drive (and optionally an extra folder) to send the same copy there too. \"Back up now\" fills every destination in one tap. Offline article copies are included, so they come back on a new phone too.",
                     icon = Icons.Rounded.Download
                 )
                 HelpItem(
@@ -1661,6 +1785,12 @@ private fun PageLimitChoice(
 private enum class ReminderTimeTarget { MORNING, EVENING }
 
 /** Formats an hour/minute into the user's 12/24-hour locale clock, e.g. "9:00 PM". */
+/** SQLite LENGTH() counts characters; close enough to bytes for a size hint. */
+private fun formatStorage(bytes: Long): String = when {
+    bytes < 1024 * 1024 -> "${(bytes / 1024).coerceAtLeast(1)} KB"
+    else -> String.format(java.util.Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0))
+}
+
 private fun formatClock(hour: Int, minute: Int): String {
     val cal = Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, hour)

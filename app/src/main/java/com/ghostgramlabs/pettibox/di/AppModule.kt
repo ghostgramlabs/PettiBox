@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.ghostgramlabs.pettibox.data.local.ALL_MIGRATIONS
 import com.ghostgramlabs.pettibox.data.local.AppDatabase
+import com.ghostgramlabs.pettibox.data.local.ArticleDao
 import com.ghostgramlabs.pettibox.data.local.AttachmentDao
 import com.ghostgramlabs.pettibox.data.local.CategoryDao
 import com.ghostgramlabs.pettibox.data.local.SaveDao
@@ -74,4 +75,5 @@ object AppModule {
     @Provides fun provideCategoryDao(db: AppDatabase): CategoryDao = db.categoryDao()
     @Provides fun provideAttachmentDao(db: AppDatabase): AttachmentDao = db.attachmentDao()
     @Provides fun provideTagDao(db: AppDatabase): TagDao = db.tagDao()
+    @Provides fun provideArticleDao(db: AppDatabase): ArticleDao = db.articleDao()
 }

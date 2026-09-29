@@ -4,10 +4,14 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ghostgramlabs.pettibox.data.article.ArticleRepository
+import com.ghostgramlabs.pettibox.data.local.ArticleCopyEntity
+import com.ghostgramlabs.pettibox.data.local.ArticleCopySummary
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.local.TagEntity
+import com.ghostgramlabs.pettibox.data.preferences.ArticlePreferences
 import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
@@ -34,11 +38,33 @@ data class DetailState(
 class DetailViewModel @Inject constructor(
     private val repo: SaveRepository,
     private val ocrPreferences: OcrPreferences,
+    private val articleRepository: ArticleRepository,
+    private val articlePreferences: ArticlePreferences,
     @ApplicationContext private val appContext: Context,
     handle: SavedStateHandle
 ) : ViewModel() {
 
     private val itemId: Long = handle.get<Long>("id") ?: -1L
+
+    /** Offline reading copy of this save's link, if one was made or attempted. */
+    val article: StateFlow<ArticleCopySummary?> = articleRepository.observeSummary(itemId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val readerTextZoom: StateFlow<Int> = articlePreferences.readerTextZoom
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ArticlePreferences.DEFAULT_TEXT_ZOOM)
+
+    /** Save, retry, or update this link's offline copy. */
+    fun requestArticleCopy() = viewModelScope.launch {
+        val it = state.value.item ?: return@launch
+        articleRepository.request(it.id, it.url)
+    }
+
+    /** The full copy for the reader; loaded on open, never kept in list/detail state. */
+    suspend fun loadArticle(): ArticleCopyEntity? = articleRepository.load(itemId)
+
+    fun setReaderTextZoom(zoom: Int) = viewModelScope.launch {
+        articlePreferences.setReaderTextZoom(zoom)
+    }
 
     val state: StateFlow<DetailState> = combine(
         repo.observeById(itemId),

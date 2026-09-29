@@ -3,6 +3,9 @@ package com.ghostgramlabs.pettibox.data.repository
 import androidx.paging.PagingSource
 import androidx.room.withTransaction
 import com.ghostgramlabs.pettibox.data.local.AppDatabase
+import com.ghostgramlabs.pettibox.data.local.ArticleCopyEntity
+import com.ghostgramlabs.pettibox.data.local.ArticleCopyStatus
+import com.ghostgramlabs.pettibox.data.local.ArticleDao
 import com.ghostgramlabs.pettibox.data.local.AttachmentDao
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
 import com.ghostgramlabs.pettibox.data.local.CategoryCount
@@ -40,6 +43,7 @@ class SaveRepository @Inject constructor(
     private val categoryDao: CategoryDao,
     private val attachmentDao: AttachmentDao,
     private val tagDao: TagDao,
+    private val articleDao: ArticleDao,
     private val attachmentStore: AttachmentStore
 ) {
 
@@ -69,6 +73,10 @@ class SaveRepository @Inject constructor(
     )
 
     data class StarterSweepResult(val removed: Int, val keptWithSaves: Int)
+
+    private companion object {
+        const val ARTICLE_ENTRY_PREFIX = "articles/"
+    }
 
     /**
      * Seed the starter collections. Runs ONCE per install (the caller
@@ -430,10 +438,19 @@ class SaveRepository @Inject constructor(
                     put(JSONObject().put("itemId", ref.itemId).put("tagId", ref.tagId))
                 }
             })
-
             zip.putNextEntry(java.util.zip.ZipEntry("backup.json"))
             zip.write(root.toString(2).toByteArray(Charsets.UTF_8))
             zip.closeEntry()
+
+            // Offline article copies, one entry each and one row in memory
+            // at a time — folding them into backup.json would build a
+            // string as big as every article combined.
+            for (saveId in articleDao.readyIds()) {
+                val copy = runCatching { articleDao.get(saveId) }.getOrNull() ?: continue
+                zip.putNextEntry(java.util.zip.ZipEntry("$ARTICLE_ENTRY_PREFIX$saveId.json"))
+                zip.write(articleJson(copy).toString().toByteArray(Charsets.UTF_8))
+                zip.closeEntry()
+            }
         }
 
         return BackupExportResult(
@@ -450,45 +467,61 @@ class SaveRepository @Inject constructor(
     suspend fun importBackupZip(input: InputStream): BackupImportResult {
         var backupJson: String? = null
         val fileUrisByPath = mutableMapOf<String, String>()
-        ZipInputStream(input.buffered()).use { zip ->
-            while (true) {
-                val entry = zip.nextEntry ?: break
-                if (entry.isDirectory) {
-                    zip.closeEntry()
-                    continue
-                }
-                // Guard against zip-slip: a malicious or corrupted backup
-                // with entries like "files/../../../etc/passwd" would
-                // otherwise escape the attachments sandbox via the
-                // originalName/extension. We only accept entries strictly
-                // inside files/ with no parent-traversal segments.
-                val safeName = !entry.name.contains("..") && !entry.name.startsWith("/")
-                when {
-                    safeName && entry.name == "backup.json" -> {
-                        backupJson = zip.readBytes().toString(Charsets.UTF_8)
+        // Article entries are spooled to temp files (keyed by the backup's
+        // save id) and inserted after the saves exist, one at a time.
+        val articleFiles = mutableMapOf<Long, File>()
+        try {
+            ZipInputStream(input.buffered()).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    if (entry.isDirectory) {
+                        zip.closeEntry()
+                        continue
                     }
-                    safeName && entry.name.startsWith("files/") -> {
-                        attachmentStore.ingestBackupFile(
-                            input = NonClosingInputStream(zip),
-                            originalName = entry.name.substringAfterLast('/')
-                        )?.let { uri ->
-                            fileUrisByPath[entry.name] = uri
+                    // Guard against zip-slip: a malicious or corrupted backup
+                    // with entries like "files/../../../etc/passwd" would
+                    // otherwise escape the attachments sandbox via the
+                    // originalName/extension. We only accept entries strictly
+                    // inside files/ with no parent-traversal segments.
+                    val safeName = !entry.name.contains("..") && !entry.name.startsWith("/")
+                    when {
+                        safeName && entry.name == "backup.json" -> {
+                            backupJson = zip.readBytes().toString(Charsets.UTF_8)
+                        }
+                        safeName && entry.name.startsWith(ARTICLE_ENTRY_PREFIX) -> {
+                            entry.name.removePrefix(ARTICLE_ENTRY_PREFIX).removeSuffix(".json").toLongOrNull()
+                                ?.let { oldSaveId ->
+                                    val temp = File.createTempFile("article_", ".json")
+                                    temp.outputStream().use { NonClosingInputStream(zip).copyTo(it) }
+                                    articleFiles[oldSaveId] = temp
+                                }
+                        }
+                        safeName && entry.name.startsWith("files/") -> {
+                            attachmentStore.ingestBackupFile(
+                                input = NonClosingInputStream(zip),
+                                originalName = entry.name.substringAfterLast('/')
+                            )?.let { uri ->
+                                fileUrisByPath[entry.name] = uri
+                            }
                         }
                     }
+                    zip.closeEntry()
                 }
-                zip.closeEntry()
             }
+            val json = backupJson ?: error("Missing backup.json")
+            return importBackupJson(json, fileUrisByPath, articleFiles)
+        } finally {
+            articleFiles.values.forEach { it.delete() }
         }
-        val json = backupJson ?: error("Missing backup.json")
-        return importBackupJson(json, fileUrisByPath)
     }
 
     suspend fun importBackupJson(json: String): BackupImportResult =
-        importBackupJson(json, emptyMap())
+        importBackupJson(json, emptyMap(), emptyMap())
 
     private suspend fun importBackupJson(
         json: String,
-        fileUrisByPath: Map<String, String>
+        fileUrisByPath: Map<String, String>,
+        articleFiles: Map<Long, File>
     ): BackupImportResult = database.withTransaction {
         // Wrapping the whole import in a transaction means a mid-flight
         // failure (process death, OOM, malformed entry) rolls everything
@@ -615,6 +648,25 @@ class SaveRepository @Inject constructor(
             val newItemId = itemIdMap[ref.optLong("itemId", -1L)] ?: continue
             val newTagId = tagIdMap[ref.optLong("tagId", -1L)] ?: continue
             tagDao.link(ItemTagCrossRef(newItemId, newTagId))
+        }
+
+        // Offline article copies travel with the backup: the point of a
+        // copy is outliving the page, so a new phone must not lose it.
+        for ((oldSaveId, file) in articleFiles) {
+            val newItemId = itemIdMap[oldSaveId] ?: continue
+            val a = runCatching { JSONObject(file.readText()) }.getOrNull() ?: continue
+            val html = a.optNullableString("html") ?: continue
+            articleDao.upsert(
+                ArticleCopyEntity(
+                    saveId = newItemId,
+                    status = ArticleCopyStatus.READY.name,
+                    html = html,
+                    textContent = a.optNullableString("text"),
+                    byline = a.optNullableString("byline"),
+                    wordCount = a.optInt("wordCount", 0),
+                    fetchedAt = a.optLong("fetchedAt", System.currentTimeMillis())
+                )
+            )
         }
 
         BackupImportResult(
@@ -753,6 +805,13 @@ class SaveRepository @Inject constructor(
     suspend fun itemIdsForTag(name: String): List<Long> = tagDao.itemIdsForTag(name)
 
     // ── Helpers ───────────────────────────────────────────────────────────
+
+    private fun articleJson(a: ArticleCopyEntity): JSONObject = JSONObject()
+        .put("html", a.html)
+        .put("text", a.textContent)
+        .put("byline", a.byline)
+        .put("wordCount", a.wordCount)
+        .put("fetchedAt", a.fetchedAt)
 
     private fun backupSummary(
         saves: List<SaveItemEntity>,

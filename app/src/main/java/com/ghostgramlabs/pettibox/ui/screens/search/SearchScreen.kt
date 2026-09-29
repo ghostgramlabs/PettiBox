@@ -196,7 +196,7 @@ fun SearchScreen(
         Column(Modifier.padding(padding).fillMaxSize()) {
             ScreenHeading(
                 title = "Look it up",
-                subtitle = "Titles, notes, sources, and English text inside images."
+                subtitle = "Titles, notes, saved articles, and text inside images."
             )
             SearchField(
                 value = state.query,
@@ -347,7 +347,7 @@ private fun SearchDiscovery(
         EmptyState(
             emoji = "\uD83D\uDD0D",
             headline = "Find anything you stashed",
-            body = "Search titles, notes, links, sources, tags, and English text inside images or PDFs. Archive is included, so tucked-away saves still show up."
+            body = "Search titles, notes, links, sources, tags, English text inside images or PDFs, and articles saved for offline reading. Archive is included, so tucked-away saves still show up."
         )
     }
 }
