@@ -96,6 +96,12 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
+    // App lock re-arms when the whole app goes to the background.
+    implementation("androidx.lifecycle:lifecycle-process:2.8.6")
+    // App lock: fingerprint / face / screen-lock PIN prompt.
+    implementation("androidx.biometric:biometric:1.1.0")
+    // Home-screen widget.
+    implementation("androidx.glance:glance-appwidget:1.1.1")
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")

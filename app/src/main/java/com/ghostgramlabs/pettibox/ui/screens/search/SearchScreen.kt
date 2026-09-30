@@ -34,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -96,24 +97,15 @@ fun SearchScreen(
     val requestNotificationPermission = rememberNotificationPermissionRequester()
     val requestDelete: (SaveItemEntity) -> Unit = { item ->
         scope.launch {
-            if (item.isArchived) {
-                // Archived → permanent. Without this branch, the snackbar
-                // claimed "Moved to Archive" while the row sat exactly
-                // where it was, looking like the action did nothing.
-                viewModel.deletePermanently(item)
-                snackbarHostState.showSnackbar("Save deleted")
-            } else {
-                viewModel.stageDelete(item)
-                val result = snackbarHostState.showSnackbar(
-                    message = "Save deleted",
-                    actionLabel = "Undo"
-                )
-                if (result == SnackbarResult.ActionPerformed) {
-                    viewModel.undoStagedDelete(item)
-                } else {
-                    viewModel.deletePermanently(item)
-                }
-            }
+            // Deleting moves the save to Recently deleted (Browse) for 30
+            // days — archived or not — so Undo here is just the fast path.
+            viewModel.stageDelete(item)
+            val result = snackbarHostState.showSnackbar(
+                message = "Moved to Recently deleted",
+                actionLabel = "Undo",
+                duration = SnackbarDuration.Long
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.undoStagedDelete(item)
         }
     }
 

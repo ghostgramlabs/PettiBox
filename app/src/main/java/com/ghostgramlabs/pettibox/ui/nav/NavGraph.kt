@@ -27,6 +27,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -90,23 +93,34 @@ private val topTabs = listOf(
 fun PettiBoxNavGraph(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
-    initialOpenItemId: Long? = null,
-    onInitialOpenItemConsumed: () -> Unit = {}
+    launch: AppLaunch? = null,
+    onLaunchConsumed: () -> Unit = {}
 ) {
     val nav = rememberNavController()
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route.orEmpty()
     val showBottomBar = topTabs.any { it.matches(currentRoute) }
 
-    // Reminder-tap deep link. When the user taps a notification, the
-    // activity stashes the item id and re-renders; this effect picks it
-    // up once the NavController has actually composed and routes to the
-    // item's Detail screen. Without this, the notification opens to Home
-    // and the user has to hunt for the save they were just nudged about.
-    androidx.compose.runtime.LaunchedEffect(initialOpenItemId) {
-        val id = initialOpenItemId ?: return@LaunchedEffect
-        nav.navigate(Routes.detail(id))
-        onInitialOpenItemConsumed()
+    // Home's add flows requested from outside (shortcut / widget "+").
+    var homeAction by remember { mutableStateOf<AppLaunch?>(null) }
+
+    // Outside entry points (notification, widget, app-icon shortcut). The
+    // activity stashes the request and re-renders; this effect acts on it
+    // once the NavController has actually composed. Without it a reminder
+    // tap would open to Home and leave the user hunting for the save.
+    androidx.compose.runtime.LaunchedEffect(launch) {
+        when (launch ?: return@LaunchedEffect) {
+            is AppLaunch.OpenItem -> nav.navigate(Routes.detail((launch as AppLaunch.OpenItem).id))
+            AppLaunch.Unread -> nav.navigateTopLevel(
+                Routes.categories(BrowseDestination.toCid(BrowseDestination.Unread))
+            )
+            AppLaunch.Search -> nav.navigateTopLevel(Routes.search())
+            AppLaunch.NewNote, AppLaunch.AddLink, AppLaunch.AddChooser -> {
+                nav.navigateTopLevel(Routes.Home)
+                homeAction = launch
+            }
+        }
+        onLaunchConsumed()
     }
 
     Scaffold(
@@ -122,6 +136,8 @@ fun PettiBoxNavGraph(
         ) {
             composable(Routes.Home) {
                 HomeScreen(
+                    pendingAction = homeAction,
+                    onPendingActionConsumed = { homeAction = null },
                     onOpenItem = { id -> nav.navigate(Routes.detail(id)) },
                     onOpenSource = { src -> nav.navigate(Routes.search(src = src)) },
                     onOpenCategory = { cid -> nav.navigate(Routes.categories(cid)) },

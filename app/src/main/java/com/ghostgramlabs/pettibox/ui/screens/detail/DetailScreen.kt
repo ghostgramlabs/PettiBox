@@ -99,6 +99,7 @@ import com.ghostgramlabs.pettibox.domain.model.ContentType
 import com.ghostgramlabs.pettibox.domain.model.SourceApp
 import com.ghostgramlabs.pettibox.ui.components.CategoryChip
 import com.ghostgramlabs.pettibox.ui.components.KeeperMascot
+import com.ghostgramlabs.pettibox.ui.components.ReviewPrompt
 import com.ghostgramlabs.pettibox.ui.components.KeeperPose
 import com.ghostgramlabs.pettibox.ui.components.ReminderCustomSheet
 import com.ghostgramlabs.pettibox.ui.components.ReminderPickerSheet
@@ -169,44 +170,31 @@ fun DetailScreen(
         val isArchived = state.item?.isArchived == true
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text(if (isArchived) "Delete permanently?" else "Delete this save?") },
+            title = { Text("Delete this save?") },
             text = {
                 Text(
-                    if (isArchived) "This save is in your Archive. Deleting removes it for good — this can't be undone."
-                    else "We'll give you a moment to Undo before it's gone. Tap \"Archive instead\" to soft-delete (stays in Archive, can be unarchived later)."
+                    "It moves to Recently deleted (in Browse) for 30 days, so you can still bring it back." +
+                        if (isArchived) "" else " Want it out of the way but kept? Tap \"Archive instead\"."
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteConfirm = false
                     scope.launch {
-                        val current = state.item ?: return@launch
-                        if (isArchived) {
-                            // Already archived → straight permanent delete.
-                            // Staging it again was the source of the
-                            // "Moved to Archive" loop bug.
-                            viewModel.deletePermanently(current)
-                            onDeleted()
-                            snackbarHostState.showSnackbar("Save deleted")
+                        val stagedItem = viewModel.stageDelete() ?: return@launch
+                        val result = snackbarHostState.showSnackbar(
+                            message = "Moved to Recently deleted",
+                            actionLabel = "Undo",
+                            duration = SnackbarDuration.Long
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            viewModel.undoStagedDelete(stagedItem)
                         } else {
-                            val stagedItem = viewModel.stageDelete() ?: return@launch
-                            val result = snackbarHostState.showSnackbar(
-                                message = "Save deleted",
-                                actionLabel = "Undo"
-                            )
-                            if (result == SnackbarResult.ActionPerformed) {
-                                viewModel.undoStagedDelete(stagedItem)
-                            } else {
-                                viewModel.deletePermanently(stagedItem)
-                                onDeleted()
-                            }
+                            onDeleted()
                         }
                     }
                 }) {
-                    Text(
-                        if (isArchived) "Delete forever" else "Delete",
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -688,7 +676,13 @@ fun DetailScreen(
                             viewModel.requestArticleCopy()
                             Toast.makeText(ctx, "Updating the offline copy…", Toast.LENGTH_SHORT).show()
                         },
-                        onDismiss = { readerCopy = null }
+                        onDismiss = {
+                            readerCopy = null
+                            scope.launch {
+                                val activity = ctx as? android.app.Activity
+                                if (activity != null && viewModel.recordOfflineRead()) ReviewPrompt.launch(activity)
+                            }
+                        }
                     )
                 }
 
@@ -769,7 +763,10 @@ fun DetailScreen(
                     }
                 )
 
-                if (!item.ocrText.isNullOrBlank() || hasIndexableAttachments(state.attachments) || isIndexableKind(item.contentType)) {
+                if (item.contentType == ContentType.LINK.name && !item.ocrText.isNullOrBlank()) {
+                    Spacer(Modifier.height(24.dp))
+                    AboutLinkSection(item.ocrText)
+                } else if (!item.ocrText.isNullOrBlank() || hasIndexableAttachments(state.attachments) || isIndexableKind(item.contentType)) {
                     Spacer(Modifier.height(24.dp))
                     OcrTextSections(
                         itemText = item.ocrText,
@@ -1269,6 +1266,29 @@ private data class OcrDocText(
     val text: String?,
     val status: String?
 )
+
+/** Channel / site / description captured when a link was saved (and searchable). */
+@Composable
+private fun AboutLinkSection(details: String) {
+    Text(
+        "About this link",
+        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
+        color = MaterialTheme.colorScheme.onBackground
+    )
+    Spacer(Modifier.height(8.dp))
+    SelectionContainer {
+        Text(
+            details,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .padding(14.dp)
+        )
+    }
+}
 
 @Composable
 private fun OcrTextSections(

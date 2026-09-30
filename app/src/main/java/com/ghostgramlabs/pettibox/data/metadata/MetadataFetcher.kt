@@ -16,6 +16,9 @@ class MetadataFetcher @Inject constructor() {
      * the URL's host as a title if this returns null.
      */
     suspend fun fetch(url: String): LinkMetadata? = withContext(Dispatchers.IO) {
+        // YouTube often serves a consent/app shell with no og: tags, so its
+        // official oEmbed answer (title + channel) is the reliable fallback.
+        val oembed = withTimeoutOrNull(3_500L) { youtubeOEmbed(url) }
         withTimeoutOrNull(5_000L) {
             runCatching {
                 val doc = Jsoup.connect(url)
@@ -30,26 +33,32 @@ class MetadataFetcher @Inject constructor() {
                 LinkMetadata(
                     title = doc.metaContent("og:title")
                         ?: doc.metaContent("twitter:title")
+                        ?: oembed?.first
                         ?: doc.title().takeIf { it.isNotBlank() },
                     description = doc.metaContent("og:description")
                         ?: doc.metaContent("description"),
                     imageUrl = imageUrl,
-                    siteName = doc.metaContent("og:site_name")
+                    siteName = doc.metaContent("og:site_name"),
+                    author = oembed?.second
+                        ?: doc.metaContent("author")
+                        ?: doc.metaContent("article:author")?.takeUnless { it.startsWith("http") }
                 )
             }.getOrNull() ?: youtubeThumbnail(url)?.let { thumbnail ->
                 LinkMetadata(
-                    title = null,
+                    title = oembed?.first,
                     description = null,
                     imageUrl = thumbnail,
-                    siteName = "YouTube"
+                    siteName = "YouTube",
+                    author = oembed?.second
                 )
             }
         } ?: youtubeThumbnail(url)?.let { thumbnail ->
             LinkMetadata(
-                title = null,
+                title = oembed?.first,
                 description = null,
                 imageUrl = thumbnail,
-                siteName = "YouTube"
+                siteName = "YouTube",
+                author = oembed?.second
             )
         }
     }
@@ -59,6 +68,20 @@ class MetadataFetcher @Inject constructor() {
         if (byProp.isNotBlank()) return byProp
         val byName = select("meta[name=$prop]").attr("content")
         return byName.ifBlank { null }
+    }
+
+    /** (title, channel) from YouTube's public oEmbed endpoint; og tags don't carry the channel. */
+    private fun youtubeOEmbed(url: String): Pair<String?, String?>? {
+        if (youtubeThumbnail(url) == null) return null
+        return runCatching {
+            val body = Jsoup.connect("https://www.youtube.com/oembed?format=json&url=" + java.net.URLEncoder.encode(url, "UTF-8"))
+                .ignoreContentType(true)
+                .timeout(3_000)
+                .execute()
+                .body()
+            val json = org.json.JSONObject(body)
+            json.optString("title").ifBlank { null } to json.optString("author_name").ifBlank { null }
+        }.getOrNull()
     }
 
     private fun youtubeThumbnail(url: String): String? {

@@ -74,8 +74,10 @@ class SaveRepository @Inject constructor(
 
     data class StarterSweepResult(val removed: Int, val keptWithSaves: Int)
 
-    private companion object {
-        const val ARTICLE_ENTRY_PREFIX = "articles/"
+    companion object {
+        private const val ARTICLE_ENTRY_PREFIX = "articles/"
+        /** How long a deleted save can still be restored. */
+        const val TRASH_KEEP_MS = 30L * 24 * 60 * 60 * 1000
     }
 
     /**
@@ -126,22 +128,34 @@ class SaveRepository @Inject constructor(
      * accumulate forever as users delete saves.
      */
     suspend fun delete(id: Long) {
-        val uris = attachmentDao.urisForItem(id)
+        // A link's preview image may be a local copy (ThumbnailWorker);
+        // deleteByUris ignores anything outside our sandbox.
+        val uris = attachmentDao.urisForItem(id) + listOfNotNull(saveDao.getById(id)?.thumbnailUri)
         saveDao.delete(id) // cascades attachments + item_tags
         attachmentStore.deleteByUris(uris)
     }
 
     /**
-     * Sweep any rows left in the `is_pending_delete` state from a
-     * previous session (force-stop, process death, OS kill during the
-     * Undo window). Called once on app start. Files for those rows are
-     * cleaned up too — without this they'd accumulate forever.
+     * Permanently removes saves that have sat in Recently deleted for
+     * longer than [TRASH_KEEP_MS]. Called once on app start; goes through
+     * [delete] so each save's files are cleaned up too.
      */
-    suspend fun sweepOrphanedPendingDeletes() {
-        val uris = saveDao.urisForPendingDeletes()
-        saveDao.permanentlyDeletePending()
-        if (uris.isNotEmpty()) attachmentStore.deleteByUris(uris)
+    suspend fun purgeExpiredTrash() {
+        saveDao.expiredTrashIds(System.currentTimeMillis() - TRASH_KEEP_MS).forEach { delete(it) }
     }
+
+    /** "Empty Recently deleted": everything in the bin, gone for good. */
+    suspend fun emptyTrash(): Int {
+        val ids = saveDao.trashIds()
+        ids.forEach { delete(it) }
+        return ids.size
+    }
+
+    fun pagedTrash(): PagingSource<Int, SaveItemEntity> = saveDao.pagedTrash()
+    fun observeTrashTotal(): Flow<Int> = saveDao.observeTrashTotal()
+
+    fun pagedUnread(sort: String = "NEWEST"): PagingSource<Int, SaveItemEntity> = saveDao.pagedUnread(sort)
+    fun observeUnreadTotal(): Flow<Int> = saveDao.observeUnreadTotal()
 
     fun observeRecent(limit: Int = 20) = saveDao.observeRecent(limit)
     fun observeFavorites() = saveDao.observeFavorites()
@@ -381,12 +395,19 @@ class SaveRepository @Inject constructor(
                             path
                         } else null
                     }
+                    // Local preview images travel in the zip too; a file://
+                    // path alone would point at nothing on the new phone.
+                    val thumbnailBackupPath = s.thumbnailUri?.takeIf { it.startsWith("file:") }?.let { uri ->
+                        val path = "files/thumb_${s.id}_${safeExt(uri)}"
+                        if (attachmentStore.copyUriToZip(uri, zip, path)) path else null
+                    }
                     put(JSONObject()
                         .put("id", s.id)
                         .put("title", s.title)
                         .put("url", s.url)
                         .put("localUri", s.localUri)
                         .put("localBackupPath", localBackupPath)
+                        .put("thumbnailBackupPath", thumbnailBackupPath)
                         .put("thumbnailUri", s.thumbnailUri)
                         .put("contentType", s.contentType)
                         .put("sourceApp", s.sourceApp)
@@ -575,7 +596,9 @@ class SaveRepository @Inject constructor(
                 url = s.optNullableString("url"),
                 localUri = s.optNullableString("localBackupPath")?.let { fileUrisByPath[it] }
                     ?: s.optNullableString("localUri"),
-                thumbnailUri = s.optNullableString("thumbnailUri"),
+                thumbnailUri = s.optNullableString("thumbnailBackupPath")?.let { fileUrisByPath[it] }
+                    // A local path from another phone is meaningless here.
+                    ?: s.optNullableString("thumbnailUri")?.takeUnless { it.startsWith("file:") },
                 contentType = s.optString("contentType", "NOTE"),
                 sourceApp = s.optString("sourceApp", "UNKNOWN"),
                 categoryId = s.optNullableString("categoryId"),

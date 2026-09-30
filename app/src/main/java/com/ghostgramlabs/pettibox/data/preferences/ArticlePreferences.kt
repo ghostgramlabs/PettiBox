@@ -19,6 +19,7 @@ class ArticlePreferences @Inject constructor(
 ) {
     private val keepOfflineCopiesKey = booleanPreferencesKey("keep_offline_copies")
     private val readerTextZoomKey = intPreferencesKey("reader_text_zoom")
+    private val readsKey = intPreferencesKey("offline_reads")
 
     /** On by default: saving a link is already asking to read it later. */
     val keepOfflineCopies: Flow<Boolean> = context.articleDataStore.data.map { prefs ->
@@ -36,6 +37,16 @@ class ArticlePreferences @Inject constructor(
 
     suspend fun setReaderTextZoom(zoom: Int) {
         context.articleDataStore.edit { it[readerTextZoomKey] = zoom.coerceIn(MIN_TEXT_ZOOM, MAX_TEXT_ZOOM) }
+    }
+
+    /** Counts reader opens; returns the new total. Feeds one rating moment. */
+    suspend fun recordRead(): Int {
+        var total = 0
+        context.articleDataStore.edit { prefs ->
+            total = (prefs[readsKey] ?: 0) + 1
+            prefs[readsKey] = total
+        }
+        return total
     }
 
     companion object {

@@ -70,4 +70,18 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+/**
+ * v4 → v5: deleted_at, turning the short Undo window into a 30-day
+ * Recently deleted bin. Rows already staged for deletion start their
+ * 30 days now rather than being dropped on the next launch.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE save_items ADD COLUMN deleted_at INTEGER")
+        db.execSQL(
+            "UPDATE save_items SET deleted_at = CAST(strftime('%s','now') AS INTEGER) * 1000 WHERE is_pending_delete = 1"
+        )
+    }
+}
+
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)

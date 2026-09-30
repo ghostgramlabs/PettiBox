@@ -249,8 +249,4 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    suspend fun deletePermanently(item: SaveItemEntity) {
-        ReminderScheduler.cancel(appContext, item.id)
-        repo.delete(item.id)
-    }
 }

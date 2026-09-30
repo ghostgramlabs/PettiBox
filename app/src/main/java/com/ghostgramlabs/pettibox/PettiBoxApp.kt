@@ -6,7 +6,12 @@ import androidx.work.Configuration
 import com.ghostgramlabs.pettibox.data.backup.LocalBackupWorker
 import com.ghostgramlabs.pettibox.data.preferences.BackupPreferences
 import com.ghostgramlabs.pettibox.data.preferences.OnboardingPreferences
+import com.ghostgramlabs.pettibox.data.preferences.ReminderPreferences
 import com.ghostgramlabs.pettibox.data.reminders.ReminderNotifications
+import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgePreferences
+import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgeWorker
+import com.ghostgramlabs.pettibox.ui.lock.AppLockSession
+import com.ghostgramlabs.pettibox.ui.widget.ShelfWidget
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
 import dagger.hilt.android.HiltAndroidApp
@@ -24,6 +29,8 @@ class PettiBoxApp : Application(), Configuration.Provider {
     @Inject lateinit var repository: SaveRepository
     @Inject lateinit var backupPreferences: BackupPreferences
     @Inject lateinit var onboardingPreferences: OnboardingPreferences
+    @Inject lateinit var shelfNudgePreferences: ShelfNudgePreferences
+    @Inject lateinit var reminderPreferences: ReminderPreferences
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -37,6 +44,7 @@ class PettiBoxApp : Application(), Configuration.Provider {
         // Register the notification channel up-front. Idempotent — the OS
         // ignores duplicate registrations after the first one took effect.
         ReminderNotifications.ensureChannel(this)
+        AppLockSession.install()
         // Seed starter collections once per install. Users can rename and
         // delete starters now, so seeding must never re-run — the flag,
         // not the table contents, decides.
@@ -46,13 +54,19 @@ class PettiBoxApp : Application(), Configuration.Provider {
                 onboardingPreferences.markCategoriesSeeded()
             }
         }
-        // Sweep rows that were mid-flight in the "Delete with Undo"
-        // staging when the process died (force-stop, OS kill, user
-        // closed PettiBox during the Undo snackbar). They're invisible
-        // anyway because every listing query filters
-        // is_pending_delete = 0; without this sweep they'd accumulate
-        // in the DB forever with their attachment files orphaned.
-        appScope.launch { repository.sweepOrphanedPendingDeletes() }
+        // Saves deleted more than 30 days ago leave Recently deleted for
+        // good (files included) — otherwise the bin would grow forever.
+        appScope.launch { repository.purgeExpiredTrash() }
+        // Keep any placed "Unread" widget in step with the shelf.
+        appScope.launch { ShelfWidget.keepUpdated(this@PettiBoxApp) }
+        // Make sure the weekly shelf nudge is queued (or not), like backups.
+        appScope.launch {
+            ShelfNudgeWorker.reconcile(
+                this@PettiBoxApp,
+                shelfNudgePreferences.enabled.first(),
+                reminderPreferences
+            )
+        }
         // Reconcile the saved backup preference with WorkManager state on
         // every cold start. If the user enabled auto-backup but the
         // WorkManager db got wiped (data clear, fresh install over old

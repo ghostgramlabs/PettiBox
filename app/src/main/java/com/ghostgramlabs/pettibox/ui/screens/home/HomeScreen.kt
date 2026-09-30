@@ -63,6 +63,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -104,6 +105,8 @@ import com.ghostgramlabs.pettibox.ui.components.rememberNotificationPermissionRe
 import com.ghostgramlabs.pettibox.ui.components.SaveCard
 import com.ghostgramlabs.pettibox.ui.components.ScreenHeading
 import com.ghostgramlabs.pettibox.ui.components.SectionHeader
+import com.ghostgramlabs.pettibox.data.preferences.RatingPreferences
+import com.ghostgramlabs.pettibox.ui.nav.AppLaunch
 import com.ghostgramlabs.pettibox.ui.screens.save.IncomingShare
 import com.ghostgramlabs.pettibox.ui.screens.save.SaveSheet
 import com.ghostgramlabs.pettibox.ui.theme.isLightTheme
@@ -112,12 +115,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     onOpenItem: (Long) -> Unit,
+    pendingAction: AppLaunch? = null,
+    onPendingActionConsumed: () -> Unit = {},
     onOpenSource: (String) -> Unit,
     onOpenCategory: (String) -> Unit,
     onOpenAllCategories: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val rateCardAllowed by viewModel.rateCardAllowed.collectAsStateWithLifecycle(initialValue = false)
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -190,6 +196,17 @@ fun HomeScreen(
     }
 
     val openQuickNote = { pendingShare = IncomingShare() }
+
+    // "+" flows opened from an app-icon shortcut or the widget.
+    LaunchedEffect(pendingAction) {
+        when (pendingAction ?: return@LaunchedEffect) {
+            AppLaunch.NewNote -> openQuickNote()
+            AppLaunch.AddLink -> showLinkDialog = true
+            AppLaunch.AddChooser -> showChooser = true
+            else -> Unit
+        }
+        onPendingActionConsumed()
+    }
 
     val shouldOfferBackupRestore = !state.isLoading &&
         state.totalCount == 0 &&
@@ -352,28 +369,15 @@ fun HomeScreen(
     val requestNotificationPermission = rememberNotificationPermissionRequester()
     val requestDelete: (SaveItemEntity) -> Unit = { item ->
         scope.launch {
-            if (item.isArchived) {
-                // Already in Archive — Delete here means permanent. Skipping
-                // the stage step means we don't lie with "Moved to Archive"
-                // (it was already there), and the row actually disappears.
-                viewModel.deletePermanently(item)
-                snackbarHostState.showSnackbar("Save deleted")
-            } else {
-                viewModel.stageDelete(item)
-                // Stage-into-archive remains under the hood — it's how
-                // we make Undo work without an in-memory snapshot — but
-                // the user-facing copy now matches the button they
-                // pressed ("Delete"), not the implementation detail.
-                val result = snackbarHostState.showSnackbar(
-                    message = "Save deleted",
-                    actionLabel = "Undo"
-                )
-                if (result == SnackbarResult.ActionPerformed) {
-                    viewModel.undoStagedDelete(item)
-                } else {
-                    viewModel.deletePermanently(item)
-                }
-            }
+            // Deleting moves the save to Recently deleted (Browse) for 30
+            // days — archived or not — so Undo here is just the fast path.
+            viewModel.stageDelete(item)
+            val result = snackbarHostState.showSnackbar(
+                message = "Moved to Recently deleted",
+                actionLabel = "Undo",
+                duration = SnackbarDuration.Long
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.undoStagedDelete(item)
         }
     }
 
@@ -536,6 +540,19 @@ fun HomeScreen(
                             modifier = Modifier.padding(horizontal = 20.dp)
                         )
                     }
+                    if (rateCardAllowed && state.totalCount >= RatingPreferences.CARD_MIN_SAVES) {
+                        Spacer(Modifier.height(10.dp))
+                        RateCard(
+                            onRate = {
+                                viewModel.finishRateCard()
+                                if (!HelpLinks.openPlayListing(ctx)) {
+                                    Toast.makeText(ctx, "Couldn't open the Play Store", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            onNotNow = viewModel::snoozeRateCard,
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
                     Spacer(Modifier.height(24.dp))
                     if (state.categories.isNotEmpty()) {
                         // No "See all" trailing — Browse is one tap away in
@@ -652,6 +669,52 @@ private fun formatBackupSize(bytes: Long): String {
     if (kb < 1024.0) return "${kotlin.math.max(1, kb.toInt())} KB"
     val mb = kb / 1024.0
     return String.format(java.util.Locale.US, "%.1f MB", mb)
+}
+
+/**
+ * A plain request for a Play rating. Deliberately no "Do you like it?"
+ * question first — routing only happy users to the store is review
+ * gating, which Play's policy forbids.
+ */
+@Composable
+private fun RateCard(
+    onRate: () -> Unit,
+    onNotNow: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(scheme.primary.copy(alpha = 0.10f))
+            .padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 10.dp)
+    ) {
+        KeeperMascot(
+            size = 42.dp,
+            pose = KeeperPose.SaveSuccess,
+            modifier = Modifier.padding(end = 10.dp)
+        )
+        Column(Modifier.weight(1f)) {
+            Text(
+                "Enjoying PettiBox?",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = scheme.onSurface
+            )
+            Text(
+                "A quick rating helps a small, independent app get found.",
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            TextButton(onClick = onRate) { Text("Rate \u2B50", fontWeight = FontWeight.Bold) }
+            TextButton(onClick = onNotNow) {
+                Text("Not now", color = scheme.onSurfaceVariant)
+            }
+        }
+    }
 }
 
 @Composable

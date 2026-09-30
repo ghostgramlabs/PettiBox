@@ -195,10 +195,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    suspend fun deletePermanently(item: SaveItemEntity) {
-        ReminderScheduler.cancel(appContext, item.id)
-        repo.delete(item.id)
-    }
 
     suspend fun exportBackupJson(): String = repo.exportBackupJson()
 
@@ -226,6 +222,11 @@ class HomeViewModel @Inject constructor(
     }
 
     // ── Milestone rating prompt (see RatingPreferences) ───────────────────
+
+    val rateCardAllowed = ratingPreferences.rateCardAllowed
+
+    fun snoozeRateCard() = viewModelScope.launch { ratingPreferences.snoozeRateCard() }
+    fun finishRateCard() = viewModelScope.launch { ratingPreferences.finishRateCard() }
 
     suspend fun ratingPromptDue(totalSaves: Int): Int? =
         ratingPreferences.duePrompt(totalSaves)

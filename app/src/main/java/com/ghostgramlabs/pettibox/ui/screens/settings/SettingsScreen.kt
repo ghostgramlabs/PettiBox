@@ -50,6 +50,10 @@ import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.TouchApp
+import androidx.compose.material.icons.rounded.AutoStories
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.RestoreFromTrash
+import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -99,6 +103,10 @@ import com.ghostgramlabs.pettibox.data.repository.SaveRepository
 import com.ghostgramlabs.pettibox.ui.components.CreateCollectionDialog
 import com.ghostgramlabs.pettibox.ui.components.EditCollectionDialog
 import com.ghostgramlabs.pettibox.ui.components.HelpLinks
+import com.ghostgramlabs.pettibox.ui.components.ReviewPrompt
+import com.ghostgramlabs.pettibox.ui.components.rememberNotificationPermissionRequester
+import com.ghostgramlabs.pettibox.ui.lock.AppLockSession
+import com.ghostgramlabs.pettibox.data.preferences.RatingPreferences
 import com.ghostgramlabs.pettibox.ui.components.KeeperMascot
 import com.ghostgramlabs.pettibox.ui.components.KeeperPose
 import com.ghostgramlabs.pettibox.ui.components.ScreenHeading
@@ -150,6 +158,14 @@ fun SettingsScreen(
     val offlineCopyStats by viewModel.offlineCopyStats.collectAsStateWithLifecycle(initialValue = ArticleStats(0, 0))
     val linksWithoutCopy by viewModel.linksWithoutCopy.collectAsStateWithLifecycle(initialValue = 0)
     var showRemoveOfflineCopies by remember { mutableStateOf(false) }
+    val weeklyNudge by viewModel.weeklyNudge.collectAsStateWithLifecycle(initialValue = true)
+    val appLockOn by viewModel.appLock.collectAsStateWithLifecycle(initialValue = false)
+    val requestNotificationPermission = rememberNotificationPermissionRequester()
+    // Play's review sheet after an "it just worked" moment (see RatingPreferences).
+    val askForReview: suspend (String) -> Unit = { moment ->
+        val activity = ctx as? android.app.Activity
+        if (activity != null && viewModel.claimHappyMoment(moment)) ReviewPrompt.launch(activity)
+    }
     val morningReminderTime by viewModel.morningReminderTime
         .collectAsStateWithLifecycle(initialValue = ReminderTime(9, 0))
     val eveningReminderTime by viewModel.eveningReminderTime
@@ -336,6 +352,7 @@ fun SettingsScreen(
             runCatching { viewModel.importBackupUri(uri) }
                 .onSuccess { result ->
                     snackbarHostState.showSnackbar(restoreResultMessage(result))
+                    if (result.saves > 0) askForReview(RatingPreferences.MOMENT_RESTORE)
                 }
                 .onFailure {
                     snackbarHostState.showSnackbar("That backup file couldn't be imported")
@@ -365,6 +382,7 @@ fun SettingsScreen(
             runCatching { viewModel.restoreFromDrive(backup.id) }
                 .onSuccess { result ->
                     snackbarHostState.showSnackbar(restoreResultMessage(result))
+                    if (result.saves > 0) askForReview(RatingPreferences.MOMENT_RESTORE)
                 }
                 .onFailure {
                     snackbarHostState.showSnackbar("Couldn't restore that backup — try again")
@@ -612,6 +630,7 @@ fun SettingsScreen(
                 runCatching { viewModel.importBookmarksUri(uri) }
                     .onSuccess { result ->
                         snackbarHostState.showSnackbar(bookmarkImportMessage(result))
+                        if (result.imported > 0) askForReview(RatingPreferences.MOMENT_IMPORT)
                     }
                     .onFailure {
                         snackbarHostState.showSnackbar(
@@ -900,6 +919,47 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
+                        Icons.Rounded.AutoStories,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Weekly shelf nudge",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Saturday morning, one thing you saved but haven't opened yet. Silent, and skipped when there's nothing unread.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = weeklyNudge,
+                        onCheckedChange = { enabled ->
+                            val apply = {
+                                scope.launch {
+                                    viewModel.setWeeklyNudge(enabled)
+                                    snackbarHostState.showSnackbar(
+                                        if (enabled) "You'll get one nudge on Saturday mornings"
+                                        else "Weekly nudge turned off"
+                                    )
+                                }
+                                Unit
+                            }
+                            if (enabled) requestNotificationPermission { apply() } else apply()
+                        }
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
                         Icons.Rounded.AccessTime,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
@@ -1025,6 +1085,16 @@ fun SettingsScreen(
                     icon = Icons.Rounded.Edit
                 )
                 HelpItem(
+                    title = "Unread: your read-later list",
+                    body = "Anything you save stays in Browse → Unread until you open it, newest first. Once a week (Saturday morning) PettiBox can nudge you about one of them — turn that off under Reminders above.",
+                    icon = Icons.Rounded.AutoStories
+                )
+                HelpItem(
+                    title = "Widget and app-icon shortcuts",
+                    body = "Long-press the PettiBox icon for New note, Add a link, Search, or Unread. Add the PettiBox widget to your home screen (long-press an empty spot → Widgets) to see unread saves and add new ones in one tap.",
+                    icon = Icons.Rounded.Widgets
+                )
+                HelpItem(
                     title = "Archive when you're done",
                     body = "Archived saves disappear from Home but stay searchable. Use Archive instead of Delete when you may need something again.",
                     icon = Icons.Rounded.Archive
@@ -1063,6 +1133,16 @@ fun SettingsScreen(
                     icon = Icons.Rounded.Share
                 )
                 HelpItem(
+                    title = "Deleted something by mistake?",
+                    body = "Deleted saves wait in Browse → Recently deleted for 30 days. Tap one to restore it, or delete it for good. After 30 days they're removed automatically.",
+                    icon = Icons.Rounded.RestoreFromTrash
+                )
+                HelpItem(
+                    title = "Lock PettiBox",
+                    body = "Turn on App lock under Privacy to require your fingerprint, face, or phone PIN. It locks again a minute after you leave the app, and the widget and weekly nudge stop showing titles.",
+                    icon = Icons.Rounded.Lock
+                )
+                HelpItem(
                     title = "Back up your shelf",
                     body = "Every backup always keeps a copy on this phone; connect Google Drive (and optionally an extra folder) to send the same copy there too. \"Back up now\" fills every destination in one tap. Offline article copies are included, so they come back on a new phone too.",
                     icon = Icons.Rounded.Download
@@ -1082,6 +1162,62 @@ fun SettingsScreen(
                     body = "Connect Google Drive in the Backup section and every nightly safety copy also uploads to a \"PettiBox Backups\" folder in your own Drive. PettiBox can only see files it created — never the rest of your Drive. Wrong account connected? Tap \"Switch account\" under Google Drive to pick a different one.",
                     icon = Icons.Rounded.Cloud
                 )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            SettingsSection(title = "Privacy") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Rounded.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Lock PettiBox",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Ask for your fingerprint, face, or phone PIN to open PettiBox or save into it. It locks again a minute after you leave, and hides titles from the widget and notifications.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = appLockOn,
+                        onCheckedChange = { enabled ->
+                            val activity = ctx as? androidx.fragment.app.FragmentActivity
+                            when {
+                                !enabled -> scope.launch {
+                                    viewModel.setAppLock(false)
+                                    snackbarHostState.showSnackbar("App lock is off")
+                                }
+                                !AppLockSession.isAvailable(ctx) -> scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        "Set up a screen lock (PIN, pattern, or fingerprint) in your phone's settings first"
+                                    )
+                                }
+                                // Confirm it works before switching it on, so no one locks themselves out.
+                                activity != null -> AppLockSession.prompt(
+                                    activity,
+                                    title = "Turn on App lock",
+                                    onSuccess = {
+                                        scope.launch {
+                                            viewModel.setAppLock(true)
+                                            snackbarHostState.showSnackbar("App lock is on")
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    )
                 }
             }
 
@@ -1406,6 +1542,20 @@ fun SettingsScreen(
                     Icon(Icons.Rounded.Email, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("Email support", fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = {
+                        if (!HelpLinks.shareApp(ctx)) {
+                            scope.launch { snackbarHostState.showSnackbar("Couldn't open the share sheet") }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Rounded.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Share PettiBox with a friend", fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(

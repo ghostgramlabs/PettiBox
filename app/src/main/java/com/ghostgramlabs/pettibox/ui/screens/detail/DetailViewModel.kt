@@ -13,6 +13,7 @@ import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.local.TagEntity
 import com.ghostgramlabs.pettibox.data.preferences.ArticlePreferences
 import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
+import com.ghostgramlabs.pettibox.data.preferences.RatingPreferences
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,6 +41,7 @@ class DetailViewModel @Inject constructor(
     private val ocrPreferences: OcrPreferences,
     private val articleRepository: ArticleRepository,
     private val articlePreferences: ArticlePreferences,
+    private val ratingPreferences: RatingPreferences,
     @ApplicationContext private val appContext: Context,
     handle: SavedStateHandle
 ) : ViewModel() {
@@ -61,6 +63,14 @@ class DetailViewModel @Inject constructor(
 
     /** The full copy for the reader; loaded on open, never kept in list/detail state. */
     suspend fun loadArticle(): ArticleCopyEntity? = articleRepository.load(itemId)
+
+    /**
+     * Records a finished offline read; true when it's the moment to show
+     * Play's review sheet (the third article someone has read offline).
+     */
+    suspend fun recordOfflineRead(): Boolean =
+        articlePreferences.recordRead() >= 3 &&
+            ratingPreferences.claimHappyMoment(RatingPreferences.MOMENT_OFFLINE_READS)
 
     fun setReaderTextZoom(zoom: Int) = viewModelScope.launch {
         articlePreferences.setReaderTextZoom(zoom)
@@ -121,10 +131,6 @@ class DetailViewModel @Inject constructor(
             repo.setRemindAt(item.id, item.remindAt)
             ReminderScheduler.schedule(appContext, item.id, item.remindAt)
         }
-    }
-    suspend fun deletePermanently(item: SaveItemEntity) {
-        ReminderScheduler.cancel(appContext, item.id)
-        repo.delete(item.id)
     }
     fun setArchived(archived: Boolean) = viewModelScope.launch {
         val it = state.value.item ?: return@launch

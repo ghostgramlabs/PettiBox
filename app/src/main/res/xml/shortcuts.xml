@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the app icon. Intents land in MainActivity; see AppLaunch. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="unread"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_unread"
+        android:shortcutShortLabel="@string/shortcut_unread_short"
+        android:shortcutLongLabel="@string/shortcut_unread_long">
+        <intent
+            android:action="com.ghostgramlabs.pettibox.action.UNREAD"
+            android:targetClass="com.ghostgramlabs.pettibox.MainActivity"
+            android:targetPackage="com.ghostgramlabs.pettibox" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="new_note"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_note"
+        android:shortcutShortLabel="@string/shortcut_note_short"
+        android:shortcutLongLabel="@string/shortcut_note_long">
+        <intent
+            android:action="com.ghostgramlabs.pettibox.action.NEW_NOTE"
+            android:targetClass="com.ghostgramlabs.pettibox.MainActivity"
+            android:targetPackage="com.ghostgramlabs.pettibox" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="add_link"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_link"
+        android:shortcutShortLabel="@string/shortcut_link_short"
+        android:shortcutLongLabel="@string/shortcut_link_long">
+        <intent
+            android:action="com.ghostgramlabs.pettibox.action.ADD_LINK"
+            android:targetClass="com.ghostgramlabs.pettibox.MainActivity"
+            android:targetPackage="com.ghostgramlabs.pettibox" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="search"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_search_short"
+        android:shortcutLongLabel="@string/shortcut_search_long">
+        <intent
+            android:action="com.ghostgramlabs.pettibox.action.SEARCH"
+            android:targetClass="com.ghostgramlabs.pettibox.MainActivity"
+            android:targetPackage="com.ghostgramlabs.pettibox" />
+    </shortcut>
+</shortcuts>

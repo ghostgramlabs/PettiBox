@@ -13,13 +13,12 @@ import kotlinx.coroutines.flow.Flow
  * browses return [PagingSource] so we never materialize more than the visible
  * window plus a small buffer.
  *
- * Every listing/count query filters `is_pending_delete = 0`. That flag is
- * set during the "Delete with Undo" snackbar window so the row is hidden
- * everywhere — including Archive — without losing it from the DB. The two
- * queries that intentionally bypass the filter are [observeById] and
- * [getById], so the Detail screen the user is currently looking at can
- * still render the item while the Undo snackbar is up. App start sweeps
- * any leftover pending-delete rows via [permanentlyDeletePending].
+ * Every listing/count query filters `is_pending_delete = 0`. That flag
+ * marks a save as deleted: it sits in Recently deleted for 30 days
+ * (stamped by `deleted_at`) and is hidden everywhere else — including
+ * Archive. The queries that intentionally bypass the filter are
+ * [observeById], [getById], and the Recently deleted ones. App start
+ * purges rows past their 30 days via [expiredTrashIds].
  */
 @Dao
 interface SaveDao {
@@ -311,19 +310,91 @@ interface SaveDao {
      * from [setArchived] preserves the user's original archived state —
      * Undo restores them to where they were, not to "archived".
      */
-    @Query("UPDATE save_items SET is_pending_delete = :pending, updated_at = :ts WHERE id = :id")
+    @Query(
+        """
+        UPDATE save_items
+        SET is_pending_delete = :pending,
+            deleted_at = CASE WHEN :pending THEN :ts ELSE NULL END,
+            updated_at = :ts
+        WHERE id = :id
+        """
+    )
     suspend fun setPendingDelete(id: Long, pending: Boolean, ts: Long = System.currentTimeMillis())
 
-    /** Read attachment URIs for items left in the pending-delete state, before app-start cleanup. */
-    @Query("SELECT a.uri FROM attachments a JOIN save_items s ON s.id = a.item_id WHERE s.is_pending_delete = 1")
-    suspend fun urisForPendingDeletes(): List<String>
+    // ── Recently deleted ─────────────────────────────────────────────────
 
-    /** Drops every row still in the pending-delete state. Called at app start. */
-    @Query("DELETE FROM save_items WHERE is_pending_delete = 1")
-    suspend fun permanentlyDeletePending()
+    @Query("SELECT * FROM save_items WHERE is_pending_delete = 1 ORDER BY deleted_at DESC")
+    fun pagedTrash(): PagingSource<Int, SaveItemEntity>
+
+    @Query("SELECT COUNT(*) FROM save_items WHERE is_pending_delete = 1")
+    fun observeTrashTotal(): Flow<Int>
+
+    @Query("SELECT id FROM save_items WHERE is_pending_delete = 1")
+    suspend fun trashIds(): List<Long>
+
+    /** Deleted saves past their keep window (or legacy rows with no timestamp). */
+    @Query("SELECT id FROM save_items WHERE is_pending_delete = 1 AND (deleted_at IS NULL OR deleted_at < :cutoff)")
+    suspend fun expiredTrashIds(cutoff: Long): List<Long>
+
+    // ── Unread ───────────────────────────────────────────────────────────
+    // "Unread" = saved but never opened. Notes are left out: you wrote
+    // them, there's nothing to go back and read.
+
+    @Query(
+        """
+        SELECT * FROM save_items
+        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0
+        ORDER BY is_pinned DESC,
+            CASE WHEN :sort = 'OLDEST' THEN created_at END ASC,
+            CASE WHEN :sort = 'UPDATED' THEN updated_at END DESC,
+            CASE WHEN :sort = 'REMINDER' AND remind_at IS NULL THEN 1 ELSE 0 END ASC,
+            CASE WHEN :sort = 'REMINDER' THEN remind_at END ASC,
+            created_at DESC
+        """
+    )
+    fun pagedUnread(sort: String = "NEWEST"): PagingSource<Int, SaveItemEntity>
+
+    @Query("SELECT COUNT(*) FROM save_items WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0")
+    fun observeUnreadTotal(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM save_items WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0")
+    suspend fun unreadTotal(): Int
+
+    @Query(
+        """
+        SELECT * FROM save_items
+        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0
+        ORDER BY created_at DESC LIMIT :limit
+        """
+    )
+    suspend fun recentUnread(limit: Int): List<SaveItemEntity>
+
+    @Query(
+        """
+        SELECT * FROM save_items
+        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0
+        ORDER BY created_at DESC LIMIT :limit
+        """
+    )
+    fun observeRecentUnread(limit: Int): Flow<List<SaveItemEntity>>
+
+    /** A random unread save older than [before], skipping ones already nudged about. */
+    @Query(
+        """
+        SELECT * FROM save_items
+        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0
+          AND created_at < :before AND id NOT IN (:exclude)
+        ORDER BY RANDOM() LIMIT 1
+        """
+    )
+    suspend fun unreadForNudge(before: Long, exclude: List<Long>): SaveItemEntity?
 
     @Query("UPDATE save_items SET remind_at = :at, updated_at = :ts WHERE id = :id")
     suspend fun setRemindAt(id: Long, at: Long?, ts: Long = System.currentTimeMillis())
+
+    /** Swaps a remote preview image for its local copy; 0 rows if the save changed meanwhile. */
+    @Query("UPDATE save_items SET thumbnail_uri = :local WHERE id = :id AND thumbnail_uri = :remote")
+    suspend fun replaceThumbnail(id: Long, remote: String, local: String): Int
 
     @Query("UPDATE save_items SET opened_at = :ts WHERE id = :id")
     suspend fun touchOpened(id: Long, ts: Long = System.currentTimeMillis())

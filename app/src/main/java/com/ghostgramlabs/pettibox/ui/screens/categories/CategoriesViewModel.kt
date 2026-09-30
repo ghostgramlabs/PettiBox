@@ -47,6 +47,10 @@ sealed interface BrowseDestination {
     data object Reminders : BrowseDestination
     data object TagList : BrowseDestination
     data class Tag(val name: String) : BrowseDestination
+    /** Saved but never opened — the read-later queue. */
+    data object Unread : BrowseDestination
+    /** Deleted saves, kept 30 days before they're removed for good. */
+    data object Trash : BrowseDestination
 
     companion object {
         const val CID_FAVORITES = "__fav"
@@ -54,6 +58,8 @@ sealed interface BrowseDestination {
         const val CID_REMINDERS = "__rem"
         const val CID_TAG_LIST = "__tags"
         const val CID_TAG_PREFIX = "__tag:"
+        const val CID_UNREAD = "__unread"
+        const val CID_TRASH = "__trash"
 
         fun fromCid(cid: String?): BrowseDestination = when {
             cid.isNullOrBlank() -> Grid
@@ -61,6 +67,8 @@ sealed interface BrowseDestination {
             cid == CID_ARCHIVE -> Archive
             cid == CID_REMINDERS -> Reminders
             cid == CID_TAG_LIST -> TagList
+            cid == CID_UNREAD -> Unread
+            cid == CID_TRASH -> Trash
             cid.startsWith(CID_TAG_PREFIX) -> Tag(cid.removePrefix(CID_TAG_PREFIX))
             else -> Category(cid)
         }
@@ -71,6 +79,8 @@ sealed interface BrowseDestination {
             Archive -> CID_ARCHIVE
             Reminders -> CID_REMINDERS
             TagList -> CID_TAG_LIST
+            Unread -> CID_UNREAD
+            Trash -> CID_TRASH
             is Category -> dest.id
             is Tag -> CID_TAG_PREFIX + dest.name
         }
@@ -91,6 +101,8 @@ data class CategoriesState(
     val favoriteCount: Int = 0,
     val archivedCount: Int = 0,
     val reminderCount: Int = 0,
+    val unreadCount: Int = 0,
+    val trashCount: Int = 0,
     val topTags: List<TagWithCount> = emptyList(),
     /** Toggle inside a Category drill — show archived items of that one collection. */
     val showArchived: Boolean = false,
@@ -120,7 +132,9 @@ class CategoriesViewModel @Inject constructor(
         repo.observeUpcomingReminderTotal(),
         repo.observeTopTags(limit = 100),
         _showArchived,
-        _sort
+        _sort,
+        repo.observeUnreadTotal(),
+        repo.observeTrashTotal()
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val cats = args[1] as List<CategoryEntity>
@@ -137,7 +151,9 @@ class CategoriesViewModel @Inject constructor(
             reminderCount = args[5] as Int,
             topTags = topTags,
             showArchived = args[7] as Boolean,
-            sort = args[8] as BrowseSort
+            sort = args[8] as BrowseSort,
+            unreadCount = args[9] as Int,
+            trashCount = args[10] as Int
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CategoriesState())
 
@@ -156,6 +172,8 @@ class CategoriesViewModel @Inject constructor(
                     BrowseDestination.Favorites -> ({ repo.pagedFavorites(sort.name) })
                     BrowseDestination.Archive -> ({ repo.pagedArchived(sort.name) })
                     BrowseDestination.Reminders -> ({ repo.pagedUpcomingReminders(sort.name) })
+                    BrowseDestination.Unread -> ({ repo.pagedUnread(sort.name) })
+                    BrowseDestination.Trash -> ({ repo.pagedTrash() })
                     is BrowseDestination.Category ->
                         ({ repo.pagedByCategory(dest.id, includeArchived = archived, sort = sort.name) })
                     is BrowseDestination.Tag -> ({ repo.pagedByTag(dest.name, sort.name) })
@@ -293,4 +311,11 @@ class CategoriesViewModel @Inject constructor(
     suspend fun deleteItemsPermanently(items: List<SaveItemEntity>) {
         items.forEach { deletePermanently(it) }
     }
+
+    /** Back out of Recently deleted, to wherever the save was (archived or not). */
+    fun restore(items: List<SaveItemEntity>) = viewModelScope.launch {
+        items.forEach { repo.setPendingDelete(it.id, false) }
+    }
+
+    suspend fun emptyTrash(): Int = repo.emptyTrash()
 }

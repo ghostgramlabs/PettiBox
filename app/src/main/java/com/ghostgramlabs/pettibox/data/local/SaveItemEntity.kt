@@ -64,6 +64,9 @@ data class SaveItemEntity(
     // Archive — without losing it from the DB so Undo can clear the
     // flag. App cold-start sweeps anything left in this state.
     @ColumnInfo(name = "is_pending_delete") val isPendingDelete: Boolean = false,
+    // When the row entered Recently deleted (is_pending_delete = 1). Rows
+    // are kept 30 days so a delete can be undone long after the snackbar.
+    @ColumnInfo(name = "deleted_at") val deletedAt: Long? = null,
     // Epoch millis at which the user wants a reminder notification. Null
     // means no reminder pending. The notification clears this back to null
     // when it fires.

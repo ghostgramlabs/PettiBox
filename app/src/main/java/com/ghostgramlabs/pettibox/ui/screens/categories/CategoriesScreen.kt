@@ -32,6 +32,8 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.Archive
+import androidx.compose.material.icons.rounded.AutoStories
+import androidx.compose.material.icons.rounded.RestoreFromTrash
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
@@ -49,6 +51,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -139,6 +142,56 @@ fun CategoriesScreen(
         )
     }
 
+    // Recently deleted: tapping a save asks restore-or-delete instead of opening it.
+    var trashPromptItem by remember { mutableStateOf<SaveItemEntity?>(null) }
+    var showEmptyTrash by remember { mutableStateOf(false) }
+    trashPromptItem?.let { item ->
+        AlertDialog(
+            onDismissRequest = { trashPromptItem = null },
+            title = { Text(item.title.ifBlank { "Untitled save" }) },
+            text = { Text("Put it back where it was, or delete it for good?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    trashPromptItem = null
+                    viewModel.restore(listOf(item))
+                    scope.launch { snackbarHostState.showSnackbar("Restored") }
+                }) { Text("Restore") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    trashPromptItem = null
+                    scope.launch {
+                        viewModel.deletePermanently(item)
+                        snackbarHostState.showSnackbar("Deleted for good")
+                    }
+                }) { Text("Delete for good", color = MaterialTheme.colorScheme.error) }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+    if (showEmptyTrash) {
+        AlertDialog(
+            onDismissRequest = { showEmptyTrash = false },
+            title = { Text("Empty Recently deleted?") },
+            text = { Text("Everything here is removed for good, including its files. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showEmptyTrash = false
+                    scope.launch {
+                        val n = viewModel.emptyTrash()
+                        snackbarHostState.showSnackbar(
+                            if (n == 1) "1 save deleted for good" else "$n saves deleted for good"
+                        )
+                    }
+                }) { Text("Empty", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEmptyTrash = false }) { Text("Cancel") }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
     // Long-press quick-action plumbing for drilled-in items.
     var quickActionItem by remember { mutableStateOf<SaveItemEntity?>(null) }
     var reminderItem by remember { mutableStateOf<SaveItemEntity?>(null) }
@@ -146,23 +199,20 @@ fun CategoriesScreen(
     val requestNotificationPermission = rememberNotificationPermissionRequester()
     val requestDelete: (SaveItemEntity) -> Unit = { item ->
         scope.launch {
-            if (item.isArchived) {
-                // From the Archive view, Delete is permanent — staging it
-                // back into archive (where it already lives) was the bug
-                // that made the row appear to never go away.
+            if (destination == BrowseDestination.Trash) {
+                // Already in Recently deleted: this is the for-good delete.
                 viewModel.deletePermanently(item)
-                snackbarHostState.showSnackbar("Save deleted")
+                snackbarHostState.showSnackbar("Deleted for good")
             } else {
+                // Everywhere else a delete lands in Recently deleted for 30
+                // days — archived or not — so Undo is just the fast path.
                 viewModel.stageDelete(item)
                 val result = snackbarHostState.showSnackbar(
-                    message = "Save deleted",
-                    actionLabel = "Undo"
+                    message = "Moved to Recently deleted",
+                    actionLabel = "Undo",
+                    duration = SnackbarDuration.Long
                 )
-                if (result == SnackbarResult.ActionPerformed) {
-                    viewModel.undoStagedDelete(item)
-                } else {
-                    viewModel.deletePermanently(item)
-                }
+                if (result == SnackbarResult.ActionPerformed) viewModel.undoStagedDelete(item)
             }
         }
     }
@@ -219,7 +269,9 @@ fun CategoriesScreen(
                     onOpenFavorites = { viewModel.navigate(BrowseDestination.Favorites) },
                     onOpenArchive = { viewModel.navigate(BrowseDestination.Archive) },
                     onOpenReminders = { viewModel.navigate(BrowseDestination.Reminders) },
-                    onOpenTags = { viewModel.navigate(BrowseDestination.TagList) }
+                    onOpenTags = { viewModel.navigate(BrowseDestination.TagList) },
+                    onOpenUnread = { viewModel.navigate(BrowseDestination.Unread) },
+                    onOpenTrash = { viewModel.navigate(BrowseDestination.Trash) }
                 )
 
                 BrowseDestination.TagList -> TagListView(
@@ -258,31 +310,41 @@ fun CategoriesScreen(
                         selectedItems = emptySet()
                         selectionMode = false
                         scope.launch {
-                            if (items.all { it.isArchived }) {
-                                // Bulk delete inside the Archive view —
-                                // permanent, no Undo, no misleading
-                                // "Moved to Archive" detour.
+                            if (destination == BrowseDestination.Trash) {
                                 viewModel.deleteItemsPermanently(items)
                                 snackbarHostState.showSnackbar(
-                                    if (items.size == 1) "Save deleted"
-                                    else "${items.size} saves deleted"
+                                    if (items.size == 1) "Deleted for good"
+                                    else "${items.size} saves deleted for good"
                                 )
                             } else {
                                 viewModel.stageDeleteItems(items)
                                 val result = snackbarHostState.showSnackbar(
-                                    message = if (items.size == 1) "Save deleted" else "${items.size} saves deleted",
-                                    actionLabel = "Undo"
+                                    message = if (items.size == 1) "Moved to Recently deleted"
+                                    else "${items.size} saves moved to Recently deleted",
+                                    actionLabel = "Undo",
+                                    duration = SnackbarDuration.Long
                                 )
                                 if (result == SnackbarResult.ActionPerformed) {
                                     viewModel.undoStagedDeleteItems(items)
-                                } else {
-                                    viewModel.deleteItemsPermanently(items)
                                 }
                             }
                         }
                     },
+                    onRestoreSelected = { items ->
+                        selectedItems = emptySet()
+                        selectionMode = false
+                        viewModel.restore(items)
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                if (items.size == 1) "Restored" else "${items.size} saves restored"
+                            )
+                        }
+                    },
+                    onEmptyTrash = { showEmptyTrash = true },
+                    canEmptyTrash = state.trashCount > 0,
                     onOpenItem = onOpenItem,
                     onLongPressItem = { quickActionItem = it },
+                    onTrashItem = { trashPromptItem = it },
                     drillItems = viewModel.drillItems
                 )
             }
@@ -299,7 +361,9 @@ private fun BrowseGrid(
     onOpenFavorites: () -> Unit,
     onOpenArchive: () -> Unit,
     onOpenReminders: () -> Unit,
-    onOpenTags: () -> Unit
+    onOpenTags: () -> Unit,
+    onOpenUnread: () -> Unit,
+    onOpenTrash: () -> Unit
 ) {
     var collectionQuery by remember { mutableStateOf("") }
     val visibleCategories = remember(state.categories, collectionQuery) {
@@ -334,7 +398,14 @@ private fun BrowseGrid(
                 // is_archived (regardless of collection, so orphan
                 // archived saves are reachable), Tags = the hub.
                 SpecialRow(
-                    items = listOf(
+                    items = listOfNotNull(
+                        SpecialEntry(
+                            icon = Icons.Rounded.AutoStories,
+                            label = "Unread",
+                            count = state.unreadCount,
+                            accent = UnreadAccent,
+                            onClick = onOpenUnread
+                        ),
                         SpecialEntry(
                             icon = Icons.Rounded.Favorite,
                             label = "Favorites",
@@ -362,7 +433,15 @@ private fun BrowseGrid(
                             count = state.topTags.size,
                             accent = Color(0xFF5B7BC9),
                             onClick = onOpenTags
-                        )
+                        ),
+                        // Only worth a pill while there's something to restore.
+                        if (state.trashCount > 0) SpecialEntry(
+                            icon = Icons.Rounded.RestoreFromTrash,
+                            label = "Recently deleted",
+                            count = state.trashCount,
+                            accent = TrashAccent,
+                            onClick = onOpenTrash
+                        ) else null
                     )
                 )
                 Spacer(Modifier.height(20.dp))
@@ -439,6 +518,9 @@ private fun CollectionFinder(
         modifier = modifier.padding(top = 2.dp, bottom = 10.dp)
     )
 }
+
+private val UnreadAccent = Color(0xFFD9822B)
+private val TrashAccent = Color(0xFF8A8580)
 
 private data class SpecialEntry(
     val icon: ImageVector,
@@ -615,15 +697,22 @@ private fun DrillView(
     onClearSelection: () -> Unit,
     onArchiveSelected: (List<SaveItemEntity>) -> Unit,
     onDeleteSelected: (List<SaveItemEntity>) -> Unit,
+    onRestoreSelected: (List<SaveItemEntity>) -> Unit,
+    onEmptyTrash: () -> Unit,
+    canEmptyTrash: Boolean,
     onOpenItem: (Long) -> Unit,
     onLongPressItem: (SaveItemEntity) -> Unit,
+    onTrashItem: (SaveItemEntity) -> Unit,
     drillItems: kotlinx.coroutines.flow.Flow<androidx.paging.PagingData<SaveItemEntity>>
 ) {
     var showBulkDeleteConfirm by remember { mutableStateOf(false) }
+    val inTrash = destination == BrowseDestination.Trash
     val title = when (destination) {
         BrowseDestination.Favorites -> "Favorites"
         BrowseDestination.Archive -> "Archive"
         BrowseDestination.Reminders -> "Reminders"
+        BrowseDestination.Unread -> "Unread"
+        BrowseDestination.Trash -> "Recently deleted"
         is BrowseDestination.Tag -> "#${destination.name}"
         is BrowseDestination.Category ->
             if (selectedCategory != null) "${selectedCategory.emoji} ${selectedCategory.name}"
@@ -634,6 +723,8 @@ private fun DrillView(
         BrowseDestination.Favorites -> "Saves you marked with a heart"
         BrowseDestination.Archive -> "Everything you've tucked away"
         BrowseDestination.Reminders -> "Upcoming nudges, sorted by time"
+        BrowseDestination.Unread -> "Saved, but not opened yet"
+        BrowseDestination.Trash -> "Kept for 30 days, then removed for good. Tap one to restore it."
         is BrowseDestination.Tag -> "Saves carrying this tag"
         is BrowseDestination.Category -> if (showArchived) "Archived saves" else null
         else -> null
@@ -643,6 +734,8 @@ private fun DrillView(
         BrowseDestination.Favorites -> Color(0xFFE85A6E)
         BrowseDestination.Archive -> Color(0xFF8B7355)
         BrowseDestination.Reminders -> Color(0xFF2F9B8F)
+        BrowseDestination.Unread -> UnreadAccent
+        BrowseDestination.Trash -> TrashAccent
         is BrowseDestination.Tag -> Color(0xFF5B7BC9)
         is BrowseDestination.Category -> selectedCategory?.let { Color(it.colorHex) } ?: defaultAccent
         else -> defaultAccent
@@ -681,6 +774,11 @@ private fun DrillView(
                     }
                 }
             }
+            if (inTrash && canEmptyTrash) {
+                TextButton(onClick = onEmptyTrash) {
+                    Text("Empty", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     )
 
@@ -692,22 +790,18 @@ private fun DrillView(
         items.loadState.refresh is androidx.paging.LoadState.NotLoading
 
     if (showBulkDeleteConfirm) {
-        // Inside Archive view the selection is already-archived items,
-        // so the dialog has to be honest about "this is permanent."
-        val allArchivedSelected = selectedVisibleItems.isNotEmpty() &&
-            selectedVisibleItems.all { it.isArchived }
         AlertDialog(
             onDismissRequest = { showBulkDeleteConfirm = false },
             title = {
                 Text(
-                    if (allArchivedSelected) "Delete ${selectedVisibleItems.size} permanently?"
+                    if (inTrash) "Delete ${selectedVisibleItems.size} for good?"
                     else "Delete ${selectedVisibleItems.size} selected?"
                 )
             },
             text = {
                 Text(
-                    if (allArchivedSelected) "These saves are in your Archive. Deleting removes them for good — this can't be undone."
-                    else "We'll give you a moment to Undo before they're gone for good."
+                    if (inTrash) "They're removed for good, including their files. This can't be undone."
+                    else "They move to Recently deleted (in Browse) for 30 days, so you can still bring them back."
                 )
             },
             confirmButton = {
@@ -716,7 +810,7 @@ private fun DrillView(
                     onDeleteSelected(selectedVisibleItems)
                 }) {
                     Text(
-                        if (allArchivedSelected) "Delete forever" else "Delete",
+                        if (inTrash) "Delete for good" else "Delete",
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -745,6 +839,16 @@ private fun DrillView(
                 "No reminders waiting",
                 "Set a reminder from a save card or the save sheet, and upcoming nudges will gather here."
             )
+            BrowseDestination.Unread -> Triple(
+                "📭",
+                "All caught up",
+                "You've opened everything you saved. New saves wait here until you open them."
+            )
+            BrowseDestination.Trash -> Triple(
+                "🧺",
+                "Nothing deleted",
+                "Deleted saves stay here for 30 days so you can change your mind."
+            )
             is BrowseDestination.Tag -> Triple(
                 "🏷",
                 "No saves with #${destination.name}",
@@ -770,7 +874,8 @@ private fun DrillView(
     ) {
         item(span = StaggeredGridItemSpan.FullLine) {
             Column {
-                SortStrip(selected = sort, onSelect = onSort)
+                // Recently deleted is always newest-deleted first.
+                if (!inTrash) SortStrip(selected = sort, onSelect = onSort)
                 if (selectionMode) {
                     Spacer(Modifier.height(8.dp))
                     if (selectedIds.isEmpty()) {
@@ -779,7 +884,11 @@ private fun DrillView(
                         BulkActionBar(
                             count = selectedIds.size,
                             onClear = onClearSelection,
-                            onArchive = { onArchiveSelected(selectedVisibleItems) },
+                            primaryLabel = if (inTrash) "Restore" else "Archive",
+                            onPrimary = {
+                                if (inTrash) onRestoreSelected(selectedVisibleItems)
+                                else onArchiveSelected(selectedVisibleItems)
+                            },
                             onDelete = { showBulkDeleteConfirm = true }
                         )
                     }
@@ -811,9 +920,17 @@ private fun DrillView(
                     categoryEmoji = perItemCategory?.emoji,
                     categoryName = perItemCategory?.name,
                     onClick = {
-                        if (selectionMode) onToggleSelect(item) else onOpenItem(item.id)
+                        when {
+                            selectionMode -> onToggleSelect(item)
+                            inTrash -> onTrashItem(item)
+                            else -> onOpenItem(item.id)
+                        }
                     },
-                    onLongClick = if (selectionMode) null else ({ onLongPressItem(item) })
+                    onLongClick = when {
+                        selectionMode -> null
+                        inTrash -> ({ onTrashItem(item) })
+                        else -> ({ onLongPressItem(item) })
+                    }
                 )
                 if (item.id in selectedIds) {
                     Icon(
@@ -900,7 +1017,8 @@ private fun SelectionHintBar(onClear: () -> Unit) {
 private fun BulkActionBar(
     count: Int,
     onClear: () -> Unit,
-    onArchive: () -> Unit,
+    primaryLabel: String,
+    onPrimary: () -> Unit,
     onDelete: () -> Unit
 ) {
     Row(
@@ -920,7 +1038,7 @@ private fun BulkActionBar(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
-        TextButton(onClick = onArchive) { Text("Archive") }
+        TextButton(onClick = onPrimary) { Text(primaryLabel) }
         TextButton(onClick = onDelete) {
             Text("Delete", color = MaterialTheme.colorScheme.error)
         }

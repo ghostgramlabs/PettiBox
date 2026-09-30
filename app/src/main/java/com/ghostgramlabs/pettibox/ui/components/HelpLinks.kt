@@ -21,6 +21,19 @@ object HelpLinks {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SHARE_DEMO_VIDEO)))
     }.isSuccess
 
+    /** "Share PettiBox with a friend": the Play link with a one-line pitch. */
+    fun shareApp(context: Context): Boolean = runCatching {
+        val link = "https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}"
+        val text = "I keep links, screenshots, PDFs and notes in PettiBox — save from any app, " +
+            "read articles offline, and find text inside pictures. Free: $link"
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "PettiBox")
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        context.startActivity(Intent.createChooser(send, "Share PettiBox"))
+    }.isSuccess
+
     const val SUPPORT_EMAIL = "ghostgramlabs@gmail.com"
 
     /**

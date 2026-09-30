@@ -85,11 +85,11 @@ fun QuickActionSheet(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text(if (item.isArchived) "Delete permanently?" else "Delete this save?") },
+            title = { Text("Delete this save?") },
             text = {
                 Text(
-                    if (item.isArchived) "This save is in your Archive. Deleting removes it for good — this can't be undone."
-                    else "We'll give you a moment to Undo before it's gone. Tap \"Archive instead\" to soft-delete (stays in Archive, can be unarchived later)."
+                    "It moves to Recently deleted (in Browse) for 30 days, so you can still bring it back." +
+                        if (item.isArchived) "" else " Want it out of the way but kept? Tap \"Archive instead\"."
                 )
             },
             confirmButton = {
@@ -98,10 +98,7 @@ fun QuickActionSheet(
                     onDelete()
                     onDismiss()
                 }) {
-                    Text(
-                        if (item.isArchived) "Delete forever" else "Delete",
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {

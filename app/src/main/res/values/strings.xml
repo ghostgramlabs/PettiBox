@@ -2,4 +2,13 @@
 <resources>
     <string name="app_name">PettiBox</string>
     <string name="share_label">Save to PettiBox</string>
+    <string name="widget_description">Your unread saves, one tap away</string>
+    <string name="shortcut_note_short">New note</string>
+    <string name="shortcut_note_long">Write a new note</string>
+    <string name="shortcut_link_short">Add a link</string>
+    <string name="shortcut_link_long">Save a link</string>
+    <string name="shortcut_search_short">Search</string>
+    <string name="shortcut_search_long">Search your saves</string>
+    <string name="shortcut_unread_short">Unread</string>
+    <string name="shortcut_unread_long">Saves not opened yet</string>
 </resources>

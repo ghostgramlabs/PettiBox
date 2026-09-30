@@ -4,8 +4,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 /**
- * Schema v4 — adds article_copies (offline reading copies of link saves)
- * and its FTS index. See [MIGRATION_3_4].
+ * Schema v5 — adds save_items.deleted_at for the 30-day Recently deleted
+ * bin. See [MIGRATION_4_5]. (v4 added offline article copies.)
  */
 @Database(
     entities = [
@@ -18,7 +18,7 @@ import androidx.room.RoomDatabase
         ArticleCopyEntity::class,
         ArticleCopyFts::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

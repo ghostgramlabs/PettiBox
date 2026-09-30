@@ -2,7 +2,6 @@ package com.ghostgramlabs.pettibox
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,39 +11,48 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.data.preferences.ThemeMode
 import com.ghostgramlabs.pettibox.data.preferences.ThemePreferences
-import com.ghostgramlabs.pettibox.data.reminders.ReminderAlarmReceiver
+import com.ghostgramlabs.pettibox.ui.nav.AppLaunch
+import com.ghostgramlabs.pettibox.ui.lock.AppLockGate
 import com.ghostgramlabs.pettibox.ui.nav.PettiBoxNavGraph
 import com.ghostgramlabs.pettibox.ui.theme.PettiBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+// FragmentActivity (still a ComponentActivity) because BiometricPrompt needs one.
+class MainActivity : FragmentActivity() {
     @Inject lateinit var themePreferences: ThemePreferences
+    @Inject lateinit var appLockPreferences: AppLockPreferences
 
     /**
-     * Holds the item id from a reminder-notification tap (or any future
-     * deep link) until the NavController is composed and can navigate
-     * to it. Using mutableStateOf instead of a Channel keeps this
-     * idempotent: a second cold-start with the same intent fires once
-     * after the NavGraph reads + clears it.
+     * Where a notification, widget, or app-icon shortcut asked to land,
+     * held until the NavController is composed and can act on it. Using
+     * mutableStateOf instead of a Channel keeps this idempotent: a second
+     * cold-start with the same intent fires once after the NavGraph reads
+     * + clears it.
      */
-    private var pendingItemOpen by mutableStateOf<Long?>(null)
+    private var pendingLaunch by mutableStateOf<AppLaunch?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        pendingItemOpen = readPendingOpenId(intent)
+        pendingLaunch = AppLaunch.from(intent)
         setContent {
             val themeMode by themePreferences.mode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+            // Null until loaded, so the gate can hold back saves until it knows.
+            val lockEnabled by appLockPreferences.enabled.map<Boolean, Boolean?> { it }
+                .collectAsStateWithLifecycle(initialValue = null)
             // Remember the value so a recomposition driven by theme change
             // doesn't re-fire the deep link.
-            val openTarget = pendingItemOpen
+            val launch = pendingLaunch
             PettiBoxTheme(themeMode = themeMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -58,38 +66,35 @@ class MainActivity : ComponentActivity() {
                     color = androidx.compose.ui.graphics.Color.Transparent,
                     contentColor = MaterialTheme.colorScheme.onBackground
                 ) {
+                    AppLockGate(activity = this@MainActivity, enabled = lockEnabled) {
                     PettiBoxNavGraph(
                         themeMode = themeMode,
                         onThemeModeChange = { mode ->
                             lifecycleScope.launch { themePreferences.setMode(mode) }
                         },
-                        initialOpenItemId = openTarget,
-                        onInitialOpenItemConsumed = {
+                        launch = launch,
+                        onLaunchConsumed = {
                             // Clear once the NavGraph has navigated, so a
                             // back-press to Home doesn't bounce the user
                             // straight back into Detail.
-                            pendingItemOpen = null
+                            pendingLaunch = null
                         }
                     )
+                    }
                 }
             }
         }
     }
 
     /**
-     * Notification-tap path while the activity is already alive. Setting
-     * [pendingItemOpen] flips the state Compose is observing; the
-     * NavGraph's LaunchedEffect picks it up and navigates without us
+     * Notification / widget / shortcut path while the activity is already
+     * alive. Setting [pendingLaunch] flips the state Compose is observing;
+     * the NavGraph's LaunchedEffect picks it up and navigates without us
      * having to recreate() the activity.
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        readPendingOpenId(intent)?.let { pendingItemOpen = it }
-    }
-
-    private fun readPendingOpenId(intent: Intent?): Long? {
-        val id = intent?.getLongExtra(ReminderAlarmReceiver.EXTRA_OPEN_ITEM_ID, -1L) ?: -1L
-        return if (id > 0L) id else null
+        AppLaunch.from(intent)?.let { pendingLaunch = it }
     }
 }

@@ -18,13 +18,17 @@ import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.ocr.OcrWorker
 import com.ghostgramlabs.pettibox.data.ocr.PdfTextWorker
 import com.ghostgramlabs.pettibox.data.preferences.ArticlePreferences
+import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.data.preferences.BackupPreferences
+import com.ghostgramlabs.pettibox.data.preferences.RatingPreferences
 import com.ghostgramlabs.pettibox.data.preferences.DriveBackupStatus
 import com.ghostgramlabs.pettibox.data.preferences.LocalBackupStatus
 import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
 import com.ghostgramlabs.pettibox.data.preferences.ReminderPreferences
 import com.ghostgramlabs.pettibox.data.preferences.ReminderTime
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
+import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgePreferences
+import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgeWorker
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
 import com.ghostgramlabs.pettibox.data.util.LocalBackupStore
 import com.ghostgramlabs.pettibox.ui.components.NewCollection
@@ -50,6 +54,9 @@ class SettingsViewModel @Inject constructor(
     private val driveBackupManager: DriveBackupManager,
     private val articleRepository: ArticleRepository,
     private val articlePreferences: ArticlePreferences,
+    private val shelfNudgePreferences: ShelfNudgePreferences,
+    private val appLockPreferences: AppLockPreferences,
+    private val ratingPreferences: RatingPreferences,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
     val autoScanOcr: Flow<Boolean> = ocrPreferences.autoScan
@@ -74,12 +81,31 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun removeAllOfflineCopies() = articleRepository.removeAll()
 
+    val weeklyNudge: Flow<Boolean> = shelfNudgePreferences.enabled
+
+    suspend fun setWeeklyNudge(enabled: Boolean) {
+        shelfNudgePreferences.setEnabled(enabled)
+        if (enabled) ShelfNudgeWorker.schedule(appContext, reminderPreferences, replace = true)
+        else ShelfNudgeWorker.cancel(appContext)
+    }
+
+    val appLock: Flow<Boolean> = appLockPreferences.enabled
+
+    suspend fun setAppLock(enabled: Boolean) = appLockPreferences.setEnabled(enabled)
+
+    /** True when this "it just worked" moment should show Play's review sheet. */
+    suspend fun claimHappyMoment(moment: String): Boolean = ratingPreferences.claimHappyMoment(moment)
+
     fun hasExactAlarmPermission(): Boolean = ReminderScheduler.hasExactAlarmPermission(appContext)
 
     fun openExactAlarmSettings(): Boolean = ReminderScheduler.openExactAlarmSettings(appContext)
 
     fun setMorningReminderTime(hour: Int, minute: Int) = viewModelScope.launch {
         reminderPreferences.setMorningTime(hour, minute)
+        // The weekly nudge lands at the morning time; move it along.
+        if (shelfNudgePreferences.enabled.first()) {
+            ShelfNudgeWorker.schedule(appContext, reminderPreferences, replace = true)
+        }
     }
 
     fun setEveningReminderTime(hour: Int, minute: Int) = viewModelScope.launch {

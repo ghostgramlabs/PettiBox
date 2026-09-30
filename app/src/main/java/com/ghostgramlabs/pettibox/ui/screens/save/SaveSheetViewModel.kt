@@ -9,6 +9,7 @@ import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.article.ArticleRepository
 import com.ghostgramlabs.pettibox.data.metadata.MetadataFetcher
+import com.ghostgramlabs.pettibox.data.metadata.ThumbnailWorker
 import com.ghostgramlabs.pettibox.data.ocr.OcrWorker
 import com.ghostgramlabs.pettibox.data.ocr.PdfTextWorker
 import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
@@ -38,6 +39,8 @@ data class SaveSheetState(
     val title: String = "",
     val previewImage: String? = null,
     val description: String? = null,
+    /** Channel / site / description for search (see LinkMetadata.searchableDetails). */
+    val linkDetails: String? = null,
     val notes: String = "",
     val tagsInput: String = "",
     val sourceApp: SourceApp = SourceApp.UNKNOWN,
@@ -147,6 +150,7 @@ class SaveSheetViewModel @Inject constructor(
                     title = resolvedTitle,
                     previewImage = meta?.imageUrl,
                     description = meta?.description,
+                    linkDetails = meta?.searchableDetails(),
                     isResolving = false,
                     // Re-run suggestion with the metadata-resolved title (often
                     // more descriptive than the raw share text) so a YouTube URL
@@ -358,6 +362,9 @@ class SaveSheetViewModel @Inject constructor(
             sourceApp = s.sourceApp.name,
             categoryId = s.selectedCategory,
             notes = s.notes.ifBlank { null },
+            // Links have no OCR; this column is what search reads beyond
+            // the title, so channel / site / description go here.
+            ocrText = if (s.contentType == ContentType.LINK) s.linkDetails else null,
             isFavorite = s.isFavorite,
             remindAt = s.remindAt
         )
@@ -399,6 +406,8 @@ class SaveSheetViewModel @Inject constructor(
         // Offline reading copy — downloads in the background, never
         // slows the save itself.
         if (s.contentType == ContentType.LINK) articleRepository.onLinkSaved(id, s.url)
+        // Keep the preview image on the phone so the card isn't blank offline.
+        if (s.previewImage?.startsWith("http") == true) ThumbnailWorker.enqueue(appContext, id)
 
         _state.value = s.copy(isSaved = true)
     }
