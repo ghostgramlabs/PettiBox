@@ -137,7 +137,7 @@ fun OfflineCopyCard(
             )
             ArticleCopyStatus.FAILED -> TextButton(onClick = onRequest) { Text("Try again") }
             ArticleCopyStatus.PENDING -> Unit
-            else -> TextButton(onClick = onRequest) { Text("Save copy") }
+            else -> TextButton(onClick = onRequest) { Text("Keep offline") }
         }
     }
 }
@@ -357,7 +357,7 @@ private fun readerHtml(
         </head><body>
         <h1 class="title">${Entities.escape(title)}</h1>
         <div class="meta">$meta</div>
-        <div class="snapshot">Copy saved ${Entities.escape(shortDate(fetchedAt))} — the live page may have changed since.</div>
+        <div class="snapshot">Copy saved ${Entities.escape(shortDate(fetchedAt))} · text only, pictures aren&apos;t saved. For the full page, tap the ↗ button at the top.</div>
         $body
         </body></html>
     """.trimIndent()
