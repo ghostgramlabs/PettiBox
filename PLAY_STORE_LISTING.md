@@ -197,6 +197,28 @@ Data safety positioning:
 - Backup files are user-controlled exports.
 - Google Drive backup is optional and opt-in: backups upload to the user's own Drive under the drive.file scope (the app can only access files it created). No data is sent to the developer; disconnecting stops uploads and leaves existing copies in the user's Drive.
 
+## Release Notes (What's New) — 2.0.8
+
+Covers everything since 2.0.7. Keep under Play's 500-character limit; Spanish and
+Hindi versions are in PLAY_STORE_LISTING_TRANSLATIONS.md.
+
+```
+NEW: Read saved articles offline, open PDFs right in the app, and pinch to zoom photos.
+NEW: Unread list, home screen widget, app shortcuts and an optional weekly nudge.
+NEW: App lock with fingerprint, face or PIN — you choose how soon it locks.
+NEW: Recently deleted keeps saves for 30 days so you can bring them back.
+IMPROVED: Quick notes open ready to type and are named after their first line.
+A fresh new icon, and lots of fixes.
+```
+
+Character count: 435 / 500
+
+## Feature Graphic
+
+`pettibox-feature-graphic.png` (1024 x 500) — the new flat icon's cream box on the
+persimmon background, with the wordmark and "Save anything. Find it later." Rebuild
+it with `python tools/icon/feature_graphic.py <font dir>` (see the script header).
+
 ## Release Notes (What's New) — 2.0.6
 
 Keep under Play's 500-character limit:

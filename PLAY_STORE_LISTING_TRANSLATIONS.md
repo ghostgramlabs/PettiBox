@@ -88,6 +88,19 @@ PettiBox es un gestor de marcadores privado, una app para leer después, un guar
 
 Character count: 3959 / 4000
 
+### Release notes — 2.0.8
+
+```
+NUEVO: Lee artículos guardados sin conexión, abre PDF dentro de la app y haz zoom en las fotos.
+NUEVO: Lista de no leídos, widget, accesos directos y un recordatorio semanal opcional.
+NUEVO: Bloqueo con huella, rostro o PIN; tú eliges cuándo se bloquea.
+NUEVO: Eliminados recientemente guarda tus elementos 30 días para recuperarlos.
+MEJORA: Las notas rápidas se abren listas para escribir y toman su título de la primera línea.
+Nuevo ícono y muchas correcciones.
+```
+
+Character count: 463 / 500
+
 ## Hindi — India (hi-IN)
 
 Written in everyday Hindi with the English words Indian users actually search for (PDF, bookmark, link, Google Drive), since many searches in India mix Hindi and English. Title says "लिंक सेव करें" (save links).
@@ -164,3 +177,16 @@ Pocket का विकल्प ढूँढ रहे हैं? PettiBox आ�
 PettiBox एक प्राइवेट बुकमार्क मैनेजर, रीड-लेटर ऐप, लिंक सेवर और स्क्रीनशॉट ऑर्गनाइज़र है — अभी सेव करें, बाद में ढूँढें।
 
 Character count: 3547 / 4000
+
+### Release notes — 2.0.8
+
+```
+नया: सेव किए आर्टिकल बिना इंटरनेट पढ़ें, PDF ऐप में ही खोलें और फ़ोटो ज़ूम करें।
+नया: अनपढ़ी सूची, होम स्क्रीन विजेट, ऐप शॉर्टकट और साप्ताहिक रिमाइंडर (वैकल्पिक)।
+नया: फ़िंगरप्रिंट, चेहरे या PIN से ऐप लॉक — कितनी देर बाद लॉक हो, यह आप चुनें।
+नया: हाल ही में हटाए गए आइटम 30 दिन तक रहते हैं, ताकि आप उन्हें वापस ला सकें।
+बेहतर: क्विक नोट सीधे लिखने के लिए खुलते हैं और पहली लाइन से उनका नाम बनता है।
+नया आइकन और कई सुधार।
+```
+
+Character count: 420 / 500

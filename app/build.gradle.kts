@@ -37,8 +37,8 @@ android {
         applicationId = "com.ghostgramlabs.pettibox"
         minSdk = 24
         targetSdk = 36
-        versionCode = 22
-        versionName = "2.0.7"
+        versionCode = 23
+        versionName = "2.0.8"
         vectorDrawables { useSupportLibrary = true }
     }
 
