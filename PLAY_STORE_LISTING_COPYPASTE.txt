@@ -2,64 +2,67 @@ APP NAME
 PettiBox: Bookmark Manager
 
 SHORT DESCRIPTION
-Save links, screenshots and PDFs. Find anything with private offline search.
+Save links, screenshots and PDFs to read later. Private offline OCR search.
 
 FULL DESCRIPTION
-Save links, screenshots, PDFs and notes in one private bookmark manager. PettiBox makes anything you save easy to organize and find later—even offline.
+Save links, screenshots, PDFs and notes in one private bookmark manager. PettiBox makes anything you save easy to organize, read and find later—even offline.
 
 Use the Android share menu to send content to PettiBox from the apps you already use. Keep articles, videos, recipes, study material, shopping ideas and documents out of scattered chats, browser bookmarks, downloads and gallery screenshots.
 
 SAVE FOR LATER FROM ANY APP
 
-Share a link, image, screenshot, PDF or file from any Android app that supports sharing. You can also paste a link, write a quick note or select files directly in PettiBox.
+Share a link, image, screenshot, PDF or file from any Android app that supports sharing. You can also paste a link, write a quick note or pick files directly in PettiBox, or use the home-screen widget and app-icon shortcuts.
+
+READ ARTICLES OFFLINE
+
+When you save a link, PettiBox keeps a clean, readable copy of the article on your phone. Read it on a plane or the subway, even if the page later changes or disappears. Adjust the text size, and search finds words inside saved articles too.
+
+AN UNREAD LIST THAT DOESN'T GET FORGOTTEN
+
+Everything you save waits in Unread until you open it. The home-screen widget shows what's waiting, and an optional weekly nudge brings back one thing you saved but never opened.
 
 FIND SAVED CONTENT FAST
 
-Search titles, notes, links, sources, collections and tags. On-device OCR also makes text inside screenshots, images and PDFs searchable. Search works offline, and OCR scans can be refreshed from Settings.
+Search titles, notes, links, sources, collections, tags and article text. On-device OCR makes text inside screenshots, images and PDFs searchable. Pinch to zoom into pictures, and read PDFs right inside the app.
 
 IMPORT FROM YOUR BROWSER OR OLD BOOKMARK APP
 
-Bring your existing library in minutes. Import bookmark files exported from Chrome, Firefox, Edge or Safari, plus HTML and CSV exports from other bookmark and read-it-later apps, including old Pocket and Raindrop.io export files. Folders become collections, tags come along, and links you already saved are skipped automatically. You can export your links as a CSV file anytime, so your library is never locked in.
+Import bookmark files exported from Chrome, Firefox, Edge or Safari, plus HTML and CSV exports from other bookmark and read-it-later apps, including old Pocket and Raindrop.io export files. Folders become collections, tags come along, and duplicates are skipped. Export your links as CSV anytime.
 
 ORGANIZE BOOKMARKS YOUR WAY
 
-Group saved content into collections for recipes, study, work, shopping, travel or anything else. Add tags, pin important items, mark favorites and archive what you no longer need. Every collection is yours to shape: rename the starters, change their emoji and color, or remove them entirely.
-
-MORE THAN A LINK SAVER
-
-Keep links, notes, text, screenshots, images, PDFs, documents and other files together. Link previews make bookmarks easy to recognize, and multiple attachments can stay together in a single saved item.
+Group saves into collections for recipes, study, work, shopping, travel or anything else. Add tags, pin important items, mark favorites and archive what you're done with. Deleted something by mistake? It waits in Recently deleted for 30 days.
 
 A READ IT LATER APP THAT CANNOT LOSE YOUR LIBRARY
 
-Looking for a Pocket alternative? PettiBox keeps your read-later library on your own device — and in your own Google Drive if you choose — so no service shutdown, account change or sync outage can take it away. If you still have your old Pocket export file, import it and pick up where you left off.
+Looking for a Pocket alternative? PettiBox keeps your read-later library on your own device—and in your own Google Drive if you choose—so no service shutdown can take it away. Import your old Pocket export file and pick up where you left off.
 
 REMINDERS FOR SAVED ITEMS
 
-Add a reminder when you save something or schedule one later. Remember to read an article, watch a video, review a document or revisit a shopping idea.
+Add a reminder when you save something or later: read an article, watch a video, review a document or revisit a shopping idea.
 
 PRIVATE AND OFFLINE-FIRST
 
-Your library stays on your device. No account or cloud sync is required for core features. PettiBox only uses internet access for optional link previews, remote thumbnails and the optional Google Drive backup.
+Your library stays on your device. No account needed. Lock PettiBox with your fingerprint, face or phone PIN. PettiBox only goes online for link previews, offline article copies and the optional Google Drive backup.
 
 BACKUP AND RESTORE, INCLUDING GOOGLE DRIVE
 
-Turn on the automatic nightly backup and PettiBox keeps fresh copies on your phone. Connect your own Google Drive and each backup is also uploaded there — saves, collections, tags, notes, attachments and searchable text included. New phone? Restore everything from Drive or from a backup file in a couple of taps. PettiBox can only see the backup files it created, never the rest of your Drive, and no PettiBox account is ever needed.
+Turn on the automatic nightly backup and connect your own Google Drive. Saves, collections, tags, notes, attachments and offline articles are all included. New phone? Restore everything in a couple of taps. PettiBox can only see the backup files it created, never the rest of your Drive.
 
 Great for saving:
 
-Recipes and meal ideas
-Reddit posts and articles
-Study materials and class notes
-Shopping ideas and wish lists
-Travel plans and places
-Work links and documents
-Screenshots with important text
-PDFs, files and reference material
-Personal memories and inspiration
+- Recipes and meal ideas
+- Articles and forum posts
+- Study materials and class notes
+- Shopping ideas and wish lists
+- Travel plans and places
+- Work links and documents
+- Screenshots with important text
+- PDFs and reference material
 
-PettiBox is a private bookmark manager, read it later app, link saver and screenshot organizer built to help you save now and find later.
+PettiBox helps you save now and find later.
 
-RELEASE NOTES (WHAT'S NEW) — 2.0.8
+RELEASE NOTES (WHAT'S NEW) — 2.0.9
 NEW: Read saved articles offline, open PDFs right in the app, and pinch to zoom photos.
 NEW: Unread list, home screen widget, app shortcuts and an optional weekly nudge.
 NEW: App lock with fingerprint, face or PIN — you choose how soon it locks.

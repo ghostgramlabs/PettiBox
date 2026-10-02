@@ -76,7 +76,7 @@ Activa la copia de seguridad automática cada noche y conecta tu propio Google D
 Ideal para guardar:
 
 - Recetas e ideas de comidas
-- Artículos y publicaciones de Reddit
+- Artículos y publicaciones de foros
 - Material de estudio y apuntes
 - Ideas de compras y listas de deseos
 - Planes de viaje y lugares
@@ -84,11 +84,11 @@ Ideal para guardar:
 - Capturas con texto importante
 - PDF y material de consulta
 
-PettiBox es un gestor de marcadores privado, una app para leer después, un guardador de enlaces y un organizador de capturas, hecho para guardar ahora y encontrar después.
+PettiBox te ayuda a guardar ahora y encontrar después.
 
-Character count: 3959 / 4000
+Character count: 3841 / 4000
 
-### Release notes — 2.0.8
+### Release notes — 2.0.9
 
 ```
 NUEVO: Lee artículos guardados sin conexión, abre PDF dentro de la app y haz zoom en las fotos.
@@ -166,7 +166,7 @@ Pocket का विकल्प ढूँढ रहे हैं? PettiBox आ�
 इन्हें सेव करने के लिए बढ़िया:
 
 - रेसिपी और खाने के आइडिया
-- आर्टिकल और Reddit पोस्ट
+- आर्टिकल और फ़ोरम पोस्ट
 - पढ़ाई का मटीरियल और क्लास नोट्स
 - शॉपिंग आइडिया और विश लिस्ट
 - ट्रैवल प्लान और जगहें
@@ -174,11 +174,11 @@ Pocket का विकल्प ढूँढ रहे हैं? PettiBox आ�
 - ज़रूरी टेक्स्ट वाले स्क्रीनशॉट
 - PDF और रेफ़रेंस मटीरियल
 
-PettiBox एक प्राइवेट बुकमार्क मैनेजर, रीड-लेटर ऐप, लिंक सेवर और स्क्रीनशॉट ऑर्गनाइज़र है — अभी सेव करें, बाद में ढूँढें।
+PettiBox के साथ अभी सेव करें, बाद में ढूँढें।
 
-Character count: 3547 / 4000
+Character count: 3471 / 4000
 
-### Release notes — 2.0.8
+### Release notes — 2.0.9
 
 ```
 नया: सेव किए आर्टिकल बिना इंटरनेट पढ़ें, PDF ऐप में ही खोलें और फ़ोटो ज़ूम करें।

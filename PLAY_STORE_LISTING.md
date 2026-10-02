@@ -41,7 +41,7 @@ Character count: 26 / 30
 
 Save links, screenshots and PDFs to read later. Private offline OCR search.
 
-Character count: 76 / 80
+Character count: 75 / 80
 
 ## Full Description
 
@@ -92,7 +92,7 @@ Turn on the automatic nightly backup and connect your own Google Drive. Saves, c
 Great for saving:
 
 - Recipes and meal ideas
-- Articles and Reddit posts
+- Articles and forum posts
 - Study materials and class notes
 - Shopping ideas and wish lists
 - Travel plans and places
@@ -100,9 +100,9 @@ Great for saving:
 - Screenshots with important text
 - PDFs and reference material
 
-PettiBox is a private bookmark manager, read it later app, link saver and screenshot organizer built to help you save now and find later.
+PettiBox helps you save now and find later.
 
-Character count: 3420 / 4000
+Character count: 3325 / 4000
 
 ## ASO Diagnosis And Launch Plan
 
@@ -197,7 +197,7 @@ Data safety positioning:
 - Backup files are user-controlled exports.
 - Google Drive backup is optional and opt-in: backups upload to the user's own Drive under the drive.file scope (the app can only access files it created). No data is sent to the developer; disconnecting stops uploads and leaves existing copies in the user's Drive.
 
-## Release Notes (What's New) — 2.0.8
+## Release Notes (What's New) — 2.0.9
 
 Covers everything since 2.0.7. Keep under Play's 500-character limit; Spanish and
 Hindi versions are in PLAY_STORE_LISTING_TRANSLATIONS.md.
