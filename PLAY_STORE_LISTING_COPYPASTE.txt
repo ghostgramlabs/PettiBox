@@ -62,11 +62,12 @@ Great for saving:
 
 PettiBox helps you save now and find later.
 
-RELEASE NOTES (WHAT'S NEW) — 2.0.11
+RELEASE NOTES (WHAT'S NEW) — 2.0.12
 NEW: Share several PDFs or files at once, or pick several in the app.
+NEW: App lock now locks the moment your screen turns off.
 NEW: The widget shows your saves while PettiBox is unlocked.
-NEW: Restore straight from the backups saved on this phone.
-IMPROVED: Search finds every match, not just recent ones, and updates as you save.
+NEW: Restore straight from backups saved on this phone.
+IMPROVED: Search finds every match and updates as you save.
 FIXED: Next/Previous in the photo viewer, images saved as PDFs, links that differ only by capital letters, and drafts lost when rotating.
 
 PROMO TEXT OPTION 1

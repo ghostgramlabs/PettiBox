@@ -88,17 +88,18 @@ PettiBox te ayuda a guardar ahora y encontrar después.
 
 Character count: 3841 / 4000
 
-### Release notes — 2.0.11
+### Release notes — 2.0.12
 
 ```
-NUEVO: Comparte varios PDF o archivos a la vez, o elige varios en la app.
-NUEVO: El widget muestra tus elementos mientras PettiBox está desbloqueado.
-NUEVO: Restaura directamente desde las copias guardadas en este teléfono.
-MEJORA: La búsqueda encuentra todas las coincidencias, no solo las recientes, y se actualiza al guardar.
+NUEVO: Comparte varios PDF o archivos a la vez.
+NUEVO: El bloqueo se activa al apagar la pantalla.
+NUEVO: El widget muestra tus elementos con PettiBox desbloqueado.
+NUEVO: Restaura desde las copias guardadas en este teléfono.
+MEJORA: La búsqueda encuentra todo y se actualiza al guardar.
 CORREGIDO: Siguiente/Anterior en el visor de fotos, imágenes guardadas como PDF, enlaces que solo cambian en mayúsculas y borradores perdidos al girar.
 ```
 
-Character count: 378 / 500
+Character count: 375 / 500
 
 ## Hindi — India (hi-IN)
 
@@ -177,14 +178,15 @@ PettiBox के साथ अभी सेव करें, बाद में 
 
 Character count: 3471 / 4000
 
-### Release notes — 2.0.11
+### Release notes — 2.0.12
 
 ```
-नया: एक साथ कई PDF या फ़ाइलें शेयर करें, या ऐप में कई चुनें।
+नया: एक साथ कई PDF या फ़ाइलें शेयर करें।
+नया: स्क्रीन बंद होते ही ऐप लॉक हो जाता है।
 नया: PettiBox अनलॉक रहते हुए विजेट आपके सेव दिखाता है।
 नया: इसी फ़ोन पर सेव बैकअप से सीधे रिस्टोर करें।
-बेहतर: सर्च अब सिर्फ़ हाल के नहीं, सारे नतीजे ढूँढता है और सेव करते ही अपडेट होता है।
-ठीक किया: फ़ोटो व्यूअर में आगे/पीछे, PDF बनकर सेव हुई इमेज, सिर्फ़ बड़े-छोटे अक्षरों वाले लिंक, और फ़ोन घुमाने पर खोए ड्राफ़्ट।
+बेहतर: सर्च अब सारे नतीजे ढूँढता है और सेव करते ही अपडेट होता है।
+ठीक किया: फ़ोटो व्यूअर में आगे/पीछे, PDF बनकर सेव हुई इमेज, बड़े-छोटे अक्षरों वाले लिंक, और फ़ोन घुमाने पर खोए ड्राफ़्ट।
 ```
 
 Character count: 420 / 500
