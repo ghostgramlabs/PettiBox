@@ -10,7 +10,9 @@ data class IncomingShare(
     val urls: List<String> = emptyList(),
     val imageUris: List<Uri> = emptyList(),
     val fileUris: List<Uri> = emptyList(),
-    val mimeType: String? = null
+    val mimeType: String? = null,
+    /** Package of the app that shared this, when Android tells us (Activity.referrer). */
+    val senderPackage: String? = null
 ) {
     val hasAnything: Boolean
         get() = !text.isNullOrBlank() || urls.isNotEmpty() || imageUris.isNotEmpty() || fileUris.isNotEmpty()

@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.view.Gravity
+import android.view.WindowManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -15,6 +17,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -38,18 +43,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import com.ghostgramlabs.pettibox.data.article.ArticleExtractor
 import com.ghostgramlabs.pettibox.data.local.ArticleCopyEntity
 import com.ghostgramlabs.pettibox.data.local.ArticleCopyStatus
@@ -178,11 +193,47 @@ fun ArticleReaderDialog(
         )
     }
     val background = scheme.background.toArgb()
+    // Creating the WebView blocks the first frame for a second or two on a
+    // cold start, which used to show as a blank screen. Draw the toolbar and
+    // a spinner first, build the WebView a frame later, and drop the spinner
+    // once the page has rendered.
+    var showWebView by remember { mutableStateOf(false) }
+    var pageLoaded by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        showWebView = true
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        // Draw behind the status bar like every other screen, instead of
+        // leaving the dim scrim showing above the toolbar as a dark band.
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
+        val dialogView = LocalView.current
+        val lightBars = scheme.surface.luminance() > 0.5f
+        SideEffect {
+            (dialogView.parent as? DialogWindowProvider)?.window?.let { window ->
+                // A dialog window stops at the status bar even with
+                // decorFitsSystemWindows off; let it cover the whole screen
+                // and drop the dim, which otherwise shows above the toolbar.
+                window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+                window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+                window.setDimAmount(0f)
+                window.attributes = window.attributes.apply {
+                    // Centred inside the bar-free area it sat a few px down,
+                    // leaving a sliver of the screen behind showing on top.
+                    gravity = Gravity.TOP
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        setFitInsetsTypes(0)
+                    }
+                }
+                WindowCompat.getInsetsController(window, dialogView).isAppearanceLightStatusBars = lightBars
+            }
+        }
         Column(
             Modifier
                 .fillMaxSize()
@@ -193,6 +244,7 @@ fun ArticleReaderDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(scheme.surface)
+                    .windowInsetsPadding(WindowInsets.statusBars)
                     .padding(horizontal = 4.dp, vertical = 4.dp)
             ) {
                 IconButton(onClick = onDismiss) {
@@ -220,17 +272,30 @@ fun ArticleReaderDialog(
                 }
             }
             HorizontalDivider(color = scheme.outlineVariant.copy(alpha = 0.5f))
-            ReaderWebView(
-                html = page,
-                plainText = copy.textContent.orEmpty(),
-                textColor = scheme.onBackground.toArgb(),
-                baseUrl = url,
-                textZoom = textZoom,
-                backgroundColor = background,
-                modifier = Modifier
+            Box(
+                Modifier
                     .fillMaxWidth()
                     .weight(1f)
-            )
+            ) {
+                if (showWebView) {
+                    ReaderWebView(
+                        html = page,
+                        plainText = copy.textContent.orEmpty(),
+                        textColor = scheme.onBackground.toArgb(),
+                        baseUrl = url,
+                        textZoom = textZoom,
+                        backgroundColor = background,
+                        onLoaded = { pageLoaded = true },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                if (!pageLoaded) {
+                    CircularProgressIndicator(
+                        color = scheme.primary,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
         }
     }
 }
@@ -244,6 +309,7 @@ private fun ReaderWebView(
     baseUrl: String,
     textZoom: Int,
     backgroundColor: Int,
+    onLoaded: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     AndroidView(
@@ -266,6 +332,10 @@ private fun ReaderWebView(
                     settings.isAlgorithmicDarkeningAllowed = false
                 }
                 webViewClient = object : WebViewClient() {
+                    override fun onPageFinished(view: WebView, url: String?) {
+                        onLoaded()
+                    }
+
                     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                         val target = request.url
                         // In-page jumps (footnotes, table of contents) stay in the reader.
@@ -276,7 +346,7 @@ private fun ReaderWebView(
                         return true
                     }
                 }
-            } ?: plainTextFallback(context, plainText, textColor, backgroundColor)
+            } ?: plainTextFallback(context, plainText, textColor, backgroundColor).also { onLoaded() }
         },
         update = { view ->
             when (view) {

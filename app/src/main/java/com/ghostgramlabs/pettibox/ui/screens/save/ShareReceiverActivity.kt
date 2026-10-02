@@ -34,7 +34,7 @@ class ShareReceiverActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val incoming = IncomingShare.from(intent)
+        val incoming = IncomingShare.from(intent).copy(senderPackage = senderPackage())
         if (!incoming.hasAnything) {
             finish(); return
         }
@@ -73,11 +73,15 @@ class ShareReceiverActivity : FragmentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        val incoming = IncomingShare.from(intent)
+        val incoming = IncomingShare.from(intent).copy(senderPackage = senderPackage())
         if (!incoming.hasAnything) {
             finish()
         } else {
             incomingShare = incoming
         }
     }
+
+    /** The sharing app's package, used only to label where a save came from. */
+    private fun senderPackage(): String? =
+        referrer?.takeIf { it.scheme == "android-app" }?.host
 }

@@ -185,7 +185,7 @@ private fun PolaroidCard(
         if (item.isPinned) PinnedTape(Modifier.align(Alignment.TopStart))
         if (onLongClick != null) CardActionButton(
             onClick = onLongClick,
-            modifier = Modifier.align(Alignment.TopEnd).padding(6.dp)
+            modifier = Modifier.align(Alignment.TopEnd)
         )
     }
 }
@@ -270,7 +270,7 @@ private fun LinkBookmarkCard(
         if (item.isPinned) PinnedTape(Modifier.align(Alignment.TopStart))
         if (onLongClick != null) CardActionButton(
             onClick = onLongClick,
-            modifier = Modifier.align(Alignment.TopEnd).padding(6.dp)
+            modifier = Modifier.align(Alignment.TopEnd)
         )
     }
 }
@@ -314,14 +314,18 @@ private fun StickyNoteCard(
                     fontFamily = FontFamily.Serif
                 ),
                 color = ink,
-                maxLines = 4
+                maxLines = 4,
+                // Text sits straight on the note (no header image), so keep
+                // the first lines clear of the quick-actions button.
+                modifier = if (onLongClick != null) Modifier.padding(end = 26.dp) else Modifier
             )
-            if (!item.notes.isNullOrBlank()) {
+            val body = noteBodyBelowTitle(item.title, item.notes)
+            if (body != null) {
                 Spacer(Modifier.height(8.dp))
                 // Capped at 3 lines (was 6) — long previews on a tinted
                 // small card become a wall of text with bad scan affordance.
                 Text(
-                    item.notes,
+                    body,
                     style = MaterialTheme.typography.bodyMedium,
                     color = ink.copy(alpha = 0.78f),
                     maxLines = 3
@@ -370,7 +374,7 @@ private fun StickyNoteCard(
         if (item.isPinned) PinnedTape(Modifier.align(Alignment.TopStart))
         if (onLongClick != null) CardActionButton(
             onClick = onLongClick,
-            modifier = Modifier.align(Alignment.TopEnd).padding(6.dp)
+            modifier = Modifier.align(Alignment.TopEnd)
         )
     }
 }
@@ -443,9 +447,21 @@ private fun PaperclipCard(
         if (item.isPinned) PinnedTape(Modifier.align(Alignment.TopStart))
         if (onLongClick != null) CardActionButton(
             onClick = onLongClick,
-            modifier = Modifier.align(Alignment.TopEnd).padding(6.dp)
+            modifier = Modifier.align(Alignment.TopEnd)
         )
     }
+}
+
+/**
+ * Quick notes are titled after their first line, so on the card the note
+ * text would repeat it. Show only what comes after; null when nothing does.
+ */
+private fun noteBodyBelowTitle(title: String, notes: String?): String? {
+    val text = notes?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val firstLine = text.lineSequence().first().trim()
+    val titleStem = title.removeSuffix("…")
+    if (firstLine != title && !(title.endsWith("…") && firstLine.startsWith(titleStem))) return text
+    return text.lineSequence().drop(1).joinToString("\n").trim().ifEmpty { null }
 }
 
 @Composable
@@ -454,22 +470,28 @@ private fun CardActionButton(onClick: () -> Unit, modifier: Modifier = Modifier)
     // 28 dp chip (was 40) so it stops dominating small cards. A hairline
     // outlineVariant ring keeps the circle legible against pale paper
     // surfaces (polaroid frame in light mode) where a flat surface fill
-    // would otherwise disappear into the card.
+    // would otherwise disappear into the card. The circle is drawn inside
+    // the 48 dp touch target — painted on the button itself, the minimum
+    // touch size stretched it to 48 dp and it covered card text.
     IconButton(
         onClick = onClick,
-        modifier = modifier
-            .minimumInteractiveComponentSize()
-            .size(28.dp)
-            .clip(CircleShape)
-            .background(scheme.surface.copy(alpha = 0.94f))
-            .border(1.dp, scheme.outlineVariant, CircleShape)
+        modifier = modifier.minimumInteractiveComponentSize()
     ) {
-        Icon(
-            Icons.Rounded.MoreHoriz,
-            contentDescription = "Open quick actions",
-            tint = scheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp)
-        )
+        Box(
+            Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .background(scheme.surface.copy(alpha = 0.94f))
+                .border(1.dp, scheme.outlineVariant, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Rounded.MoreHoriz,
+                contentDescription = "Open quick actions",
+                tint = scheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
+        }
     }
 }
 

@@ -5,6 +5,9 @@ enum class SourceApp(val displayName: String, val emoji: String) {
     REDDIT("Reddit", "\uD83D\uDC7D"),
     YOUTUBE("YouTube", "\u25B6"),
     CHROME("Chrome", "\uD83C\uDF10"),
+    // Any other web link. Used to be labelled Chrome, which was wrong for
+    // links from Firefox, Samsung Internet, mail apps, imports, etc.
+    WEB("Web", "\uD83C\uDF10"),
     MAPS("Maps", "\uD83D\uDCCD"),
     WHATSAPP("WhatsApp", "\uD83D\uDCAC"),
     TWITTER("X / Twitter", "\uD83D\uDC26"),
@@ -33,9 +36,25 @@ enum class SourceApp(val displayName: String, val emoji: String) {
                 "amazon." in u -> AMAZON
                 "google.com/maps" in u || "maps.app.goo.gl" in u || "goo.gl/maps" in u -> MAPS
                 "wa.me" in u || "whatsapp.com" in u -> WHATSAPP
-                u.startsWith("http") -> CHROME
+                u.startsWith("http") -> WEB
                 else -> UNKNOWN
             }
+        }
+
+        /** The app a share came from, when it's one we have a label for. */
+        fun fromPackage(pkg: String?): SourceApp? = when {
+            pkg.isNullOrBlank() -> null
+            pkg == "com.android.chrome" || pkg.startsWith("com.chrome.") -> CHROME
+            pkg == "com.instagram.android" -> INSTAGRAM
+            pkg == "com.reddit.frontpage" -> REDDIT
+            pkg == "com.google.android.youtube" -> YOUTUBE
+            pkg == "com.google.android.apps.maps" -> MAPS
+            pkg == "com.whatsapp" || pkg == "com.whatsapp.w4b" -> WHATSAPP
+            pkg == "com.twitter.android" -> TWITTER
+            pkg == "com.pinterest" -> PINTEREST
+            pkg == "com.spotify.music" -> SPOTIFY
+            pkg.startsWith("com.amazon.mShop") -> AMAZON
+            else -> null
         }
     }
 }

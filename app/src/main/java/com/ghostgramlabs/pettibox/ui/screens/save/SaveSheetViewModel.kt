@@ -34,6 +34,9 @@ import javax.inject.Inject
 
 enum class SaveMode { NEW, PICK_EXISTING }
 
+/** Placeholder title for a save with nothing better to be called (a blank quick note). */
+private const val QUICK_SAVE_TITLE = "Quick save"
+
 data class SaveSheetState(
     val mode: SaveMode = SaveMode.NEW,
     val title: String = "",
@@ -107,7 +110,15 @@ class SaveSheetViewModel @Inject constructor(
             !share.text.isNullOrBlank() -> ContentType.TEXT
             else -> ContentType.NOTE
         }
-        val source = SourceApp.fromUrl(firstUrl)
+        // The link's own site wins (a YouTube link is "YouTube" whichever app
+        // shared it); generic links fall back to the app that shared them.
+        val source = SourceApp.fromUrl(firstUrl).let { fromUrl ->
+            if (fromUrl == SourceApp.WEB || fromUrl == SourceApp.UNKNOWN) {
+                SourceApp.fromPackage(share.senderPackage) ?: fromUrl
+            } else {
+                fromUrl
+            }
+        }
 
         val initialTitle = TextUtils.smartTitle(
             share.text,
@@ -115,7 +126,7 @@ class SaveSheetViewModel @Inject constructor(
                 ContentType.IMAGE -> if (allImages.size > 1) "${allImages.size} images" else "Saved image"
                 ContentType.PDF -> "Saved PDF"
                 ContentType.FILE -> "Saved file"
-                else -> "Quick save"
+                else -> QUICK_SAVE_TITLE
             }
         )
 
@@ -353,8 +364,16 @@ class SaveSheetViewModel @Inject constructor(
         val ownLocalUri = s.localUri?.let { ingestIfForeign(it) }
         val ownAttachments = s.attachments.map { ingestIfForeign(it) ?: it }
 
+        // A quick note left on the placeholder title is named after its
+        // first line, so the shelf shows "Call the dentist", not "Quick save".
+        val title = if (s.contentType == ContentType.NOTE && s.title == QUICK_SAVE_TITLE && s.notes.isNotBlank()) {
+            TextUtils.smartTitle(s.notes, fallback = QUICK_SAVE_TITLE)
+        } else {
+            s.title.ifBlank { "Untitled" }
+        }
+
         val entity = SaveItemEntity(
-            title = s.title.ifBlank { "Untitled" },
+            title = title,
             url = s.url,
             localUri = ownLocalUri,
             thumbnailUri = s.previewImage,

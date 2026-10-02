@@ -41,6 +41,16 @@ private val LightColors = lightColorScheme(
     surfaceTint = PaperOff,
     surfaceVariant = SurfaceTint,
     onSurfaceVariant = Gravel,
+    // M3 components pick their fill from these container tiers (dialogs use
+    // High, switch tracks use Highest). Left unset they fall back to the
+    // stock lavender baseline, so map them onto the paper ladder.
+    surfaceContainerLowest = PaperBright,
+    surfaceContainerLow = PaperOff,
+    surfaceContainer = PaperOff,
+    surfaceContainerHigh = PaperBright,
+    surfaceContainerHighest = SurfaceTint,
+    surfaceBright = PaperBright,
+    surfaceDim = Bone,
     outline = PaperEdge,
     outlineVariant = SurfaceTint,
     error = PersimmonDeep,
@@ -66,6 +76,14 @@ private val DarkColors = darkColorScheme(
     surfaceTint = SurfaceDark,
     surfaceVariant = SurfaceTintDark,
     onSurfaceVariant = Pebble,
+    // Same container ladder as light, in charcoal (see LightColors).
+    surfaceContainerLowest = InkDark,
+    surfaceContainerLow = SurfaceDark,
+    surfaceContainer = SurfaceDark,
+    surfaceContainerHigh = SurfaceTintDark,
+    surfaceContainerHighest = SurfaceTintDark,
+    surfaceBright = SurfaceTintDark,
+    surfaceDim = InkDark,
     outline = OutlineDark,
     outlineVariant = SurfaceTintDark,
     error = PersimmonDeep,

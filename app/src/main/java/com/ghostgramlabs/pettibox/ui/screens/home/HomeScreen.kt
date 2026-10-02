@@ -282,7 +282,8 @@ fun HomeScreen(
             onDismiss = viewModel::completeOnboarding,
             onAdd = {
                 viewModel.completeOnboarding()
-                showChooser = true
+                // The button promises a note, so go straight to one.
+                openQuickNote()
             }
         )
     }
@@ -822,7 +823,7 @@ private fun HomeOnboardingDialog(
                                 .clip(CircleShape)
                                 .background(
                                     if (i == page) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.outlineVariant
+                                    else MaterialTheme.colorScheme.outline
                                 )
                         )
                     }

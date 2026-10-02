@@ -6,15 +6,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -68,6 +71,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -252,6 +256,7 @@ fun SaveSheet(
                 onNotesChange = viewModel::setNotes,
                 onTagsChange = viewModel::setTags,
                 titleFocus = titleFocus,
+                openNotes = !incoming.hasAnything,
                 onOpenExisting = onOpenExisting,
                 onDismissDuplicate = { viewModel.dismissDuplicate() }
             )
@@ -415,7 +420,8 @@ fun SaveSheet(
                 onTitleChange = viewModel::setTitle,
                 onNotesChange = viewModel::setNotes,
                 onTagsChange = viewModel::setTags,
-                titleFocus = titleFocus
+                titleFocus = titleFocus,
+                openNotes = !incoming.hasAnything
             )
             // Bottom padding inside the scroll so the last field clears the
             // sticky action bar even before the user scrolls.
@@ -442,6 +448,7 @@ fun SaveSheet(
  * which is where the user's attention is when they're hunting for a
  * collection. Stepping out of search restores the full sheet.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FinderPickerBody(
     state: SaveSheetState,
@@ -459,12 +466,14 @@ private fun FinderPickerBody(
     onNotesChange: (String) -> Unit,
     onTagsChange: (String) -> Unit,
     titleFocus: FocusRequester,
+    openNotes: Boolean,
     onOpenExisting: (Long) -> Unit,
     onDismissDuplicate: () -> Unit
 ) {
     val haptics = LocalHapticFeedback.current
     var finderFocused by remember { mutableStateOf(false) }
     val searching = finderFocused || query.isNotBlank()
+    val imeVisible = WindowInsets.isImeVisible
 
     Column(
         Modifier
@@ -577,8 +586,8 @@ private fun FinderPickerBody(
         // Pinned bottom: secondary actions + optional details. Search still
         // gets most of the sheet, but the edit/reminder affordances stay
         // reachable so the user never has to back out of typing to finish.
-        if (!searching) {
-            Column(Modifier.padding(horizontal = 20.dp)) {
+        Column(Modifier.padding(horizontal = 20.dp)) {
+            if (!searching) {
                 Spacer(Modifier.height(10.dp))
                 LazyRow(
                     contentPadding = PaddingValues(end = 8.dp),
@@ -591,36 +600,32 @@ private fun FinderPickerBody(
                     }
                 }
                 Spacer(Modifier.height(14.dp))
-                OptionalDetails(
-                    title = state.title,
-                    notes = state.notes,
-                    tagsInput = state.tagsInput,
-                    onTitleChange = onTitleChange,
-                    onNotesChange = onNotesChange,
-                    onTagsChange = onTagsChange,
-                    titleFocus = titleFocus
-                )
-                Spacer(Modifier.height(12.dp))
-            }
-        } else {
-            Column(Modifier.padding(horizontal = 20.dp)) {
+            } else {
                 SearchSelectionActions(
                     selectedCategoryName = selectedCategoryName,
                     remindAt = state.remindAt,
                     onPickReminder = onPickReminder
                 )
                 Spacer(Modifier.height(10.dp))
-                OptionalDetails(
-                    title = state.title,
-                    notes = state.notes,
-                    tagsInput = state.tagsInput,
-                    onTitleChange = onTitleChange,
-                    onNotesChange = onNotesChange,
-                    onTagsChange = onTagsChange,
-                    titleFocus = titleFocus
-                )
-                Spacer(Modifier.height(10.dp))
             }
+            // One call site outside the branch above, so moving focus between
+            // the finder and a title/note/tags field doesn't remount it — that
+            // used to collapse the field being typed into and drop its focus.
+            OptionalDetails(
+                title = state.title,
+                notes = state.notes,
+                tagsInput = state.tagsInput,
+                onTitleChange = onTitleChange,
+                onNotesChange = onNotesChange,
+                onTagsChange = onTagsChange,
+                titleFocus = titleFocus,
+                openNotes = openNotes,
+                // While the user is typing in the finder the list needs the
+                // room; open fields fold away (keeping what's typed) until the
+                // finder lets go or the keyboard closes.
+                compact = finderFocused && imeVisible
+            )
+            Spacer(Modifier.height(if (searching) 10.dp else 12.dp))
         }
         SaveFooter(
             isFavorite = state.isFavorite,
@@ -863,19 +868,38 @@ private fun OptionalDetails(
     onTitleChange: (String) -> Unit,
     onNotesChange: (String) -> Unit,
     onTagsChange: (String) -> Unit,
-    titleFocus: FocusRequester
+    titleFocus: FocusRequester,
+    openNotes: Boolean = false,
+    compact: Boolean = false
 ) {
+    val focusManager = LocalFocusManager.current
     var showTitle by remember { mutableStateOf(false) }
-    var showNotes by remember { mutableStateOf(false) }
-    var showTags by remember { mutableStateOf(false) }
+    // A field that already holds something (a quick note's text, say)
+    // starts open so the user can see what's being saved.
+    // A quick note (opened from "Note", not a share) starts with the note
+    // field open and focused: the user's tap on "Note" asked for it.
+    var showNotes by remember { mutableStateOf(openNotes || notes.isNotBlank()) }
+    var showTags by remember { mutableStateOf(tagsInput.isNotBlank()) }
+    // Opening notes/tags puts the cursor there, like the title does —
+    // otherwise typing lands in whichever field last had focus.
+    var focusTitleOnOpen by remember { mutableStateOf(false) }
+    var focusNotesOnOpen by remember { mutableStateOf(openNotes) }
+    var focusTagsOnOpen by remember { mutableStateOf(false) }
+    val notesFocus = remember { FocusRequester() }
+    val tagsFocus = remember { FocusRequester() }
+    // Revealing a field also releases the collection finder, so the sheet
+    // leaves compact mode and the new field can take the cursor.
+    val revealTitle = { focusManager.clearFocus(); showTitle = true; focusTitleOnOpen = true }
+    val revealNotes = { focusManager.clearFocus(); showNotes = true; focusNotesOnOpen = true }
+    val revealTags = { focusManager.clearFocus(); showTags = true; focusTagsOnOpen = true }
 
     val anyOpen = showTitle || showNotes || showTags
 
-    if (!anyOpen) {
+    if (!anyOpen || compact) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AddChip("Edit title") { showTitle = true }
-            AddChip("Add note") { showNotes = true }
-            AddChip("Add tags") { showTags = true }
+            if (!showTitle) AddChip("Edit title", onClick = revealTitle)
+            if (!showNotes) AddChip("Add note", onClick = revealNotes)
+            if (!showTags) AddChip("Add tags", onClick = revealTags)
         }
         return
     }
@@ -895,11 +919,13 @@ private fun OptionalDetails(
             shape = RoundedCornerShape(18.dp),
             modifier = Modifier.fillMaxWidth().focusRequester(titleFocus)
         )
-        // Focus the title only after the user explicitly asked to edit it.
-        LaunchedEffect(showTitle) {
-            if (showTitle) {
+        // Focus the title only after the user explicitly asked to edit it
+        // (once — not again each time the field folds back in after a search).
+        LaunchedEffect(focusTitleOnOpen) {
+            if (focusTitleOnOpen) {
                 kotlinx.coroutines.delay(80)
                 runCatching { titleFocus.requestFocus() }
+                focusTitleOnOpen = false
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -910,8 +936,15 @@ private fun OptionalDetails(
             onValueChange = onNotesChange,
             placeholder = { Text("Add a note") },
             shape = RoundedCornerShape(18.dp),
-            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp)
+            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp).focusRequester(notesFocus)
         )
+        LaunchedEffect(focusNotesOnOpen) {
+            if (focusNotesOnOpen) {
+                kotlinx.coroutines.delay(80)
+                runCatching { notesFocus.requestFocus() }
+                focusNotesOnOpen = false
+            }
+        }
         Spacer(Modifier.height(12.dp))
     }
     if (showTags) {
@@ -921,16 +954,23 @@ private fun OptionalDetails(
             placeholder = { Text("Tags, comma-separated") },
             singleLine = true,
             shape = RoundedCornerShape(18.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().focusRequester(tagsFocus)
         )
+        LaunchedEffect(focusTagsOnOpen) {
+            if (focusTagsOnOpen) {
+                kotlinx.coroutines.delay(80)
+                runCatching { tagsFocus.requestFocus() }
+                focusTagsOnOpen = false
+            }
+        }
         Spacer(Modifier.height(12.dp))
     }
 
     // Let the user reveal whichever fields they didn't open yet.
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (!showTitle) AddChip("Edit title") { showTitle = true }
-        if (!showNotes) AddChip("Add note") { showNotes = true }
-        if (!showTags) AddChip("Add tags") { showTags = true }
+        if (!showTitle) AddChip("Edit title", onClick = revealTitle)
+        if (!showNotes) AddChip("Add note", onClick = revealNotes)
+        if (!showTags) AddChip("Add tags", onClick = revealTags)
     }
 }
 
