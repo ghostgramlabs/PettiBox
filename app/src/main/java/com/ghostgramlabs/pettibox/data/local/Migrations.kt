@@ -84,4 +84,18 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+/**
+ * v5 → v6: data only. The Beauty starter's emoji moved from lipstick to a
+ * lotion bottle. Only rows still on the original lipstick change, so an
+ * emoji the user picked themselves is left alone.
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "UPDATE categories SET emoji = ? WHERE id = 'beauty' AND emoji = ?",
+            arrayOf<Any>("🧴", "💄")
+        )
+    }
+}
+
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)

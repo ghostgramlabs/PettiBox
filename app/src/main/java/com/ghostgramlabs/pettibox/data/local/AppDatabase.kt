@@ -4,8 +4,9 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 /**
- * Schema v5 — adds save_items.deleted_at for the 30-day Recently deleted
- * bin. See [MIGRATION_4_5]. (v4 added offline article copies.)
+ * Schema v6 — data-only bump that swaps the Beauty starter's emoji. See
+ * [MIGRATION_5_6]. (v5 added save_items.deleted_at for the 30-day
+ * Recently deleted bin; v4 added offline article copies.)
  */
 @Database(
     entities = [
@@ -18,7 +19,7 @@ import androidx.room.RoomDatabase
         ArticleCopyEntity::class,
         ArticleCopyFts::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

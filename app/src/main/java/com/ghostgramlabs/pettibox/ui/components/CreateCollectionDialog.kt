@@ -53,7 +53,7 @@ import com.ghostgramlabs.pettibox.ui.theme.TravelTeal
 
 val CollectionEmojiSeeds = listOf(
     "📦", "🛒", "🍳", "✈️", "💪",
-    "👗", "🏡", "💄", "📖", "💰",
+    "👗", "🏡", "🧴", "📖", "💰",
     "🎵", "💡", "🎬", "💼", "❤️",
     "📚", "⭐", "🎨", "🐾", "🌱",
     "🧠", "☕", "📷", "🎮", "🧘"
