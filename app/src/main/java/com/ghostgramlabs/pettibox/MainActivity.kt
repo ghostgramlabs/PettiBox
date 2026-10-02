@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -48,8 +49,10 @@ class MainActivity : FragmentActivity() {
         setContent {
             val themeMode by themePreferences.mode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
             // Null until loaded, so the gate can hold back saves until it knows.
-            val lockEnabled by appLockPreferences.enabled.map<Boolean, Boolean?> { it }
-                .collectAsStateWithLifecycle(initialValue = null)
+            // remember: building the mapped flow inside composition made a new one
+            // on every recomposition (lint: FlowOperatorInvokedInComposition).
+            val lockEnabledFlow = remember { appLockPreferences.enabled.map<Boolean, Boolean?> { it } }
+            val lockEnabled by lockEnabledFlow.collectAsStateWithLifecycle(initialValue = null)
             // Remember the value so a recomposition driven by theme change
             // doesn't re-fire the deep link.
             val launch = pendingLaunch

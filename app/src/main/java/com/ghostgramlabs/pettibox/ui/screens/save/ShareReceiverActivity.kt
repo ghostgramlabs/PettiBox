@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
@@ -41,8 +42,10 @@ class ShareReceiverActivity : FragmentActivity() {
         incomingShare = incoming
 
         setContent {
-            val lockEnabled by appLockPreferences.enabled.map<Boolean, Boolean?> { it }
-                .collectAsStateWithLifecycle(initialValue = null)
+            // remember: building the mapped flow inside composition made a new one
+            // on every recomposition (lint: FlowOperatorInvokedInComposition).
+            val lockEnabledFlow = remember { appLockPreferences.enabled.map<Boolean, Boolean?> { it } }
+            val lockEnabled by lockEnabledFlow.collectAsStateWithLifecycle(initialValue = null)
             incomingShare?.let { share ->
                 PettiBoxTheme {
                     // The sheet lists collections and recent saves, so it

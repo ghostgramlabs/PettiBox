@@ -74,6 +74,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -152,7 +153,8 @@ fun HomeScreen(
     // these; SaveSheet renders when [pendingShare] is non-null.
     var showChooser by remember { mutableStateOf(false) }
     var showLinkDialog by remember { mutableStateOf(false) }
-    var pendingShare by remember { mutableStateOf<IncomingShare?>(null) }
+    // Saveable so an open Save sheet survives rotation instead of vanishing.
+    var pendingShare by rememberSaveable(stateSaver = IncomingShare.Saver) { mutableStateOf<IncomingShare?>(null) }
     var isImportingDiscoveredBackup by remember { mutableStateOf(false) }
 
     // Milestone rating prompt: when the shelf crosses a save-count mark

@@ -78,7 +78,15 @@ data class SaveSheetState(
     val duplicateOf: SaveItemEntity? = null,
     val isResolving: Boolean = false,
     val isSaved: Boolean = false
-)
+) {
+    /**
+     * A quick note needs something in it: note text, or a title the user
+     * typed. Saving an empty one only added blank "Quick save" cards.
+     */
+    val canSave: Boolean
+        get() = contentType != ContentType.NOTE ||
+            notes.isNotBlank() || (title.isNotBlank() && title != QUICK_SAVE_TITLE)
+}
 
 @HiltViewModel
 class SaveSheetViewModel @Inject constructor(
@@ -92,6 +100,9 @@ class SaveSheetViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(SaveSheetState())
     private val ingestGeneration = AtomicLong(0L)
+    // The share the current draft belongs to. Re-showing the same share
+    // (the sheet recomposing after rotation) must keep what was typed.
+    private var draftFor: IncomingShare? = null
 
     val state: StateFlow<SaveSheetState> = combine(
         _state, repo.observeCategories(), repo.observeRecent(30), repo.observeRecentCategoryIds()
@@ -100,6 +111,8 @@ class SaveSheetViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), _state.value)
 
     fun ingest(share: IncomingShare) {
+        if (share == draftFor && !_state.value.isSaved) return
+        draftFor = share
         val generation = ingestGeneration.incrementAndGet()
         val firstUrl = share.urls.firstOrNull() ?: TextUtils.extractFirstUrl(share.text)
         // Every shared file, typed by what it actually is. The share's own
@@ -195,6 +208,11 @@ class SaveSheetViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /** The sheet was dismissed: the next open of the same share starts fresh. */
+    fun discardDraft() {
+        draftFor = null
     }
 
     private suspend fun loadCategoriesOnce(): List<CategoryEntity> =
@@ -396,6 +414,7 @@ class SaveSheetViewModel @Inject constructor(
 
     fun save() = viewModelScope.launch {
         val s = _state.value
+        if (!s.canSave) return@launch
         if (s.title.isBlank() && s.url.isNullOrBlank() && s.localUri.isNullOrBlank()) return@launch
 
         // Copy any foreign content URIs into our own filesDir so they survive

@@ -58,6 +58,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,6 +66,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -110,7 +112,7 @@ fun SaveSheet(
     var createInitialName by remember { mutableStateOf("") }
     var showReminderPicker by remember { mutableStateOf(false) }
     var showCustomReminder by remember { mutableStateOf(false) }
-    var collectionQuery by remember { mutableStateOf("") }
+    var collectionQuery by rememberSaveable { mutableStateOf("") }
     val requestNotificationPermission = rememberNotificationPermissionRequester()
     val titleFocus = remember { FocusRequester() }
     val haptics = LocalHapticFeedback.current
@@ -175,7 +177,10 @@ fun SaveSheet(
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            viewModel.discardDraft()
+            onDismiss()
+        },
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.background,
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
@@ -430,6 +435,7 @@ fun SaveSheet(
         SaveFooter(
             isFavorite = state.isFavorite,
             selectedCategoryName = selectedCategoryName,
+            canSave = state.canSave,
             onToggleFavorite = { viewModel.toggleFavorite() },
             onSave = { viewModel.save() }
         )
@@ -474,6 +480,10 @@ private fun FinderPickerBody(
     var finderFocused by remember { mutableStateOf(false) }
     val searching = finderFocused || query.isNotBlank()
     val imeVisible = WindowInsets.isImeVisible
+    // Phones in landscape are ~400dp tall; with the keyboard up there is no
+    // room for the finder, the list and an open note field all at once.
+    val shortScreen = LocalConfiguration.current.screenHeightDp < 480
+    val editingDetails = shortScreen && imeVisible && !finderFocused
 
     Column(
         Modifier
@@ -483,102 +493,109 @@ private fun FinderPickerBody(
     ) {
         // Pinned header: tiny context + Save-to + finder. The item never
         // disappears while the user searches, which keeps the save target clear.
-        Column(Modifier.padding(horizontal = 20.dp)) {
-            Spacer(Modifier.height(6.dp))
-            if (!searching) {
-                state.duplicateOf?.let { dup ->
-                    DuplicateBanner(
-                        existing = dup,
-                        categoryLabel = state.categories.firstOrNull { it.id == dup.categoryId }
-                            ?.let { "${it.emoji} ${it.name}" },
-                        onOpen = { onOpenExisting(dup.id) },
-                        onDismiss = onDismissDuplicate
-                    )
-                    Spacer(Modifier.height(12.dp))
+        // Short landscape screen, keyboard up for a note/tag/title: a landscape
+        // keyboard leaves ~140dp, so the header and picker step aside and the
+        // field and Save get all of it. They return when the keyboard closes.
+        if (!editingDetails) {
+            Column(Modifier.padding(horizontal = 20.dp)) {
+                Spacer(Modifier.height(6.dp))
+                if (!searching) {
+                    state.duplicateOf?.let { dup ->
+                        DuplicateBanner(
+                            existing = dup,
+                            categoryLabel = state.categories.firstOrNull { it.id == dup.categoryId }
+                                ?.let { "${it.emoji} ${it.name}" },
+                            onOpen = { onOpenExisting(dup.id) },
+                            onDismiss = onDismissDuplicate
+                        )
+                        Spacer(Modifier.height(12.dp))
+                    }
                 }
+                CompactContext(state, dense = searching)
+                Spacer(Modifier.height(if (searching) 10.dp else 14.dp))
+                Text(
+                    "Save to",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(Modifier.height(10.dp))
+                CollectionFinder(
+                    query = query,
+                    onQueryChange = onQueryChange,
+                    onFocusChanged = { finderFocused = it }
+                )
+                Spacer(Modifier.height(10.dp))
             }
-            CompactContext(state, dense = searching)
-            Spacer(Modifier.height(if (searching) 10.dp else 14.dp))
-            Text(
-                "Save to",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(Modifier.height(10.dp))
-            CollectionFinder(
-                query = query,
-                onQueryChange = onQueryChange,
-                onFocusChanged = { finderFocused = it }
-            )
-            Spacer(Modifier.height(10.dp))
         }
 
         // The one scroll region: the collection list. weight(1f) lets it grow
         // when the keyboard is closed and shrink when it opens, always keeping
         // the finder above and the footer below in view.
-        if (visibleCategories.isEmpty()) {
-            // In-character empty state: the Keeper went looking and came up
-            // empty, then offers to start the collection they searched for —
-            // instead of a bare line of grey text.
-            Column(
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Spacer(Modifier.height(8.dp))
-                KeeperMascot(size = 92.dp, pose = KeeperPose.Search)
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "No collection called \"$query\" yet",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Want to start one?",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-                Spacer(Modifier.height(14.dp))
-                NewCollectionChip(
-                    label = query.trim().takeIf { it.isNotBlank() }?.let { "Create \"$it\"" } ?: "New",
-                    onClick = { onCreateCollection(query.trim().takeIf { it.isNotBlank() }) }
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                itemsIndexed(visibleCategories, key = { _, c -> c.id }) { index, c ->
-                    val previous = visibleCategories.getOrNull(index - 1)
-                    val group = collectionGroupLabel(c, state.suggestedCategory, state.recentCategoryIds)
-                    val previousGroup = previous?.let {
-                        collectionGroupLabel(it, state.suggestedCategory, state.recentCategoryIds)
-                    }
-                    if (index == 0 || group != previousGroup) {
-                        CollectionGroupLabel(group)
-                    }
-                    CollectionResultRow(
-                        name = c.name,
-                        emoji = c.emoji,
-                        color = Color(c.colorHex),
-                        selected = state.selectedCategory == c.id,
-                        suggested = state.selectedCategory == null &&
-                            state.suggestedCategory == c.id,
-                        onClick = {
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onSelectCategory(c.id)
-                        }
+        if (!editingDetails) {
+            if (visibleCategories.isEmpty()) {
+                // In-character empty state: the Keeper went looking and came up
+                // empty, then offers to start the collection they searched for —
+                // instead of a bare line of grey text.
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(Modifier.height(8.dp))
+                    KeeperMascot(size = 92.dp, pose = KeeperPose.Search)
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "No collection called \"$query\" yet",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Want to start one?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    NewCollectionChip(
+                        label = query.trim().takeIf { it.isNotBlank() }?.let { "Create \"$it\"" } ?: "New",
+                        onClick = { onCreateCollection(query.trim().takeIf { it.isNotBlank() }) }
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(visibleCategories, key = { _, c -> c.id }) { index, c ->
+                        val previous = visibleCategories.getOrNull(index - 1)
+                        val group = collectionGroupLabel(c, state.suggestedCategory, state.recentCategoryIds)
+                        val previousGroup = previous?.let {
+                            collectionGroupLabel(it, state.suggestedCategory, state.recentCategoryIds)
+                        }
+                        if (index == 0 || group != previousGroup) {
+                            CollectionGroupLabel(group)
+                        }
+                        CollectionResultRow(
+                            name = c.name,
+                            emoji = c.emoji,
+                            color = Color(c.colorHex),
+                            selected = state.selectedCategory == c.id,
+                            suggested = state.selectedCategory == null &&
+                                state.suggestedCategory == c.id,
+                            onClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onSelectCategory(c.id)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -586,8 +603,17 @@ private fun FinderPickerBody(
         // Pinned bottom: secondary actions + optional details. Search still
         // gets most of the sheet, but the edit/reminder affordances stay
         // reachable so the user never has to back out of typing to finish.
-        Column(Modifier.padding(horizontal = 20.dp)) {
-            if (!searching) {
+        Column(
+            Modifier
+                .padding(horizontal = 20.dp)
+                // While editing on a short screen the fields get the freed
+                // space and scroll if they still don't fit.
+                .then(if (editingDetails) Modifier.weight(1f).verticalScroll(rememberScrollState()) else Modifier)
+        ) {
+            if (editingDetails) {
+                // Chips step aside too; they come back with the picker.
+                Spacer(Modifier.height(4.dp))
+            } else if (!searching) {
                 Spacer(Modifier.height(10.dp))
                 LazyRow(
                     contentPadding = PaddingValues(end = 8.dp),
@@ -630,6 +656,8 @@ private fun FinderPickerBody(
         SaveFooter(
             isFavorite = state.isFavorite,
             selectedCategoryName = selectedCategoryName,
+            canSave = state.canSave,
+            compact = editingDetails,
             onToggleFavorite = onToggleFavorite,
             onSave = onSave
         )
@@ -684,8 +712,10 @@ private fun CompactContext(state: SaveSheetState, dense: Boolean = false) {
 private fun SaveFooter(
     isFavorite: Boolean,
     selectedCategoryName: String?,
+    canSave: Boolean,
     onToggleFavorite: () -> Unit,
-    onSave: () -> Unit
+    onSave: () -> Unit,
+    compact: Boolean = false
 ) {
     val haptics = LocalHapticFeedback.current
     Row(
@@ -702,7 +732,7 @@ private fun SaveFooter(
                 )
             }
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .padding(horizontal = 20.dp, vertical = if (compact) 2.dp else 12.dp)
             .navigationBarsPadding()
     ) {
         // Heart icon stands on its own; contentDescription preserves the
@@ -720,6 +750,7 @@ private fun SaveFooter(
         }
         Spacer(Modifier.weight(1f))
         Button(
+            enabled = canSave,
             onClick = {
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 onSave()
@@ -731,7 +762,11 @@ private fun SaveFooter(
             )
         ) {
             Text(
-                selectedCategoryName?.let { "Save to $it" } ?: "Save without collection",
+                when {
+                    !canSave -> "Write a note to save"
+                    selectedCategoryName != null -> "Save to $selectedCategoryName"
+                    else -> "Save without collection"
+                },
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -873,13 +908,13 @@ private fun OptionalDetails(
     compact: Boolean = false
 ) {
     val focusManager = LocalFocusManager.current
-    var showTitle by remember { mutableStateOf(false) }
+    var showTitle by rememberSaveable { mutableStateOf(false) }
     // A field that already holds something (a quick note's text, say)
     // starts open so the user can see what's being saved.
     // A quick note (opened from "Note", not a share) starts with the note
     // field open and focused: the user's tap on "Note" asked for it.
-    var showNotes by remember { mutableStateOf(openNotes || notes.isNotBlank()) }
-    var showTags by remember { mutableStateOf(tagsInput.isNotBlank()) }
+    var showNotes by rememberSaveable { mutableStateOf(openNotes || notes.isNotBlank()) }
+    var showTags by rememberSaveable { mutableStateOf(tagsInput.isNotBlank()) }
     // Opening notes/tags puts the cursor there, like the title does —
     // otherwise typing lands in whichever field last had focus.
     var focusTitleOnOpen by remember { mutableStateOf(false) }

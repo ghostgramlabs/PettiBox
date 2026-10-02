@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Parcelable
+import androidx.compose.runtime.saveable.Saver
 
 data class IncomingShare(
     val text: String? = null,
@@ -18,6 +19,35 @@ data class IncomingShare(
         get() = !text.isNullOrBlank() || urls.isNotEmpty() || imageUris.isNotEmpty() || fileUris.isNotEmpty()
 
     companion object {
+        /**
+         * Keeps an open Save sheet's share across rotation and process
+         * recreation (rememberSaveable). Null isn't saved, so it restores
+         * as "no sheet open".
+         */
+        val Saver: Saver<IncomingShare?, Any> = Saver(
+            save = { share ->
+                share?.let {
+                    arrayListOf(
+                        it.text, ArrayList(it.urls),
+                        ArrayList(it.imageUris.map(Uri::toString)), ArrayList(it.fileUris.map(Uri::toString)),
+                        it.mimeType, it.senderPackage
+                    )
+                }
+            },
+            restore = { saved ->
+                @Suppress("UNCHECKED_CAST")
+                val v = saved as List<Any?>
+                IncomingShare(
+                    text = v[0] as String?,
+                    urls = v[1] as List<String>,
+                    imageUris = (v[2] as List<String>).map(Uri::parse),
+                    fileUris = (v[3] as List<String>).map(Uri::parse),
+                    mimeType = v[4] as String?,
+                    senderPackage = v[5] as String?
+                )
+            }
+        )
+
         fun from(intent: Intent?): IncomingShare {
             if (intent == null) return IncomingShare()
             val mime = intent.type
