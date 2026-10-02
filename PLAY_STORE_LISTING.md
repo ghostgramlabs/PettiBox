@@ -197,22 +197,21 @@ Data safety positioning:
 - Backup files are user-controlled exports.
 - Google Drive backup is optional and opt-in: backups upload to the user's own Drive under the drive.file scope (the app can only access files it created). No data is sent to the developer; disconnecting stops uploads and leaves existing copies in the user's Drive.
 
-## Release Notes (What's New) — 2.0.10
+## Release Notes (What's New) — 2.0.11
 
-Covers everything since 2.0.7 (2.0.10 adds multi-file sharing and fixes). Keep under Play's 500-character limit; Spanish and
-Hindi versions are in PLAY_STORE_LISTING_TRANSLATIONS.md.
+What's new for people updating from 2.0.8, the current production release (2.0.9 and 2.0.10
+were never rolled out). Keep under Play's 500-character limit; Spanish and Hindi
+versions are in PLAY_STORE_LISTING_TRANSLATIONS.md.
 
 ```
-NEW: Read saved articles offline, open PDFs in the app, and zoom photos.
-NEW: Unread list, home screen widget, app shortcuts and an optional weekly nudge.
-NEW: App lock with fingerprint, face or PIN — you choose how soon it locks.
-NEW: Share several PDFs or files at once.
-NEW: Recently deleted keeps saves for 30 days.
-IMPROVED: Quick notes open ready to type and are named after their first line.
-A fresh new icon, and lots of fixes.
+NEW: Share several PDFs or files at once, or pick several in the app.
+NEW: The widget shows your saves while PettiBox is unlocked.
+NEW: Restore straight from the backups saved on this phone.
+IMPROVED: Search finds every match, not just recent ones, and updates as you save.
+FIXED: Next/Previous in the photo viewer, images saved as PDFs, links that differ only by capital letters, and drafts lost when rotating.
 ```
 
-Character count: 435 / 500
+Character count: 411 / 500
 
 ## Feature Graphic
 
