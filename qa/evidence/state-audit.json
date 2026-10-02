@@ -1,0 +1,17 @@
+{
+  "total_saves": 9,
+  "empty_notes": 1,
+  "case_sensitive_import_expected": 2,
+  "case_sensitive_import_actual": 1,
+  "qa_collection_note_saved": 1,
+  "large_font_note_saved": 1,
+  "attachment_files": [
+    "0baa7de8-fbb7-4f60-bd5d-a094d72cdbde.bin",
+    "2179aa1a-8183-4800-bf2d-f03d146e81a5.bin",
+    "b13987cd-73a3-4c5b-ab04-d6e7f7f7b607.png"
+  ],
+  "unreferenced_attachment_files": [
+    "2179aa1a-8183-4800-bf2d-f03d146e81a5.bin",
+    "b13987cd-73a3-4c5b-ab04-d6e7f7f7b607.png"
+  ]
+}

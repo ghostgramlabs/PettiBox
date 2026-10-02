@@ -1,0 +1,43 @@
+Starting: Intent { cmp=com.ghostgramlabs.pettibox/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.ghostgramlabs.pettibox/.MainActivity
+TotalTime: 6027
+WaitTime: 6029
+Complete
+
+
+Starting: Intent { cmp=com.ghostgramlabs.pettibox/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.ghostgramlabs.pettibox/.MainActivity
+TotalTime: 2140
+WaitTime: 2166
+Complete
+
+
+Starting: Intent { cmp=com.ghostgramlabs.pettibox/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.ghostgramlabs.pettibox/.MainActivity
+TotalTime: 2144
+WaitTime: 2149
+Complete
+
+
+Starting: Intent { cmp=com.ghostgramlabs.pettibox/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.ghostgramlabs.pettibox/.MainActivity
+TotalTime: 2129
+WaitTime: 2131
+Complete
+
+
+Starting: Intent { cmp=com.ghostgramlabs.pettibox/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.ghostgramlabs.pettibox/.MainActivity
+TotalTime: 2198
+WaitTime: 2201
+Complete
