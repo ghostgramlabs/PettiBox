@@ -1143,12 +1143,12 @@ fun SettingsScreen(
                 HelpGroupTitle("The basics")
                 HelpItem(
                     title = "Save from any app",
-                    body = "Tap Share in another app, choose PettiBox, pick a collection, then save. You can also highlight text in any app and choose \"Save to PettiBox\" from the selection menu. Add a note or reminder only when you need it.",
+                    body = "Tap Share in another app, choose PettiBox, pick a collection, then save. Several photos, PDFs or files shared together become one save. You can also highlight text in any app and choose \"Save to PettiBox\" from the selection menu. Add a note or reminder only when you need it.",
                     icon = Icons.Rounded.Share
                 )
                 HelpItem(
                     title = "Add from PettiBox",
-                    body = "Tap the + button on Home to add a note, paste a link, choose pictures, or pick a file.",
+                    body = "Tap the + button on Home to add a note, paste a link, choose pictures, or pick one or more files.",
                     icon = Icons.Rounded.PhoneAndroid
                 )
                 HelpItem(
@@ -1249,7 +1249,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Restore from a backup",
-                    body = "New phone, or need to recover? Tap \"Restore a backup\" in the Backup section and choose Google Drive or a backup file — everything comes back either way.",
+                    body = "New phone, or need to recover? Tap \"Restore a backup\" in the Backup section and choose Google Drive, one of the automatic copies on this phone, or a backup file. Saves you already have are skipped, so nothing gets duplicated.",
                     icon = Icons.Rounded.FolderOpen
                 )
                 HelpItem(
