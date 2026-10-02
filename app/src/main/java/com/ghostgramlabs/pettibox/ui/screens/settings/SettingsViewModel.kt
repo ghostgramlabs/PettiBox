@@ -93,6 +93,10 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun setAppLock(enabled: Boolean) = appLockPreferences.setEnabled(enabled)
 
+    val appLockAfterMs: Flow<Long> = appLockPreferences.lockAfterMs
+
+    suspend fun setAppLockAfterMs(ms: Long) = appLockPreferences.setLockAfterMs(ms)
+
     /** True when this "it just worked" moment should show Play's review sheet. */
     suspend fun claimHappyMoment(moment: String): Boolean = ratingPreferences.claimHappyMoment(moment)
 

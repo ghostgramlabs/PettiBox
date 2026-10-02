@@ -3,6 +3,7 @@ package com.ghostgramlabs.pettibox.ui.lock
 import android.app.KeyguardManager
 import android.content.Context
 import android.os.Build
+import android.os.SystemClock
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
@@ -27,6 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +41,8 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.ui.components.KeeperMascot
 import com.ghostgramlabs.pettibox.ui.components.KeeperPose
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,28 +51,38 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Process-wide unlock state. The app starts locked, stays unlocked while
- * it's in use, and locks again once it has been in the background for
- * [GRACE_MS] — long enough to pick a photo or confirm a PIN without being
- * asked twice, short enough that a phone left on a table isn't open.
+ * it's in use, and locks again once it has been in the background longer
+ * than [lockAfterMs] (the user's "Lock after" choice, 1 minute by default).
  */
 object AppLockSession {
-    private const val GRACE_MS = 60_000L
-
     private val _unlocked = MutableStateFlow(false)
     val unlocked: StateFlow<Boolean> = _unlocked.asStateFlow()
+
+    /** Kept in step with the "Lock after" preference by the Application. */
+    @Volatile var lockAfterMs: Long = AppLockPreferences.DEFAULT_LOCK_AFTER_MS
+
+    // Uptime, not wall-clock time: changing the phone's clock must not
+    // stretch the grace period.
     private var backgroundedAt = 0L
+
+    // The phone-PIN screen is another app's activity, so asking for the PIN
+    // backgrounds us. Leaving for the prompt must not count as leaving.
+    private var prompting = false
 
     /** Call once from Application.onCreate (main thread). */
     fun install() {
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
-                backgroundedAt = System.currentTimeMillis()
+                if (!prompting) backgroundedAt = SystemClock.elapsedRealtime()
             }
 
             override fun onStart(owner: LifecycleOwner) {
-                if (backgroundedAt > 0 && System.currentTimeMillis() - backgroundedAt > GRACE_MS) {
+                if (!prompting && backgroundedAt > 0 &&
+                    SystemClock.elapsedRealtime() - backgroundedAt >= lockAfterMs
+                ) {
                     _unlocked.value = false
                 }
+                backgroundedAt = 0L
             }
         })
     }
@@ -95,11 +111,13 @@ object AppLockSession {
     ) {
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                prompting = false
                 markUnlocked()
                 onSuccess()
             }
 
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                prompting = false
                 onFailure()
             }
         }
@@ -108,8 +126,12 @@ object AppLockSession {
             .setSubtitle("Use your fingerprint, face, or phone PIN")
             .setAllowedAuthenticators(BIOMETRIC_WEAK or DEVICE_CREDENTIAL)
             .build()
+        prompting = true
         runCatching { BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), callback).authenticate(info) }
-            .onFailure { onFailure() }
+            .onFailure {
+                prompting = false
+                onFailure()
+            }
     }
 }
 
@@ -125,6 +147,13 @@ fun AppLockGate(
     content: @Composable () -> Unit
 ) {
     val unlocked by AppLockSession.unlocked.collectAsState()
+    // Re-checked on every resume, so adding a screen lock back in Android
+    // settings brings the lock back the moment the user returns.
+    var available by remember { mutableStateOf(AppLockSession.isAvailable(activity)) }
+    LifecycleResumeEffect(Unit) {
+        available = AppLockSession.isAvailable(activity)
+        onPauseOrDispose { }
+    }
     // Hide saves from the Recents thumbnail while the lock is on.
     LaunchedEffect(enabled) {
         if (enabled != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -136,7 +165,7 @@ fun AppLockGate(
         // If the phone's screen lock was removed after App lock was turned
         // on, there's nothing left to unlock with — step aside rather than
         // lock the user out of their own saves.
-        !enabled || unlocked || !AppLockSession.isAvailable(activity) -> content()
+        !enabled || unlocked || !available -> content()
         else -> {
             // Ask straight away; the screen behind stays as the retry.
             LaunchedEffect(Unit) { AppLockSession.prompt(activity, onSuccess = {}) }

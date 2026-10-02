@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -93,6 +94,7 @@ import com.ghostgramlabs.pettibox.BuildConfig
 import com.ghostgramlabs.pettibox.data.drive.DriveBackupFile
 import com.ghostgramlabs.pettibox.data.drive.DriveBackupManager
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
+import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.data.preferences.DriveBackupStatus
 import com.ghostgramlabs.pettibox.data.preferences.LocalBackupStatus
 import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
@@ -160,6 +162,16 @@ fun SettingsScreen(
     var showRemoveOfflineCopies by remember { mutableStateOf(false) }
     val weeklyNudge by viewModel.weeklyNudge.collectAsStateWithLifecycle(initialValue = true)
     val appLockOn by viewModel.appLock.collectAsStateWithLifecycle(initialValue = false)
+    val appLockAfterMs by viewModel.appLockAfterMs.collectAsStateWithLifecycle(
+        initialValue = AppLockPreferences.DEFAULT_LOCK_AFTER_MS
+    )
+    // Re-checked on every resume: the user may have just removed (or added)
+    // the phone's screen lock in Android settings.
+    var appLockAvailable by remember { mutableStateOf(true) }
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        appLockAvailable = AppLockSession.isAvailable(ctx)
+        onPauseOrDispose { }
+    }
     val requestNotificationPermission = rememberNotificationPermissionRequester()
     // Play's review sheet after an "it just worked" moment (see RatingPreferences).
     val askForReview: suspend (String) -> Unit = { moment ->
@@ -1139,7 +1151,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Lock PettiBox",
-                    body = "Turn on App lock under Privacy to require your fingerprint, face, or phone PIN. It locks again a minute after you leave the app, and the widget and weekly nudge stop showing titles.",
+                    body = "Turn on App lock under Privacy to require your fingerprint, face, or phone PIN. Pick how soon it locks again after you leave the app (a minute by default), and the widget and weekly nudge stop showing titles.",
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
@@ -1185,7 +1197,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Ask for your fingerprint, face, or phone PIN to open PettiBox or save into it. It locks again a minute after you leave, and hides titles from the widget and notifications.",
+                            "Ask for your fingerprint, face, or phone PIN to open PettiBox or save into it. While it's on, the widget and notifications hide titles.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1217,6 +1229,28 @@ fun SettingsScreen(
                                 )
                             }
                         }
+                    )
+                }
+                if (appLockOn && !appLockAvailable) {
+                    // The gate steps aside when there's nothing to unlock
+                    // with; say so instead of showing a switch that lies.
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        "Paused: this phone has no screen lock right now, so PettiBox opens without asking. Set a PIN, pattern, or fingerprint in your phone's settings and the lock comes back on its own.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else if (appLockOn) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Lock after leaving",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LockAfterChoices(
+                        selectedMs = appLockAfterMs,
+                        onSelect = { ms -> scope.launch { viewModel.setAppLockAfterMs(ms) } }
                     )
                 }
             }
@@ -1928,6 +1962,43 @@ private fun PageLimitChoice(
         colors = colors
     ) {
         Text("$limit", fontWeight = FontWeight.Bold)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LockAfterChoices(selectedMs: Long, onSelect: (Long) -> Unit) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AppLockPreferences.LOCK_AFTER_OPTIONS.forEach { (label, ms) ->
+            LockAfterChoice(label = label, selected = selectedMs == ms, onClick = { onSelect(ms) })
+        }
+    }
+}
+
+@Composable
+private fun LockAfterChoice(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = if (selected) {
+        ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+            contentColor = MaterialTheme.colorScheme.primary
+        )
+    } else {
+        ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
+    }
+    OutlinedButton(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        colors = colors,
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Text(label, fontWeight = FontWeight.Bold, maxLines = 1)
     }
 }
 

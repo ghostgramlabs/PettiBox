@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.ghostgramlabs.pettibox.data.backup.LocalBackupWorker
+import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.data.preferences.BackupPreferences
 import com.ghostgramlabs.pettibox.data.preferences.OnboardingPreferences
 import com.ghostgramlabs.pettibox.data.preferences.ReminderPreferences
@@ -31,6 +32,7 @@ class PettiBoxApp : Application(), Configuration.Provider {
     @Inject lateinit var onboardingPreferences: OnboardingPreferences
     @Inject lateinit var shelfNudgePreferences: ShelfNudgePreferences
     @Inject lateinit var reminderPreferences: ReminderPreferences
+    @Inject lateinit var appLockPreferences: AppLockPreferences
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -45,6 +47,9 @@ class PettiBoxApp : Application(), Configuration.Provider {
         // ignores duplicate registrations after the first one took effect.
         ReminderNotifications.ensureChannel(this)
         AppLockSession.install()
+        appScope.launch {
+            appLockPreferences.lockAfterMs.collect { AppLockSession.lockAfterMs = it }
+        }
         // Seed starter collections once per install. Users can rename and
         // delete starters now, so seeding must never re-run — the flag,
         // not the table contents, decides.
