@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -55,6 +54,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.ghostgramlabs.pettibox.domain.model.ContentType
 import com.ghostgramlabs.pettibox.domain.model.SourceApp
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
@@ -79,6 +80,7 @@ fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val results = viewModel.results.collectAsLazyPagingItems()
     var showFilters by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     // O(1) accent lookup per result card — mirrors the Home perf pass.
@@ -211,7 +213,7 @@ fun SearchScreen(
                 onToggleTag = viewModel::toggleTag,
                 onToggleReminders = viewModel::toggleReminders
             )
-            if (state.results.isNotEmpty()) {
+            if (state.resultCount > 0) {
                 Spacer(Modifier.height(8.dp))
                 SearchSortStrip(selected = state.sort, onSelect = viewModel::setSort)
             }
@@ -235,7 +237,7 @@ fun SearchScreen(
                         onToggleReminders = viewModel::toggleReminders
                     )
                 }
-                state.results.isEmpty() -> NoResultsRecovery(
+                state.resultCount == 0 -> NoResultsRecovery(
                     query = state.query,
                     hasFilters = anyFilter,
                     onClearFilters = viewModel::clearFilters,
@@ -256,14 +258,15 @@ fun SearchScreen(
                             // reads as part of the same app.
                             SectionHeader(
                                 title = "Matches",
-                                subtitle = "${state.results.size} found"
+                                subtitle = "${state.resultCount} found"
                             )
                         }
                         items(
-                            state.results,
-                            key = { it.id },
+                            count = results.itemCount,
+                            key = results.itemKey { it.id },
                             contentType = { "result" }
-                        ) { item ->
+                        ) { index ->
+                            val item = results[index] ?: return@items
                             val cat = categoriesById[item.categoryId]
                             SaveCard(
                                 item = item,

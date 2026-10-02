@@ -385,6 +385,35 @@ fun SettingsScreen(
         }
     }
 
+    // ── This phone's automatic copies ─────────────────────────────────────
+    var localRestoreChoices by remember { mutableStateOf<List<File>?>(null) }
+
+    val runLocalRestore: (File) -> Unit = { file ->
+        scope.launch {
+            busyLabel = "Restoring backup"
+            runCatching { viewModel.restoreFromLocal(file) }
+                .onSuccess { result ->
+                    snackbarHostState.showSnackbar(restoreResultMessage(result))
+                    if (result.saves > 0) askForReview(RatingPreferences.MOMENT_RESTORE)
+                }
+                .onFailure {
+                    snackbarHostState.showSnackbar("That backup couldn't be restored")
+                }
+            busyLabel = null
+        }
+    }
+
+    val openLocalRestore: () -> Unit = {
+        scope.launch {
+            val copies = viewModel.listLocalBackups()
+            if (copies.isEmpty()) {
+                snackbarHostState.showSnackbar("No copies on this phone yet — tap \"Back up now\" first")
+            } else {
+                localRestoreChoices = copies
+            }
+        }
+    }
+
     // ── Google Drive: connect, upload-now, restore ────────────────────────
     var driveRestoreChoices by remember { mutableStateOf<List<DriveBackupFile>?>(null) }
 
@@ -540,6 +569,15 @@ fun SettingsScreen(
                         }
                     )
                     RestoreSourceRow(
+                        icon = Icons.Rounded.PhoneAndroid,
+                        title = "From this phone",
+                        caption = "One of the automatic copies PettiBox keeps here",
+                        onClick = {
+                            showRestoreChooser = false
+                            openLocalRestore()
+                        }
+                    )
+                    RestoreSourceRow(
                         icon = Icons.Rounded.FolderOpen,
                         title = "From a file",
                         caption = "Pick a PettiBox backup zip from this phone",
@@ -574,11 +612,61 @@ fun SettingsScreen(
                     when (pending) {
                         is PendingRestore.FromFile -> runFileRestore(pending.uri)
                         is PendingRestore.FromDrive -> runDriveRestore(pending.backup)
+                        is PendingRestore.FromLocal -> runLocalRestore(pending.file)
                     }
                 }) { Text("Restore") }
             },
             dismissButton = {
                 TextButton(onClick = { pendingRestore = null }) { Text("Cancel") }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
+    localRestoreChoices?.let { copies ->
+        AlertDialog(
+            onDismissRequest = { localRestoreChoices = null },
+            title = { Text("Restore from this phone") },
+            text = {
+                Column {
+                    Text(
+                        "Pick a copy. Your current saves stay — the backup's items are added alongside them, and anything already here is skipped.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    copies.forEach { file ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    localRestoreChoices = null
+                                    if (totalSaves > 0) {
+                                        pendingRestore = PendingRestore.FromLocal(file)
+                                    } else {
+                                        runLocalRestore(file)
+                                    }
+                                }
+                                .padding(horizontal = 8.dp, vertical = 10.dp)
+                        ) {
+                            Text(
+                                formatBackupTime(file.lastModified()),
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                formatStorage(file.length()),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { localRestoreChoices = null }) { Text("Cancel") }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -2240,6 +2328,7 @@ private fun ThemeChoice(
 private sealed interface PendingRestore {
     data class FromFile(val uri: Uri) : PendingRestore
     data class FromDrive(val backup: DriveBackupFile) : PendingRestore
+    data class FromLocal(val file: File) : PendingRestore
 }
 
 private fun shareBackupFile(ctx: Context, file: File): Boolean =

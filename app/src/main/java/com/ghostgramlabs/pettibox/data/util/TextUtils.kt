@@ -23,6 +23,21 @@ object TextUtils {
         return firstLine.take(77) + "…"
     }
 
+    /**
+     * Key for "is this the same link?" checks. Scheme and host are
+     * case-insensitive, so they're lowercased; the path, query and fragment
+     * can name different pages by case alone (/Report vs /report), so they
+     * are kept exactly.
+     */
+    fun urlDedupeKey(url: String): String {
+        val t = url.trim()
+        val schemeEnd = t.indexOf("://")
+        if (schemeEnd <= 0) return t
+        val authorityStart = schemeEnd + 3
+        val authorityEnd = t.indexOfAny(charArrayOf('/', '?', '#'), authorityStart).let { if (it < 0) t.length else it }
+        return t.substring(0, authorityEnd).lowercase() + t.substring(authorityEnd)
+    }
+
     fun hostOf(url: String?): String? {
         if (url.isNullOrBlank()) return null
         return runCatching {

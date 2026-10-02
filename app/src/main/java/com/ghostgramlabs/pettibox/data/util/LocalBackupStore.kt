@@ -44,6 +44,13 @@ class LocalBackupStore @Inject constructor(
             .orEmpty()
             .maxByOrNull { it.lastModified() }
 
+    /** The automatic copies kept on this phone, newest first. */
+    fun listBackups(): List<File> =
+        backupDir()
+            .listFiles { file -> file.isFile && file.name.startsWith("pettibox-auto-backup-") && file.extension == "zip" }
+            .orEmpty()
+            .sortedByDescending { it.lastModified() }
+
     fun backupLocationLabel(): String = "Device storage / PettiBox backups"
 
     fun backupPath(): String = backupDir().absolutePath

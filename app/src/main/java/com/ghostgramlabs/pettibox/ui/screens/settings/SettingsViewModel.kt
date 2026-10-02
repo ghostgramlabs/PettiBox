@@ -231,6 +231,12 @@ class SettingsViewModel @Inject constructor(
 
     fun localBackupLocationLabel(): String = localBackupStore.backupLocationLabel()
 
+    /** The automatic copies on this phone. They live in app storage the system file picker can't show. */
+    suspend fun listLocalBackups(): List<File> = withContext(Dispatchers.IO) { localBackupStore.listBackups() }
+
+    suspend fun restoreFromLocal(file: File): SaveRepository.BackupImportResult =
+        withContext(Dispatchers.IO) { file.inputStream().use { repo.importBackupZip(it) } }
+
     fun localBackupPath(): String = localBackupStore.backupPath()
 
     suspend fun importBackupUri(uri: Uri): SaveRepository.BackupImportResult =

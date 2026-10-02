@@ -69,9 +69,6 @@ interface SaveDao {
     @Query("SELECT * FROM save_items WHERE id = :id LIMIT 1")
     fun observeById(id: Long): Flow<SaveItemEntity?>
 
-    @Query("SELECT * FROM save_items WHERE is_pending_delete = 0 ORDER BY created_at DESC LIMIT :limit")
-    suspend fun browseForSearch(limit: Int = 200): List<SaveItemEntity>
-
     @Query("SELECT * FROM save_items WHERE is_pending_delete = 0 ORDER BY created_at DESC")
     suspend fun allForExport(): List<SaveItemEntity>
 
@@ -104,7 +101,7 @@ interface SaveDao {
     suspend fun pdfItemsNeedingOcr(): List<SaveItemEntity>
 
     // ── Hot, capped browses (Home) ───────────────────────────────────────
-    // Home views hide archived items. Search (FTS + browseForSearch) still
+    // Home views hide archived items. Search (pagedSearch) still
     // returns them so "I'm done with this" doesn't make a save unfindable.
 
     @Query("SELECT * FROM save_items WHERE is_archived = 0 AND is_pending_delete = 0 ORDER BY created_at DESC LIMIT :limit")
@@ -423,22 +420,65 @@ interface SaveDao {
     )
     suspend fun appendOcrText(id: Long, text: String, ts: Long = System.currentTimeMillis())
 
-    // ── FTS search ───────────────────────────────────────────────────────
+    // ── Search screen: filtered + sorted in SQL, paged, live ─────────────
+    // Every filter and the sort run inside the query, over the whole
+    // library: no "newest 200 first, filter after" cap that hid older
+    // matches. Room re-runs these when any table they read changes, so an
+    // open search picks up new saves, edits and finished OCR by itself.
 
-    @Query(
-        """
-        SELECT s.* FROM save_items s
-        WHERE s.is_pending_delete = 0 AND (
-            s.id IN (SELECT rowid FROM save_items_fts WHERE save_items_fts MATCH :query)
-            -- Words inside a link's offline article copy count too.
-            OR s.id IN (SELECT rowid FROM article_copies_fts WHERE article_copies_fts MATCH :query)
-        )
-        ORDER BY s.created_at DESC
-        LIMIT 200
-        """
-    )
-    suspend fun search(query: String): List<SaveItemEntity>
+    @Query("SELECT s.* FROM save_items s " + SEARCH_WHERE + " ORDER BY " + SEARCH_ORDER)
+    fun pagedSearch(
+        hasQuery: Boolean,
+        query: String,
+        source: String?,
+        category: String?,
+        type: String?,
+        tag: String?,
+        remindersOnly: Boolean,
+        now: Long,
+        sort: String
+    ): PagingSource<Int, SaveItemEntity>
+
+    @Query("SELECT COUNT(*) FROM save_items s " + SEARCH_WHERE)
+    fun observeSearchCount(
+        hasQuery: Boolean,
+        query: String,
+        source: String?,
+        category: String?,
+        type: String?,
+        tag: String?,
+        remindersOnly: Boolean,
+        now: Long
+    ): Flow<Int>
 }
+
+/**
+ * Search screen filter. With [hasQuery] false the FTS branches are skipped
+ * and every live save is a candidate. Archived saves are included on
+ * purpose: search is how tucked-away saves are found again.
+ */
+private const val SEARCH_WHERE = """
+    WHERE s.is_pending_delete = 0
+    AND (:hasQuery = 0
+        OR s.id IN (SELECT rowid FROM save_items_fts WHERE save_items_fts MATCH :query)
+        OR s.id IN (SELECT rowid FROM article_copies_fts WHERE article_copies_fts MATCH :query))
+    AND (:source IS NULL OR s.source_app = :source)
+    AND (:category IS NULL OR s.category_id = :category)
+    AND (:type IS NULL OR s.content_type = :type)
+    AND (:remindersOnly = 0 OR s.remind_at > :now)
+    AND (:tag IS NULL OR s.id IN (
+        SELECT it.item_id FROM item_tags it JOIN tags t ON t.id = it.tag_id
+        WHERE t.name = :tag COLLATE NOCASE))
+"""
+
+/** RELEVANT and NEWEST both mean newest first; reminders soonest first, none last. */
+private const val SEARCH_ORDER = """
+    CASE WHEN :sort = 'OLDEST' THEN s.created_at END ASC,
+    CASE WHEN :sort = 'UPDATED' THEN s.updated_at END DESC,
+    CASE WHEN :sort = 'REMINDER' AND s.remind_at IS NULL THEN 1 ELSE 0 END ASC,
+    CASE WHEN :sort = 'REMINDER' THEN s.remind_at END ASC,
+    s.created_at DESC
+"""
 
 data class SourceCount(val source: String, val count: Int)
 data class CategoryCount(val categoryId: String, val count: Int)

@@ -22,10 +22,12 @@ import com.ghostgramlabs.pettibox.data.backup.BackupSummaryCalculator
 import com.ghostgramlabs.pettibox.data.bookmarks.BookmarkCsvWriter
 import com.ghostgramlabs.pettibox.data.bookmarks.ImportedBookmark
 import com.ghostgramlabs.pettibox.data.util.AttachmentStore
+import com.ghostgramlabs.pettibox.data.util.TextUtils
 import com.ghostgramlabs.pettibox.domain.model.CategoryPalette
 import com.ghostgramlabs.pettibox.domain.model.ContentType
 import com.ghostgramlabs.pettibox.domain.model.SourceApp
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -160,8 +162,6 @@ class SaveRepository @Inject constructor(
     fun observeRecent(limit: Int = 20) = saveDao.observeRecent(limit)
     fun observeFavorites() = saveDao.observeFavorites()
     fun observePinned() = saveDao.observePinned()
-    suspend fun browseForSearch(): List<SaveItemEntity> = saveDao.browseForSearch()
-
     // Paged browses for large lists.
     fun pagedAll(includeArchived: Boolean = false, sort: String = "NEWEST"): PagingSource<Int, SaveItemEntity> =
         saveDao.pagedAll(includeArchived, sort)
@@ -215,11 +215,47 @@ class SaveRepository @Inject constructor(
     suspend fun imageItemsNeedingOcr(): List<SaveItemEntity> = saveDao.imageItemsNeedingOcr()
     suspend fun pdfItemsNeedingOcr(): List<SaveItemEntity> = saveDao.pdfItemsNeedingOcr()
 
-    suspend fun search(rawQuery: String): List<SaveItemEntity> {
-        val q = SearchQuerySanitizer.sanitizeFtsQuery(rawQuery)
-        if (q.isBlank()) return emptyList()
-        return runCatching { saveDao.search(q) }.getOrDefault(emptyList())
-    }
+    /** The Search screen's query: sanitized FTS text (blank = filters only) plus filters. */
+    data class SearchSpec(
+        val ftsQuery: String,
+        val source: String?,
+        val category: String?,
+        val type: String?,
+        val tag: String?,
+        val remindersOnly: Boolean,
+        val now: Long
+    )
+
+    fun searchSpec(
+        rawQuery: String,
+        source: String?,
+        category: String?,
+        type: String?,
+        tag: String?,
+        remindersOnly: Boolean
+    ): SearchSpec = SearchSpec(
+        ftsQuery = SearchQuerySanitizer.sanitizeFtsQuery(rawQuery),
+        source = source,
+        category = category,
+        type = type,
+        tag = tag,
+        remindersOnly = remindersOnly,
+        now = System.currentTimeMillis()
+    )
+
+    // With no text query the FTS branches are skipped in SQL; "x" just keeps
+    // the unused MATCH argument well-formed.
+    fun pagedSearch(spec: SearchSpec, sort: String): PagingSource<Int, SaveItemEntity> = saveDao.pagedSearch(
+        hasQuery = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" },
+        source = spec.source, category = spec.category, type = spec.type, tag = spec.tag,
+        remindersOnly = spec.remindersOnly, now = spec.now, sort = sort
+    )
+
+    fun observeSearchCount(spec: SearchSpec): Flow<Int> = saveDao.observeSearchCount(
+        hasQuery = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" },
+        source = spec.source, category = spec.category, type = spec.type, tag = spec.tag,
+        remindersOnly = spec.remindersOnly, now = spec.now
+    ).catch { emit(0) }
 
     // ── Categories ────────────────────────────────────────────────────────
 
@@ -491,6 +527,11 @@ class SaveRepository @Inject constructor(
         // Article entries are spooled to temp files (keyed by the backup's
         // save id) and inserted after the saves exist, one at a time.
         val articleFiles = mutableMapOf<Long, File>()
+        // Files are copied in as the ZIP streams past, before we know whether
+        // the backup is valid or which saves are duplicates. Track what the
+        // import actually references so the rest can be removed afterwards.
+        val usedFileUris = mutableSetOf<String>()
+        var imported = false
         try {
             ZipInputStream(input.buffered()).use { zip ->
                 while (true) {
@@ -530,20 +571,26 @@ class SaveRepository @Inject constructor(
                 }
             }
             val json = backupJson ?: error("Missing backup.json")
-            return importBackupJson(json, fileUrisByPath, articleFiles)
+            return importBackupJson(json, fileUrisByPath, articleFiles, usedFileUris).also { imported = true }
         } finally {
             articleFiles.values.forEach { it.delete() }
+            // A failed import rolled its rows back, so none of its copies are
+            // referenced; a successful one keeps only what it attached.
+            val orphans = fileUrisByPath.values.filter { !imported || it !in usedFileUris }
+            if (orphans.isNotEmpty()) attachmentStore.deleteByUris(orphans)
         }
     }
 
     suspend fun importBackupJson(json: String): BackupImportResult =
-        importBackupJson(json, emptyMap(), emptyMap())
+        importBackupJson(json, emptyMap(), emptyMap(), mutableSetOf())
 
     private suspend fun importBackupJson(
         json: String,
         fileUrisByPath: Map<String, String>,
-        articleFiles: Map<Long, File>
+        articleFiles: Map<Long, File>,
+        usedFileUris: MutableSet<String>
     ): BackupImportResult = database.withTransaction {
+        val backupFiles = fileUrisByPath.values.toSet()
         // Wrapping the whole import in a transaction means a mid-flight
         // failure (process death, OOM, malformed entry) rolls everything
         // back — the user retries from the same backup file and doesn't
@@ -581,7 +628,7 @@ class SaveRepository @Inject constructor(
         val existingFingerprints = mutableSetOf<String>()
         for (key in saveDao.dedupeKeys()) {
             val url = key.url?.trim()
-            if (!url.isNullOrEmpty()) existingUrls.add(url.lowercase())
+            if (!url.isNullOrEmpty()) existingUrls.add(TextUtils.urlDedupeKey(url))
             else existingFingerprints.add("${key.contentType}|${key.createdAt}|${key.title}")
         }
 
@@ -613,7 +660,7 @@ class SaveRepository @Inject constructor(
                 updatedAt = s.optLong("updatedAt", System.currentTimeMillis()),
                 openedAt = s.optNullableLong("openedAt")
             )
-            val urlKey = imported.url?.trim()?.takeIf { it.isNotEmpty() }?.lowercase()
+            val urlKey = imported.url?.trim()?.takeIf { it.isNotEmpty() }?.let(TextUtils::urlDedupeKey)
             val fingerprint = if (urlKey == null) {
                 "${imported.contentType}|${imported.createdAt}|${imported.title}"
             } else null
@@ -627,6 +674,8 @@ class SaveRepository @Inject constructor(
             val newId = saveDao.insert(imported)
             if (oldId > 0) itemIdMap[oldId] = newId
             saveCount++
+            listOfNotNull(imported.localUri, imported.thumbnailUri)
+                .filterTo(usedFileUris) { it in backupFiles }
         }
 
         var attachmentCount = 0
@@ -648,6 +697,7 @@ class SaveRepository @Inject constructor(
             }
         }
         if (attachmentRows.isNotEmpty()) {
+            attachmentRows.mapNotNullTo(usedFileUris) { row -> row.uri.takeIf { it in backupFiles } }
             attachmentDao.insertAll(attachmentRows)
             attachmentCount = attachmentRows.size
         }
@@ -725,7 +775,7 @@ class SaveRepository @Inject constructor(
 
             for (bookmark in bookmarks) {
                 val url = bookmark.url.trim()
-                if (!seenUrls.add(url.lowercase()) || saveDao.findByUrl(url) != null) {
+                if (!seenUrls.add(TextUtils.urlDedupeKey(url)) || saveDao.findByUrl(url) != null) {
                     skipped++
                     continue
                 }

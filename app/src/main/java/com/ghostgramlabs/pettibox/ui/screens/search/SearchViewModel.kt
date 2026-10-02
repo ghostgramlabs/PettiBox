@@ -3,6 +3,10 @@ package com.ghostgramlabs.pettibox.ui.screens.search
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
@@ -13,6 +17,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +26,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
@@ -33,7 +38,8 @@ data class SearchState(
     val typeFilter: ContentType? = null,
     val tagFilter: String? = null,
     val reminderFilter: Boolean = false,
-    val results: List<SaveItemEntity> = emptyList(),
+    /** Total matches; the matches themselves page in via SearchViewModel.results. */
+    val resultCount: Int = 0,
     val categories: List<CategoryEntity> = emptyList(),
     val knownTags: List<String> = emptyList(),
     val sources: List<SourceApp> = emptyList(),
@@ -46,6 +52,15 @@ enum class SearchSort(val label: String) {
     OLDEST("Oldest"),
     UPDATED("Recently edited"),
     REMINDER("Reminder time")
+}
+
+/** What the results area should run. */
+private sealed interface SearchTarget {
+    /** Blank query and no filters: the discovery screen shows instead. */
+    data object Idle : SearchTarget
+    /** A query of only punctuation/operators: nothing can match it. */
+    data object NoMatch : SearchTarget
+    data class Run(val spec: SaveRepository.SearchSpec) : SearchTarget
 }
 
 private data class Filters(
@@ -76,83 +91,60 @@ class SearchViewModel @Inject constructor(
         _sourceFilter, _categoryFilter, _typeFilter, _tagFilter, _reminderFilter
     ) { src, cat, type, tag, reminders -> Filters(src, cat, type, tag, reminders) }
 
-    private val candidates: StateFlow<List<SaveItemEntity>> = combine(
-        _query
-            .debounce(180)
-            .distinctUntilChanged(),
+    private val target: Flow<SearchTarget> = combine(
+        _query.debounce(180).distinctUntilChanged(),
         filters
-    ) { q, f -> q to f }
-        .flatMapLatest { (q, f) ->
-            flow {
-                val haveFilters = f.source != null || f.category != null ||
-                    f.type != null || f.tag != null || f.reminders
-                emit(
-                    when {
-                        q.isNotBlank() -> repo.search(q)
-                        haveFilters -> repo.browseForSearch()
-                        else -> emptyList()
-                    }
-                )
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    /**
-     * Tag aggregation hits the [item_tags] table directly — never the items.
-     */
-    private val knownTags = repo.observeTopTags(20).map { list -> list.map { it.name } }
-
-    /**
-     * When the user filters by tag, we resolve the tag → item ids via an
-     * indexed JOIN once per change; the rest of filtering is then a cheap
-     * post-filter on the (already capped) FTS or browse result set.
-     */
-    private val tagItemIdSet = _tagFilter.flatMapLatest { tag ->
-        flow {
-            emit(if (tag == null) null else repo.itemIdsForTag(tag).toSet())
+    ) { q, f ->
+        val haveFilters = f.source != null || f.category != null ||
+            f.type != null || f.tag != null || f.reminders
+        val spec = repo.searchSpec(q, f.source, f.category, f.type?.name, f.tag, f.reminders)
+        when {
+            q.isBlank() && !haveFilters -> SearchTarget.Idle
+            // Don't let an unsearchable query fall through to "everything".
+            q.isNotBlank() && spec.ftsQuery.isBlank() -> SearchTarget.NoMatch
+            else -> SearchTarget.Run(spec)
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    }
+
+    /**
+     * Every match, filtered and sorted in the database and loaded a page at
+     * a time. Room invalidates the source when saves change, so an open
+     * search stays current after new saves, edits, deletes and OCR.
+     */
+    val results: Flow<PagingData<SaveItemEntity>> = combine(target, _sort) { t, sort -> t to sort }
+        .flatMapLatest { (t, sort) ->
+            if (t !is SearchTarget.Run) flowOf(PagingData.empty())
+            else Pager(PagingConfig(pageSize = 40, enablePlaceholders = false)) {
+                repo.pagedSearch(t.spec, sort.name)
+            }.flow
+        }
+        .cachedIn(viewModelScope)
+
+    private val resultCount: Flow<Int> = target.flatMapLatest { t ->
+        if (t is SearchTarget.Run) repo.observeSearchCount(t.spec) else flowOf(0)
+    }
+
+    private val knownTags = repo.observeTopTags(20).map { list -> list.map { it.name } }
 
     private val knownSources = repo.observeSourceCounts().map { counts ->
         counts.mapNotNull { sc -> runCatching { SourceApp.valueOf(sc.source) }.getOrNull() }
     }
 
     val state: StateFlow<SearchState> = combine(
-        _query, filters, candidates, repo.observeCategories(), knownTags, tagItemIdSet, _sort, knownSources
+        _query, filters, resultCount, repo.observeCategories(), knownTags, _sort, knownSources
     ) { args ->
         // See HomeViewModel: combine(vararg) erases types through Array<Any?>
         // and each cast emits its own warning. Suppress per-line.
         val q = args[0] as String
         val f = args[1] as Filters
-        @Suppress("UNCHECKED_CAST")
-        val candidates = args[2] as List<SaveItemEntity>
+        val count = args[2] as Int
         @Suppress("UNCHECKED_CAST")
         val cats = args[3] as List<CategoryEntity>
         @Suppress("UNCHECKED_CAST")
         val tags = args[4] as List<String>
+        val sort = args[5] as SearchSort
         @Suppress("UNCHECKED_CAST")
-        val tagIds = args[5] as Set<Long>?
-        val sort = args[6] as SearchSort
-        @Suppress("UNCHECKED_CAST")
-        val sources = args[7] as List<SourceApp>
-
-        val filtered = candidates.filter { item ->
-                (f.source == null || item.sourceApp == f.source) &&
-                (f.category == null || item.categoryId == f.category) &&
-                (f.type == null || item.contentType == f.type.name) &&
-                (!f.reminders || (item.remindAt ?: 0L) > System.currentTimeMillis()) &&
-                (tagIds == null || item.id in tagIds)
-        }.let { list ->
-            when (sort) {
-                SearchSort.RELEVANT -> list
-                SearchSort.NEWEST -> list.sortedByDescending { it.createdAt }
-                SearchSort.OLDEST -> list.sortedBy { it.createdAt }
-                SearchSort.UPDATED -> list.sortedByDescending { it.updatedAt }
-                SearchSort.REMINDER -> list.sortedWith(
-                    compareBy<SaveItemEntity> { it.remindAt ?: Long.MAX_VALUE }
-                        .thenByDescending { it.createdAt }
-                )
-            }
-        }
+        val sources = args[6] as List<SourceApp>
         SearchState(
             query = q,
             sourceFilter = f.source,
@@ -160,7 +152,7 @@ class SearchViewModel @Inject constructor(
             typeFilter = f.type,
             tagFilter = f.tag,
             reminderFilter = f.reminders,
-            results = filtered,
+            resultCount = count,
             categories = cats,
             knownTags = tags,
             sources = sources,
