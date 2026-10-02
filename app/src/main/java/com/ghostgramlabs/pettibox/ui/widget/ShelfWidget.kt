@@ -32,6 +32,7 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.ghostgramlabs.pettibox.data.local.SaveDao
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
@@ -223,7 +224,9 @@ private fun Message(context: Context, title: String, body: String) {
     ) {
         Text(title, style = TextStyle(color = InkText, fontSize = 14.sp, fontWeight = FontWeight.Bold))
         Spacer(GlanceModifier.height(2.dp))
-        Text(body, style = TextStyle(color = MutedText, fontSize = 12.sp))
+        // Centered lines too: the box is centered, but a wrapped body
+        // otherwise reads left-aligned under a centered title.
+        Text(body, style = TextStyle(color = MutedText, fontSize = 12.sp, textAlign = TextAlign.Center))
     }
 }
 

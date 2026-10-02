@@ -1,7 +1,10 @@
 package com.ghostgramlabs.pettibox.ui.lock
 
 import android.app.KeyguardManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.SystemClock
 import androidx.biometric.BiometricManager
@@ -53,6 +56,8 @@ import kotlinx.coroutines.flow.asStateFlow
  * Process-wide unlock state. The app starts locked, stays unlocked while
  * it's in use, and locks again once it has been in the background longer
  * than [lockAfterMs] (the user's "Lock after" choice, 1 minute by default).
+ * Turning the phone's screen off locks it at once, whatever that choice:
+ * a phone handed to someone else must not open straight into PettiBox.
  */
 object AppLockSession {
     private val _unlocked = MutableStateFlow(false)
@@ -77,7 +82,20 @@ object AppLockSession {
     @Volatile var onTitlesVisibleUntil: (Long) -> Unit = {}
 
     /** Call once from Application.onCreate (main thread). */
-    fun install() {
+    fun install(context: Context) {
+        // SCREEN_OFF only reaches receivers registered at runtime, never the
+        // manifest. It's a system broadcast, so a not-exported receiver
+        // still gets it.
+        ContextCompat.registerReceiver(
+            context.applicationContext,
+            object : BroadcastReceiver() {
+                override fun onReceive(c: Context, intent: Intent) {
+                    if (intent.action == Intent.ACTION_SCREEN_OFF) lock()
+                }
+            },
+            IntentFilter(Intent.ACTION_SCREEN_OFF),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
                 if (prompting) return
@@ -108,7 +126,18 @@ object AppLockSession {
 
     private fun lock() {
         _unlocked.value = false
+        autoPromptPending = true
         onTitlesVisibleUntil(0L)
+    }
+
+    // The lock screen asks by itself once per lock (app start counts).
+    @Volatile private var autoPromptPending = true
+
+    /** True once after each lock: the lock screen should open the prompt itself. */
+    fun takeAutoPrompt(): Boolean {
+        if (!autoPromptPending || prompting) return false
+        autoPromptPending = false
+        return true
     }
 
     /** Whether this phone has anything to unlock with: a screen lock or enrolled biometrics. */
@@ -187,8 +216,14 @@ fun AppLockGate(
         // lock the user out of their own saves.
         !enabled || unlocked || !available -> content()
         else -> {
-            // Ask straight away; the screen behind stays as the retry.
-            LaunchedEffect(Unit) { AppLockSession.prompt(activity, onSuccess = {}) }
+            // Ask once the app is actually in view. Asking on composition
+            // fails when the lock happened with the screen off (the prompt is
+            // dropped while the activity is stopped). Only once per lock, so
+            // cancelling leaves the Unlock button instead of re-asking.
+            LifecycleResumeEffect(Unit) {
+                if (AppLockSession.takeAutoPrompt()) AppLockSession.prompt(activity, onSuccess = {})
+                onPauseOrDispose { }
+            }
             LockScreen(onUnlock = { AppLockSession.prompt(activity, onSuccess = {}) })
         }
     }

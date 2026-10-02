@@ -1239,7 +1239,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Lock PettiBox",
-                    body = "Turn on App lock under Privacy to require your fingerprint, face, or phone PIN. Pick how soon it locks again after you leave the app (a minute by default). The widget shows titles only while PettiBox is unlocked, and the weekly nudge never shows them.",
+                    body = "Turn on App lock under Privacy to require your fingerprint, face, or phone PIN. Pick how soon it locks again after you leave the app (a minute by default); locking your phone's screen locks it right away. The widget shows titles only while PettiBox is unlocked, and the weekly nudge never shows them.",
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
@@ -1339,6 +1339,12 @@ fun SettingsScreen(
                     LockAfterChoices(
                         selectedMs = appLockAfterMs,
                         onSelect = { ms -> scope.launch { viewModel.setAppLockAfterMs(ms) } }
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "Locking your phone's screen always locks PettiBox right away, so it's safe to hand your phone to someone.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

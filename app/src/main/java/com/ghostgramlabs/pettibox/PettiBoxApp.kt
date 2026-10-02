@@ -60,7 +60,7 @@ class PettiBoxApp : Application(), Configuration.Provider {
         appScope.launch {
             titlesUntil.filterNotNull().collect { appLockPreferences.setWidgetTitlesVisibleUntil(it) }
         }
-        AppLockSession.install()
+        AppLockSession.install(this)
         appScope.launch {
             appLockPreferences.lockAfterMs.collect { AppLockSession.lockAfterMs = it }
         }
