@@ -38,6 +38,7 @@ import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.data.util.TimeFormat
 import com.ghostgramlabs.pettibox.domain.model.ContentType
+import com.ghostgramlabs.pettibox.ui.lock.AppLockSession
 import com.ghostgramlabs.pettibox.ui.nav.AppLaunch
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -69,11 +70,20 @@ class ShelfWidget : GlanceAppWidget() {
         // First frame from a one-off read; after that the session observes
         // the database, because Glance keeps a session alive and re-draws it
         // on update rather than calling provideGlance again.
-        val initialLocked = entry.appLockPreferences().enabled.first()
+        val prefs = entry.appLockPreferences()
+        val initialLockOn = prefs.enabled.first()
+        val initialTitlesUntil = prefs.widgetTitlesVisibleUntil.first()
         val initialTotal = dao.unreadTotal()
         val initialItems = dao.recentUnread(MAX_ITEMS)
         provideContent {
-            val locked by entry.appLockPreferences().enabled.collectAsState(initialLocked)
+            val lockOn by prefs.enabled.collectAsState(initialLockOn)
+            // With App lock on, titles show only while PettiBox is unlocked
+            // (and until it would relock after being left).
+            val titlesUntil by prefs.widgetTitlesVisibleUntil.collectAsState(initialTitlesUntil)
+            // No screen lock on the phone means App lock is paused and the app
+            // opens freely, so the widget doesn't hide anything either.
+            val locked = lockOn && titlesUntil <= System.currentTimeMillis() &&
+                AppLockSession.isAvailable(context)
             val total by dao.observeUnreadTotal().collectAsState(initialTotal)
             val items by dao.observeRecentUnread(MAX_ITEMS).collectAsState(initialItems)
             WidgetContent(context, total, if (locked) emptyList() else items, locked)
@@ -94,8 +104,9 @@ class ShelfWidget : GlanceAppWidget() {
             combine(
                 entry.saveDao().observeRecentUnread(MAX_ITEMS),
                 entry.saveDao().observeUnreadTotal(),
-                entry.appLockPreferences().enabled
-            ) { items, total, locked -> Triple(items.map { it.id to it.title }, total, locked) }
+                entry.appLockPreferences().enabled,
+                entry.appLockPreferences().widgetTitlesVisibleUntil
+            ) { items, total, locked, titlesUntil -> listOf(items.map { it.id to it.title }, total, locked, titlesUntil) }
                 .distinctUntilChanged()
                 .debounce(500)
                 .collect { runCatching { ShelfWidget().updateAll(context) } }
@@ -160,8 +171,8 @@ private fun WidgetContent(context: Context, total: Int, items: List<SaveItemEnti
         when {
             locked -> Message(
                 context,
-                "PettiBox is locked",
-                "Open it to see your saves."
+                "PettiBox is locked 🔒",
+                "Unlock PettiBox to see your saves here."
             )
             items.isEmpty() -> Message(
                 context,

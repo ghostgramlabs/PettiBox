@@ -34,6 +34,21 @@ class AppLockPreferences @Inject constructor(
         context.appLockDataStore.edit { it[lockAfterKey] = ms }
     }
 
+    private val widgetTitlesUntilKey = longPreferencesKey("widget_titles_visible_until")
+
+    /**
+     * Wall-clock time until which the widget may show titles while App lock
+     * is on: Long.MAX_VALUE while PettiBox is unlocked and open, the relock
+     * deadline once it's been left, 0 when locked. Only a display hint for
+     * the widget; the app's own lock never reads it.
+     */
+    val widgetTitlesVisibleUntil: Flow<Long> =
+        context.appLockDataStore.data.map { it[widgetTitlesUntilKey] ?: 0L }
+
+    suspend fun setWidgetTitlesVisibleUntil(until: Long) {
+        context.appLockDataStore.edit { it[widgetTitlesUntilKey] = until }
+    }
+
     companion object {
         const val DEFAULT_LOCK_AFTER_MS = 60_000L
 

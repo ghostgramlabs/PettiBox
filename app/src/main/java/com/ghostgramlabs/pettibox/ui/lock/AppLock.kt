@@ -69,26 +69,46 @@ object AppLockSession {
     // backgrounds us. Leaving for the prompt must not count as leaving.
     private var prompting = false
 
+    /**
+     * Told how long the home-screen widget may show titles (wall-clock ms):
+     * Long.MAX_VALUE while unlocked and open, the relock deadline once the
+     * app is left, 0 when locked. Set by the Application.
+     */
+    @Volatile var onTitlesVisibleUntil: (Long) -> Unit = {}
+
     /** Call once from Application.onCreate (main thread). */
     fun install() {
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
-                if (!prompting) backgroundedAt = SystemClock.elapsedRealtime()
+                if (prompting) return
+                backgroundedAt = SystemClock.elapsedRealtime()
+                // The widget hides titles when the app itself would relock.
+                if (_unlocked.value) onTitlesVisibleUntil(System.currentTimeMillis() + lockAfterMs)
             }
 
             override fun onStart(owner: LifecycleOwner) {
                 if (!prompting && backgroundedAt > 0 &&
                     SystemClock.elapsedRealtime() - backgroundedAt >= lockAfterMs
                 ) {
-                    _unlocked.value = false
+                    lock()
+                } else if (!prompting && _unlocked.value) {
+                    onTitlesVisibleUntil(Long.MAX_VALUE)
                 }
                 backgroundedAt = 0L
             }
         })
+        // A fresh process always starts locked, whatever the widget last showed.
+        onTitlesVisibleUntil(0L)
     }
 
     fun markUnlocked() {
         _unlocked.value = true
+        onTitlesVisibleUntil(Long.MAX_VALUE)
+    }
+
+    private fun lock() {
+        _unlocked.value = false
+        onTitlesVisibleUntil(0L)
     }
 
     /** Whether this phone has anything to unlock with: a screen lock or enrolled biometrics. */

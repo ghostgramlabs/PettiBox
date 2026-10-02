@@ -1151,7 +1151,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Lock PettiBox",
-                    body = "Turn on App lock under Privacy to require your fingerprint, face, or phone PIN. Pick how soon it locks again after you leave the app (a minute by default), and the widget and weekly nudge stop showing titles.",
+                    body = "Turn on App lock under Privacy to require your fingerprint, face, or phone PIN. Pick how soon it locks again after you leave the app (a minute by default). The widget shows titles only while PettiBox is unlocked, and the weekly nudge never shows them.",
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
@@ -1197,7 +1197,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Ask for your fingerprint, face, or phone PIN to open PettiBox or save into it. While it's on, the widget and notifications hide titles.",
+                            "Ask for your fingerprint, face, or phone PIN to open PettiBox or save into it. The widget shows titles only while PettiBox is unlocked, and notifications hide them.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

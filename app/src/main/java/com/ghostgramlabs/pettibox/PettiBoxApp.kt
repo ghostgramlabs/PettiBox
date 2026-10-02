@@ -13,12 +13,15 @@ import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgePreferences
 import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgeWorker
 import com.ghostgramlabs.pettibox.ui.lock.AppLockSession
 import com.ghostgramlabs.pettibox.ui.widget.ShelfWidget
+import com.ghostgramlabs.pettibox.ui.widget.WidgetTitlesExpiryWorker
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -46,6 +49,17 @@ class PettiBoxApp : Application(), Configuration.Provider {
         // Register the notification channel up-front. Idempotent — the OS
         // ignores duplicate registrations after the first one took effect.
         ReminderNotifications.ensureChannel(this)
+        // How long the widget may show titles follows the unlock session.
+        // Conflated: only the latest value matters, and writes stay in order.
+        val titlesUntil = MutableStateFlow<Long?>(null)
+        AppLockSession.onTitlesVisibleUntil = { until ->
+            titlesUntil.value = until
+            val wait = until - System.currentTimeMillis()
+            if (until != Long.MAX_VALUE && wait > 0) WidgetTitlesExpiryWorker.schedule(this, wait)
+        }
+        appScope.launch {
+            titlesUntil.filterNotNull().collect { appLockPreferences.setWidgetTitlesVisibleUntil(it) }
+        }
         AppLockSession.install()
         appScope.launch {
             appLockPreferences.lockAfterMs.collect { AppLockSession.lockAfterMs = it }
