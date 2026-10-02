@@ -69,10 +69,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
             </intent-filter>
+            <!-- Several items at once: photos, PDFs, or a mix. The Save sheet
+                 types each file from the file itself, so any type is fine. -->
             <intent-filter android:label="@string/share_label">
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="image/*" />
+                <data android:mimeType="*/*" />
             </intent-filter>
             <!-- "Save to PettiBox" in the text-selection toolbar of any app:
                  highlighted text arrives as EXTRA_PROCESS_TEXT and is routed

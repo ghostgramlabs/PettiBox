@@ -178,20 +178,24 @@ fun HomeScreen(
             pendingShare = IncomingShare(imageUris = uris, mimeType = "image/*")
         }
     }
+    // Several files at once (e.g. a batch of PDFs) become one save; the
+    // Save sheet types each file from the file itself.
     val pickFile = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            // Take a persistable read grant so SaveSheet can ingest the file
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            // Take a persistable read grant so SaveSheet can ingest the files
             // even if the user navigates away first.
-            runCatching {
-                ctx.contentResolver.takePersistableUriPermission(
-                    uri,
-                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
+            uris.forEach { uri ->
+                runCatching {
+                    ctx.contentResolver.takePersistableUriPermission(
+                        uri,
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                }
             }
-            val mime = ctx.contentResolver.getType(uri)
-            pendingShare = IncomingShare(fileUris = listOf(uri), mimeType = mime)
+            val mime = if (uris.size == 1) ctx.contentResolver.getType(uris.first()) else null
+            pendingShare = IncomingShare(fileUris = uris, mimeType = mime)
         }
     }
 

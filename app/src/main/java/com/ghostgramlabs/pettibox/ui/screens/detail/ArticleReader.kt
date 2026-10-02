@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.view.Gravity
-import android.view.WindowManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -18,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,7 +43,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,17 +52,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
-import androidx.core.view.WindowCompat
 import com.ghostgramlabs.pettibox.data.article.ArticleExtractor
 import com.ghostgramlabs.pettibox.data.local.ArticleCopyEntity
 import com.ghostgramlabs.pettibox.data.local.ArticleCopyStatus
@@ -204,40 +196,14 @@ fun ArticleReaderDialog(
         showWebView = true
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        // Draw behind the status bar like every other screen, instead of
-        // leaving the dim scrim showing above the toolbar as a dark band.
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
-    ) {
-        val dialogView = LocalView.current
-        val lightBars = scheme.surface.luminance() > 0.5f
-        SideEffect {
-            (dialogView.parent as? DialogWindowProvider)?.window?.let { window ->
-                // A dialog window stops at the status bar even with
-                // decorFitsSystemWindows off; let it cover the whole screen
-                // and drop the dim, which otherwise shows above the toolbar.
-                window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-                window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
-                window.setDimAmount(0f)
-                window.attributes = window.attributes.apply {
-                    // Centred inside the bar-free area it sat a few px down,
-                    // leaving a sliver of the screen behind showing on top.
-                    gravity = Gravity.TOP
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        setFitInsetsTypes(0)
-                    }
-                }
-                WindowCompat.getInsetsController(window, dialogView).isAppearanceLightStatusBars = lightBars
-            }
-        }
+    // Edge to edge, like the rest of the app: no dark band above the
+    // toolbar, and nothing tucked under the navigation bar.
+    FullScreenDialog(onDismissRequest = onDismiss) {
         Column(
             Modifier
                 .fillMaxSize()
                 .background(scheme.background)
+                .windowInsetsPadding(WindowInsets.navigationBars)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

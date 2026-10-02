@@ -14,13 +14,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -64,8 +69,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -974,10 +977,9 @@ private fun AttachmentViewerDialog(
         onSelect(pagerState.currentPage)
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
+    // Full screen, edge to edge. A plain Dialog sat partly under the
+    // navigation bar, which swallowed taps on Previous/Next.
+    FullScreenDialog(onDismissRequest = onDismiss) {
         Box(
             Modifier
                 .fillMaxSize()
@@ -987,6 +989,7 @@ private fun AttachmentViewerDialog(
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.systemBars)
                     .padding(12.dp)
             ) { page ->
                 val pageItem = items[page]
@@ -1023,6 +1026,7 @@ private fun AttachmentViewerDialog(
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
+                    .windowInsetsPadding(WindowInsets.statusBars)
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 IconButton(onClick = onDismiss) {
@@ -1056,6 +1060,7 @@ private fun AttachmentViewerDialog(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(16.dp)
             ) {
                 TextButton(

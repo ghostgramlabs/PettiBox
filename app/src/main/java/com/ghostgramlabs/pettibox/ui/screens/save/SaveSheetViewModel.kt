@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.Uri
+import android.webkit.MimeTypeMap
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
@@ -51,6 +52,8 @@ data class SaveSheetState(
     val url: String? = null,
     val localUri: String? = null,
     val attachments: List<String> = emptyList(),
+    /** Type of each entry in [attachments], read from the file itself. */
+    val attachmentKinds: List<ContentType> = emptyList(),
     val isFavorite: Boolean = false,
     // Reminder picked at save-time. Null means no reminder. The picker
     // sheet writes this, and save()/saveToCategory() persists it plus
@@ -99,14 +102,18 @@ class SaveSheetViewModel @Inject constructor(
     fun ingest(share: IncomingShare) {
         val generation = ingestGeneration.incrementAndGet()
         val firstUrl = share.urls.firstOrNull() ?: TextUtils.extractFirstUrl(share.text)
-        val allImages = share.imageUris.map { it.toString() }
-        val firstImage = allImages.firstOrNull()
-        val firstFile = share.fileUris.firstOrNull()?.toString()
+        // Every shared file, typed by what it actually is. The share's own
+        // MIME type covers the whole intent and can be vague ("*/*") or plain
+        // wrong, which once saved an image as a PDF; a multi-file share with a
+        // generic type also used to keep only its first file.
+        val streams = share.imageUris + share.fileUris
+        val kinds = streams.map { kindOf(it, share.mimeType) }
+        val keepAll = share.imageUris.isNotEmpty() || streams.size > 1
+        val allImages = if (keepAll) streams.map { it.toString() } else emptyList()
 
         val type = when {
             firstUrl != null -> ContentType.LINK
-            firstImage != null -> ContentType.IMAGE
-            firstFile != null -> ContentType.fromMime(share.mimeType)
+            streams.isNotEmpty() -> kinds.first()
             !share.text.isNullOrBlank() -> ContentType.TEXT
             else -> ContentType.NOTE
         }
@@ -120,23 +127,23 @@ class SaveSheetViewModel @Inject constructor(
             }
         }
 
-        val initialTitle = TextUtils.smartTitle(
-            share.text,
-            fallback = TextUtils.hostOf(firstUrl) ?: when (type) {
-                ContentType.IMAGE -> if (allImages.size > 1) "${allImages.size} images" else "Saved image"
-                ContentType.PDF -> "Saved PDF"
-                ContentType.FILE -> "Saved file"
-                else -> QUICK_SAVE_TITLE
-            }
-        )
+        val fallbackTitle = when {
+            streams.size > 1 && kinds.any { it != type } -> "${streams.size} files"
+            type == ContentType.IMAGE -> if (streams.size > 1) "${streams.size} images" else "Saved image"
+            type == ContentType.PDF -> if (streams.size > 1) "${streams.size} PDFs" else "Saved PDF"
+            type == ContentType.FILE -> "Saved file"
+            else -> QUICK_SAVE_TITLE
+        }
+        val initialTitle = TextUtils.smartTitle(share.text, fallback = TextUtils.hostOf(firstUrl) ?: fallbackTitle)
 
         // Build a fresh state so a reused ViewModel (e.g. FAB → save → FAB
         // again on Home) doesn't carry over isSaved, notes, tags, etc.
         _state.value = SaveSheetState(
             title = initialTitle,
             url = firstUrl,
-            localUri = firstImage ?: firstFile,
+            localUri = streams.firstOrNull()?.toString(),
             attachments = allImages,
+            attachmentKinds = if (keepAll) kinds else emptyList(),
             sourceApp = source,
             contentType = type,
             isResolving = firstUrl != null,
@@ -192,6 +199,39 @@ class SaveSheetViewModel @Inject constructor(
 
     private suspend fun loadCategoriesOnce(): List<CategoryEntity> =
         runCatching { repo.observeCategories().first() }.getOrDefault(emptyList())
+
+    /**
+     * What a shared file really is: the providing app's MIME type for this
+     * URI, then its file extension, and only then the share's overall type.
+     * Generic types (match-anything, octet-stream) don't count as an answer.
+     */
+    private fun kindOf(uri: Uri, shareMime: String?): ContentType {
+        fun String?.useful() = this?.takeUnless { it.isBlank() || it == "*/*" || it == "application/octet-stream" }
+        val mime = runCatching { appContext.contentResolver.getType(uri) }.getOrNull().useful()
+            ?: MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+                ?.takeIf { it.isNotBlank() }
+                ?.let { MimeTypeMap.getSingleton().getMimeTypeFromExtension(it.lowercase()) }
+            ?: sniffMime(uri)
+            ?: shareMime.useful()
+        return mime?.let { ContentType.fromMime(it) } ?: ContentType.FILE
+    }
+
+    /** Recognises PDFs and common image formats by their first bytes. */
+    private fun sniffMime(uri: Uri): String? = runCatching {
+        val head = ByteArray(12)
+        val read = appContext.contentResolver.openInputStream(uri)?.use { it.read(head) } ?: return null
+        fun at(offset: Int, sig: String) =
+            read >= offset + sig.length && sig.indices.all { head[offset + it] == sig[it].code.toByte() }
+        when {
+            at(0, "%PDF") -> "application/pdf"
+            read >= 4 && head[0] == 0x89.toByte() && at(1, "PNG") -> "image/png"
+            read >= 3 && head[0] == 0xFF.toByte() && head[1] == 0xD8.toByte() && head[2] == 0xFF.toByte() -> "image/jpeg"
+            at(0, "GIF8") -> "image/gif"
+            at(0, "RIFF") && at(8, "WEBP") -> "image/webp"
+            at(4, "ftypheic") || at(4, "ftypheix") || at(4, "ftypmif1") -> "image/heic"
+            else -> null
+        }
+    }.getOrNull()
 
     /**
      * The single chip we border as a hint. A user's own collection named in the
@@ -402,24 +442,22 @@ class SaveSheetViewModel @Inject constructor(
             AttachmentEntity(
                 itemId = id,
                 uri = uri,
-                kind = (if (s.contentType == ContentType.IMAGE) ContentType.IMAGE else s.contentType).name,
+                kind = (s.attachmentKinds.getOrNull(i) ?: s.contentType).name,
                 sortOrder = i
             )
         }
         val attachmentIds = repo.insertAttachments(attachmentRows)
 
         if (ocrPreferences.autoScan.first()) {
-            if (s.contentType == ContentType.IMAGE) {
-                if (attachmentRows.isEmpty() && !ownLocalUri.isNullOrBlank()) {
+            if (attachmentRows.isEmpty()) {
+                if (s.contentType == ContentType.IMAGE && !ownLocalUri.isNullOrBlank()) {
                     OcrWorker.enqueueForItem(appContext, id, ownLocalUri)
-                } else {
-                    attachmentRows.zip(attachmentIds).forEach { (row, attId) ->
-                        OcrWorker.enqueueForAttachment(appContext, id, attId, row.uri)
-                    }
                 }
-            }
-            if (s.contentType == ContentType.PDF && !ownLocalUri.isNullOrBlank()) {
-                PdfTextWorker.enqueue(appContext, id, ownLocalUri)
+                if (s.contentType == ContentType.PDF && !ownLocalUri.isNullOrBlank()) {
+                    PdfTextWorker.enqueue(appContext, id, ownLocalUri)
+                }
+            } else {
+                scanAttachments(id, attachmentRows, attachmentIds)
             }
         }
         // Offline reading copy — downloads in the background, never
@@ -429,6 +467,16 @@ class SaveSheetViewModel @Inject constructor(
         if (s.previewImage?.startsWith("http") == true) ThumbnailWorker.enqueue(appContext, id)
 
         _state.value = s.copy(isSaved = true)
+    }
+
+    /** Text recognition for each image attachment, text extraction for each PDF. */
+    private fun scanAttachments(itemId: Long, rows: List<AttachmentEntity>, ids: List<Long>) {
+        rows.zip(ids).forEach { (row, attId) ->
+            when (row.kind) {
+                ContentType.IMAGE.name -> OcrWorker.enqueueForAttachment(appContext, itemId, attId, row.uri)
+                ContentType.PDF.name -> PdfTextWorker.enqueue(appContext, itemId, row.uri, attId)
+            }
+        }
     }
 
     private suspend fun ingestIfForeign(uriString: String): String? {
@@ -458,12 +506,24 @@ class SaveSheetViewModel @Inject constructor(
             else addAll(ownAttachments)
         }
 
+        val existing = repo.attachmentsFor(target.id)
+        // A single-file save keeps its file only in localUri. Once something
+        // is appended, the gallery shows attachments only, so the original
+        // file would vanish from view; give it a row of its own first.
+        val targetType = runCatching { ContentType.valueOf(target.contentType) }.getOrNull()
+        if (existing.isEmpty() && !target.localUri.isNullOrBlank() &&
+            targetType in setOf(ContentType.IMAGE, ContentType.PDF, ContentType.FILE)
+        ) {
+            repo.insertAttachments(
+                listOf(AttachmentEntity(itemId = target.id, uri = target.localUri, kind = targetType!!.name, sortOrder = 0))
+            )
+        }
         val baseSort = (repo.attachmentsFor(target.id).maxOfOrNull { it.sortOrder } ?: -1) + 1
         val rows = urisToAttach.mapIndexed { i, uri ->
             AttachmentEntity(
                 itemId = target.id,
                 uri = uri,
-                kind = (if (s.contentType == ContentType.IMAGE) ContentType.IMAGE else s.contentType).name,
+                kind = (s.attachmentKinds.getOrNull(i) ?: s.contentType).name,
                 sortOrder = baseSort + i
             )
         }
@@ -477,18 +537,7 @@ class SaveSheetViewModel @Inject constructor(
             repo.update(target.copy(notes = mergedNotes, updatedAt = System.currentTimeMillis()))
         }
 
-        if (ocrPreferences.autoScan.first()) {
-            if (s.contentType == ContentType.IMAGE) {
-                rows.zip(attIds).forEach { (row, id) ->
-                    OcrWorker.enqueueForAttachment(appContext, target.id, id, row.uri)
-                }
-            }
-            if (s.contentType == ContentType.PDF) {
-                rows.zip(attIds).forEach { (row, id) ->
-                    PdfTextWorker.enqueue(appContext, target.id, row.uri, id)
-                }
-            }
-        }
+        if (ocrPreferences.autoScan.first()) scanAttachments(target.id, rows, attIds)
 
         _state.value = s.copy(isSaved = true)
     }
