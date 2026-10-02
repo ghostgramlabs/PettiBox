@@ -197,16 +197,17 @@ Data safety positioning:
 - Backup files are user-controlled exports.
 - Google Drive backup is optional and opt-in: backups upload to the user's own Drive under the drive.file scope (the app can only access files it created). No data is sent to the developer; disconnecting stops uploads and leaves existing copies in the user's Drive.
 
-## Release Notes (What's New) — 2.0.9
+## Release Notes (What's New) — 2.0.10
 
-Covers everything since 2.0.7. Keep under Play's 500-character limit; Spanish and
+Covers everything since 2.0.7 (2.0.10 adds multi-file sharing and fixes). Keep under Play's 500-character limit; Spanish and
 Hindi versions are in PLAY_STORE_LISTING_TRANSLATIONS.md.
 
 ```
-NEW: Read saved articles offline, open PDFs right in the app, and pinch to zoom photos.
+NEW: Read saved articles offline, open PDFs in the app, and zoom photos.
 NEW: Unread list, home screen widget, app shortcuts and an optional weekly nudge.
 NEW: App lock with fingerprint, face or PIN — you choose how soon it locks.
-NEW: Recently deleted keeps saves for 30 days so you can bring them back.
+NEW: Share several PDFs or files at once.
+NEW: Recently deleted keeps saves for 30 days.
 IMPROVED: Quick notes open ready to type and are named after their first line.
 A fresh new icon, and lots of fixes.
 ```

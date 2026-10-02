@@ -62,11 +62,12 @@ Great for saving:
 
 PettiBox helps you save now and find later.
 
-RELEASE NOTES (WHAT'S NEW) — 2.0.9
-NEW: Read saved articles offline, open PDFs right in the app, and pinch to zoom photos.
+RELEASE NOTES (WHAT'S NEW) — 2.0.10
+NEW: Read saved articles offline, open PDFs in the app, and zoom photos.
 NEW: Unread list, home screen widget, app shortcuts and an optional weekly nudge.
 NEW: App lock with fingerprint, face or PIN — you choose how soon it locks.
-NEW: Recently deleted keeps saves for 30 days so you can bring them back.
+NEW: Share several PDFs or files at once.
+NEW: Recently deleted keeps saves for 30 days.
 IMPROVED: Quick notes open ready to type and are named after their first line.
 A fresh new icon, and lots of fixes.
 

@@ -88,18 +88,19 @@ PettiBox te ayuda a guardar ahora y encontrar después.
 
 Character count: 3841 / 4000
 
-### Release notes — 2.0.9
+### Release notes — 2.0.10
 
 ```
-NUEVO: Lee artículos guardados sin conexión, abre PDF dentro de la app y haz zoom en las fotos.
+NUEVO: Lee artículos sin conexión, abre PDF en la app y haz zoom en las fotos.
 NUEVO: Lista de no leídos, widget, accesos directos y un recordatorio semanal opcional.
 NUEVO: Bloqueo con huella, rostro o PIN; tú eliges cuándo se bloquea.
-NUEVO: Eliminados recientemente guarda tus elementos 30 días para recuperarlos.
+NUEVO: Comparte varios PDF o archivos a la vez.
+NUEVO: Eliminados recientemente guarda tus elementos 30 días.
 MEJORA: Las notas rápidas se abren listas para escribir y toman su título de la primera línea.
 Nuevo ícono y muchas correcciones.
 ```
 
-Character count: 463 / 500
+Character count: 429 / 500
 
 ## Hindi — India (hi-IN)
 
@@ -178,13 +179,14 @@ PettiBox के साथ अभी सेव करें, बाद में 
 
 Character count: 3471 / 4000
 
-### Release notes — 2.0.9
+### Release notes — 2.0.10
 
 ```
-नया: सेव किए आर्टिकल बिना इंटरनेट पढ़ें, PDF ऐप में ही खोलें और फ़ोटो ज़ूम करें।
+नया: सेव किए आर्टिकल बिना इंटरनेट पढ़ें, PDF ऐप में खोलें और फ़ोटो ज़ूम करें।
 नया: अनपढ़ी सूची, होम स्क्रीन विजेट, ऐप शॉर्टकट और साप्ताहिक रिमाइंडर (वैकल्पिक)।
 नया: फ़िंगरप्रिंट, चेहरे या PIN से ऐप लॉक — कितनी देर बाद लॉक हो, यह आप चुनें।
-नया: हाल ही में हटाए गए आइटम 30 दिन तक रहते हैं, ताकि आप उन्हें वापस ला सकें।
+नया: एक साथ कई PDF या फ़ाइलें शेयर करें।
+नया: हाल ही में हटाए गए आइटम 30 दिन तक रहते हैं।
 बेहतर: क्विक नोट सीधे लिखने के लिए खुलते हैं और पहली लाइन से उनका नाम बनता है।
 नया आइकन और कई सुधार।
 ```
