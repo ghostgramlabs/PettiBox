@@ -5,7 +5,7 @@
 FONT_DIR should hold NotoSerif.ttf and NotoSans.ttf (the variable fonts from
 github.com/google/fonts, OFL) so the type matches the app's Android serif.
 Without them it falls back to Georgia / Segoe UI from C:/Windows/Fonts.
-Writes pettibox-feature-graphic.png at the repo root.
+Writes store/pettibox-feature-graphic.png.
 """
 import os
 import sys
@@ -93,7 +93,7 @@ def main(font_dir):
         x += tw + 2 * pad_x + 12 * SS
 
     img.alpha_composite(layer)
-    out = os.path.join(ROOT, "pettibox-feature-graphic.png")
+    out = os.path.join(ROOT, "store", "pettibox-feature-graphic.png")
     img.resize((W, H), Image.LANCZOS).convert("RGB").save(out)
     print("written:", out)
 

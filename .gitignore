@@ -40,3 +40,6 @@ Thumbs.db
 
 ## Wrapper jar may be missing if the user hasn't generated it; keep it
 ## tracked when present, but ignore the local cache dirs.
+
+## AI assistant settings
+.claude/

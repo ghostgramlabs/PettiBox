@@ -254,5 +254,5 @@ if __name__ == "__main__":
         for name in ("ic_launcher.xml", "ic_launcher_round.xml"):
             with open(os.path.join(RES, "mipmap-anydpi-v26", name), "w", newline="\n") as f:
                 f.write(ADAPTIVE_XML)
-        masked(p, 512, "square").save(os.path.join(ROOT, "pettibox-icon-512.png"))
+        masked(p, 512, "square").save(os.path.join(ROOT, "store", "pettibox-icon-512.png"))
         print("written")

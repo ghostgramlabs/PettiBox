@@ -1,6 +1,9 @@
-# PettiBox Implementation Handoff
+# PettiBox architecture
 
-This document summarizes the PettiBox Android app features, architecture, and implementation details so another AI tool or developer can understand the project quickly.
+This guide describes PettiBox's features, architecture and implementation details, so a new
+contributor can find their way around the code. It was last reviewed in full for version 2.0.7;
+where it and the code disagree, the code is right, and a pull request fixing the guide is
+welcome. For build steps see the [README](README.md).
 
 ## 1. Product Overview
 
