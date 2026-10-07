@@ -1,8 +1,8 @@
 # PettiBox architecture
 
 This guide describes PettiBox's features, architecture and implementation details, so a new
-contributor can find their way around the code. It was last reviewed in full for version 2.0.7;
-where it and the code disagree, the code is right, and a pull request fixing the guide is
+contributor can find their way around the code. Sections 1 to 27 were reviewed in full for version 2.0.7, and
+section 28 covers what 2.0.8 to 2.0.12 added. Where the guide and the code disagree, the code is right, and a pull request fixing the guide is
 welcome. For build steps see the [README](README.md).
 
 ## 1. Product Overview
@@ -171,7 +171,8 @@ Important behavior:
 
 Database: `data/local/AppDatabase.kt`
 
-Room database version: `2`
+Room database version: `6` (exported schemas for every version are in `app/schemas/`; a schema
+change needs a version bump and a migration)
 
 Entities:
 
@@ -181,6 +182,7 @@ Entities:
 - `AttachmentEntity`
 - `TagEntity`
 - `ItemTagCrossRef`
+- `ArticleCopyEntity` and `ArticleCopyFts`: offline copies of link articles (see section 28)
 
 ### SaveItemEntity
 
@@ -1183,3 +1185,19 @@ Possible next steps:
 - Consider a clearer visual affordance for `Select` mode in Browse.
 - Consider explicit restore preview before import, showing saves/attachments count from backup summary.
 - Consider user-controlled backup encryption if backups may contain sensitive content.
+
+## 28. Added in 2.0.8 to 2.0.12
+
+Paths are under `app/src/main/java/com/ghostgramlabs/pettibox/`.
+
+| Feature | Where | How it works |
+| --- | --- | --- |
+| Offline article copies | `data/article/` (`ArticleExtractor`, `ArticleRepository`, `ArticleCopyWorker`), `data/local/ArticleCopyEntity.kt`, `ArticleDao.kt`, `data/preferences/ArticlePreferences.kt` | A WorkManager job, constrained to having a network connection, extracts a link's article text into `ArticleCopyEntity` (searchable through `ArticleCopyFts`). A failed refresh keeps the existing copy. Shown in `ui/screens/detail/ArticleReader.kt`. |
+| Local link thumbnails | `data/metadata/ThumbnailWorker.kt` | Downloads a link's preview image as a small JPEG, so cards keep their picture offline. |
+| Image zoom and PDF reader | `ui/screens/detail/Zoomable.kt`, `PdfViewer.kt`, `FullScreenDialog.kt` | Pinch-zoom for images and an in-app PDF viewer built on Android's `PdfRenderer`. |
+| App lock | `ui/lock/AppLock.kt`, `data/preferences/AppLockPreferences.kt` | Process-wide lock state. The app starts locked, relocks after the chosen time in the background, and locks immediately when the screen turns off. Unlocking uses the system biometric/PIN prompt. |
+| Unread widget | `ui/widget/ShelfWidget.kt`, `WidgetTitlesExpiryWorker.kt`, `res/xml/shelf_widget_info.xml` | A Glance widget listing unopened saves. With App lock on, it shows titles only while the app is unlocked; a worker hides them again at the relock deadline. |
+| Weekly nudge | `data/reminders/ShelfNudgeWorker.kt` | Once a week, at the user's morning reminder time, a notification resurfaces one save that was never opened, avoiding recently nudged ones. On by default; needs notification permission. |
+| App shortcuts | `res/xml/shortcuts.xml`, `ui/nav/AppLaunch.kt` | Launcher shortcuts (new link, new note, search, unread) routed into navigation. |
+| Multi-file saves and local restore | share parsing and backup code (sections 10 and 20) | Shares with several files are accepted and typed by content; backups kept on the phone can be restored directly. |
+| Review prompt | `ui/components/ReviewPrompt.kt` | In-app Google Play review prompt. |
