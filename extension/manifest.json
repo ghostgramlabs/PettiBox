@@ -16,7 +16,7 @@
   "permissions": ["identity", "storage", "unlimitedStorage", "alarms", "contextMenus", "activeTab"],
   "host_permissions": ["https://www.googleapis.com/*", "https://oauth2.googleapis.com/*"],
   "oauth2": {
-    "client_id": "REPLACE_WITH_CHROME_EXTENSION_CLIENT_ID.apps.googleusercontent.com",
+    "client_id": "785489867134-pedrhdknqvdd1jnleki69kj9nsa8eo7g.apps.googleusercontent.com",
     "scopes": ["https://www.googleapis.com/auth/drive.file"]
   },
   "minimum_chrome_version": "120"

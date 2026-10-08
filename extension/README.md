@@ -40,7 +40,7 @@ belongs to the project, so that's what lets the extension see the files the app 
    credentials › OAuth client ID › Application type **Chrome Extension**.
 2. Item ID: `ejdpmogmafbecaokmpgpfoipoafinpoi` (the development ID, fixed by `"key"` in
    `manifest.json`).
-3. Copy the client ID into `manifest.json` › `oauth2.client_id`.
+3. Copy the client ID into `manifest.json` › `oauth2.client_id` (done for the development ID: `785489867134-pedr…`).
 4. The scope is `drive.file`, already on the consent screen, so nothing there changes and no
    new verification is needed.
 
