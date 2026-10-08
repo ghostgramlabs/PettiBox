@@ -105,6 +105,42 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
+/**
+ * v7 → v8: "Sync between devices". Adds save_items.sync_id (backfilled with a
+ * random id per save, then made unique) and the empty sync_* tables. Nothing
+ * runs for users who never turn sync on: the outbox triggers are created by
+ * SyncSetup only when they do. SQL is copied from schemas/8.json.
+ */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE save_items ADD COLUMN sync_id TEXT NOT NULL DEFAULT ''")
+        // Backfill before the unique index, or every existing row collides on ''.
+        db.execSQL("UPDATE save_items SET sync_id = lower(hex(randomblob(16))) WHERE sync_id = ''")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_save_items_sync_id` ON `save_items` (`sync_id`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `sync_outbox` (`kind` TEXT NOT NULL, `sync_id` TEXT NOT NULL, " +
+                "`ts` INTEGER NOT NULL, PRIMARY KEY(`kind`, `sync_id`))"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `sync_inbox` (`kind` TEXT NOT NULL, `sync_id` TEXT NOT NULL, " +
+                "`device` TEXT NOT NULL, `record_json` TEXT NOT NULL, PRIMARY KEY(`kind`, `sync_id`, `device`))"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `sync_meta` (`kind` TEXT NOT NULL, `sync_id` TEXT NOT NULL, " +
+                "`shard` INTEGER NOT NULL, `record_json` TEXT NOT NULL, PRIMARY KEY(`kind`, `sync_id`))"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_sync_meta_shard` ON `sync_meta` (`shard`)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `sync_applying` (`id` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `sync_files` (`local_uri` TEXT NOT NULL, `sha256` TEXT NOT NULL, " +
+                "PRIMARY KEY(`local_uri`))"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_sync_files_sha256` ON `sync_files` (`sha256`)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `sync_dirty` (`shard` INTEGER NOT NULL, PRIMARY KEY(`shard`))")
+    }
+}
+
 val ALL_MIGRATIONS = arrayOf(
-    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7
+    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+    MIGRATION_7_8
 )

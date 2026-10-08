@@ -65,6 +65,10 @@ interface SaveDao {
     @Query("SELECT url, content_type, created_at, title FROM save_items WHERE is_pending_delete = 0")
     suspend fun dedupeKeys(): List<SaveDedupeKey>
 
+    /** Every save's sync id, Recently deleted included: restore must not reuse one. */
+    @Query("SELECT sync_id FROM save_items")
+    suspend fun allSyncIds(): List<String>
+
     /**
      * Every row referencing the category — archived and Undo-staged rows
      * included. This is the "is it safe to delete this collection without

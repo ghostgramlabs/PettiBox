@@ -18,6 +18,7 @@ import com.ghostgramlabs.pettibox.data.local.SourceCount
 import com.ghostgramlabs.pettibox.data.local.TagDao
 import com.ghostgramlabs.pettibox.data.local.TagEntity
 import com.ghostgramlabs.pettibox.data.local.TagWithCount
+import com.ghostgramlabs.pettibox.data.local.newSyncId
 import com.ghostgramlabs.pettibox.data.backup.BackupSummaryCalculator
 import com.ghostgramlabs.pettibox.data.bookmarks.BookmarkCsvWriter
 import com.ghostgramlabs.pettibox.data.bookmarks.ImportedBookmark
@@ -386,6 +387,7 @@ class SaveRepository @Inject constructor(
                     .put("contentType", s.contentType)
                     .put("sourceApp", s.sourceApp)
                     .put("categoryId", s.categoryId)
+                    .put("syncId", s.syncId)
                     .put("notes", s.notes)
                     .put("ocrText", s.ocrText)
                     .put("metadataJson", s.metadataJson)
@@ -482,6 +484,7 @@ class SaveRepository @Inject constructor(
                         .put("contentType", s.contentType)
                         .put("sourceApp", s.sourceApp)
                         .put("categoryId", s.categoryId)
+                    .put("syncId", s.syncId)
                         .put("notes", s.notes)
                         .put("ocrText", s.ocrText)
                         .put("metadataJson", s.metadataJson)
@@ -670,6 +673,11 @@ class SaveRepository @Inject constructor(
             else existingFingerprints.add("${key.contentType}|${key.createdAt}|${key.title}")
         }
 
+        // Sync ids already here. A save carrying one of these is the same save
+        // (restored onto the phone it came from, or synced in already), so it
+        // counts as a duplicate rather than colliding on the unique index.
+        val existingSyncIds = saveDao.allSyncIds().toHashSet()
+
         val itemIdMap = mutableMapOf<Long, Long>()
         var saveCount = 0
         var skippedCount = 0
@@ -696,13 +704,16 @@ class SaveRepository @Inject constructor(
                 remindAt = s.optNullableLong("remindAt"),
                 createdAt = s.optLong("createdAt", System.currentTimeMillis()),
                 updatedAt = s.optLong("updatedAt", System.currentTimeMillis()),
-                openedAt = s.optNullableLong("openedAt")
+                openedAt = s.optNullableLong("openedAt"),
+                // Kept so a restored save is still the same save to sync;
+                // backups from before sync existed get a fresh one.
+                syncId = s.optNullableString("syncId")?.takeIf { it.isNotBlank() } ?: newSyncId()
             )
             val urlKey = imported.url?.trim()?.takeIf { it.isNotEmpty() }?.let(TextUtils::urlDedupeKey)
             val fingerprint = if (urlKey == null) {
                 "${imported.contentType}|${imported.createdAt}|${imported.title}"
             } else null
-            val isDuplicate =
+            val isDuplicate = !existingSyncIds.add(imported.syncId) ||
                 if (urlKey != null) !existingUrls.add(urlKey)
                 else !existingFingerprints.add(fingerprint!!)
             if (isDuplicate) {

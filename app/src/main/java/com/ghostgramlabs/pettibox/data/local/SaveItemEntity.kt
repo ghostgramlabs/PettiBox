@@ -39,7 +39,8 @@ import androidx.room.PrimaryKey
         Index("is_pending_delete"),
         Index("remind_at"),
         Index(value = ["category_id", "created_at"], name = "idx_save_items_cat_time"),
-        Index(value = ["source_app", "created_at"], name = "idx_save_items_src_time")
+        Index(value = ["source_app", "created_at"], name = "idx_save_items_src_time"),
+        Index(value = ["sync_id"], unique = true)
     ]
 )
 data class SaveItemEntity(
@@ -73,5 +74,9 @@ data class SaveItemEntity(
     @ColumnInfo(name = "remind_at") val remindAt: Long? = null,
     @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis(),
     @ColumnInfo(name = "updated_at") val updatedAt: Long = System.currentTimeMillis(),
-    @ColumnInfo(name = "opened_at") val openedAt: Long? = null
+    @ColumnInfo(name = "opened_at") val openedAt: Long? = null,
+    // Identity across devices for "Sync between devices". Random per save,
+    // kept through backup and restore; row ids are not stable enough (a
+    // restore renumbers them).
+    @ColumnInfo(name = "sync_id", defaultValue = "") val syncId: String = newSyncId()
 )
