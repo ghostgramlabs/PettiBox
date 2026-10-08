@@ -44,10 +44,33 @@ class LocalBackupStore @Inject constructor(
             .orEmpty()
             .maxByOrNull { it.lastModified() }
 
-    /** The automatic copies kept on this phone, newest first. */
+    /**
+     * A copy made by sync just before a first sync or a big change from
+     * another device. Kept apart from the nightly copies (its own 3), so
+     * nightly pruning never removes it.
+     */
+    fun createSafetyBackupFile(): File {
+        val dir = backupDir().also { it.mkdirs() }
+        val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
+        return File(dir, "$SAFETY_PREFIX$stamp.zip")
+    }
+
+    fun pruneSafetyBackups(keep: Int = 3) {
+        backupDir()
+            .listFiles { file -> file.isFile && file.name.startsWith(SAFETY_PREFIX) && file.extension == "zip" }
+            .orEmpty()
+            .sortedByDescending { it.lastModified() }
+            .drop(keep)
+            .forEach { it.delete() }
+    }
+
+    /** The automatic copies kept on this phone (nightly and before-sync), newest first. */
     fun listBackups(): List<File> =
         backupDir()
-            .listFiles { file -> file.isFile && file.name.startsWith("pettibox-auto-backup-") && file.extension == "zip" }
+            .listFiles { file ->
+                file.isFile && file.extension == "zip" &&
+                    (file.name.startsWith("pettibox-auto-backup-") || file.name.startsWith(SAFETY_PREFIX))
+            }
             .orEmpty()
             .sortedByDescending { it.lastModified() }
 
@@ -79,5 +102,9 @@ class LocalBackupStore @Inject constructor(
     private fun backupDir(): File {
         val external = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
         return File(external ?: context.filesDir, "pettibox-backups")
+    }
+
+    companion object {
+        const val SAFETY_PREFIX = "pettibox-before-sync-"
     }
 }

@@ -105,4 +105,28 @@ interface SyncDao {
 
     @Query("SELECT sync_id FROM save_items")
     suspend fun allItemSyncIds(): List<String>
+
+    /** Saves this device has never synced (no merged copy yet): first-sync match candidates. */
+    @Query("SELECT * FROM save_items WHERE sync_id NOT IN (SELECT sync_id FROM sync_meta WHERE kind = 'item')")
+    suspend fun unsyncedItems(): List<SaveItemEntity>
+
+    /** Removes the row only; the file stays on disk (and in Drive), so nothing is lost. */
+    @Query("DELETE FROM attachments WHERE id = :id")
+    suspend fun deleteAttachmentRow(id: Long)
+
+    @Query("UPDATE attachments SET kind = :kind, sort_order = :order, ocr_text = :ocr WHERE id = :id")
+    suspend fun updateAttachment(id: Long, kind: String, order: Int, ocr: String?)
+
+    @Query("UPDATE attachments SET uri = :uri WHERE uri = :placeholder")
+    suspend fun fillAttachment(placeholder: String, uri: String)
+
+    @Query("UPDATE save_items SET local_uri = :uri WHERE local_uri = :placeholder")
+    suspend fun fillMainFile(placeholder: String, uri: String)
+
+    @Query("SELECT uri FROM attachments WHERE uri LIKE 'pettibox-sync:%' UNION SELECT local_uri FROM save_items WHERE local_uri LIKE 'pettibox-sync:%'")
+    suspend fun pendingFiles(): List<String>
+
+    /** Live saves (not in Recently deleted, not archived), for the mass-change guard. */
+    @Query("SELECT COUNT(*) FROM save_items WHERE is_pending_delete = 0 AND is_archived = 0")
+    suspend fun liveCount(): Int
 }
