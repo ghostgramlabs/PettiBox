@@ -128,6 +128,7 @@ fun DetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lockedOut by viewModel.lockedOut.collectAsStateWithLifecycle()
+    val conflicts by viewModel.conflicts.collectAsStateWithLifecycle()
     val item = state.item
     val article by viewModel.article.collectAsStateWithLifecycle()
     val readerTextZoom by viewModel.readerTextZoom.collectAsStateWithLifecycle()
@@ -543,6 +544,15 @@ fun DetailScreen(
             // Search. Was 24.dp before — 4 px off looks fine alone but
             // visibly misaligns when the user navigates between screens.
             Column(Modifier.padding(horizontal = 20.dp)) {
+                // Edited on two devices at once: both versions were kept.
+                conflicts.forEach { conflict ->
+                    ConflictCard(
+                        conflict = conflict,
+                        onUse = { value -> viewModel.useVersion(conflict, value) },
+                        onKeep = { viewModel.keepCurrent(conflict) }
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
                 // Editable title still lives in the body so the user can
                 // rename their save inline — but it's secondary now: the
                 // big page title above shows the canonical name; this
@@ -1728,5 +1738,59 @@ private fun CollectionFinderChip(label: String, onClick: () -> Unit) {
         Icon(Icons.Rounded.Search, null, tint = scheme.primary, modifier = Modifier.size(16.dp))
         Spacer(Modifier.width(4.dp))
         Text(label, style = MaterialTheme.typography.labelLarge, color = scheme.primary)
+    }
+}
+
+/** "Edited on 2 devices": the version shown, the other one(s), and a way to pick. */
+@Composable
+private fun ConflictCard(conflict: SyncConflict, onUse: (String) -> Unit, onKeep: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(scheme.tertiaryContainer.copy(alpha = 0.45f))
+            .padding(14.dp)
+    ) {
+        Text(
+            "${conflict.label} edited on 2 devices",
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            color = scheme.onSurface
+        )
+        Text(
+            "Both versions were kept. Pick the one to use everywhere.",
+            style = MaterialTheme.typography.bodySmall,
+            color = scheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+        ConflictVersion(label = "Shown now", value = conflict.shown.orEmpty(), action = "Keep", onClick = onKeep)
+        conflict.others.forEach { other ->
+            Spacer(Modifier.height(8.dp))
+            ConflictVersion(label = "Other version", value = other, action = "Use this", onClick = { onUse(other) })
+        }
+    }
+}
+
+@Composable
+private fun ConflictVersion(label: String, value: String, action: String, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp)
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                value.ifBlank { "(empty)" },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 4,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        }
+        TextButton(onClick = onClick) { Text(action, fontWeight = FontWeight.Bold) }
     }
 }

@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Email
@@ -51,6 +52,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.Lock
@@ -104,6 +106,8 @@ import com.ghostgramlabs.pettibox.data.preferences.ReminderTime
 import com.ghostgramlabs.pettibox.data.preferences.ThemeMode
 import com.ghostgramlabs.pettibox.data.local.ArticleStats
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.data.sync.SyncInterval
+import com.ghostgramlabs.pettibox.data.sync.SyncStatus
 import com.ghostgramlabs.pettibox.ui.components.CreateCollectionDialog
 import com.ghostgramlabs.pettibox.ui.components.EditCollectionDialog
 import com.ghostgramlabs.pettibox.ui.components.HelpLinks
@@ -450,6 +454,42 @@ fun SettingsScreen(
                 snackbarHostState.showSnackbar("Saved on this phone, but the Drive upload failed — check your connection")
         }
         busyLabel = null
+    }
+
+    val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle(
+        initialValue = SyncStatus(
+            enabled = false, interval = SyncInterval.HOURS_3, filesOnWifiOnly = true, deviceName = "",
+            accountEmail = "", lastSyncAt = 0L, lastError = "", lastErrorAt = 0L, needsReconnect = false,
+            pendingReview = 0, progress = ""
+        )
+    )
+    val syncDevices by viewModel.syncDevices.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val syncConsent = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        scope.launch {
+            if (result.resultCode == Activity.RESULT_OK && viewModel.completeSyncConnect(result.data)) {
+                snackbarHostState.showSnackbar("Sync is on. Your library is syncing now.")
+            } else {
+                snackbarHostState.showSnackbar("Sync wasn't turned on")
+            }
+        }
+    }
+    val connectSync: () -> Unit = {
+        scope.launch {
+            runCatching { viewModel.beginSyncConnect() }
+                .onSuccess { step ->
+                    when (step) {
+                        SettingsViewModel.DriveConnectStep.Connected ->
+                            snackbarHostState.showSnackbar("Sync is on. Your library is syncing now.")
+                        is SettingsViewModel.DriveConnectStep.NeedsConsent ->
+                            syncConsent.launch(IntentSenderRequest.Builder(step.pendingIntent.intentSender).build())
+                    }
+                }
+                .onFailure {
+                    snackbarHostState.showSnackbar("Couldn't reach Google Play services. Is this device signed in to Google?")
+                }
+        }
     }
 
     val driveConsent = rememberLauncherForActivityResult(
@@ -1263,6 +1303,16 @@ fun SettingsScreen(
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
+                    title = "Sync between your devices",
+                    body = "Turn on Sync between devices on each phone or tablet, signed in to the same Google account. Your library travels through your own Google Drive (a \"PettiBox Sync\" folder). PettiBox syncs when you open it, about a minute after you change something, and on the schedule you pick (30 minutes to weekly, or only when you tap Sync now). Photos and files follow, on Wi-Fi by default. Reminders ring on every device that has the save.",
+                    icon = Icons.Rounded.Sync
+                )
+                HelpItem(
+                    title = "Edited on two devices?",
+                    body = "If the same title, note or link was changed on two devices before they synced, both versions are kept. Open the save and pick the one to use; every device follows. A delete never wipes an edit made elsewhere: the save stays, and anything removed by sync waits in Recently deleted for 30 days. If another device wants to remove many saves at once, sync pauses and asks you first, after making a backup.",
+                    icon = Icons.Rounded.Devices
+                )
+                HelpItem(
                     title = "Back up your shelf",
                     body = "Every backup always keeps a copy on this phone; connect Google Drive (and optionally an extra folder) to send the same copy there too. \"Back up now\" fills every destination in one tap. Offline article copies are included, so they come back on a new phone too.",
                     icon = Icons.Rounded.Download
@@ -1442,6 +1492,39 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
+            SyncSettingsCard(
+                status = syncStatus,
+                devices = syncDevices,
+                onTurnOn = connectSync,
+                onTurnOff = {
+                    scope.launch {
+                        viewModel.turnOffSync()
+                        snackbarHostState.showSnackbar("Sync is off on this device")
+                    }
+                },
+                onSyncNow = {
+                    viewModel.syncNow()
+                    scope.launch { snackbarHostState.showSnackbar("Syncing…") }
+                },
+                onReconnect = connectSync,
+                onInterval = { scope.launch { viewModel.setSyncInterval(it) } },
+                onWifiOnly = { scope.launch { viewModel.setSyncFilesOnWifiOnly(it) } },
+                onRename = { scope.launch { viewModel.setSyncDeviceName(it) } },
+                onRemoveDevice = { id ->
+                    scope.launch {
+                        val ok = viewModel.removeSyncDevice(id)
+                        snackbarHostState.showSnackbar(if (ok) "Removed" else "Couldn't reach Google Drive")
+                    }
+                },
+                onReview = { keep ->
+                    scope.launch {
+                        viewModel.answerSyncReview(keep)
+                        snackbarHostState.showSnackbar(if (keep) "Keeping your saves" else "Applying the changes")
+                    }
+                }
+            )
 
             Spacer(Modifier.height(16.dp))
             SettingsSection(title = "Backup") {

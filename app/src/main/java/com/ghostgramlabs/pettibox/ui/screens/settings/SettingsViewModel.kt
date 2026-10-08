@@ -30,6 +30,13 @@ import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgePreferences
 import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgeWorker
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.data.sync.DriveSyncClient
+import com.ghostgramlabs.pettibox.data.sync.SyncEngine
+import com.ghostgramlabs.pettibox.data.sync.SyncInterval
+import com.ghostgramlabs.pettibox.data.sync.SyncPreferences
+import com.ghostgramlabs.pettibox.data.sync.SyncScheduler
+import com.ghostgramlabs.pettibox.data.sync.SyncSetup
+import com.ghostgramlabs.pettibox.data.sync.SyncStatus
 import com.ghostgramlabs.pettibox.data.util.LocalBackupStore
 import com.ghostgramlabs.pettibox.ui.components.NewCollection
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -57,8 +64,96 @@ class SettingsViewModel @Inject constructor(
     private val shelfNudgePreferences: ShelfNudgePreferences,
     private val appLockPreferences: AppLockPreferences,
     private val ratingPreferences: RatingPreferences,
+    private val syncPreferences: SyncPreferences,
+    private val syncSetup: SyncSetup,
+    private val syncClient: DriveSyncClient,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
+    // ── Sync between devices ─────────────────────────────────────────────
+
+    val syncStatus: Flow<SyncStatus> = syncPreferences.status
+
+    /** Other devices seen in Drive: id -> (name, when their copy last changed). */
+    val syncDevices: Flow<Map<String, Pair<String, Long>>> = syncPreferences.devices
+
+    /**
+     * Turning sync on needs the same Drive access as backups. If it was
+     * granted already, sync starts now; otherwise the screen shows Google's
+     * consent sheet and calls [completeSyncConnect].
+     */
+    suspend fun beginSyncConnect(): DriveConnectStep {
+        val result = driveAuth.authorize()
+        val pendingIntent = result.pendingIntent
+        return if (result.hasResolution() && pendingIntent != null) {
+            DriveConnectStep.NeedsConsent(pendingIntent)
+        } else {
+            turnOnSync()
+            DriveConnectStep.Connected
+        }
+    }
+
+    suspend fun completeSyncConnect(data: Intent?): Boolean =
+        runCatching {
+            com.google.android.gms.auth.api.identity.Identity
+                .getAuthorizationClient(appContext)
+                .getAuthorizationResultFromIntent(data)
+            turnOnSync()
+            true
+        }.getOrDefault(false)
+
+    private suspend fun turnOnSync() {
+        syncPreferences.setNeedsReconnect(false)
+        syncPreferences.setEnabled(true)
+        syncSetup.enable()
+        SyncScheduler.apply(appContext, true, syncPreferences.status.first().interval)
+        SyncScheduler.now(appContext)
+    }
+
+    /** Stops syncing on this phone. Nothing is deleted here or in Drive. */
+    suspend fun turnOffSync() {
+        syncPreferences.setEnabled(false)
+        syncSetup.disable()
+        syncPreferences.resetForDisable()
+        SyncScheduler.apply(appContext, false, SyncInterval.MANUAL)
+    }
+
+    suspend fun setSyncInterval(interval: SyncInterval) {
+        syncPreferences.setInterval(interval)
+        val on = syncPreferences.isEnabled()
+        SyncScheduler.apply(appContext, on, interval)
+    }
+
+    suspend fun setSyncFilesOnWifiOnly(on: Boolean) = syncPreferences.setFilesOnWifiOnly(on)
+
+    suspend fun setSyncDeviceName(name: String) {
+        if (name.isBlank()) return
+        syncPreferences.setDeviceName(name)
+        SyncScheduler.now(appContext) // others see the new name after the next upload
+    }
+
+    fun syncNow() = SyncScheduler.now(appContext)
+
+    /** The user's answer to "another device wants to remove N saves". */
+    suspend fun answerSyncReview(keepMine: Boolean) {
+        syncPreferences.setReviewDecision(if (keepMine) SyncEngine.REVIEW_KEEP else SyncEngine.REVIEW_APPLY)
+        SyncScheduler.now(appContext)
+    }
+
+    /**
+     * Removes another device's copy from Drive (an old phone, say). The
+     * library itself stays: every device keeps and republishes the merged
+     * library. If that device syncs again it simply reappears.
+     */
+    suspend fun removeSyncDevice(deviceId: String): Boolean = runCatching {
+        val token = driveAuth.silentAccessToken() ?: return false
+        val folder = syncClient.syncFolder(token)
+        syncClient.listDeviceFiles(token, folder)
+            .filter { DriveSyncClient.deviceOf(it.name) == deviceId }
+            .forEach { syncClient.delete(token, it.id) }
+        syncPreferences.forgetDevice(deviceId)
+        true
+    }.getOrDefault(false)
+
     val autoScanOcr: Flow<Boolean> = ocrPreferences.autoScan
     val pdfPageLimit: Flow<Int> = ocrPreferences.pdfPageLimit
     val localBackupStatus: Flow<LocalBackupStatus> = backupPreferences.status

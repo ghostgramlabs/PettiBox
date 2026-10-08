@@ -335,6 +335,23 @@ class SyncEngine @Inject constructor(
 
     private fun decodeOrNull(json: String): SyncRecord? = runCatching { SyncCodec.decodeString(json) }.getOrNull()
 
+    /**
+     * Settles a field edited on two devices by keeping the value shown now.
+     * (Picking the other value is an ordinary edit of the save.) Written as
+     * a new edit so every device drops the other version.
+     */
+    suspend fun keepShown(syncId: String, field: String) = lock.withLock {
+        val r = syncDao.meta(KIND_ITEM, syncId)?.let { decodeOrNull(it.recordJson) } ?: return@withLock
+        if (r.alternatives(field).isEmpty()) return@withLock
+        val clock = HybridClock(prefs.clock())
+        val next = SyncWrite.field(r, field, r.value(field), Dot(prefs.deviceId(), clock.next()))
+        db.withTransaction {
+            syncDao.putMeta(listOf(SyncMetaEntity(KIND_ITEM, syncId, shardOf(syncId), SyncCodec.encodeString(next))))
+            syncDao.markDirty(listOf(SyncDirtyEntity(shardOf(syncId))))
+        }
+        prefs.saveClock(clock.current)
+    }
+
     companion object {
         private const val TAG = "PettiBoxSync"
 

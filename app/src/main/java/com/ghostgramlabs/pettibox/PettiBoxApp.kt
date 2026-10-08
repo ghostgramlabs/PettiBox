@@ -16,11 +16,16 @@ import com.ghostgramlabs.pettibox.ui.widget.ShelfWidget
 import com.ghostgramlabs.pettibox.ui.widget.WidgetTitlesExpiryWorker
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.data.local.SyncDao
+import com.ghostgramlabs.pettibox.data.sync.SyncPreferences
+import com.ghostgramlabs.pettibox.data.sync.SyncScheduler
+import com.ghostgramlabs.pettibox.data.sync.SyncSetup
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -36,6 +41,9 @@ class PettiBoxApp : Application(), Configuration.Provider {
     @Inject lateinit var shelfNudgePreferences: ShelfNudgePreferences
     @Inject lateinit var reminderPreferences: ReminderPreferences
     @Inject lateinit var appLockPreferences: AppLockPreferences
+    @Inject lateinit var syncPreferences: SyncPreferences
+    @Inject lateinit var syncSetup: SyncSetup
+    @Inject lateinit var syncDao: SyncDao
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -108,6 +116,20 @@ class PettiBoxApp : Application(), Configuration.Provider {
         // the user doesn't lose them entirely.
         appScope.launch {
             ReminderScheduler.rescheduleAll(this@PettiBoxApp, repository)
+        }
+        // Sync between devices: make the outbox triggers and background
+        // syncing match the setting (a kill mid-toggle, or a WorkManager
+        // wipe, can leave them out of step). Nothing runs while it's off.
+        appScope.launch {
+            val sync = syncPreferences.status.first()
+            syncSetup.reconcile(sync.enabled)
+            SyncScheduler.apply(this@PettiBoxApp, sync.enabled, sync.interval)
+        }
+        // About a minute after the last edit, send it. Each edit pushes the
+        // round back, so a burst of edits is one round.
+        appScope.launch {
+            combine(syncPreferences.enabled, syncDao.observeOutboxCount()) { on, queued -> on && queued > 0 }
+                .collect { pending -> if (pending) SyncScheduler.soon(this@PettiBoxApp) }
         }
     }
 }

@@ -13,6 +13,12 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 - Links without a preview image get a screenshot of the page instead, and any link can switch
   to one with "Use a page screenshot as the picture".
 - With more than 8 collections, moving a save opens a searchable collection list.
+- Sync between devices through your own Google Drive: every phone and tablet keeps the same
+  library, on a schedule you choose (30 minutes to weekly, or manual), plus when you open the
+  app and shortly after a change. Photos and files sync too (Wi-Fi only by default). Edits made
+  on two devices at once are both kept until you pick one; a delete never wipes an edit made
+  elsewhere; anything removed by sync waits in Recently deleted; and a large removal from
+  another device pauses for your OK, with a backup made first.
 
 ## 2.0.12 - 2026-10-02
 

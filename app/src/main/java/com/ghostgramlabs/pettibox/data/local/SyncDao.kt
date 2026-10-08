@@ -47,6 +47,9 @@ interface SyncDao {
     @Query("SELECT * FROM sync_meta WHERE kind = :kind AND sync_id = :syncId")
     suspend fun meta(kind: String, syncId: String): SyncMetaEntity?
 
+    @Query("SELECT * FROM sync_meta WHERE kind = :kind AND sync_id = :syncId")
+    fun observeMeta(kind: String, syncId: String): Flow<SyncMetaEntity?>
+
     @Query("SELECT * FROM sync_meta WHERE shard = :shard")
     suspend fun metaInShard(shard: Int): List<SyncMetaEntity>
 

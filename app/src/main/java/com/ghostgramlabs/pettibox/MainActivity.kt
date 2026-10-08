@@ -18,11 +18,14 @@ import androidx.lifecycle.lifecycleScope
 import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.data.preferences.ThemeMode
 import com.ghostgramlabs.pettibox.data.preferences.ThemePreferences
+import com.ghostgramlabs.pettibox.data.sync.SyncPreferences
+import com.ghostgramlabs.pettibox.data.sync.SyncScheduler
 import com.ghostgramlabs.pettibox.ui.nav.AppLaunch
 import com.ghostgramlabs.pettibox.ui.lock.AppLockGate
 import com.ghostgramlabs.pettibox.ui.nav.PettiBoxNavGraph
 import com.ghostgramlabs.pettibox.ui.theme.PettiBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,6 +35,7 @@ import javax.inject.Inject
 class MainActivity : FragmentActivity() {
     @Inject lateinit var themePreferences: ThemePreferences
     @Inject lateinit var appLockPreferences: AppLockPreferences
+    @Inject lateinit var syncPreferences: SyncPreferences
 
     /**
      * Where a notification, widget, or app-icon shortcut asked to land,
@@ -85,6 +89,17 @@ class MainActivity : FragmentActivity() {
                     )
                     }
                 }
+            }
+        }
+    }
+
+    /** Opening the app pulls in what other devices changed, unless a round ran just now. */
+    override fun onStart() {
+        super.onStart()
+        lifecycleScope.launch {
+            val sync = syncPreferences.status.first()
+            if (sync.enabled && System.currentTimeMillis() - sync.lastSyncAt > 2 * 60_000L) {
+                SyncScheduler.now(this@MainActivity)
             }
         }
     }
