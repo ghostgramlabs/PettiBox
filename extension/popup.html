@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PettiBox</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="bar">
+    <img src="icons/icon-48.png" alt="" class="logo">
+    <h1>PettiBox</h1>
+    <span id="status" class="status" aria-live="polite"></span>
+    <button id="sync" class="icon-btn" title="Sync now" aria-label="Sync now">⟳</button>
+  </header>
+
+  <!-- Signed out -->
+  <section id="signin" class="card" hidden>
+    <h2>Sign in to sync</h2>
+    <p>Use the same Google account as PettiBox on your phone. Your library is read from your own
+      Google Drive (the "PettiBox Sync" folder); turn on <b>Sync between devices</b> in the app's
+      Settings first.</p>
+    <button id="signin-btn" class="primary">Sign in with Google</button>
+  </section>
+
+  <main id="app" hidden>
+    <!-- Save this tab -->
+    <section class="card" id="save-card">
+      <div id="saved-note" class="saved-note" hidden>Already in PettiBox. <a href="#" id="saved-edit">Edit</a></div>
+      <label class="field">
+        <span>Title</span>
+        <input id="save-title" type="text" autocomplete="off">
+      </label>
+      <div class="url" id="save-url"></div>
+      <div class="row">
+        <label class="field grow">
+          <span>Collection</span>
+          <input id="save-col" type="text" list="cols" placeholder="None" autocomplete="off">
+        </label>
+        <label class="field grow">
+          <span>Tags</span>
+          <input id="save-tags" type="text" placeholder="comma separated" autocomplete="off">
+        </label>
+      </div>
+      <label class="field">
+        <span>Note</span>
+        <textarea id="save-note" rows="2" placeholder="Optional"></textarea>
+      </label>
+      <button id="save-btn" class="primary">Save to PettiBox</button>
+    </section>
+
+    <!-- Library -->
+    <section class="card">
+      <div class="row">
+        <input id="search" type="search" placeholder="Search your library" autocomplete="off" class="grow">
+      </div>
+      <div class="filters" role="tablist">
+        <button data-filter="all" class="chip on">All</button>
+        <button data-filter="fav" class="chip">Favorites</button>
+        <button data-filter="trash" class="chip">Recently deleted</button>
+      </div>
+      <ul id="results" class="results"></ul>
+      <p id="empty" class="muted" hidden></p>
+    </section>
+  </main>
+
+  <!-- Edit a save -->
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet-body card">
+      <h2>Edit save</h2>
+      <div id="conflicts"></div>
+      <label class="field"><span>Title</span><input id="edit-title" type="text"></label>
+      <label class="field"><span>Link</span><input id="edit-url" type="url"></label>
+      <div class="row">
+        <label class="field grow"><span>Collection</span><input id="edit-col" type="text" list="cols" placeholder="None"></label>
+        <label class="field grow"><span>Tags</span><input id="edit-tags" type="text" placeholder="comma separated"></label>
+      </div>
+      <label class="field"><span>Note</span><textarea id="edit-note" rows="3"></textarea></label>
+      <label class="check"><input id="edit-fav" type="checkbox"> Favorite</label>
+      <div class="row actions">
+        <button id="edit-delete" class="danger">Delete</button>
+        <span class="grow"></span>
+        <button id="edit-cancel">Cancel</button>
+        <button id="edit-save" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <datalist id="cols"></datalist>
+  <footer class="foot">
+    <a href="#" id="options">Settings</a>
+    <span id="account" class="muted"></span>
+  </footer>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -23,3 +23,14 @@ jobs:
         run: ./gradlew :app:testDebugUnitTest
       - name: Debug build
         run: ./gradlew :app:assembleDebug
+
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Extension tests (incl. the shared sync cases)
+        working-directory: extension
+        run: node --test test/*.test.js

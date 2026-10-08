@@ -85,6 +85,13 @@ For every field, tag and file key, with `A` and `B` the two copies:
 was replaced or removed there on purpose. `vv` merges by taking each device's max,
 `gone` likewise; `c` takes the min. Elements are kept sorted by dot `(t, d)`.
 
+If both copies carry the same dot with *different* contents (only possible when a file
+is corrupt), keep the one with the smaller **tie key** (string order): for a field value
+`"h:" + v + "|" + ctx`, where `v` is `null`, `s:<string>`, `n:<number>` or
+`b:<true|false>` and `ctx` is the `x` context as `dev=ts` pairs sorted by device and
+joined with `,` (or `-` when absent); for a tag `"t:" + name`; for a file
+`"f:" + kind + "|" + order`.
+
 This is commutative, associative and idempotent, so devices converge whatever order
 they sync in.
 

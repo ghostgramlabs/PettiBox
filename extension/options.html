@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PettiBox settings</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    body { width: auto; max-width: 560px; max-height: none; margin: 24px auto; padding: 0 16px; }
+    h1 { font-size: 26px; margin: 8px 0 16px; }
+    select { font: inherit; border: 1px solid var(--edge); background: var(--bright); color: var(--ink); border-radius: 10px; padding: 7px 9px; }
+    .line { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .line > :first-child { flex: 1; }
+    ul { padding-left: 18px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>PettiBox</h1>
+
+  <section class="card">
+    <h2>Google account</h2>
+    <div class="line">
+      <span id="account">Not signed in</span>
+      <button id="signin" class="primary" style="width:auto">Sign in</button>
+      <button id="signout" hidden>Sign out</button>
+    </div>
+    <p class="muted">Use the account PettiBox uses on your phone (Settings › Sync between devices).
+      PettiBox only sees files it made in your Drive, never the rest of it.</p>
+  </section>
+
+  <section class="card">
+    <h2>Sync</h2>
+    <div class="line">
+      <span id="last" class="muted"></span>
+      <button id="sync">Sync now</button>
+    </div>
+    <p id="error" class="muted" style="color: var(--danger)" hidden></p>
+    <label class="field">
+      <span>Sync in the background</span>
+      <select id="interval"></select>
+    </label>
+    <p class="muted">The extension also syncs about half a minute after you save or edit something.</p>
+  </section>
+
+  <section class="card">
+    <h2>This browser</h2>
+    <div class="line">
+      <input id="name" type="text" maxlength="40" placeholder="Chrome">
+      <button id="rename">Rename</button>
+    </div>
+    <p class="muted">How your phone lists this browser.</p>
+    <div id="devices-box" hidden>
+      <span class="muted">Your other devices</span>
+      <ul id="devices"></ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Privacy</h2>
+    <p>Your library lives in your own Google Drive, in a "PettiBox Sync" folder, and in this browser.
+      Saves in locked collections never show here: the browser can't unlock them.</p>
+  </section>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

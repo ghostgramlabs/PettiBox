@@ -167,9 +167,9 @@ data class SyncRecord(
 fun merge(a: SyncRecord, b: SyncRecord): SyncRecord {
     require(a.kind == b.kind && a.id == b.id) { "merging different records" }
     if (a == b) return a
-    val fields = mergeKeyed(a.fields, a.vv, b.fields, b.vv) { it.dot }
-    val tags = mergeKeyed(a.tags, a.vv, b.tags, b.vv) { it.dot }
-    val files = mergeKeyed(a.files, a.vv, b.files, b.vv) { it.dot }
+    val fields = mergeKeyed(a.fields, a.vv, b.fields, b.vv, { it.dot }, ::tieKey)
+    val tags = mergeKeyed(a.tags, a.vv, b.tags, b.vv, { it.dot }) { "t:" + it.name }
+    val files = mergeKeyed(a.files, a.vv, b.files, b.vv, { it.dot }) { "f:" + it.kind + "|" + it.order }
     val gone = when {
         a.gone == null -> b.gone
         b.gone == null -> a.gone
@@ -197,7 +197,8 @@ private fun <T : Any> mergeKeyed(
     aSeen: Ctx,
     b: Map<String, List<T>>,
     bSeen: Ctx,
-    dotOf: (T) -> Dot
+    dotOf: (T) -> Dot,
+    tie: (T) -> String
 ): Map<String, List<T>> {
     val out = HashMap<String, List<T>>()
     for (key in a.keys + b.keys) {
@@ -212,13 +213,26 @@ private fun <T : Any> mergeKeyed(
                 val dot = dotOf(y)
                 val existing = kept[dot]
                 // The same write can only carry one value; if two copies
-                // disagree (corruption), pick one the same way everywhere.
-                kept[dot] = if (existing == null) y else minOf(existing, y, compareBy { it.toString() })
+                // disagree (corruption), pick one the same way everywhere,
+                // including in the extension (see sync-spec: tie key).
+                kept[dot] = if (existing == null) y else minOf(existing, y, compareBy(tie))
             }
         }
         if (kept.isNotEmpty()) out[key] = kept.values.sortedBy(dotOf)
     }
     return out
+}
+
+/** Implementation-independent order for two values claiming the same write (spec: tie key). */
+private fun tieKey(h: Head): String {
+    val v = when (val x = h.value) {
+        null -> "null"
+        is String -> "s:$x"
+        is Boolean -> "b:$x"
+        else -> "n:$x"
+    }
+    val ctx = h.ctx?.entries?.sortedBy { it.key }?.joinToString(",") { "${it.key}=${it.value}" } ?: "-"
+    return "h:$v|$ctx"
 }
 
 /**
