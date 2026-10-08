@@ -61,8 +61,10 @@ key (Developer Dashboard › Package › Public key) into `manifest.json` › `k
 Chrome Extension OAuth client for the store ID in the same project. Ship as **Unlisted** until
 the app release with sync is rolled out.
 
-`keys/dev-key.pem` (git-ignored) is only needed to pack a `.crx` by hand; the ID comes from the
-public key in the manifest.
+The development key pair lives outside the repo, in `%USERPROFILE%\.pettibox-keys\`
+(`dev-key.pem` is the private key; never put it in this folder, or Chrome would load it with the
+extension). It's only needed to pack a `.crx` by hand; the ID comes from the public key in
+`manifest.json` › `key`, so the extension keeps its ID even without it.
 
 ## What the browser doesn't do (yet)
 

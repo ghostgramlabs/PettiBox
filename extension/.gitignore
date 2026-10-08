@@ -1,3 +1,4 @@
-keys/*.pem
-keys/*.der
+# Private keys never belong in the extension folder (Chrome would load them).
+*.pem
+*.der
 node_modules/
