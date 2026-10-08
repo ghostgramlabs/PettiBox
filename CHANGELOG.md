@@ -21,6 +21,8 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
   another device pauses for your OK, with a backup made first.
 - PettiBox for Chrome: save the page you're on in one tap (or Ctrl+Shift+S), see pictures, search,
   edit, and download your library as a bookmarks file. It syncs with the app through your Drive.
+- Everything PettiBox keeps in Google Drive is now in one "PettiBox" folder (Backups and Sync
+  inside). The old "PettiBox Backups" folder moves in by itself, with every backup.
 - Turning sync off never deletes anything on the phone; you can also remove this phone's copy from
   Drive, or delete all synced data from Drive (sync then stops on every device, and each keeps its
   library).

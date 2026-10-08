@@ -2,7 +2,7 @@
 
 Save the page you're on to PettiBox, and search, edit or delete your saves from the browser.
 The extension syncs with the PettiBox Android app through the user's own Google Drive, using
-the same "Sync between devices" format as the app (see `../sync-spec/README.md`). The browser is
+the same "Sync between devices" format as the app, in `My Drive/PettiBox/Sync` (see `../sync-spec/README.md`). The browser is
 just another device: it keeps its own merged copy of the library and publishes its own files.
 
 Manifest V3, plain ES modules, no build step.

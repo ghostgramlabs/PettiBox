@@ -1,5 +1,5 @@
-// Google Drive for the extension: the same "PettiBox Sync" folder and files as
-// the Android app (DriveSyncClient.kt), under the same drive.file scope. That
+// Google Drive for the extension: the same My Drive/PettiBox/Sync folder and files
+// as the Android app (DriveSyncClient.kt, DriveFolders.kt), under the same drive.file scope. That
 // works across the app and the extension because drive.file access belongs to
 // the Google Cloud project, and both OAuth clients live in the one project.
 
@@ -8,7 +8,9 @@ import { SyncFormatError } from './sync/codec.js';
 
 const API = 'https://www.googleapis.com/drive/v3';
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3';
-const FOLDER = 'PettiBox Sync';
+const ROOT = 'PettiBox';
+const SYNC = 'Sync';
+const LEGACY_SYNC = 'PettiBox Sync'; // older versions kept it at the top of My Drive
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
 
 export class DriveError extends Error {
@@ -53,32 +55,93 @@ async function call(token, url, init = {}) {
 
 const q = (s) => encodeURIComponent(s);
 
-async function findFolder(token, name = FOLDER, parent = null) {
-  const query = `name = '${name}' and mimeType = '${FOLDER_MIME}' and trashed = false` +
-    (parent ? ` and '${parent}' in parents` : '');
-  const res = await call(token, `${API}/files?q=${q(query)}&orderBy=createdTime&fields=${q('files(id)')}`);
-  const files = (await res.json()).files ?? [];
-  return files.length ? files[0].id : null;
+/** Folders matching [query], oldest first: [{ id, parents }]. */
+async function folders(token, query) {
+  const out = [];
+  let page = null;
+  do {
+    const url = `${API}/files?q=${q(query)}&orderBy=createdTime&pageSize=1000&fields=${q('nextPageToken,files(id,parents)')}` +
+      (page ? `&pageToken=${q(page)}` : '');
+    const body = await (await call(token, url)).json();
+    for (const f of body.files ?? []) out.push({ id: f.id, parents: f.parents ?? [] });
+    page = body.nextPageToken ?? null;
+  } while (page);
+  return out;
 }
 
-async function syncFolder(token) {
-  const found = await findFolder(token);
-  if (found) return found;
+const named = (name, parent) =>
+  `name = '${name}' and mimeType = '${FOLDER_MIME}' and trashed = false` + (parent ? ` and '${parent}' in parents` : '');
+
+async function move(token, id, { to, from = [], name }) {
+  const params = `addParents=${q(to)}` + (from.length ? `&removeParents=${q(from.join(','))}` : '') + '&fields=id';
+  await call(token, `${API}/files/${id}?${params}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify(name ? { name } : {}),
+  });
+}
+
+/** Moves everything in [from] into [into], then removes the empty [from]. */
+async function mergeInto(token, from, into) {
+  for (const f of await folders(token, `'${from}' in parents and trashed = false`)) await move(token, f.id, { to: into, from: f.parents });
+  await call(token, `${API}/files/${from}`, { method: 'DELETE' }).catch(() => {});
+}
+
+/** The oldest of several same-named folders; the rest are folded into it. */
+async function settle(token, found) {
+  if (!found.length) return null;
+  for (const extra of found.slice(1)) await mergeInto(token, extra.id, found[0].id);
+  return found[0].id;
+}
+
+async function createFolder(token, name, parent) {
   await call(token, `${API}/files?fields=id`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-    body: JSON.stringify({ name: FOLDER, mimeType: FOLDER_MIME }),
+    body: JSON.stringify({ name, mimeType: FOLDER_MIME, parents: [parent] }),
   });
-  // Another device may have made one at the same moment: everyone uses the oldest.
-  return findFolder(token);
 }
+
+async function findOrCreate(token, name, parent) {
+  const found = await settle(token, await folders(token, named(name, parent)));
+  if (found) return found;
+  await createFolder(token, name, parent);
+  // Another device may have made one at the same moment: settle on the oldest.
+  return settle(token, await folders(token, named(name, parent)));
+}
+
+/** My Drive/PettiBox/Sync, with an older top-level "PettiBox Sync" moved in. */
+async function syncFolder(token) {
+  const root = await findOrCreate(token, ROOT, 'root');
+  const legacy = await folders(token, named(LEGACY_SYNC));
+  const current = await settle(token, await folders(token, named(SYNC, root)));
+  if (current) {
+    for (const old of legacy) await mergeInto(token, old.id, current);
+    return current;
+  }
+  if (legacy.length) {
+    await move(token, legacy[0].id, { to: root, from: legacy[0].parents, name: SYNC });
+    for (const old of legacy.slice(1)) await mergeInto(token, old.id, legacy[0].id);
+    return legacy[0].id;
+  }
+  return findOrCreate(token, SYNC, root);
+}
+
+async function findFolder(token, name, parent) {
+  const found = await folders(token, named(name, parent));
+  return found.length ? found[0].id : null;
+}
+
+// The folder hardly ever changes; look it up once per worker lifetime and account.
+let known = null; // { token, id }
 
 /** The SyncTransport the engine uses. */
 export const driveTransport = {
   async open() {
     const token = await getToken(false);
     if (!token) return null;
-    const folder = await syncFolder(token);
+    if (known?.token !== token) known = { token, id: await syncFolder(token) };
+    const folder = known.id;
     return {
       async list() {
         const out = [];

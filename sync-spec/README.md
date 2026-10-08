@@ -9,10 +9,21 @@ implementation; `extension/sync/model.js` is a port, and both must reproduce eve
 ## Drive layout
 
 ```
-My Drive/PettiBox Sync/
-  d-<deviceId>-<shard>.json.gz    shard 0–15; written only by that device
-  files/<sha256>                  photos, PDFs and other files, named by content
+My Drive/PettiBox/
+  Backups/                        nightly backup zips (not part of sync)
+  Sync/
+    d-<deviceId>-<shard>.json.gz  shard 0–15; written only by that device
+    pettibox-sync-reset.json      only after "Delete synced data" (see below)
+    files/<sha256>.<ext>          photos, PDFs, files and card pictures, named by content
 ```
+
+Everything PettiBox keeps in Drive is under the one `PettiBox` folder. Finding a folder:
+take the oldest folder of that name the app can see (drive.file shows only folders PettiBox
+made); if there are more, move the others' contents into it and delete them (two devices
+may create one at the same moment). Older versions used top-level `PettiBox Sync` and
+`PettiBox Backups`; those are moved into `PettiBox` and renamed `Sync` / `Backups`, and if
+one appears again (an older app version on another device), its contents are moved in.
+`DriveFolders.kt` and `extension/drive.js` implement this.
 
 - `deviceId`: 16 random hex characters, made once per install (or per browser profile).
 - Each device publishes its **whole merged copy** of the library, split into 16

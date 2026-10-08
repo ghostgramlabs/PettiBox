@@ -93,7 +93,7 @@ fun SyncSettingsCard(
             Text(
                 "Keep the same library on your phones, tablets and the PettiBox Chrome extension. " +
                     "PettiBox has no servers: your library stays on your devices, and they keep in step through your own Google Drive, " +
-                    "in a \"PettiBox Sync\" folder. Nothing passes through anyone else, and we can't see your saves.",
+                    "in a \"PettiBox\" folder. Nothing passes through anyone else, and we can't see your saves.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onSurfaceVariant
             )
@@ -296,7 +296,7 @@ fun SyncSettingsCard(
             title = { Text("Delete synced data from Google Drive?") },
             text = {
                 Text(
-                    "This deletes the \"PettiBox Sync\" folder in your Google Drive, with every device's copy and the synced photos and files, " +
+                    "This deletes the sync data in the \"PettiBox\" folder of your Google Drive (PettiBox › Sync), with every device's copy and the synced photos and files, " +
                         "and turns sync off on all your devices and the Chrome extension.\n\n" +
                         "Nothing is deleted from any phone: each keeps its own library. Your Drive backups aren't touched. " +
                         "You can turn sync on again later to start fresh."

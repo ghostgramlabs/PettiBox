@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Moves photos, PDFs and other files between this phone and
- * "PettiBox Sync/files/", separately from the text sync so text never waits
+ * "PettiBox/Sync/files/", separately from the text sync so text never waits
  * for them. Files are named by their sha256 (plus extension), uploaded once,
  * and checked against that hash when they come down. Nothing here deletes a
  * file anywhere.

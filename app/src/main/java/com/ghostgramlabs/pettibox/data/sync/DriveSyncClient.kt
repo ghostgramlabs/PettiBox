@@ -1,5 +1,6 @@
 package com.ghostgramlabs.pettibox.data.sync
 
+import com.ghostgramlabs.pettibox.data.drive.DriveFolders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -33,17 +34,14 @@ data class DriveSyncFile(val id: String, val name: String, val md5: String, val 
  * scope as backups (it only sees files PettiBox made). Kept apart from
  * DriveBackupClient on purpose, so sync work can never break backups.
  *
- * Layout: "PettiBox Sync/" holds each device's d-<device>-<shard>.json.gz;
- * "PettiBox Sync/files/" holds photos and files named by their sha256.
+ * Layout: "PettiBox/Sync/" holds each device's d-<device>-<shard>.json.gz;
+ * "PettiBox/Sync/files/" holds photos and files named by their sha256.
  */
 @Singleton
-class DriveSyncClient @Inject constructor() {
+class DriveSyncClient @Inject constructor(private val folders: DriveFolders) {
 
-    /** The sync folder, made if missing. Two folders (a race at first sync) resolve to the oldest. */
-    suspend fun syncFolder(token: String): String = withContext(Dispatchers.IO) {
-        findFolder(token, FOLDER_NAME, parent = null) ?: createFolder(token, FOLDER_NAME, parent = null)
-            .let { findFolder(token, FOLDER_NAME, parent = null) ?: it }
-    }
+    /** My Drive/PettiBox/Sync, made if missing (see DriveFolders for the layout and moving old folders). */
+    suspend fun syncFolder(token: String): String = folders.sync(token)
 
     suspend fun filesFolder(token: String, syncFolder: String): String = withContext(Dispatchers.IO) {
         findFolder(token, FILES_FOLDER, syncFolder) ?: createFolder(token, FILES_FOLDER, syncFolder)
@@ -317,7 +315,6 @@ class DriveSyncClient @Inject constructor() {
     }
 
     companion object {
-        const val FOLDER_NAME = "PettiBox Sync"
         const val FILES_FOLDER = "files"
         /** Present once someone chose "Delete synced data from Google Drive". */
         const val RESET_MARKER = "pettibox-sync-reset.json"

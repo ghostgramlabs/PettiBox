@@ -1304,12 +1304,12 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Sync between your devices",
-                    body = "Turn on Sync between devices on each phone or tablet, signed in to the same Google account. Your library travels through your own Google Drive (a \"PettiBox Sync\" folder). PettiBox syncs when you open it, about a minute after you change something, and on the schedule you pick (30 minutes to weekly, or only when you tap Sync now). Photos and files follow, on Wi-Fi by default. Reminders ring on every device that has the save.",
+                    body = "Turn on Sync between devices on each phone or tablet, signed in to the same Google account. Your library travels through your own Google Drive (a \"PettiBox\" folder). PettiBox syncs when you open it, about a minute after you change something, and on the schedule you pick (30 minutes to weekly, or only when you tap Sync now). Photos and files follow, on Wi-Fi by default. Reminders ring on every device that has the save.",
                     icon = Icons.Rounded.Sync
                 )
                 HelpItem(
                     title = "Where is my library kept?",
-                    body = "PettiBox has no servers. Your library lives on your phone and, with sync on, on your other devices and in your own Google Drive. Nobody else can see it. Turning sync off never deletes anything on the phone; you can also remove this phone's copy from Drive, or use \"Delete synced data\" to clear the PettiBox Sync folder from Drive and stop sync on every device, while each device keeps its library.",
+                    body = "PettiBox has no servers. Your library lives on your phone and, with sync on, on your other devices and in your own Google Drive. Nobody else can see it. Turning sync off never deletes anything on the phone; you can also remove this phone's copy from Drive, or use \"Delete synced data\" to clear the synced data from Drive and stop sync on every device, while each device keeps its library.",
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
@@ -1334,7 +1334,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Back up to your Google Drive",
-                    body = "Connect Google Drive in the Backup section and every nightly safety copy also uploads to a \"PettiBox Backups\" folder in your own Drive. PettiBox can only see files it created — never the rest of your Drive. Wrong account connected? Tap \"Switch account\" under Google Drive to pick a different one.",
+                    body = "Connect Google Drive in the Backup section and every nightly safety copy also uploads to a \"PettiBox › Backups\" folder in your own Drive. PettiBox can only see files it created — never the rest of your Drive. Wrong account connected? Tap \"Switch account\" under Google Drive to pick a different one.",
                     icon = Icons.Rounded.Cloud
                 )
                 }
