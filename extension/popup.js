@@ -322,6 +322,7 @@ $('edit-delete').addEventListener('click', async () => {
   await done();
 });
 $('options').addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
+$('where').addEventListener('click', (e) => { e.preventDefault(); chrome.tabs.create({ url: chrome.runtime.getURL('options.html#where') }); });
 
 async function start() {
   const s = await showState();

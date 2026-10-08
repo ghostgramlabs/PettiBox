@@ -30,6 +30,8 @@ interface SyncTransport {
         /** Creates or replaces this device's file; [existingId] from [list] when it exists. */
         suspend fun write(name: String, json: String, existingId: String?)
         suspend fun accountEmail(): String?
+        /** The reset marker's content, or null if sync was never reset. */
+        suspend fun resetMarker(): String? = null
     }
 }
 
@@ -38,6 +40,8 @@ interface SyncHooks {
     suspend fun safetyBackup()
     suspend fun afterApply(applied: List<LocalLibrary.Applied>, now: Long)
     suspend fun syncFiles(wifiOnly: Boolean)
+    /** Another device deleted the synced data: stop syncing here (the library stays). */
+    suspend fun stopSync()
 }
 
 @Singleton
@@ -55,6 +59,7 @@ class DriveTransport @Inject constructor(
                 client.uploadShard(token, folder, name, json, existingId)
             }
             override suspend fun accountEmail() = client.accountEmail(token)
+            override suspend fun resetMarker() = client.readResetMarker(token, folder)
         }
     }
 }
@@ -64,7 +69,8 @@ class AppSyncHooks @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: SaveRepository,
     private val articles: ArticleRepository,
-    private val backupStore: LocalBackupStore
+    private val backupStore: LocalBackupStore,
+    private val setup: SyncSetup
 ) : SyncHooks {
 
     override suspend fun safetyBackup() {
@@ -93,6 +99,11 @@ class AppSyncHooks @Inject constructor(
     }
 
     override suspend fun syncFiles(wifiOnly: Boolean) = FileSyncWorker.enqueue(context, wifiOnly)
+
+    override suspend fun stopSync() {
+        setup.disable()
+        SyncScheduler.apply(context, false, SyncInterval.MANUAL)
+    }
 }
 
 @Module

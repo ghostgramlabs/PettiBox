@@ -144,6 +144,12 @@ export const driveTransport = {
       async readFile(id) {
         return (await call(token, `${API}/files/${id}?alt=media`)).blob();
       },
+      async resetMarker() {
+        const query = `'${folder}' in parents and trashed = false and name = 'pettibox-sync-reset.json'`;
+        const body = await (await call(token, `${API}/files?q=${q(query)}&fields=${q('files(id)')}`)).json();
+        const f = (body.files ?? [])[0];
+        return f ? (await call(token, `${API}/files/${f.id}?alt=media`)).text() : null;
+      },
       async accountEmail() {
         const body = await (await call(token, `${API}/about?fields=${q('user(emailAddress)')}`)).json();
         return body.user?.emailAddress ?? null;

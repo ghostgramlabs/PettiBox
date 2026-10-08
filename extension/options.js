@@ -35,7 +35,9 @@ async function refresh() {
 }
 
 $('signin').addEventListener('click', async () => { await ask('signIn'); await refresh(); });
-$('signout').addEventListener('click', async () => { await ask('signOut'); await refresh(); });
+$('signout').addEventListener('click', () => { $('signout-choice').hidden = false; });
+$('signout-keep').addEventListener('click', async () => { await ask('signOut', { wipe: false }); $('signout-choice').hidden = true; await refresh(); });
+$('signout-wipe').addEventListener('click', async () => { await ask('signOut', { wipe: true }); $('signout-choice').hidden = true; await refresh(); });
 $('sync').addEventListener('click', async () => {
   $('sync').disabled = true;
   try { await ask('sync'); } finally { $('sync').disabled = false; }
@@ -43,5 +45,31 @@ $('sync').addEventListener('click', async () => {
 });
 $('interval').addEventListener('change', async (e) => { await ask('setInterval', { interval: e.target.value }); });
 $('rename').addEventListener('click', async () => { await ask('setName', { name: $('name').value }); await refresh(); });
+
+/** The library as a standard bookmarks file (the format every browser imports). */
+const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+$('download').addEventListener('click', async () => {
+  const { items, collections } = await ask('library', { trash: false });
+  const byCol = new Map([[null, []], ...collections.map((c) => [c.id, []])]);
+  for (const i of items) if (i.url) (byCol.get(i.cat) ?? byCol.get(null)).push(i);
+  const link = (i) => `    <DT><A HREF="${esc(i.url)}" ADD_DATE="${Math.floor(i.created / 1000)}"` +
+    (i.tags.length ? ` TAGS="${esc(i.tags.join(','))}"` : '') + `>${esc(i.title)}</A>` +
+    (i.notes ? `\n    <DD>${esc(i.notes)}` : '');
+  const parts = ['<!DOCTYPE NETSCAPE-Bookmark-file-1>', '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">',
+    '<TITLE>PettiBox</TITLE>', '<H1>PettiBox</H1>', '<DL><p>'];
+  for (const c of collections) {
+    const list = byCol.get(c.id);
+    if (!list.length) continue;
+    parts.push(`  <DT><H3>${esc(c.name)}</H3>`, '  <DL><p>', ...list.map(link), '  </DL><p>');
+  }
+  parts.push(...byCol.get(null).map(link), '</DL><p>');
+  const blob = new Blob([parts.join('\n')], { type: 'text/html' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: `pettibox-${new Date().toISOString().slice(0, 10)}.html`,
+  });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+});
 
 refresh();

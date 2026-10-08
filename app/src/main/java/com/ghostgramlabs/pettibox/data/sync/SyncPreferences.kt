@@ -77,6 +77,18 @@ class SyncPreferences(context: Context, fileName: String) {
     private val progressKey = stringPreferencesKey("progress")
     private val md5Key = stringPreferencesKey("seen_md5")
     private val backedUpKey = booleanPreferencesKey("first_backup_done")
+    private val knownResetKey = stringPreferencesKey("known_reset")
+
+    /**
+     * The reset marker as it was when sync was turned on here (null: not read
+     * yet). A different marker later means someone deleted the synced data.
+     * Compared by content, not clocks, so a phone's wrong time can't fool it.
+     */
+    suspend fun knownReset(): String? = store.data.first()[knownResetKey]
+
+    suspend fun setKnownReset(marker: String) = store.edit { it[knownResetKey] = marker }
+
+    suspend fun clearKnownReset() = store.edit { it.remove(knownResetKey) }
 
     val status: Flow<SyncStatus> = store.data.map { p ->
         SyncStatus(

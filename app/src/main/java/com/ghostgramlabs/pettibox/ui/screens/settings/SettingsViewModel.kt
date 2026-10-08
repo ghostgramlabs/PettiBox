@@ -102,6 +102,7 @@ class SettingsViewModel @Inject constructor(
         }.getOrDefault(false)
 
     private suspend fun turnOnSync() {
+        syncPreferences.clearKnownReset() // the first round notes Drive's state as it is now
         syncPreferences.setNeedsReconnect(false)
         syncPreferences.setEnabled(true)
         syncSetup.enable()
@@ -109,12 +110,41 @@ class SettingsViewModel @Inject constructor(
         SyncScheduler.now(appContext)
     }
 
-    /** Stops syncing on this phone. Nothing is deleted here or in Drive. */
-    suspend fun turnOffSync() {
+    /**
+     * Stops syncing on this phone; nothing on the phone is deleted. With
+     * [removeMine], this phone's copy in Drive goes too (a phone being
+     * retired): other devices keep the whole library, as each holds it all.
+     * Returns false if Drive couldn't be reached for the removal.
+     */
+    suspend fun turnOffSync(removeMine: Boolean = false): Boolean {
+        val removed = !removeMine || removeSyncDevice(syncPreferences.deviceId())
         syncPreferences.setEnabled(false)
         syncSetup.disable()
         syncPreferences.resetForDisable()
         SyncScheduler.apply(appContext, false, SyncInterval.MANUAL)
+        return removed
+    }
+
+    /**
+     * Deletes everything sync put in Google Drive and stops sync on every
+     * device (each sees the marker and turns itself off rather than
+     * re-uploading). No device's library is touched. Returns false if Drive
+     * couldn't be reached; then nothing changed.
+     */
+    suspend fun deleteSyncedData(): Boolean {
+        val ok = runCatching {
+            val token = driveAuth.silentAccessToken() ?: return false
+            val folder = syncClient.syncFolder(token)
+            val marker = org.json.JSONObject()
+                .put("format", 1)
+                .put("resetAt", System.currentTimeMillis())
+                .put("by", syncPreferences.deviceId())
+                .toString()
+            syncClient.resetEverything(token, folder, marker)
+            true
+        }.getOrDefault(false)
+        if (ok) turnOffSync()
+        return ok
     }
 
     suspend fun setSyncInterval(interval: SyncInterval) {

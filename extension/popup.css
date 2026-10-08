@@ -126,3 +126,7 @@ details summary { cursor: pointer; color: var(--accent); font-size: 13px; margin
 /* ── Files in the editor ── */
 .files { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .files button { display: flex; gap: 6px; align-items: center; font-size: 12px; }
+
+.where { text-align: center; margin: 6px 0 0; }
+.where a { color: var(--ink-3); text-decoration: none; }
+.where a:hover { color: var(--accent); }

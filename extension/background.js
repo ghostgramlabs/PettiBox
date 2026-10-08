@@ -160,11 +160,26 @@ const handlers = {
   async signIn() {
     const token = await getToken(true);
     if (!token) return { ok: false };
+    await engine.restart();
     await schedule();
     const out = await syncNow();
     return { ok: true, sync: out };
   },
-  async signOut() { await signOut(); await updateBadge(); return true; },
+  /** [wipe]: also remove the library from this browser (a shared computer, say). */
+  async signOut({ wipe }) {
+    await signOut();
+    if (wipe) {
+      await chrome.storage.local.clear();
+      await caches.delete(FILE_CACHE);
+      shared = null;
+    } else {
+      const m = await engine.meta();
+      m.knownReset = null;
+      await engine.saveMeta(m);
+    }
+    await updateBadge();
+    return true;
+  },
   async setInterval({ interval }) {
     const m = await engine.meta();
     m.interval = interval;

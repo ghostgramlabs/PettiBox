@@ -103,6 +103,25 @@ export class SyncEngine {
     await this.store.set({ [META]: m });
   }
 
+  /**
+   * Starting sync (again) in this browser: forget what was read, note Drive
+   * afresh, and re-upload this browser's whole copy, since Drive may have
+   * been emptied (a reset, or this browser's files removed).
+   */
+  restart() {
+    return this.exclusive(async () => {
+      const m = await this.meta();
+      const held = new Set([...(await this.records()).values()].map((r) => shardOf(r.id)));
+      m.stopped = false;
+      m.knownReset = null;
+      m.seenMd5 = {};
+      m.dirty = [...held];
+      m.lastError = '';
+      m.needs = null;
+      await this.saveMeta(m);
+    });
+  }
+
   /** Every record this browser holds: Map "kind:id" -> record. */
   async records() {
     const got = await this.store.get(SHARD_KEYS);
@@ -368,7 +387,17 @@ export class SyncEngine {
       return this.fail(m, 'Couldn\'t reach Google Drive', true);
     }
     if (!session) return this.fail(m, 'Sign in to Google to sync', false, 'signin');
+    if (m.stopped) return this.fail(m, m.lastError || 'Sync is off. Sign in again to start over.', false, 'reset');
     try {
+      // Synced data deleted from Drive since this browser signed in? Stop
+      // rather than upload everything again; what's here stays.
+      const marker = (await session.resetMarker?.()) ?? '';
+      if (m.knownReset == null) {
+        m.knownReset = marker;
+      } else if (marker !== m.knownReset) {
+        m.stopped = true;
+        return this.fail(m, 'Sync was turned off because the synced data was deleted from Google Drive. Your library is still here; sign in again to start over.', false, 'reset');
+      }
       const clock = new HybridClock(m.clock, this.now);
       const now = this.now();
       const files = await session.list();

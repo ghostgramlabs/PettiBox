@@ -19,6 +19,11 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
   on two devices at once are both kept until you pick one; a delete never wipes an edit made
   elsewhere; anything removed by sync waits in Recently deleted; and a large removal from
   another device pauses for your OK, with a backup made first.
+- PettiBox for Chrome: save the page you're on in one tap (or Ctrl+Shift+S), see pictures, search,
+  edit, and download your library as a bookmarks file. It syncs with the app through your Drive.
+- Turning sync off never deletes anything on the phone; you can also remove this phone's copy from
+  Drive, or delete all synced data from Drive (sync then stops on every device, and each keeps its
+  library).
 
 ## 2.0.12 - 2026-10-02
 

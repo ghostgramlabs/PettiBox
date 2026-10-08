@@ -1,6 +1,7 @@
 package com.ghostgramlabs.pettibox.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -57,7 +59,8 @@ fun SyncSettingsCard(
     status: SyncStatus,
     devices: Map<String, Pair<String, Long>>,
     onTurnOn: () -> Unit,
-    onTurnOff: () -> Unit,
+    onTurnOff: (removeMine: Boolean) -> Unit,
+    onDeleteSynced: () -> Unit,
     onSyncNow: () -> Unit,
     onReconnect: () -> Unit,
     onInterval: (SyncInterval) -> Unit,
@@ -68,6 +71,7 @@ fun SyncSettingsCard(
 ) {
     val scheme = MaterialTheme.colorScheme
     var confirmOff by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
     var renaming by remember { mutableStateOf(false) }
     var removing by remember { mutableStateOf<Pair<String, String>?>(null) }
 
@@ -88,7 +92,8 @@ fun SyncSettingsCard(
         if (!status.enabled) {
             Text(
                 "Keep the same library on your phones, tablets and the PettiBox Chrome extension. " +
-                    "It all goes through your own Google Drive, in a \"PettiBox Sync\" folder; nothing passes through anyone else's servers.",
+                    "PettiBox has no servers: your library stays on your devices, and they keep in step through your own Google Drive, " +
+                    "in a \"PettiBox Sync\" folder. Nothing passes through anyone else, and we can't see your saves.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onSurfaceVariant
             )
@@ -232,25 +237,77 @@ fun SyncSettingsCard(
 
         Spacer(Modifier.height(12.dp))
         Text(
-            "Changes reach your other devices the next time they sync. Edits made on two devices at once are both kept: " +
+            "Where your library lives: on this phone, on your other devices, and in your own Google Drive. PettiBox has no servers. " +
+                "Changes reach your other devices the next time they sync. Edits made on two devices at once are both kept: " +
                 "open the save to pick one. A delete always passes through Recently deleted first.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant
         )
-        TextButton(onClick = { confirmOff = true }) {
-            Text("Turn off sync", color = scheme.error, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = { confirmOff = true }) {
+                Text("Turn off sync", color = scheme.error, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = { confirmDelete = true }) {
+                Text("Delete synced data…", color = scheme.error)
+            }
         }
     }
 
     if (confirmOff) {
+        var removeMine by remember { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = { confirmOff = false },
             title = { Text("Turn off sync on this device?") },
-            text = { Text("It stops sending and receiving changes. Nothing is deleted, here or in Google Drive, and your other devices keep syncing.") },
+            text = {
+                Column {
+                    Text("This phone stops sending and receiving changes. Everything on it stays, and your other devices keep syncing.")
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { removeMine = !removeMine }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Checkbox(checked = removeMine, onCheckedChange = { removeMine = it })
+                        Column(Modifier.weight(1f)) {
+                            Text("Also remove this phone's copy from Google Drive", fontWeight = FontWeight.Bold)
+                            Text(
+                                "For a phone you're giving away or no longer use. Your other devices still have everything.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            },
             confirmButton = {
-                TextButton(onClick = { confirmOff = false; onTurnOff() }) { Text("Turn off", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = { confirmOff = false; onTurnOff(removeMine) }) { Text("Turn off", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = { TextButton(onClick = { confirmOff = false }) { Text("Cancel") } },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text("Delete synced data from Google Drive?") },
+            text = {
+                Text(
+                    "This deletes the \"PettiBox Sync\" folder in your Google Drive, with every device's copy and the synced photos and files, " +
+                        "and turns sync off on all your devices and the Chrome extension.\n\n" +
+                        "Nothing is deleted from any phone: each keeps its own library. Your Drive backups aren't touched. " +
+                        "You can turn sync on again later to start fresh."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { confirmDelete = false; onDeleteSynced() }) {
+                    Text("Delete from Drive", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
             shape = RoundedCornerShape(24.dp)
         )
     }

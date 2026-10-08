@@ -34,6 +34,9 @@ class SyncSetup @Inject constructor(private val db: AppDatabase) {
         // off); one it hasn't is merged in as new.
         sql.execSQL("INSERT OR REPLACE INTO sync_outbox(kind, sync_id, ts) SELECT 'item', sync_id, updated_at FROM save_items")
         sql.execSQL("INSERT OR REPLACE INTO sync_outbox(kind, sync_id, ts) SELECT 'col', id, created_at FROM categories")
+        // Drive may have been emptied meanwhile (a reset, or this phone's
+        // copy removed): send this phone's whole copy again.
+        sql.execSQL("INSERT OR IGNORE INTO sync_dirty(shard) SELECT DISTINCT shard FROM sync_meta")
         // Removed for good while sync was off: still in the merged copy but not here.
         sql.execSQL(
             "INSERT OR REPLACE INTO sync_outbox(kind, sync_id, ts) SELECT kind, sync_id, $NOW FROM sync_meta m " +

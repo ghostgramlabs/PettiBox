@@ -1308,6 +1308,11 @@ fun SettingsScreen(
                     icon = Icons.Rounded.Sync
                 )
                 HelpItem(
+                    title = "Where is my library kept?",
+                    body = "PettiBox has no servers. Your library lives on your phone and, with sync on, on your other devices and in your own Google Drive. Nobody else can see it. Turning sync off never deletes anything on the phone; you can also remove this phone's copy from Drive, or use \"Delete synced data\" to clear the PettiBox Sync folder from Drive and stop sync on every device, while each device keeps its library.",
+                    icon = Icons.Rounded.Lock
+                )
+                HelpItem(
                     title = "Edited on two devices?",
                     body = "If the same title, note or link was changed on two devices before they synced, both versions are kept. Open the save and pick the one to use; every device follows. A delete never wipes an edit made elsewhere: the save stays, and anything removed by sync waits in Recently deleted for 30 days. If another device wants to remove many saves at once, sync pauses and asks you first, after making a backup.",
                     icon = Icons.Rounded.Devices
@@ -1498,10 +1503,25 @@ fun SettingsScreen(
                 status = syncStatus,
                 devices = syncDevices,
                 onTurnOn = connectSync,
-                onTurnOff = {
+                onTurnOff = { removeMine ->
                     scope.launch {
-                        viewModel.turnOffSync()
-                        snackbarHostState.showSnackbar("Sync is off on this device")
+                        val removed = viewModel.turnOffSync(removeMine)
+                        snackbarHostState.showSnackbar(
+                            when {
+                                !removed -> "Sync is off. Couldn't reach Google Drive to remove this phone's copy; remove it later from another device"
+                                removeMine -> "Sync is off, and this phone's copy was removed from Google Drive"
+                                else -> "Sync is off on this device"
+                            }
+                        )
+                    }
+                },
+                onDeleteSynced = {
+                    scope.launch {
+                        val ok = viewModel.deleteSyncedData()
+                        snackbarHostState.showSnackbar(
+                            if (ok) "Synced data deleted from Google Drive. Sync is off on all your devices."
+                            else "Couldn't reach Google Drive. Nothing was deleted."
+                        )
                     }
                 },
                 onSyncNow = {

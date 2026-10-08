@@ -140,6 +140,36 @@ class DriveSyncClient @Inject constructor() {
         }
     }
 
+    /** Content of the "sync was reset" marker, or null if sync was never reset. */
+    suspend fun readResetMarker(token: String, folder: String): String? = withContext(Dispatchers.IO) {
+        val f = list(token, "'$folder' in parents and trashed = false and name = '$RESET_MARKER'").firstOrNull()
+            ?: return@withContext null
+        String(download(token, f.id), Charsets.UTF_8)
+    }
+
+    /**
+     * Deletes everything sync put in Drive (every device's files, the shared
+     * photos and files) and leaves a marker, so other devices stop syncing
+     * instead of re-uploading. Libraries on the devices are not touched.
+     */
+    suspend fun resetEverything(token: String, folder: String, marker: String) = withContext(Dispatchers.IO) {
+        // Marker first: a device syncing mid-reset sees it and stops.
+        val existing = list(token, "'$folder' in parents and trashed = false and name = '$RESET_MARKER'").firstOrNull()
+        if (existing != null) {
+            val conn = open("$UPLOAD/files/${existing.id}?uploadType=media", "PATCH", token)
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.doOutput = true
+            conn.outputStream.use { it.write(marker.toByteArray(Charsets.UTF_8)) }
+            readResponse(conn)
+        } else {
+            val bytes = marker.toByteArray(Charsets.UTF_8)
+            multipartCreate(token, folder, RESET_MARKER, "application/json", bytes.inputStream(), bytes.size.toLong())
+        }
+        for (f in list(token, "'$folder' in parents and trashed = false and name != '$RESET_MARKER'")) {
+            readResponse(open("$API/files/${f.id}", "DELETE", token)) // the files/ folder goes with its contents
+        }
+    }
+
     suspend fun delete(token: String, fileId: String) = withContext(Dispatchers.IO) {
         readResponse(open("$API/files/$fileId", "DELETE", token))
         Unit
@@ -289,6 +319,8 @@ class DriveSyncClient @Inject constructor() {
     companion object {
         const val FOLDER_NAME = "PettiBox Sync"
         const val FILES_FOLDER = "files"
+        /** Present once someone chose "Delete synced data from Google Drive". */
+        const val RESET_MARKER = "pettibox-sync-reset.json"
         private const val FOLDER_MIME = "application/vnd.google-apps.folder"
         private const val API = "https://www.googleapis.com/drive/v3"
         private const val UPLOAD = "https://www.googleapis.com/upload/drive/v3"

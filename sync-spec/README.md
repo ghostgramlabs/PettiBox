@@ -22,6 +22,16 @@ My Drive/PettiBox Sync/
 - A device reads every other device's shards, but only the ones whose md5 changed
   since it last read them.
 
+### Deleting synced data
+
+"Delete synced data from Google Drive" writes `pettibox-sync-reset.json` into the
+folder (`{"format":1,"resetAt":…,"by":"<device>"}`), then deletes everything else in it.
+Each device notes the marker's *content* when it starts syncing (an empty string if there's
+none) and compares on every round: if it changed, the device stops syncing, keeps its own
+library, and uploads nothing. Starting sync again notes the marker afresh and re-uploads
+that device's whole copy. Comparing content rather than timestamps keeps a wrong clock
+from mattering.
+
 ## Device file
 
 gzip of UTF‑8 JSON:

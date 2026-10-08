@@ -24,6 +24,15 @@
       <button id="signin" class="primary" style="width:auto">Sign in</button>
       <button id="signout" hidden>Sign out</button>
     </div>
+    <div id="signout-choice" class="card" style="margin-top:8px" hidden>
+      <p><b>Sign out of PettiBox in this browser?</b></p>
+      <div class="line">
+        <button id="signout-keep">Keep my library here</button>
+        <button id="signout-wipe" class="danger">Remove it from this browser</button>
+      </div>
+      <p class="muted">Removing only clears this browser. Your phone and Google Drive keep everything.
+        Use it on a computer you share.</p>
+    </div>
     <p class="muted">Use the account PettiBox uses on your phone (Settings › Sync between devices).
       PettiBox only sees files it made in your Drive, never the rest of it.</p>
   </section>
@@ -55,10 +64,22 @@
     </div>
   </section>
 
-  <section class="card">
-    <h2>Privacy</h2>
-    <p>Your library lives in your own Google Drive, in a "PettiBox Sync" folder, and in this browser.
-      Saves in locked collections never show here: the browser can't unlock them.</p>
+  <section class="card" id="where">
+    <h2>Where your library lives</h2>
+    <p><b>PettiBox has no servers.</b> Your library is kept in three places, all yours:</p>
+    <ul>
+      <li><b>On this computer</b>, inside Chrome, so it works offline and opens instantly.</li>
+      <li><b>On your phones and tablets</b> with PettiBox.</li>
+      <li><b>In your own Google Drive</b>, in a "PettiBox Sync" folder, which is how your devices stay in step.</li>
+    </ul>
+    <p>Nothing passes through anyone else's computers, and we can't see your saves. PettiBox only sees
+      files it made in your Drive, never the rest of it. Saves in locked collections never show here:
+      the browser can't unlock them.</p>
+    <div class="line">
+      <span class="muted">Keep your own copy as a file on this computer. It opens in any browser and imports into
+        Chrome, Firefox or other bookmark apps.</span>
+      <button id="download">Download a copy</button>
+    </div>
   </section>
 
   <script type="module" src="options.js"></script>

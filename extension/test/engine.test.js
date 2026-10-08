@@ -155,3 +155,24 @@ test('the page card finds a saved page, with its pictures and files, and its tra
   assert.equal((await a.savedPage('https://example.com/pic')).trashed, true);
   assert.equal(await a.savedPage('https://example.com/other'), null);
 });
+
+test('synced data deleted from Drive stops this browser, keeps its library, and signing in again starts fresh', async () => {
+  const drive = fakeDrive();
+  drive.marker = null;
+  const open = drive.open.bind(drive);
+  drive.open = async () => ({ ...(await open()), resetMarker: async () => drive.marker });
+  const a = browser(drive);
+  await a.saveLink({ url: 'https://example.com/a', title: 'A' });
+  assert.equal((await a.round()).ok, true);
+  drive.files.clear();
+  drive.marker = '{"resetAt":1}';
+  const out = await a.round();
+  assert.equal(out.ok, false);
+  assert.equal(out.needs, 'reset');
+  assert.equal(drive.files.size, 0); // didn't upload it all again
+  assert.equal((await a.library()).items.length, 1); // still here
+  assert.equal((await a.round()).needs, 'reset'); // stays stopped
+  await a.restart(); // what signing in again does
+  assert.equal((await a.round()).ok, true);
+  assert.ok(drive.files.size > 0);
+});

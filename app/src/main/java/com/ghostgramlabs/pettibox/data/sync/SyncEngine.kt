@@ -26,6 +26,8 @@ sealed interface SyncOutcome {
     data class Ok(val received: Int, val sent: Int, val damaged: Int = 0) : SyncOutcome
     data object Off : SyncOutcome
     data object NeedsReconnect : SyncOutcome
+    /** Someone deleted the synced data from Drive; sync is now off here (the library stays). */
+    data object ResetElsewhere : SyncOutcome
     /** Another device wants to remove or archive [count] saves; waiting for the user. */
     data class NeedsReview(val count: Int) : SyncOutcome
     data class Failed(val message: String, val retry: Boolean) : SyncOutcome
@@ -64,6 +66,7 @@ class SyncEngine @Inject constructor(
                 is SyncOutcome.NeedsReview -> prefs.recordSuccess()
                 is SyncOutcome.Failed -> prefs.recordError(outcome.message)
                 SyncOutcome.NeedsReconnect -> reconnect()
+                SyncOutcome.ResetElsewhere -> {}
                 SyncOutcome.Off -> {}
             }
             outcome
@@ -107,6 +110,20 @@ class SyncEngine @Inject constructor(
         }
 
         prefs.setProgress("Checking Google Drive…")
+        // Deleted from Google Drive on some device since sync was turned on
+        // here? Then stop, rather than upload everything again.
+        val marker = session.resetMarker() ?: ""
+        val known = prefs.knownReset()
+        if (known == null) {
+            prefs.setKnownReset(marker)
+        } else if (marker != known) {
+            prefs.setEnabled(false)
+            prefs.resetForDisable()
+            prefs.recordError("Sync was turned off because the synced data was deleted from Google Drive on another device. Everything on this phone is still here; turn sync on again to start over.")
+            // Last: stopping cancels background sync work, possibly this very round.
+            hooks.stopSync()
+            return SyncOutcome.ResetElsewhere
+        }
         val files = session.list()
         val seen = prefs.seenMd5()
         val newSeen = HashMap(seen)

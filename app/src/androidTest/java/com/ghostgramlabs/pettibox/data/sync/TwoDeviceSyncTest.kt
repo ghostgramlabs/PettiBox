@@ -34,6 +34,7 @@ class TwoDeviceSyncTest {
     private class FakeDrive : SyncTransport {
         val files = LinkedHashMap<String, Triple<String, String, String>>() // name -> (id, json, md5)
         var corrupt: String? = null
+        var marker: String? = null
 
         override suspend fun open() = object : SyncTransport.Session {
             override suspend fun list() = files.map { (name, f) -> DriveSyncFile(f.first, name, f.third, 0L) }
@@ -47,6 +48,7 @@ class TwoDeviceSyncTest {
                 files[name] = Triple(files[name]?.first ?: UUID.randomUUID().toString(), json, md5)
             }
             override suspend fun accountEmail() = "test@example.com"
+            override suspend fun resetMarker() = marker
         }
     }
 
@@ -54,6 +56,8 @@ class TwoDeviceSyncTest {
         override suspend fun safetyBackup() {}
         override suspend fun afterApply(applied: List<LocalLibrary.Applied>, now: Long) {}
         override suspend fun syncFiles(wifiOnly: Boolean) {}
+        var stopped = false
+        override suspend fun stopSync() { stopped = true }
     }
 
     private class Phone(context: Context, name: String, drive: FakeDrive) {
@@ -61,7 +65,8 @@ class TwoDeviceSyncTest {
         val prefs = SyncPreferences(context, "sync-test-$name-${UUID.randomUUID()}")
         val setup = SyncSetup(db)
         val library = LocalLibrary(context, db.saveDao(), db.categoryDao(), db.tagDao(), db.attachmentDao(), db.syncDao())
-        val engine = SyncEngine(db, db.syncDao(), prefs, library, drive, NoHooks())
+        val hooks = NoHooks()
+        val engine = SyncEngine(db, db.syncDao(), prefs, library, drive, hooks)
 
         suspend fun turnOn() {
             prefs.setEnabled(true)
@@ -225,6 +230,24 @@ class TwoDeviceSyncTest {
         drive.corrupt = null
         assertTrue(b.sync() is SyncOutcome.Ok)
         assertEquals(1, b.saves().size) // picked up once it's readable
+    }
+
+    @Test fun deleting_synced_data_elsewhere_stops_sync_here_and_keeps_the_library() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        // A deletes everything from Drive: files gone, marker left.
+        drive.files.clear()
+        drive.marker = "{\"resetAt\":1}"
+        assertEquals(SyncOutcome.ResetElsewhere, b.sync())
+        assertTrue(b.hooks.stopped)
+        assertFalse(b.prefs.isEnabled())
+        assertEquals(1, b.saves().size) // nothing on B was touched
+        assertTrue(drive.files.isEmpty()) // and B didn't upload it all again
+        // Turning sync back on later starts fresh and is not stopped again.
+        b.prefs.clearKnownReset()
+        b.turnOn()
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        assertTrue(drive.files.isNotEmpty())
     }
 
     @Test fun turning_sync_off_stops_sending() = runBlocking {
