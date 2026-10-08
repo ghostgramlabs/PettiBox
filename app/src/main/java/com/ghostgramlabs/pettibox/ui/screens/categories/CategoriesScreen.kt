@@ -1,5 +1,6 @@
 package com.ghostgramlabs.pettibox.ui.screens.categories
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +26,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LockOpen
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.fragment.app.FragmentActivity
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -87,6 +93,7 @@ import com.ghostgramlabs.pettibox.ui.components.ScreenHeading
 import com.ghostgramlabs.pettibox.ui.components.rememberNotificationPermissionRequester
 import com.ghostgramlabs.pettibox.ui.components.EditCollectionDialog
 import com.ghostgramlabs.pettibox.ui.components.toLongHex
+import com.ghostgramlabs.pettibox.ui.lock.AppLockSession
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,9 +138,40 @@ fun CategoriesScreen(
         )
     }
 
+    val ctx = LocalContext.current
+    val activity = ctx as? FragmentActivity
+    val unlockCollections: () -> Unit = {
+        if (activity != null) AppLockSession.unlockCollections(activity)
+    }
+
+    // A locked collection relocked (or was deleted) while open: it's gone
+    // from the list, so step back to Browse instead of an empty page.
+    LaunchedEffect(destination, selectedCategory == null, state.categoriesLoaded) {
+        if (destination is BrowseDestination.Category && selectedCategory == null && state.categoriesLoaded) {
+            viewModel.navigate(BrowseDestination.Grid)
+        }
+    }
+
     if (showEditCategory && selectedCategory != null) {
         EditCollectionDialog(
             category = selectedCategory,
+            lockAvailable = AppLockSession.isAvailable(ctx),
+            onLockedChange = { locked ->
+                if (!locked) {
+                    viewModel.setSelectedCategoryLocked(false)
+                } else if (activity != null) {
+                    // Confirm they can unlock it before hiding it away.
+                    AppLockSession.unlockCollections(activity) {
+                        viewModel.setSelectedCategoryLocked(true)
+                        Toast.makeText(
+                            ctx,
+                            if (state.showLockedTile) "Locked. Find it under Browse › Locked."
+                            else "Locked. Open it from Settings › Privacy.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            },
             onDismiss = { showEditCategory = false },
             onSave = { name, emoji, colorHex ->
                 showEditCategory = false
@@ -271,7 +309,11 @@ fun CategoriesScreen(
                     onOpenReminders = { viewModel.navigate(BrowseDestination.Reminders) },
                     onOpenTags = { viewModel.navigate(BrowseDestination.TagList) },
                     onOpenUnread = { viewModel.navigate(BrowseDestination.Unread) },
-                    onOpenTrash = { viewModel.navigate(BrowseDestination.Trash) }
+                    onOpenTrash = { viewModel.navigate(BrowseDestination.Trash) },
+                    onToggleLockedCollections = {
+                        if (state.collectionsUnlocked) AppLockSession.lockCollections()
+                        else unlockCollections()
+                    }
                 )
 
                 BrowseDestination.TagList -> TagListView(
@@ -363,7 +405,8 @@ private fun BrowseGrid(
     onOpenReminders: () -> Unit,
     onOpenTags: () -> Unit,
     onOpenUnread: () -> Unit,
-    onOpenTrash: () -> Unit
+    onOpenTrash: () -> Unit,
+    onToggleLockedCollections: () -> Unit
 ) {
     var collectionQuery by remember { mutableStateOf("") }
     val visibleCategories = remember(state.categories, collectionQuery) {
@@ -476,7 +519,21 @@ private fun BrowseGrid(
                 onClick = { onSelectCategory(c.id) }
             )
         }
-        if (visibleCategories.isEmpty()) {
+        // The way into locked collections, like Photos' Locked Folder.
+        // While locked they're missing from the grid above entirely. With
+        // "Show Locked in Browse" off the tile appears only once they've
+        // been opened from Settings, to offer "Lock again".
+        val showTile = state.showLockedTile || state.collectionsUnlocked
+        if (state.lockedCount > 0 && showTile && collectionQuery.isBlank()) {
+            item(key = "locked", contentType = "locked") {
+                LockedTile(
+                    lockedCount = state.lockedCount,
+                    unlocked = state.collectionsUnlocked,
+                    onClick = onToggleLockedCollections
+                )
+            }
+        }
+        if (visibleCategories.isEmpty() && collectionQuery.isNotBlank()) {
             item(span = StaggeredGridItemSpan.FullLine) {
                 Text(
                     "No collection matches \"$collectionQuery\"",
@@ -521,6 +578,7 @@ private fun CollectionFinder(
 
 private val UnreadAccent = Color(0xFFD9822B)
 private val TrashAccent = Color(0xFF8A8580)
+private val LockedAccent = Color(0xFF5E5A72)
 
 private data class SpecialEntry(
     val icon: ImageVector,
@@ -1072,10 +1130,65 @@ private fun CategoryTile(c: CategoryEntity, count: Int, tilt: Float, onClick: ()
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onSurface
             )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (c.isLocked) {
+                    Icon(
+                        Icons.Rounded.Lock,
+                        contentDescription = "Locked",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(end = 4.dp).size(14.dp)
+                    )
+                }
+                Text(
+                    if (count == 0) "Empty" else "$count item${if (count == 1) "" else "s"}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/** Opens (or closes again) the locked collections. Names nothing inside them. */
+@Composable
+private fun LockedTile(lockedCount: Int, unlocked: Boolean, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 168.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(scheme.surfaceVariant.copy(alpha = 0.6f))
+            .border(1.dp, scheme.outline.copy(alpha = 0.4f), RoundedCornerShape(22.dp))
+            .clickable(onClick = onClick)
+            .padding(18.dp),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Box(
+            Modifier
+                .size(72.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .background(LockedAccent),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                if (unlocked) Icons.Rounded.LockOpen else Icons.Rounded.Lock,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+        Column {
             Text(
-                if (count == 0) "Empty" else "$count item${if (count == 1) "" else "s"}",
+                if (unlocked) "Lock again" else "Locked",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
+                color = scheme.onSurface
+            )
+            Text(
+                if (unlocked) "Hide locked collections"
+                else "$lockedCount collection${if (lockedCount == 1) "" else "s"}",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = scheme.onSurfaceVariant
             )
         }
     }

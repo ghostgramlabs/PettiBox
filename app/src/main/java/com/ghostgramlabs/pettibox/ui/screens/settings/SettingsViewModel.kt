@@ -97,6 +97,13 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun setAppLockAfterMs(ms: Long) = appLockPreferences.setLockAfterMs(ms)
 
+    val showLockedTile: Flow<Boolean> = appLockPreferences.showLockedTile
+
+    suspend fun setShowLockedTile(show: Boolean) = appLockPreferences.setShowLockedTile(show)
+
+    /** Read only after an unlock, so Settings never hints whether any exist. */
+    suspend fun lockedCollectionCount(): Int = repo.observeLockedCollectionCount().first()
+
     /** True when this "it just worked" moment should show Play's review sheet. */
     suspend fun claimHappyMoment(moment: String): Boolean = ratingPreferences.claimHappyMoment(moment)
 

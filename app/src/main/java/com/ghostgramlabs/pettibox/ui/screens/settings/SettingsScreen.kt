@@ -45,6 +45,7 @@ import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.LocalOffer
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Share
@@ -54,6 +55,7 @@ import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.RestoreFromTrash
+import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material3.AlertDialog
@@ -126,6 +128,7 @@ import java.util.Locale
 fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    onOpenBrowse: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val ctx = LocalContext.current
@@ -162,6 +165,8 @@ fun SettingsScreen(
     var showRemoveOfflineCopies by remember { mutableStateOf(false) }
     val weeklyNudge by viewModel.weeklyNudge.collectAsStateWithLifecycle(initialValue = true)
     val appLockOn by viewModel.appLock.collectAsStateWithLifecycle(initialValue = false)
+    val showLockedTile by viewModel.showLockedTile.collectAsStateWithLifecycle(initialValue = true)
+    val collectionsUnlocked by AppLockSession.collectionsUnlocked.collectAsStateWithLifecycle()
     val appLockAfterMs by viewModel.appLockAfterMs.collectAsStateWithLifecycle(
         initialValue = AppLockPreferences.DEFAULT_LOCK_AFTER_MS
     )
@@ -1161,6 +1166,11 @@ fun SettingsScreen(
                     body = "Use Collections above to create or rename shelves. New collections show up in Browse and in the save sheet.",
                     icon = Icons.Rounded.GridView
                 )
+                HelpItem(
+                    title = "Lots of collections? Search them",
+                    body = "Once you have more than 8 collections, a \"Find collection\" box appears when you save something, in Browse, and when you move a save (open it and tap Choose collection or Change, or long-press → Move to collection). Type a few letters to jump straight to the one you want.",
+                    icon = Icons.Rounded.Search
+                )
 
                 Spacer(Modifier.height(14.dp))
                 HelpGroupTitle("Get more out of it")
@@ -1210,6 +1220,11 @@ fun SettingsScreen(
                     icon = Icons.AutoMirrored.Rounded.MenuBook
                 )
                 HelpItem(
+                    title = "Pictures for every link",
+                    body = "Links show the picture the website provides. If it has none, PettiBox takes a screenshot of the top of the page in the background, so you can spot the save by eye later. Not a helpful picture? Open the save and tap \"Use a page screenshot as the picture\".",
+                    icon = Icons.Rounded.Wallpaper
+                )
+                HelpItem(
                     title = "\"No offline copy\"?",
                     body = "Some pages can't be copied: paywalled or login-only articles, pages that no longer exist, and very long pages. Tap \"Try again\" on the save — or \"Open original\" to read it on the web.",
                     icon = Icons.AutoMirrored.Rounded.MenuBook
@@ -1240,6 +1255,11 @@ fun SettingsScreen(
                 HelpItem(
                     title = "Lock PettiBox",
                     body = "Turn on App lock under Privacy to require your fingerprint, face, or phone PIN. Pick how soon it locks again after you leave the app (a minute by default); locking your phone's screen locks it right away. The widget shows titles only while PettiBox is unlocked, and the weekly nudge never shows them.",
+                    icon = Icons.Rounded.Lock
+                )
+                HelpItem(
+                    title = "Lock a collection",
+                    body = "Open a collection, tap Edit, and turn on \"Lock this collection\". It disappears from Home, Browse, search, and the widget. To see it again, tap Locked at the bottom of Browse (or Open under Privacy here) and unlock with your fingerprint, face, or phone PIN. It hides again when your screen locks. Want no trace of it in Browse? Turn off \"Show Locked in Browse\" under Privacy.",
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
@@ -1345,6 +1365,80 @@ fun SettingsScreen(
                         "Locking your phone's screen always locks PettiBox right away, so it's safe to hand your phone to someone.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Locked collections. Looks the same whether or not any exist,
+                // so Settings gives nothing away until after an unlock.
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        if (collectionsUnlocked) Icons.Rounded.LockOpen else Icons.Rounded.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Locked collections",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Lock a collection from its Edit screen to hide it everywhere until you unlock it.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    TextButton(onClick = {
+                        val activity = ctx as? androidx.fragment.app.FragmentActivity
+                        when {
+                            collectionsUnlocked -> {
+                                AppLockSession.lockCollections()
+                                scope.launch { snackbarHostState.showSnackbar("Locked collections are hidden again") }
+                            }
+                            activity != null -> AppLockSession.unlockCollections(activity) {
+                                scope.launch {
+                                    if (viewModel.lockedCollectionCount() > 0) {
+                                        onOpenBrowse()
+                                    } else {
+                                        snackbarHostState.showSnackbar(
+                                            "Nothing locked yet. Lock a collection from its Edit screen."
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }) {
+                        Text(if (collectionsUnlocked) "Lock again" else "Open", fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(Modifier.width(36.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Show Locked in Browse",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            if (showLockedTile) "A Locked tile at the bottom of Browse opens them."
+                            else "No trace in Browse. Open them here, with the button above.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = showLockedTile,
+                        onCheckedChange = { show -> scope.launch { viewModel.setShowLockedTile(show) } }
                     )
                 }
             }

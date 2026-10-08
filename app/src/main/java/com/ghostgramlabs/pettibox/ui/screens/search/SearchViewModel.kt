@@ -11,6 +11,7 @@ import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.ui.lock.AppLockSession
 import com.ghostgramlabs.pettibox.domain.model.ContentType
 import com.ghostgramlabs.pettibox.domain.model.SourceApp
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -91,13 +92,15 @@ class SearchViewModel @Inject constructor(
         _sourceFilter, _categoryFilter, _typeFilter, _tagFilter, _reminderFilter
     ) { src, cat, type, tag, reminders -> Filters(src, cat, type, tag, reminders) }
 
+    // Saves in locked collections are searchable only while those are unlocked.
     private val target: Flow<SearchTarget> = combine(
         _query.debounce(180).distinctUntilChanged(),
-        filters
-    ) { q, f ->
+        filters,
+        AppLockSession.collectionsUnlocked
+    ) { q, f, showLocked ->
         val haveFilters = f.source != null || f.category != null ||
             f.type != null || f.tag != null || f.reminders
-        val spec = repo.searchSpec(q, f.source, f.category, f.type?.name, f.tag, f.reminders)
+        val spec = repo.searchSpec(q, f.source, f.category, f.type?.name, f.tag, f.reminders, showLocked)
         when {
             q.isBlank() && !haveFilters -> SearchTarget.Idle
             // Don't let an unsearchable query fall through to "everything".

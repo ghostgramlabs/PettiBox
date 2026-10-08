@@ -34,6 +34,18 @@ class AppLockPreferences @Inject constructor(
         context.appLockDataStore.edit { it[lockAfterKey] = ms }
     }
 
+    private val showLockedTileKey = booleanPreferencesKey("show_locked_tile")
+
+    /**
+     * Whether Browse shows the "Locked" tile. Off hides even that locked
+     * collections exist; Settings › Privacy is then the only way in.
+     */
+    val showLockedTile: Flow<Boolean> = context.appLockDataStore.data.map { it[showLockedTileKey] ?: true }
+
+    suspend fun setShowLockedTile(show: Boolean) {
+        context.appLockDataStore.edit { it[showLockedTileKey] = show }
+    }
+
     private val widgetTitlesUntilKey = longPreferencesKey("widget_titles_visible_until")
 
     /**

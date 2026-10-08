@@ -21,6 +21,7 @@ import com.ghostgramlabs.pettibox.data.local.TagWithCount
 import com.ghostgramlabs.pettibox.data.backup.BackupSummaryCalculator
 import com.ghostgramlabs.pettibox.data.bookmarks.BookmarkCsvWriter
 import com.ghostgramlabs.pettibox.data.bookmarks.ImportedBookmark
+import com.ghostgramlabs.pettibox.data.lock.LockedCollections
 import com.ghostgramlabs.pettibox.data.util.AttachmentStore
 import com.ghostgramlabs.pettibox.data.util.TextUtils
 import com.ghostgramlabs.pettibox.domain.model.CategoryPalette
@@ -28,6 +29,8 @@ import com.ghostgramlabs.pettibox.domain.model.ContentType
 import com.ghostgramlabs.pettibox.domain.model.SourceApp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -122,7 +125,7 @@ class SaveRepository @Inject constructor(
     suspend fun getById(id: Long) = saveDao.getById(id)
     fun observeById(id: Long) = saveDao.observeById(id)
     /** Existing live save with this exact URL, if any — for duplicate-on-save detection. */
-    suspend fun findByUrl(url: String): SaveItemEntity? = saveDao.findByUrl(url)
+    suspend fun findByUrl(url: String): SaveItemEntity? = saveDao.findVisibleByUrl(url)
 
     /**
      * Cleans up local files (attachments + the item's own localUri) before
@@ -153,7 +156,7 @@ class SaveRepository @Inject constructor(
         return ids.size
     }
 
-    fun pagedTrash(): PagingSource<Int, SaveItemEntity> = saveDao.pagedTrash()
+    fun pagedTrash(showLocked: Boolean): PagingSource<Int, SaveItemEntity> = saveDao.pagedTrash(showLocked)
     fun observeTrashTotal(): Flow<Int> = saveDao.observeTrashTotal()
 
     fun pagedUnread(sort: String = "NEWEST"): PagingSource<Int, SaveItemEntity> = saveDao.pagedUnread(sort)
@@ -168,9 +171,10 @@ class SaveRepository @Inject constructor(
     fun pagedByCategory(
         categoryId: String,
         includeArchived: Boolean = false,
-        sort: String = "NEWEST"
+        sort: String = "NEWEST",
+        showLocked: Boolean = false
     ): PagingSource<Int, SaveItemEntity> =
-        saveDao.pagedByCategory(categoryId, includeArchived, sort)
+        saveDao.pagedByCategory(categoryId, includeArchived, sort, showLocked)
     fun pagedBySource(sourceApp: String): PagingSource<Int, SaveItemEntity> =
         saveDao.pagedBySource(sourceApp)
 
@@ -223,7 +227,9 @@ class SaveRepository @Inject constructor(
         val type: String?,
         val tag: String?,
         val remindersOnly: Boolean,
-        val now: Long
+        val now: Long,
+        /** Include saves in locked collections (they're unlocked right now). */
+        val showLocked: Boolean
     )
 
     fun searchSpec(
@@ -232,7 +238,8 @@ class SaveRepository @Inject constructor(
         category: String?,
         type: String?,
         tag: String?,
-        remindersOnly: Boolean
+        remindersOnly: Boolean,
+        showLocked: Boolean
     ): SearchSpec = SearchSpec(
         ftsQuery = SearchQuerySanitizer.sanitizeFtsQuery(rawQuery),
         source = source,
@@ -240,7 +247,8 @@ class SaveRepository @Inject constructor(
         type = type,
         tag = tag,
         remindersOnly = remindersOnly,
-        now = System.currentTimeMillis()
+        now = System.currentTimeMillis(),
+        showLocked = showLocked
     )
 
     // With no text query the FTS branches are skipped in SQL; "x" just keeps
@@ -248,21 +256,45 @@ class SaveRepository @Inject constructor(
     fun pagedSearch(spec: SearchSpec, sort: String): PagingSource<Int, SaveItemEntity> = saveDao.pagedSearch(
         hasQuery = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" },
         source = spec.source, category = spec.category, type = spec.type, tag = spec.tag,
-        remindersOnly = spec.remindersOnly, now = spec.now, sort = sort
+        remindersOnly = spec.remindersOnly, now = spec.now, showLocked = spec.showLocked, sort = sort
     )
 
     fun observeSearchCount(spec: SearchSpec): Flow<Int> = saveDao.observeSearchCount(
         hasQuery = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" },
         source = spec.source, category = spec.category, type = spec.type, tag = spec.tag,
-        remindersOnly = spec.remindersOnly, now = spec.now
+        remindersOnly = spec.remindersOnly, now = spec.now, showLocked = spec.showLocked
     ).catch { emit(0) }
 
     // ── Categories ────────────────────────────────────────────────────────
 
-    fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
+    /**
+     * Collections to show. Locked ones are left out entirely until
+     * [LockedCollections] is unlocked, so a locked collection doesn't even
+     * show its name in Browse, Home, pickers, or search filters.
+     */
+    fun observeCategories(): Flow<List<CategoryEntity>> =
+        combine(categoryDao.observeAll(), LockedCollections.unlocked) { all, unlocked ->
+            if (unlocked) all else all.filterNot { it.isLocked }
+        }
+
+    /** How many collections are locked — the Browse "Locked" pill shows only when > 0. */
+    fun observeLockedCollectionCount(): Flow<Int> = categoryDao.observeLockedCount()
+
+    /** Whether a collection is locked; false for none / a missing one. */
+    fun observeCategoryLocked(id: String?): Flow<Boolean> =
+        if (id == null) flowOf(false) else categoryDao.observeIsLocked(id)
     suspend fun upsertCategory(c: CategoryEntity) = categoryDao.upsert(c)
     suspend fun getCategory(id: String) = categoryDao.getById(id)
     suspend fun deleteCategory(id: String) = categoryDao.delete(id)
+
+    suspend fun setCategoryLocked(id: String, locked: Boolean) {
+        val c = categoryDao.getById(id) ?: return
+        if (c.isLocked != locked) categoryDao.update(c.copy(isLocked = locked))
+    }
+
+    /** True if the save is filed in a locked collection. */
+    suspend fun isInLockedCollection(item: SaveItemEntity): Boolean =
+        item.categoryId?.let { categoryDao.getById(it)?.isLocked } == true
 
     data class CsvExportResult(val csv: String, val links: Int)
 
@@ -339,7 +371,8 @@ class SaveRepository @Inject constructor(
                     .put("sortOrder", c.sortOrder)
                     .put("parentId", c.parentId)
                     .put("userCreated", c.userCreated)
-                    .put("createdAt", c.createdAt))
+                    .put("createdAt", c.createdAt)
+                    .put("isLocked", c.isLocked))
             }
         })
         root.put("saves", JSONArray().apply {
@@ -418,7 +451,8 @@ class SaveRepository @Inject constructor(
                         .put("sortOrder", c.sortOrder)
                         .put("parentId", c.parentId)
                         .put("userCreated", c.userCreated)
-                        .put("createdAt", c.createdAt))
+                        .put("createdAt", c.createdAt)
+                        .put("isLocked", c.isLocked))
                 }
             })
 
@@ -613,7 +647,11 @@ class SaveRepository @Inject constructor(
                 sortOrder = c.optInt("sortOrder", i),
                 parentId = c.optNullableString("parentId"),
                 userCreated = c.optBoolean("userCreated", true),
-                createdAt = c.optLong("createdAt", System.currentTimeMillis())
+                createdAt = c.optLong("createdAt", System.currentTimeMillis()),
+                // An older backup has no lock flag; never let restoring it
+                // unlock a collection that's locked on this phone.
+                isLocked = c.optBoolean("isLocked", false) ||
+                    categoryDao.getById(c.getString("id"))?.isLocked == true
             )
             categoryDao.upsert(category)
             categoryCount++

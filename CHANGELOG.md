@@ -6,6 +6,13 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 ## Unreleased
 
 - PettiBox is now open source under the Apache License 2.0.
+- Locked collections: lock a collection from Edit collection and it disappears from Home,
+  Browse, search, the widget and nudges until you open Browse › Locked with your fingerprint,
+  face or phone PIN. Reminders from it don't show the title. To leave no trace in Browse,
+  turn off "Show Locked in Browse" and open them from Settings › Privacy instead.
+- Links without a preview image get a screenshot of the page instead, and any link can switch
+  to one with "Use a page screenshot as the picture".
+- With more than 8 collections, moving a save opens a searchable collection list.
 
 ## 2.0.12 - 2026-10-02
 

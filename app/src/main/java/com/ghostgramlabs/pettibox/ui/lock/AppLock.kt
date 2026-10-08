@@ -27,15 +27,18 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,6 +48,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.ghostgramlabs.pettibox.data.lock.LockedCollections
 import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.ui.components.KeeperMascot
 import com.ghostgramlabs.pettibox.ui.components.KeeperPose
@@ -62,6 +66,10 @@ import kotlinx.coroutines.flow.asStateFlow
 object AppLockSession {
     private val _unlocked = MutableStateFlow(false)
     val unlocked: StateFlow<Boolean> = _unlocked.asStateFlow()
+
+    // Locked collections unlock separately from the app (opening PettiBox
+    // doesn't open them), but relock on the same events.
+    val collectionsUnlocked: StateFlow<Boolean> = LockedCollections.unlocked
 
     /** Kept in step with the "Lock after" preference by the Application. */
     @Volatile var lockAfterMs: Long = AppLockPreferences.DEFAULT_LOCK_AFTER_MS
@@ -126,8 +134,30 @@ object AppLockSession {
 
     private fun lock() {
         _unlocked.value = false
+        LockedCollections.setUnlocked(false)
         autoPromptPending = true
         onTitlesVisibleUntil(0L)
+    }
+
+    /** Asks for fingerprint / face / PIN, then shows locked collections until the next lock. */
+    fun unlockCollections(activity: FragmentActivity, onSuccess: () -> Unit = {}) {
+        // Screen lock removed since the collection was locked: nothing left
+        // to unlock with, so step aside rather than strand the saves (as
+        // App lock does).
+        if (!isAvailable(activity)) {
+            LockedCollections.setUnlocked(true)
+            onSuccess()
+            return
+        }
+        prompt(activity, title = "Unlock locked collections", onSuccess = {
+            LockedCollections.setUnlocked(true)
+            onSuccess()
+        })
+    }
+
+    /** Hides locked collections again right away (the lock button inside one). */
+    fun lockCollections() {
+        LockedCollections.setUnlocked(false)
     }
 
     // The lock screen asks by itself once per lock (app start counts).
@@ -259,5 +289,56 @@ private fun LockScreen(onUnlock: () -> Unit) {
             Spacer(Modifier.size(8.dp))
             Text("Unlock", fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+/**
+ * Stands in for a save from a locked collection until locked collections
+ * are unlocked. Asks once on its own when shown; after a cancel the
+ * Unlock button stays.
+ */
+@Composable
+fun LockedCollectionPanel(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val activity = LocalContext.current as? FragmentActivity
+    var asked by rememberSaveable { mutableStateOf(false) }
+    LifecycleResumeEffect(Unit) {
+        if (!asked && activity != null) {
+            asked = true
+            AppLockSession.unlockCollections(activity)
+        }
+        onPauseOrDispose { }
+    }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        KeeperMascot(pose = KeeperPose.Welcome, badgeIcon = Icons.Rounded.Lock)
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "This save is in a locked collection",
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold),
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Unlock with your fingerprint, face, or phone PIN.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(24.dp))
+        Button(
+            onClick = { activity?.let { AppLockSession.unlockCollections(it) } },
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.size(8.dp))
+            Text("Unlock", fontWeight = FontWeight.Bold)
+        }
+        TextButton(onClick = onBack) { Text("Go back") }
     }
 }

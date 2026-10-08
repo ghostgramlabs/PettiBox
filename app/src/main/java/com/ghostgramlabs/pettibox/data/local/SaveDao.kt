@@ -19,6 +19,11 @@ import kotlinx.coroutines.flow.Flow
  * Archive. The queries that intentionally bypass the filter are
  * [observeById], [getById], and the Recently deleted ones. App start
  * purges rows past their 30 days via [expiredTrashIds].
+ *
+ * Listings that span collections also add [NOT_IN_LOCKED_COLLECTION], so
+ * a locked collection's saves only appear inside it, and [pagedByCategory]
+ * shows them only while unlocked. [observeCategoryCounts] and the reminder
+ * scheduling queries don't filter.
  */
 @Dao
 interface SaveDao {
@@ -45,6 +50,10 @@ interface SaveDao {
      * ignored so re-saving something you deliberately tucked away isn't
      * flagged as a duplicate.
      */
+    @Query("SELECT * FROM save_items WHERE url = :url AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION ORDER BY created_at DESC LIMIT 1")
+    suspend fun findVisibleByUrl(url: String): SaveItemEntity?
+
+    /** [findVisibleByUrl] including locked collections — import's duplicate check, never shown. */
     @Query("SELECT * FROM save_items WHERE url = :url AND is_archived = 0 AND is_pending_delete = 0 ORDER BY created_at DESC LIMIT 1")
     suspend fun findByUrl(url: String): SaveItemEntity?
 
@@ -104,13 +113,13 @@ interface SaveDao {
     // Home views hide archived items. Search (pagedSearch) still
     // returns them so "I'm done with this" doesn't make a save unfindable.
 
-    @Query("SELECT * FROM save_items WHERE is_archived = 0 AND is_pending_delete = 0 ORDER BY created_at DESC LIMIT :limit")
+    @Query("SELECT * FROM save_items WHERE is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION ORDER BY created_at DESC LIMIT :limit")
     fun observeRecent(limit: Int = 20): Flow<List<SaveItemEntity>>
 
-    @Query("SELECT * FROM save_items WHERE is_pinned = 1 AND is_archived = 0 AND is_pending_delete = 0 ORDER BY updated_at DESC LIMIT :limit")
+    @Query("SELECT * FROM save_items WHERE is_pinned = 1 AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION ORDER BY updated_at DESC LIMIT :limit")
     fun observePinned(limit: Int = 12): Flow<List<SaveItemEntity>>
 
-    @Query("SELECT * FROM save_items WHERE is_favorite = 1 AND is_archived = 0 AND is_pending_delete = 0 ORDER BY created_at DESC LIMIT :limit")
+    @Query("SELECT * FROM save_items WHERE is_favorite = 1 AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION ORDER BY created_at DESC LIMIT :limit")
     fun observeFavorites(limit: Int = 12): Flow<List<SaveItemEntity>>
 
     // ── Paged browses (Categories drill-in, future "all saves") ──────────
@@ -119,6 +128,7 @@ interface SaveDao {
         """
         SELECT * FROM save_items
         WHERE category_id = :categoryId AND is_archived = :includeArchived AND is_pending_delete = 0
+            AND (:showLocked OR $NOT_IN_LOCKED_COLLECTION)
         ORDER BY is_pinned DESC,
             CASE WHEN :sort = 'OLDEST' THEN created_at END ASC,
             CASE WHEN :sort = 'UPDATED' THEN updated_at END DESC,
@@ -130,13 +140,14 @@ interface SaveDao {
     fun pagedByCategory(
         categoryId: String,
         includeArchived: Boolean = false,
-        sort: String = "NEWEST"
+        sort: String = "NEWEST",
+        showLocked: Boolean = false
     ): PagingSource<Int, SaveItemEntity>
 
     @Query(
         """
         SELECT * FROM save_items
-        WHERE is_archived = :includeArchived AND is_pending_delete = 0
+        WHERE is_archived = :includeArchived AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         ORDER BY is_pinned DESC,
             CASE WHEN :sort = 'OLDEST' THEN created_at END ASC,
             CASE WHEN :sort = 'UPDATED' THEN updated_at END DESC,
@@ -150,7 +161,7 @@ interface SaveDao {
     @Query(
         """
         SELECT * FROM save_items
-        WHERE source_app = :sourceApp AND is_archived = 0 AND is_pending_delete = 0
+        WHERE source_app = :sourceApp AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         ORDER BY is_pinned DESC, created_at DESC
         """
     )
@@ -160,7 +171,7 @@ interface SaveDao {
     @Query(
         """
         SELECT * FROM save_items
-        WHERE is_favorite = 1 AND is_archived = 0 AND is_pending_delete = 0
+        WHERE is_favorite = 1 AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         ORDER BY is_pinned DESC,
             CASE WHEN :sort = 'OLDEST' THEN created_at END ASC,
             CASE WHEN :sort = 'UPDATED' THEN updated_at END DESC,
@@ -181,7 +192,7 @@ interface SaveDao {
     @Query(
         """
         SELECT * FROM save_items
-        WHERE is_archived = 1 AND is_pending_delete = 0
+        WHERE is_archived = 1 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         ORDER BY
             CASE WHEN :sort = 'OLDEST' THEN created_at END ASC,
             CASE WHEN :sort = 'NEWEST' THEN created_at END DESC,
@@ -198,7 +209,7 @@ interface SaveDao {
         SELECT s.* FROM save_items s
         JOIN item_tags it ON it.item_id = s.id
         JOIN tags t ON t.id = it.tag_id
-        WHERE t.name = :name COLLATE NOCASE AND s.is_archived = 0 AND s.is_pending_delete = 0
+        WHERE t.name = :name COLLATE NOCASE AND s.is_archived = 0 AND s.is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         ORDER BY s.is_pinned DESC,
             CASE WHEN :sort = 'OLDEST' THEN s.created_at END ASC,
             CASE WHEN :sort = 'UPDATED' THEN s.updated_at END DESC,
@@ -212,7 +223,7 @@ interface SaveDao {
     @Query(
         """
         SELECT * FROM save_items
-        WHERE remind_at IS NOT NULL AND remind_at > :now AND is_archived = 0 AND is_pending_delete = 0
+        WHERE remind_at IS NOT NULL AND remind_at > :now AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         ORDER BY
             CASE WHEN :sort = 'OLDEST' THEN created_at END ASC,
             CASE WHEN :sort = 'UPDATED' THEN updated_at END DESC,
@@ -233,7 +244,7 @@ interface SaveDao {
         """
         SELECT source_app AS source, COUNT(*) AS count
         FROM save_items
-        WHERE is_archived = 0 AND is_pending_delete = 0
+        WHERE is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         GROUP BY source_app
         ORDER BY count DESC
         """
@@ -268,20 +279,20 @@ interface SaveDao {
     )
     fun observeRecentCategoryIds(limit: Int = 12): Flow<List<String>>
 
-    @Query("SELECT COUNT(*) FROM save_items WHERE is_archived = 0 AND is_pending_delete = 0")
+    @Query("SELECT COUNT(*) FROM save_items WHERE is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION")
     fun observeTotal(): Flow<Int>
 
     /** Count of archived items only — used to differentiate "fresh install" (0) from "you archived everything" (>0). */
-    @Query("SELECT COUNT(*) FROM save_items WHERE is_archived = 1 AND is_pending_delete = 0")
+    @Query("SELECT COUNT(*) FROM save_items WHERE is_archived = 1 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION")
     fun observeArchivedTotal(): Flow<Int>
 
     /** Count of live favorited items — drives the Favorites tile label in Browse. */
-    @Query("SELECT COUNT(*) FROM save_items WHERE is_favorite = 1 AND is_archived = 0 AND is_pending_delete = 0")
+    @Query("SELECT COUNT(*) FROM save_items WHERE is_favorite = 1 AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION")
     fun observeFavoriteTotal(): Flow<Int>
 
     // ── Reminders ─────────────────────────────────────────────────────────
 
-    @Query("SELECT COUNT(*) FROM save_items WHERE remind_at IS NOT NULL AND remind_at > :now AND is_archived = 0 AND is_pending_delete = 0")
+    @Query("SELECT COUNT(*) FROM save_items WHERE remind_at IS NOT NULL AND remind_at > :now AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION")
     fun observeUpcomingReminderTotal(now: Long = System.currentTimeMillis()): Flow<Int>
 
     @Query("SELECT * FROM save_items WHERE remind_at IS NOT NULL AND remind_at <= :now AND is_archived = 0 AND is_pending_delete = 0 ORDER BY remind_at ASC")
@@ -320,8 +331,9 @@ interface SaveDao {
 
     // ── Recently deleted ─────────────────────────────────────────────────
 
-    @Query("SELECT * FROM save_items WHERE is_pending_delete = 1 ORDER BY deleted_at DESC")
-    fun pagedTrash(): PagingSource<Int, SaveItemEntity>
+    /** Saves deleted from a locked collection are listed only while [showLocked]. */
+    @Query("SELECT * FROM save_items WHERE is_pending_delete = 1 AND (:showLocked OR $NOT_IN_LOCKED_COLLECTION) ORDER BY deleted_at DESC")
+    fun pagedTrash(showLocked: Boolean): PagingSource<Int, SaveItemEntity>
 
     @Query("SELECT COUNT(*) FROM save_items WHERE is_pending_delete = 1")
     fun observeTrashTotal(): Flow<Int>
@@ -340,7 +352,7 @@ interface SaveDao {
     @Query(
         """
         SELECT * FROM save_items
-        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0
+        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         ORDER BY is_pinned DESC,
             CASE WHEN :sort = 'OLDEST' THEN created_at END ASC,
             CASE WHEN :sort = 'UPDATED' THEN updated_at END DESC,
@@ -351,16 +363,16 @@ interface SaveDao {
     )
     fun pagedUnread(sort: String = "NEWEST"): PagingSource<Int, SaveItemEntity>
 
-    @Query("SELECT COUNT(*) FROM save_items WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0")
+    @Query("SELECT COUNT(*) FROM save_items WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION")
     fun observeUnreadTotal(): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM save_items WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0")
+    @Query("SELECT COUNT(*) FROM save_items WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION")
     suspend fun unreadTotal(): Int
 
     @Query(
         """
         SELECT * FROM save_items
-        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0
+        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         ORDER BY created_at DESC LIMIT :limit
         """
     )
@@ -369,7 +381,7 @@ interface SaveDao {
     @Query(
         """
         SELECT * FROM save_items
-        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0
+        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
         ORDER BY created_at DESC LIMIT :limit
         """
     )
@@ -379,7 +391,7 @@ interface SaveDao {
     @Query(
         """
         SELECT * FROM save_items
-        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0
+        WHERE opened_at IS NULL AND content_type != 'NOTE' AND is_archived = 0 AND is_pending_delete = 0 AND $NOT_IN_LOCKED_COLLECTION
           AND created_at < :before AND id NOT IN (:exclude)
         ORDER BY RANDOM() LIMIT 1
         """
@@ -392,6 +404,13 @@ interface SaveDao {
     /** Swaps a remote preview image for its local copy; 0 rows if the save changed meanwhile. */
     @Query("UPDATE save_items SET thumbnail_uri = :local WHERE id = :id AND thumbnail_uri = :remote")
     suspend fun replaceThumbnail(id: Long, remote: String, local: String): Int
+
+    /**
+     * Sets the card picture only if it's still [expected] (null = none);
+     * 0 rows if the save changed meanwhile. `IS` so null compares equal.
+     */
+    @Query("UPDATE save_items SET thumbnail_uri = :thumbnail WHERE id = :id AND thumbnail_uri IS :expected")
+    suspend fun swapThumbnail(id: Long, expected: String?, thumbnail: String): Int
 
     @Query("UPDATE save_items SET opened_at = :ts WHERE id = :id")
     suspend fun touchOpened(id: Long, ts: Long = System.currentTimeMillis())
@@ -436,6 +455,7 @@ interface SaveDao {
         tag: String?,
         remindersOnly: Boolean,
         now: Long,
+        showLocked: Boolean,
         sort: String
     ): PagingSource<Int, SaveItemEntity>
 
@@ -448,17 +468,30 @@ interface SaveDao {
         type: String?,
         tag: String?,
         remindersOnly: Boolean,
-        now: Long
+        now: Long,
+        showLocked: Boolean
     ): Flow<Int>
 }
 
 /**
+ * Leaves out saves filed in a locked collection. Those show only inside
+ * their collection once it's unlocked; every listing, count, and nudge
+ * that spans collections adds this. Written unqualified so it works with
+ * or without the `s` alias.
+ */
+internal const val NOT_IN_LOCKED_COLLECTION =
+    "(category_id IS NULL OR category_id NOT IN (SELECT id FROM categories WHERE is_locked = 1))"
+
+/**
  * Search screen filter. With [hasQuery] false the FTS branches are skipped
  * and every live save is a candidate. Archived saves are included on
- * purpose: search is how tucked-away saves are found again.
+ * purpose: search is how tucked-away saves are found again. Saves in
+ * locked collections are included only while [showLocked] (they've been
+ * unlocked this session).
  */
 private const val SEARCH_WHERE = """
     WHERE s.is_pending_delete = 0
+    AND (:showLocked OR $NOT_IN_LOCKED_COLLECTION)
     AND (:hasQuery = 0
         OR s.id IN (SELECT rowid FROM save_items_fts WHERE save_items_fts MATCH :query)
         OR s.id IN (SELECT rowid FROM article_copies_fts WHERE article_copies_fts MATCH :query))

@@ -10,6 +10,7 @@ import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.article.ArticleRepository
 import com.ghostgramlabs.pettibox.data.metadata.MetadataFetcher
+import com.ghostgramlabs.pettibox.data.metadata.PageSnapshotWorker
 import com.ghostgramlabs.pettibox.data.metadata.ThumbnailWorker
 import com.ghostgramlabs.pettibox.data.ocr.OcrWorker
 import com.ghostgramlabs.pettibox.data.ocr.PdfTextWorker
@@ -483,7 +484,12 @@ class SaveSheetViewModel @Inject constructor(
         // slows the save itself.
         if (s.contentType == ContentType.LINK) articleRepository.onLinkSaved(id, s.url)
         // Keep the preview image on the phone so the card isn't blank offline.
-        if (s.previewImage?.startsWith("http") == true) ThumbnailWorker.enqueue(appContext, id)
+        if (s.previewImage?.startsWith("http") == true) {
+            ThumbnailWorker.enqueue(appContext, id)
+        } else if (s.contentType == ContentType.LINK && s.previewImage == null) {
+            // No preview image (or the save beat it): a screenshot of the page.
+            PageSnapshotWorker.enqueue(appContext, id)
+        }
 
         _state.value = s.copy(isSaved = true)
     }

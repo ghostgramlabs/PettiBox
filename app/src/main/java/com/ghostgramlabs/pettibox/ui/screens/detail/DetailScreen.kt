@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -46,8 +47,10 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Unarchive
+import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -100,7 +103,9 @@ import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
 import com.ghostgramlabs.pettibox.data.util.TimeFormat
 import com.ghostgramlabs.pettibox.domain.model.ContentType
 import com.ghostgramlabs.pettibox.domain.model.SourceApp
+import com.ghostgramlabs.pettibox.ui.components.COLLECTION_FINDER_THRESHOLD
 import com.ghostgramlabs.pettibox.ui.components.CategoryChip
+import com.ghostgramlabs.pettibox.ui.components.CollectionPickerSheet
 import com.ghostgramlabs.pettibox.ui.components.KeeperMascot
 import com.ghostgramlabs.pettibox.ui.components.ReviewPrompt
 import com.ghostgramlabs.pettibox.ui.components.KeeperPose
@@ -109,6 +114,7 @@ import com.ghostgramlabs.pettibox.ui.components.ReminderPickerSheet
 import com.ghostgramlabs.pettibox.ui.components.ScreenHeading
 import com.ghostgramlabs.pettibox.ui.components.formatReminderAt
 import com.ghostgramlabs.pettibox.ui.components.rememberNotificationPermissionRequester
+import com.ghostgramlabs.pettibox.ui.lock.LockedCollectionPanel
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -121,6 +127,7 @@ fun DetailScreen(
     viewModel: DetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val lockedOut by viewModel.lockedOut.collectAsStateWithLifecycle()
     val item = state.item
     val article by viewModel.article.collectAsStateWithLifecycle()
     val readerTextZoom by viewModel.readerTextZoom.collectAsStateWithLifecycle()
@@ -138,6 +145,7 @@ fun DetailScreen(
     val focusManager = LocalFocusManager.current
     val clipboard = LocalClipboardManager.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showCollectionPicker by remember { mutableStateOf(false) }
     var viewerIndex by remember { mutableStateOf<Int?>(null) }
     var showReminderSheet by remember { mutableStateOf(false) }
     var showCustomReminder by remember { mutableStateOf(false) }
@@ -280,6 +288,12 @@ fun DetailScreen(
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
+        if (lockedOut != false) {
+            if (lockedOut == true) {
+                LockedCollectionPanel(onBack = onBack, modifier = Modifier.padding(padding))
+            }
+            return@Scaffold
+        }
         if (item == null) {
             if (state.isLoaded) {
                 MissingSaveState(
@@ -665,6 +679,27 @@ fun DetailScreen(
                             },
                             onRequest = viewModel::requestArticleCopy
                         )
+                        // For finding it again by eye: the page itself as the
+                        // card picture, when the site's own image is a logo
+                        // or missing.
+                        TextButton(
+                            onClick = {
+                                viewModel.requestPageScreenshot()
+                                Toast.makeText(ctx, "Taking a screenshot of the page…", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.padding(top = 2.dp)
+                        ) {
+                            Icon(
+                                Icons.Rounded.Wallpaper, null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(end = 8.dp).size(18.dp)
+                            )
+                            Text(
+                                "Use a page screenshot as the picture",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
                 readerCopy?.let { copy ->
@@ -696,7 +731,35 @@ fun DetailScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(Modifier.height(8.dp))
-                LazyRow(
+                if (state.categories.size > COLLECTION_FINDER_THRESHOLD) {
+                    // Too many collections to scroll through sideways: show the
+                    // current one and open the searchable picker to change it.
+                    if (showCollectionPicker) {
+                        CollectionPickerSheet(
+                            categories = state.categories,
+                            currentCategoryId = item.categoryId,
+                            onPick = viewModel::setCategory,
+                            onDismiss = { showCollectionPicker = false }
+                        )
+                    }
+                    val current = state.categories.firstOrNull { it.id == item.categoryId }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (current != null) {
+                            CategoryChip(
+                                label = current.name,
+                                emoji = current.emoji,
+                                color = Color(current.colorHex),
+                                selected = true,
+                                tilt = if (current.sortOrder % 2 == 0) -2f else 1.5f,
+                                onClick = { showCollectionPicker = true }
+                            )
+                        }
+                        CollectionFinderChip(
+                            label = if (current != null) "Change" else "Choose collection",
+                            onClick = { showCollectionPicker = true }
+                        )
+                    }
+                } else LazyRow(
                     contentPadding = PaddingValues(end = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -1646,5 +1709,24 @@ private fun NotesEditor(initial: String, onCommit: (old: String, new: String) ->
                 .commitFieldOnExit(text, initial, onCommit),
             shape = RoundedCornerShape(20.dp)
         )
+    }
+}
+
+/** Outlined "search collections" chip that opens the collection picker. */
+@Composable
+private fun CollectionFinderChip(label: String, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(scheme.surface)
+            .border(1.5.dp, scheme.primary, CircleShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 9.dp)
+    ) {
+        Icon(Icons.Rounded.Search, null, tint = scheme.primary, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge, color = scheme.primary)
     }
 }

@@ -11,6 +11,8 @@ import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.local.TagEntity
+import com.ghostgramlabs.pettibox.data.lock.LockedCollections
+import com.ghostgramlabs.pettibox.data.metadata.PageSnapshotWorker
 import com.ghostgramlabs.pettibox.data.preferences.ArticlePreferences
 import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
 import com.ghostgramlabs.pettibox.data.preferences.RatingPreferences
@@ -18,9 +20,13 @@ import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -55,6 +61,12 @@ class DetailViewModel @Inject constructor(
     val readerTextZoom: StateFlow<Int> = articlePreferences.readerTextZoom
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ArticlePreferences.DEFAULT_TEXT_ZOOM)
 
+    /** Replaces the card picture with a fresh screenshot of the page. */
+    fun requestPageScreenshot() {
+        if (state.value.item?.url.isNullOrBlank()) return
+        PageSnapshotWorker.enqueue(appContext, itemId, force = true)
+    }
+
     /** Save, retry, or update this link's offline copy. */
     fun requestArticleCopy() = viewModelScope.launch {
         val it = state.value.item ?: return@launch
@@ -75,6 +87,19 @@ class DetailViewModel @Inject constructor(
     fun setReaderTextZoom(zoom: Int) = viewModelScope.launch {
         articlePreferences.setReaderTextZoom(zoom)
     }
+
+    /**
+     * True while the save sits in a locked collection that hasn't been
+     * unlocked; null until known, so neither the save nor the lock flashes.
+     * Reminder taps and other deep links land here without passing Browse.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val lockedOut: StateFlow<Boolean?> = repo.observeById(itemId)
+        .map { it?.categoryId }
+        .distinctUntilChanged()
+        .flatMapLatest { repo.observeCategoryLocked(it) }
+        .combine(LockedCollections.unlocked) { locked, unlocked -> locked && !unlocked }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val state: StateFlow<DetailState> = combine(
         repo.observeById(itemId),

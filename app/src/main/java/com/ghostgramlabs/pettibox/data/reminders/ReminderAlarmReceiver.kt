@@ -89,7 +89,11 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
             return
         }
         ReminderNotifications.ensureChannel(ctx)
-        postNotification(ctx, itemId, item.title.ifBlank { "Saved item" })
+        // A locked collection's save still reminds you, but never says what
+        // it is on the lock screen; tapping it asks to unlock first.
+        val title = if (repository.isInLockedCollection(item)) "A save in a locked collection"
+            else item.title.ifBlank { "Saved item" }
+        postNotification(ctx, itemId, title)
         repository.setRemindAt(itemId, null)
     }
 
