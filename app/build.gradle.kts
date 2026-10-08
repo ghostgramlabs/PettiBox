@@ -81,6 +81,16 @@ android {
     }
 }
 
+// The sync simulation runs 1,500 random scenarios by default; raise it with
+// ./gradlew testDebugUnitTest -PsyncSimRuns=50000
+tasks.withType<Test>().configureEach {
+    systemProperty("syncSimRuns", (project.findProperty("syncSimRuns") ?: "1500").toString())
+    project.findProperty("syncSimSeed")?.let { systemProperty("syncSimSeed", it.toString()) }
+    project.findProperty("writeSyncVectors")?.let { systemProperty("writeSyncVectors", it.toString()) }
+    systemProperty("repoRoot", rootDir.absolutePath)
+    testLogging { if (project.findProperty("syncSimSeed") != null) showStandardStreams = true }
+}
+
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.incremental", "true")
