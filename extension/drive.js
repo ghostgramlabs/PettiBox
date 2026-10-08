@@ -53,8 +53,9 @@ async function call(token, url, init = {}) {
 
 const q = (s) => encodeURIComponent(s);
 
-async function findFolder(token) {
-  const query = `name = '${FOLDER}' and mimeType = '${FOLDER_MIME}' and trashed = false`;
+async function findFolder(token, name = FOLDER, parent = null) {
+  const query = `name = '${name}' and mimeType = '${FOLDER_MIME}' and trashed = false` +
+    (parent ? ` and '${parent}' in parents` : '');
   const res = await call(token, `${API}/files?q=${q(query)}&orderBy=createdTime&fields=${q('files(id)')}`);
   const files = (await res.json()).files ?? [];
   return files.length ? files[0].id : null;
@@ -121,6 +122,27 @@ export const driveTransport = {
           headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
           body: new Blob([head, body, tail]),
         });
+      },
+      /** Photos, PDFs and pictures the phones shared: sha -> { id, size, mime }. */
+      async storedFiles() {
+        const files = await findFolder(token, 'files', folder);
+        const out = {};
+        if (!files) return out;
+        let page = null;
+        do {
+          const query = `'${files}' in parents and trashed = false`;
+          const url = `${API}/files?q=${q(query)}&pageSize=1000&fields=${q('nextPageToken,files(id,name,size,mimeType)')}` +
+            (page ? `&pageToken=${q(page)}` : '');
+          const body = await (await call(token, url)).json();
+          for (const f of body.files ?? []) {
+            out[f.name.split('.')[0]] = { id: f.id, size: Number(f.size ?? 0), mime: f.mimeType ?? 'application/octet-stream' };
+          }
+          page = body.nextPageToken ?? null;
+        } while (page);
+        return out;
+      },
+      async readFile(id) {
+        return (await call(token, `${API}/files/${id}?alt=media`)).blob();
       },
       async accountEmail() {
         const body = await (await call(token, `${API}/about?fields=${q('user(emailAddress)')}`)).json();

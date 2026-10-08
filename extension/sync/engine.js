@@ -16,6 +16,7 @@ import {
 import { encodeRecord, decodeRecord, encodeShard, decodeShard, SyncFormatError } from './codec.js';
 
 export const INTERVALS = [
+  { id: 'MINUTES_15', label: '15 min', minutes: 15 },
   { id: 'MINUTES_30', label: '30 min', minutes: 30 },
   { id: 'HOUR_1', label: '1 hour', minutes: 60 },
   { id: 'HOURS_3', label: '3 hours', minutes: 180 },
@@ -161,28 +162,51 @@ export class SyncEngine {
       if (isTrashed(r) !== trash) continue;
       const cat = value(r, F.CAT);
       if (cat && locked.has(cat)) continue;
-      items.push({
-        id: r.id,
-        title: value(r, F.TITLE) ?? 'Untitled',
-        url: value(r, F.URL),
-        notes: value(r, F.NOTES),
-        ocr: value(r, F.OCR),
-        cat: cat && known.has(cat) ? cat : null,
-        type: value(r, F.TYPE),
-        fav: value(r, F.FAV) === true,
-        pin: value(r, F.PIN) === true,
-        arch: value(r, F.ARCH) === true,
-        tags: Object.values(presentTags(r)),
-        created: r.created,
-        updated: maxTs(r),
-        trashedAt: trashedAt(r),
-        conflicts: [F.TITLE, F.NOTES, F.URL]
-          .map((f) => ({ field: f, shown: value(r, f), others: alternatives(r, f).map((h) => h.value) }))
-          .filter((c) => c.others.length > 0),
-      });
+      items.push(SyncEngine.itemView(r, known));
     }
     items.sort((a, b) => (b.pin - a.pin) || (b.created - a.created));
     return { items, collections };
+  }
+
+  /** One save as the popup shows it. [known]: collection ids that may be shown. */
+  static itemView(r, known) {
+    const cat = value(r, F.CAT);
+    const files = Object.entries(presentFiles(r))
+      .sort(([, a], [, b]) => a.order - b.order)
+      .map(([sha, f]) => ({ sha, kind: f.kind }));
+    const main = value(r, F.MAIN);
+    return {
+      id: r.id,
+      title: value(r, F.TITLE) ?? 'Untitled',
+      url: value(r, F.URL),
+      notes: value(r, F.NOTES),
+      ocr: value(r, F.OCR),
+      cat: cat && known.has(cat) ? cat : null,
+      type: value(r, F.TYPE),
+      fav: value(r, F.FAV) === true,
+      pin: value(r, F.PIN) === true,
+      arch: value(r, F.ARCH) === true,
+      tags: Object.values(presentTags(r)),
+      created: r.created,
+      updated: maxTs(r),
+      trashed: isTrashed(r),
+      trashedAt: trashedAt(r),
+      // Pictures and files live in Drive by content hash; the popup fetches them on demand.
+      thumb: value(r, F.THUMB),
+      main,
+      files: main ? [{ sha: main, kind: value(r, F.TYPE) ?? 'FILE' }, ...files] : files,
+      conflicts: [F.TITLE, F.NOTES, F.URL]
+        .map((f) => ({ field: f, shown: value(r, f), others: alternatives(r, f).map((h) => h.value) }))
+        .filter((c) => c.others.length > 0),
+    };
+  }
+
+  /** The save holding this link, as the popup shows it (null if none, or it's in a locked collection). */
+  async savedPage(url) {
+    const r = await this.findByUrl(url);
+    if (!r) return null;
+    const lib = await this.library({ trash: isTrashed(r) });
+    return lib.items.find((i) => i.id === r.id) ?? null;
   }
 
   // ── Edits made in the browser ──────────────────────────────────────────

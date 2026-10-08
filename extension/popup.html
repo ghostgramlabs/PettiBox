@@ -16,43 +16,58 @@
   <!-- Signed out -->
   <section id="signin" class="card" hidden>
     <h2>Sign in to sync</h2>
-    <p>Use the same Google account as PettiBox on your phone. Your library is read from your own
+    <p>Use the same Google account as PettiBox on your phone. Your library comes from your own
       Google Drive (the "PettiBox Sync" folder); turn on <b>Sync between devices</b> in the app's
       Settings first.</p>
     <button id="signin-btn" class="primary">Sign in with Google</button>
   </section>
 
   <main id="app" hidden>
-    <!-- Save this tab -->
-    <section class="card" id="save-card">
-      <div id="saved-note" class="saved-note" hidden>Already in PettiBox. <a href="#" id="saved-edit">Edit</a></div>
-      <label class="field">
-        <span>Title</span>
-        <input id="save-title" type="text" autocomplete="off">
-      </label>
-      <div class="url" id="save-url"></div>
-      <div class="row">
-        <label class="field grow">
-          <span>Collection</span>
-          <input id="save-col" type="text" list="cols" placeholder="None" autocomplete="off">
-        </label>
-        <label class="field grow">
-          <span>Tags</span>
-          <input id="save-tags" type="text" placeholder="comma separated" autocomplete="off">
-        </label>
+    <!-- The page you're on -->
+    <section class="card page" id="page" hidden>
+      <div class="page-head">
+        <div class="pic" id="page-pic"><img id="page-favicon" alt=""></div>
+        <div class="grow">
+          <input id="page-title" class="title-input" type="text" autocomplete="off" aria-label="Title">
+          <div class="url" id="page-url"></div>
+        </div>
       </div>
-      <label class="field">
-        <span>Note</span>
-        <textarea id="save-note" rows="2" placeholder="Optional"></textarea>
-      </label>
-      <button id="save-btn" class="primary">Save to PettiBox</button>
+
+      <!-- Not saved yet -->
+      <div id="page-new">
+        <div class="hint">Save to</div>
+        <div class="chips" id="save-chips"></div>
+        <details id="more">
+          <summary>Tags, a note, or another collection</summary>
+          <label class="field"><span>Collection</span><input id="save-col" type="text" list="cols" placeholder="Type a name (new ones are made)" autocomplete="off"></label>
+          <label class="field"><span>Tags</span><input id="save-tags" type="text" placeholder="comma separated" autocomplete="off"></label>
+          <label class="field"><span>Note</span><textarea id="save-note" rows="2"></textarea></label>
+          <button id="save-btn" class="primary">Save</button>
+        </details>
+      </div>
+
+      <!-- Already saved -->
+      <div id="page-saved" hidden>
+        <div class="saved-line" id="saved-line"></div>
+        <div class="hint">Move to</div>
+        <div class="chips" id="move-chips"></div>
+        <div class="row actions">
+          <button id="saved-edit">Edit</button>
+          <span class="grow"></span>
+          <span class="muted">Ctrl+Shift+S saves without opening this</span>
+        </div>
+      </div>
+
+      <!-- In Recently deleted -->
+      <div id="page-trash" hidden>
+        <div class="saved-line">In Recently deleted</div>
+        <button id="restore-btn" class="primary">Restore</button>
+      </div>
     </section>
 
     <!-- Library -->
     <section class="card">
-      <div class="row">
-        <input id="search" type="search" placeholder="Search your library" autocomplete="off" class="grow">
-      </div>
+      <input id="search" type="search" placeholder="Search your library" autocomplete="off">
       <div class="filters" role="tablist">
         <button data-filter="all" class="chip on">All</button>
         <button data-filter="fav" class="chip">Favorites</button>
@@ -68,6 +83,7 @@
     <div class="sheet-body card">
       <h2>Edit save</h2>
       <div id="conflicts"></div>
+      <div id="edit-files" class="files"></div>
       <label class="field"><span>Title</span><input id="edit-title" type="text"></label>
       <label class="field"><span>Link</span><input id="edit-url" type="url"></label>
       <div class="row">

@@ -126,8 +126,19 @@ interface SyncDao {
     @Query("UPDATE save_items SET local_uri = :uri WHERE local_uri = :placeholder")
     suspend fun fillMainFile(placeholder: String, uri: String)
 
+    @Query("UPDATE save_items SET thumbnail_uri = :uri WHERE thumbnail_uri = :placeholder")
+    suspend fun fillThumbnail(placeholder: String, uri: String)
+
     @Query("SELECT uri FROM attachments WHERE uri LIKE 'pettibox-sync:%' UNION SELECT local_uri FROM save_items WHERE local_uri LIKE 'pettibox-sync:%'")
     suspend fun pendingFiles(): List<String>
+
+    /** Card pictures waiting to download: small, so they come down even on mobile data. */
+    @Query("SELECT DISTINCT thumbnail_uri FROM save_items WHERE thumbnail_uri LIKE 'pettibox-sync:%'")
+    suspend fun pendingThumbnails(): List<String>
+
+    /** Card pictures this phone has as files, for uploading. */
+    @Query("SELECT DISTINCT thumbnail_uri FROM save_items WHERE thumbnail_uri LIKE 'file:%'")
+    suspend fun localThumbnails(): List<String>
 
     /** Live saves (not in Recently deleted, not archived), for the mass-change guard. */
     @Query("SELECT COUNT(*) FROM save_items WHERE is_pending_delete = 0 AND is_archived = 0")

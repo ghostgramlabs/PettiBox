@@ -20,6 +20,7 @@ import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_EMOJI
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_FAV
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_LOCKED
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_MAIN
+import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_THUMB
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_META
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_NAME
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_NOTES
@@ -105,7 +106,10 @@ class LocalLibrary @Inject constructor(
             F_TRASH to if (s.isPendingDelete) (s.deletedAt ?: s.updatedAt) else null,
             // A file this phone can't read right now is not a removal: report
             // what the merged copy has, so nothing is taken off other devices.
-            F_MAIN to s.localUri?.let { shaOf(it) ?: meta?.value(F_MAIN) }
+            F_MAIN to s.localUri?.let { shaOf(it) ?: meta?.value(F_MAIN) },
+            // Only a picture this phone holds as a file; a web address is still
+            // being downloaded (ThumbnailWorker), and a missing one is kept as is.
+            F_THUMB to (s.thumbnailUri?.takeIf { !it.startsWith("http") }?.let { shaOf(it) } ?: meta?.value(F_THUMB))
         )
         val files = LinkedHashMap<String, Pair<String, Long>>()
         var unreadable = false
@@ -197,6 +201,14 @@ class LocalLibrary @Inject constructor(
         val cat = (r.value(F_CAT) as? String)?.takeIf { categoryDao.getById(it) != null }
         val mainSha = r.value(F_MAIN) as? String
         val localUri = mainSha?.let { localFileFor(it) }
+        val thumbSha = r.value(F_THUMB) as? String
+        val thumbnail = when {
+            // No shared picture: keep whatever this phone made.
+            thumbSha == null -> existing?.thumbnailUri
+            existing?.thumbnailUri != null && !existing.thumbnailUri.startsWith("http") &&
+                shaOf(existing.thumbnailUri) == thumbSha -> existing.thumbnailUri
+            else -> localFileFor(thumbSha)
+        }
         val trashedAt = r.trashedAt
         val base = existing ?: SaveItemEntity(
             title = "",
@@ -225,6 +237,7 @@ class LocalLibrary @Inject constructor(
             localUri = if (mainSha == null) null
             else if (existing?.localUri != null && shaOf(existing.localUri) == mainSha) existing.localUri
             else localUri,
+            thumbnailUri = thumbnail,
             createdAt = minOf(base.createdAt, r.created),
             updatedAt = minOf(maxOf(base.updatedAt, r.maxTs), now)
         )

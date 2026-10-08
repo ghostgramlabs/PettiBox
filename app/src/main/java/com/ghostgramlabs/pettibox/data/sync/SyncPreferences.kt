@@ -19,8 +19,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-/** How often to sync in the background. [MANUAL] syncs only on "Sync now" (and app open, and after edits). */
+/**
+ * How often to sync in the background (15 minutes is Android's shortest). [MANUAL]
+ * syncs only on "Sync now". Whatever the choice, the app also syncs every
+ * minute while it's open, and about a minute after an edit.
+ */
 enum class SyncInterval(val label: String, val minutes: Long) {
+    MINUTES_15("15 min", 15),
     MINUTES_30("30 min", 30),
     HOUR_1("1 hour", 60),
     HOURS_3("3 hours", 180),

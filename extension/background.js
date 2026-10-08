@@ -17,7 +17,7 @@ const ALARM_SOON = 'sync-soon';
 
 async function schedule() {
   const m = await engine.meta();
-  const interval = INTERVALS.find((i) => i.id === m.interval) ?? INTERVALS[2];
+  const interval = INTERVALS.find((i) => i.id === m.interval) ?? INTERVALS.find((i) => i.id === 'HOURS_3');
   await chrome.alarms.clear(ALARM_PERIODIC);
   if (interval.minutes > 0) chrome.alarms.create(ALARM_PERIODIC, { periodInMinutes: interval.minutes, delayInMinutes: 1 });
 }
@@ -58,6 +58,65 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_PERIODIC || alarm.name === ALARM_SOON) syncNow();
 });
 
+// ── Pictures and files the phones shared ────────────────────────────────
+// Kept in Cache Storage under a made-up URL per content hash, so each one is
+// downloaded once. The popup and viewer read the same cache.
+
+const FILE_CACHE = 'pettibox-files';
+const fileKey = (sha) => `https://files.pettibox.invalid/${sha}`;
+let shared = null; // { session, files, at }
+
+async function sharedFiles(refresh = false) {
+  if (!shared || refresh || Date.now() - shared.at > 10 * 60_000) {
+    const session = await driveTransport.open();
+    if (!session) return null;
+    shared = { session, files: await session.storedFiles(), at: Date.now() };
+  }
+  return shared;
+}
+
+/** Makes sure a shared file is in the cache. [maxBytes] skips big files (list previews). */
+async function ensureFile(sha, maxBytes) {
+  const cache = await caches.open(FILE_CACHE);
+  if (await cache.match(fileKey(sha))) return { ok: true };
+  let s = await sharedFiles();
+  if (!s) return { ok: false, reason: 'signin' };
+  let f = s.files[sha];
+  if (!f) { s = await sharedFiles(true); f = s?.files[sha]; }
+  // Not uploaded yet: phones send full files on Wi-Fi by default.
+  if (!f) return { ok: false, reason: 'missing' };
+  if (maxBytes && f.size > maxBytes) return { ok: false, reason: 'large' };
+  let blob;
+  try {
+    blob = await s.session.readFile(f.id);
+  } catch (e) {
+    shared = null; // a stale token or folder: start fresh next time
+    throw e;
+  }
+  const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer()))]
+    .map((b) => b.toString(16).padStart(2, '0')).join('');
+  if (digest !== sha) return { ok: false, reason: 'damaged' };
+  await cache.put(fileKey(sha), new Response(blob, { headers: { 'Content-Type': f.mime } }));
+  return { ok: true };
+}
+
+// ── Saving ───────────────────────────────────────────────────────────────
+
+async function saveTab(tab) {
+  if (!tab?.url || !/^https?:/i.test(tab.url)) return null;
+  const result = await engine.saveLink({ url: tab.url, title: tab.title || tab.url });
+  soon();
+  await chrome.action.setBadgeText({ text: result.existed ? '=' : '✓', tabId: tab.id });
+  setTimeout(() => chrome.action.setBadgeText({ text: '', tabId: tab.id }), 2500);
+  return result;
+}
+
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command !== 'save-page') return;
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  await saveTab(tab);
+});
+
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const url = info.menuItemId === 'save-link' ? info.linkUrl : (info.pageUrl ?? tab?.url);
   if (!url || !/^https?:/i.test(url)) return;
@@ -80,12 +139,10 @@ const handlers = {
     };
   },
   library: ({ trash }) => engine.library({ trash }),
-  findByUrl: async ({ url }) => {
-    const r = await engine.findByUrl(url);
-    return r ? { id: r.id } : null;
-  },
-  async save({ colName, ...args }) {
-    const cat = colName ? await engine.collectionNamed(colName) : null;
+  savedPage: ({ url }) => engine.savedPage(url),
+  file: ({ sha, maxBytes }) => ensureFile(sha, maxBytes),
+  async save({ colName, cat = null, ...args }) {
+    if (!cat && colName) cat = await engine.collectionNamed(colName);
     const r = await engine.saveLink({ ...args, cat });
     soon();
     return r;

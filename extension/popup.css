@@ -100,3 +100,29 @@ button:disabled { opacity: .55; cursor: default; }
 .conflict .v span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .foot { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 2px 2px 0; }
+
+/* ── The page you're on ── */
+.page-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.pic { width: 52px; height: 52px; flex: none; border-radius: 10px; background: var(--bright); border: 1px solid var(--edge); display: grid; place-items: center; overflow: hidden; }
+.pic img { max-width: 100%; max-height: 100%; }
+.pic img.cover { width: 100%; height: 100%; object-fit: cover; }
+#page-favicon { width: 24px; height: 24px; }
+.title-input { font-weight: 700; border-color: transparent !important; background: transparent !important; padding: 2px 4px !important; }
+.title-input:hover, .title-input:focus { border-color: var(--edge) !important; background: var(--bright) !important; }
+.hint { font-size: 11px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; margin: 2px 0 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.chips button { border-radius: 999px; padding: 6px 12px; font-weight: 600; }
+.chips button.lead { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chips button.current { background: var(--wash); border-color: var(--accent); color: var(--accent-deep); }
+details summary { cursor: pointer; color: var(--accent); font-size: 13px; margin-bottom: 8px; }
+.saved-line { background: var(--wash); border-radius: 10px; padding: 7px 10px; margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+
+/* ── Library rows ── */
+.thumb { width: 44px; height: 44px; flex: none; border-radius: 8px; background: var(--bright); border: 1px solid var(--edge); overflow: hidden; display: grid; place-items: center; font-size: 18px; color: var(--ink-3); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.results li { align-items: center; }
+#search { margin-bottom: 0; }
+
+/* ── Files in the editor ── */
+.files { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.files button { display: flex; gap: 6px; align-items: center; font-size: 12px; }

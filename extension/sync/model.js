@@ -16,11 +16,11 @@ export const KIND_COLLECTION = 'col';
 export const F = {
   TITLE: 'title', URL: 'url', NOTES: 'notes', OCR: 'ocr', META: 'meta', CAT: 'cat',
   TYPE: 'type', SRC: 'src', FAV: 'fav', PIN: 'pin', ARCH: 'arch', REMIND: 'remind',
-  OPENED: 'opened', TRASH: 'trash', MAIN: 'main',
+  OPENED: 'opened', TRASH: 'trash', MAIN: 'main', THUMB: 'thumb',
   NAME: 'name', EMOJI: 'emoji', COLOR: 'color', ORDER: 'order', PARENT: 'parent', USER: 'user', LOCKED: 'locked',
 };
 export const FILE_OCR_PREFIX = 'ocr:';
-const DERIVED = new Set([F.OCR, F.META, F.OPENED]);
+const DERIVED = new Set([F.OCR, F.META, F.OPENED, F.THUMB]);
 
 // ── Dots and contexts ────────────────────────────────────────────────────
 

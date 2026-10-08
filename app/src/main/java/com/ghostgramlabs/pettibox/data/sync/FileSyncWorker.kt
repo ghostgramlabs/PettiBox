@@ -37,6 +37,9 @@ import java.util.concurrent.TimeUnit
  * for them. Files are named by their sha256 (plus extension), uploaded once,
  * and checked against that hash when they come down. Nothing here deletes a
  * file anywhere.
+ *
+ * Two jobs: card pictures only (tens of KB each, on any connection), and
+ * everything (photos, PDFs, files) on the network the user allowed.
  */
 @HiltWorker
 class FileSyncWorker @AssistedInject constructor(
@@ -58,8 +61,9 @@ class FileSyncWorker @AssistedInject constructor(
         return try {
             val folder = client.filesFolder(token, client.syncFolder(token))
             val stored = client.listStoredFiles(token, folder).associateBy { it.name.substringBefore('.') }
-            upload(token, folder, stored.keys)
-            download(token, stored)
+            val thumbsOnly = inputData.getBoolean(KEY_THUMBS_ONLY, false)
+            upload(token, folder, stored.keys, thumbsOnly)
+            download(token, stored, thumbsOnly)
             Result.success()
         } catch (e: DriveSyncException) {
             if (e.transient && runAttemptCount < 5) Result.retry() else Result.success()
@@ -67,8 +71,10 @@ class FileSyncWorker @AssistedInject constructor(
     }
 
     /** Every file this phone's saves use that Drive doesn't have yet. */
-    private suspend fun upload(token: String, folder: String, inDrive: Set<String>) {
-        val uris = (saveDao.allForExport().mapNotNull { it.localUri } + attachmentDao.allForExport().map { it.uri })
+    private suspend fun upload(token: String, folder: String, inDrive: Set<String>, thumbsOnly: Boolean) {
+        val files = if (thumbsOnly) emptyList()
+        else saveDao.allForExport().mapNotNull { it.localUri } + attachmentDao.allForExport().map { it.uri }
+        val uris = (syncDao.localThumbnails() + files)
             .filter { it.startsWith("file:") }
             .distinct()
         val sent = HashSet(inDrive)
@@ -83,8 +89,8 @@ class FileSyncWorker @AssistedInject constructor(
     }
 
     /** Fills placeholders for files other devices added, three at a time. */
-    private suspend fun download(token: String, inDrive: Map<String, DriveSyncFile>) = coroutineScope {
-        val pending = syncDao.pendingFiles().distinct()
+    private suspend fun download(token: String, inDrive: Map<String, DriveSyncFile>, thumbsOnly: Boolean) = coroutineScope {
+        val pending = (syncDao.pendingThumbnails() + if (thumbsOnly) emptyList() else syncDao.pendingFiles()).distinct()
         if (pending.isEmpty()) return@coroutineScope
         val dir = File(applicationContext.filesDir, "attachments").apply { mkdirs() }
         val gate = Semaphore(3)
@@ -102,6 +108,7 @@ class FileSyncWorker @AssistedInject constructor(
                         syncDao.putFile(SyncFileEntity(uri, sha))
                         syncDao.fillAttachment(placeholder, uri)
                         syncDao.fillMainFile(placeholder, uri)
+                        syncDao.fillThumbnail(placeholder, uri)
                         syncDao.endApplying()
                     }
                 }
@@ -111,20 +118,27 @@ class FileSyncWorker @AssistedInject constructor(
 
     companion object {
         private const val NAME = "sync_files"
+        private const val THUMBS = "sync_thumbs"
+        private const val KEY_THUMBS_ONLY = "thumbs_only"
 
+        /** Card pictures now (any network); everything else on the network the user allowed. */
         fun enqueue(context: Context, wifiOnly: Boolean) {
-            val request = OneTimeWorkRequestBuilder<FileSyncWorker>()
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED)
-                        .setRequiresBatteryNotLow(true)
-                        .build()
-                )
+            fun request(thumbsOnly: Boolean, network: NetworkType) = OneTimeWorkRequestBuilder<FileSyncWorker>()
+                .setInputData(androidx.work.workDataOf(KEY_THUMBS_ONLY to thumbsOnly))
+                .setConstraints(Constraints.Builder().setRequiredNetworkType(network).setRequiresBatteryNotLow(true).build())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
                 .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(NAME, ExistingWorkPolicy.KEEP, request)
+            val wm = WorkManager.getInstance(context)
+            wm.enqueueUniqueWork(THUMBS, ExistingWorkPolicy.KEEP, request(true, NetworkType.CONNECTED))
+            wm.enqueueUniqueWork(
+                NAME, ExistingWorkPolicy.KEEP,
+                request(false, if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED)
+            )
         }
 
-        fun cancel(context: Context) = WorkManager.getInstance(context).cancelUniqueWork(NAME)
+        fun cancel(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(NAME)
+            WorkManager.getInstance(context).cancelUniqueWork(THUMBS)
+        }
     }
 }

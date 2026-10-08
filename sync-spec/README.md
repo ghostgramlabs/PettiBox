@@ -69,6 +69,7 @@ whole numbers, booleans or null.
 | `remind`, `opened` | ms / null | `opened` is *derived* |
 | `trash` | ms / null | in Recently deleted since; carries `x` |
 | `main` | sha256 / null | the save's own file |
+| `thumb` | sha256 / null | its card picture (link preview, page screenshot); *derived* |
 
 Collection fields: `name`, `emoji`, `color`, `order`, `parent`, `user`, `locked`.
 Unknown fields are kept and merged like any other, so a newer app's fields pass through
@@ -104,7 +105,7 @@ they sync in.
 - **Tags / files present**: keys with at least one add. Display name, kind and order come
   from the newest add.
 - **User dots**: dots of every field except the derived ones (`ocr`, `ocr:*`, `meta`,
-  `opened`), plus every tag and file add.
+  `opened`, `thumb`), plus every tag and file add.
 - **Gone** (permanently removed): `gone` is set and covers every user dot.
 - **Trashed** (in Recently deleted): the shown `trash` value is non-null and its `x`
   covers every user dot outside `trash`. An edit the deleting device hadn't seen brings

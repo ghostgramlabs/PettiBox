@@ -2,22 +2,55 @@
   "manifest_version": 3,
   "name": "PettiBox",
   "short_name": "PettiBox",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Save pages to PettiBox and search your library. Syncs with the PettiBox app through your own Google Drive.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAydIMR9nOMV2mH67wXGsCt+JAgz3/0fbyMfoqkOevj7cx9ymemnMzlODK8ahseUw5onNEUSlRRGV9ksetYgk+OwXRNgOKmxr4W5exXJVgICE1FwWs5hc6XTTZ2+MGd+aVwsyEycPbALjpWJT/sJlUkFr5MVL0uG1Oh0hOIeBGpgNKhaMR4Ei1F30nFKMGfad2b2qOptwd2AHjM3zLlPLU20iNXrljSv2FKOdMpdH4L8e+EtvJ9KvDyNT1JMjZ1C2Q5ytgchCG8ypDsV7MkC2CZPWiqYjbNQsUhAN8UjnWXK9IlAZy2uaJSTJ4QFlWyub1InknSrUAnWZ8RzQGfy4kYQIDAQAB",
-  "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "PettiBox",
-    "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png" }
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
   },
   "options_page": "options.html",
-  "background": { "service_worker": "background.js", "type": "module" },
-  "permissions": ["identity", "storage", "unlimitedStorage", "alarms", "contextMenus", "activeTab"],
-  "host_permissions": ["https://www.googleapis.com/*", "https://oauth2.googleapis.com/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "identity",
+    "storage",
+    "unlimitedStorage",
+    "alarms",
+    "contextMenus",
+    "activeTab",
+    "favicon"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/*",
+    "https://oauth2.googleapis.com/*"
+  ],
   "oauth2": {
     "client_id": "785489867134-pedrhdknqvdd1jnleki69kj9nsa8eo7g.apps.googleusercontent.com",
-    "scopes": ["https://www.googleapis.com/auth/drive.file"]
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file"
+    ]
   },
-  "minimum_chrome_version": "120"
+  "minimum_chrome_version": "120",
+  "commands": {
+    "save-page": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Save this page to PettiBox"
+    }
+  }
 }

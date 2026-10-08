@@ -141,6 +141,8 @@ data class SyncRecord(
         const val F_OPENED = "opened"
         const val F_TRASH = "trash"
         const val F_MAIN = "main"
+        /** sha256 of the card picture (link preview, page screenshot), shared so other devices needn't make their own. */
+        const val F_THUMB = "thumb"
 
         /** Per-file recognized text: "ocr:<sha256>". */
         const val FILE_OCR_PREFIX = "ocr:"
@@ -155,7 +157,7 @@ data class SyncRecord(
         const val F_LOCKED = "locked"
 
         /** Written by a phone on its own, so they never undo a delete. */
-        val DERIVED_FIELDS = setOf(F_OCR, F_META, F_OPENED)
+        val DERIVED_FIELDS = setOf(F_OCR, F_META, F_OPENED, F_THUMB)
     }
 }
 

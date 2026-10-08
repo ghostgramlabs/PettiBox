@@ -140,3 +140,18 @@ test('md5 and gzip agree with Node', async () => {
   const text = JSON.stringify({ hello: 'wörld', n: [1, 2, 3] }).repeat(50);
   assert.equal(await gunzip(await gzip(text)), text);
 });
+
+test('the page card finds a saved page, with its pictures and files, and its trash state', async () => {
+  const a = browser(fakeDrive());
+  const { id } = await a.saveLink({ url: 'https://example.com/pic', title: 'Pic' });
+  // A phone's card picture and photo arrive as fields on the save.
+  await a.edit('item', id, (l) => { l.fields.thumb = 'ab'.repeat(32); l.fields.type = 'IMAGE'; l.fields.main = 'cd'.repeat(32); return l; });
+  const seen = await a.savedPage('https://EXAMPLE.com/pic');
+  assert.equal(seen.id, id);
+  assert.equal(seen.thumb, 'ab'.repeat(32));
+  assert.deepEqual(seen.files.map((f) => f.sha), ['cd'.repeat(32)]);
+  assert.equal(seen.trashed, false);
+  await a.trash(id);
+  assert.equal((await a.savedPage('https://example.com/pic')).trashed, true);
+  assert.equal(await a.savedPage('https://example.com/other'), null);
+});

@@ -180,7 +180,7 @@ fun SyncSettingsCard(
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "PettiBox also syncs when you open it and about a minute after you change something.",
+            "PettiBox also syncs every minute while it's open, and about a minute after you change something.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant
         )

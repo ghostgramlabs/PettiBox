@@ -13,8 +13,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.data.preferences.ThemeMode
 import com.ghostgramlabs.pettibox.data.preferences.ThemePreferences
@@ -25,6 +27,7 @@ import com.ghostgramlabs.pettibox.ui.lock.AppLockGate
 import com.ghostgramlabs.pettibox.ui.nav.PettiBoxNavGraph
 import com.ghostgramlabs.pettibox.ui.theme.PettiBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -50,6 +53,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         pendingLaunch = AppLaunch.from(intent)
+        syncWhileOpen()
         setContent {
             val themeMode by themePreferences.mode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
             // Null until loaded, so the gate can hold back saves until it knows.
@@ -93,13 +97,21 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    /** Opening the app pulls in what other devices changed, unless a round ran just now. */
-    override fun onStart() {
-        super.onStart()
+    /**
+     * While PettiBox is on screen, sync every minute, so edits made in Chrome
+     * or on another phone show up while you look. A round with nothing new
+     * is one small Drive request. Stops as soon as the app is left.
+     */
+    private fun syncWhileOpen() {
         lifecycleScope.launch {
-            val sync = syncPreferences.status.first()
-            if (sync.enabled && System.currentTimeMillis() - sync.lastSyncAt > 2 * 60_000L) {
-                SyncScheduler.now(this@MainActivity)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    val sync = syncPreferences.status.first()
+                    if (sync.enabled && System.currentTimeMillis() - sync.lastSyncAt >= 55_000L) {
+                        SyncScheduler.now(this@MainActivity)
+                    }
+                    delay(60_000L)
+                }
             }
         }
     }
