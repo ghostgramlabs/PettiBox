@@ -192,6 +192,19 @@ class SyncPreferences(context: Context, fileName: String) {
     suspend fun fileCleanupAt(): Long = store.data.first()[fileCleanupKey] ?: 0L
     suspend fun setFileCleanupAt(at: Long) = store.edit { it[fileCleanupKey] = at }
 
+    private val uploadSessionsKey = stringPreferencesKey("upload_sessions")
+
+    /** A big file's unfinished resumable upload (sha256 -> session address), so it carries on. */
+    suspend fun uploadSession(sha: String): String? = runCatching {
+        JSONObject(store.data.first()[uploadSessionsKey] ?: return null).optString(sha).ifBlank { null }
+    }.getOrNull()
+
+    suspend fun setUploadSession(sha: String, uri: String?) = store.edit { p ->
+        val o = runCatching { JSONObject(p[uploadSessionsKey] ?: "{}") }.getOrDefault(JSONObject())
+        if (uri == null) o.remove(sha) else o.put(sha, uri)
+        p[uploadSessionsKey] = o.toString()
+    }
+
     private val devicesKey = stringPreferencesKey("devices")
 
     /** Other devices seen in Drive: id -> (name, last time their files changed). */

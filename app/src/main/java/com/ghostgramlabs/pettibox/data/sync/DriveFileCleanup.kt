@@ -45,13 +45,13 @@ object DriveFileCleanup {
     )
 
     /**
-     * [stored]: Drive file name -> id. [unusedSince]: from the last run. A file
+     * [stored]: Drive file id -> name. [unusedSince]: from the last run. A file
      * used again starts over; one that has disappeared from Drive is forgotten.
      */
     fun plan(stored: Map<String, String>, used: Set<String>, unusedSince: Map<String, Long>, now: Long): Plan {
         val remove = ArrayList<String>()
         val waiting = HashMap<String, Long>()
-        for ((name, id) in stored) {
+        for ((id, name) in stored) {
             val sha = shaOfName(name) ?: continue
             if (sha in used) continue
             val since = unusedSince[sha]?.coerceAtMost(now) ?: now

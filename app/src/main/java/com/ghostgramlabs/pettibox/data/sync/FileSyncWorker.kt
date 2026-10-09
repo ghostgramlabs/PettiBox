@@ -86,7 +86,7 @@ class FileSyncWorker @AssistedInject constructor(
             val file = Uri.parse(uri).path?.let(::File)?.takeIf { it.exists() } ?: continue
             val ext = file.extension.lowercase().ifBlank { "bin" }
             val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "application/octet-stream"
-            client.uploadFile(token, folder, "$sha.$ext", file, mime)
+            client.uploadFile(token, folder, "$sha.$ext", file, mime, prefs.uploadSession(sha)) { prefs.setUploadSession(sha, it) }
         }
     }
 
@@ -95,6 +95,9 @@ class FileSyncWorker @AssistedInject constructor(
         val pending = (syncDao.pendingThumbnails() + if (thumbsOnly) emptyList() else syncDao.pendingFiles()).distinct()
         if (pending.isEmpty()) return@coroutineScope
         val dir = File(applicationContext.filesDir, "attachments").apply { mkdirs() }
+        // A part-downloaded file nobody came back for in a week.
+        val stale = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
+        dir.listFiles { f -> f.name.endsWith(".part") && f.lastModified() < stale }?.forEach { it.delete() }
         val gate = Semaphore(3)
         pending.map { placeholder ->
             async {
@@ -141,7 +144,7 @@ class FileSyncWorker @AssistedInject constructor(
             if (uri.startsWith("http")) continue
             library.shaOf(uri)?.let { used += it } // a file missing here is covered by the records above
         }
-        val plan = DriveFileCleanup.plan(listed.associate { it.name to it.id }, used, prefs.unusedFiles(), now)
+        val plan = DriveFileCleanup.plan(listed.associate { it.id to it.name }, used, prefs.unusedFiles(), now)
         for (id in plan.remove) {
             try {
                 client.delete(token, id)

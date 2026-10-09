@@ -41,7 +41,7 @@ class DriveFileCleanupTest {
     }
 
     @Test fun an_unused_file_waits_30_days_before_it_goes() {
-        val stored = mapOf("${sha('a')}.pdf" to "id-a", "${sha('b')}.jpg" to "id-b")
+        val stored = mapOf("id-a" to "${sha('a')}.pdf", "id-b" to "${sha('b')}.jpg")
         val used = setOf(sha('b'))
         val first = DriveFileCleanup.plan(stored, used, emptyMap(), now = 100 * day)
         assertTrue(first.remove.isEmpty())
@@ -55,7 +55,7 @@ class DriveFileCleanupTest {
     }
 
     @Test fun a_file_used_again_starts_over_and_other_names_are_left_alone() {
-        val stored = mapOf("${sha('a')}.pdf" to "id-a", "notes.txt" to "id-x", "${sha('c')}" to "id-c")
+        val stored = mapOf("id-a" to "${sha('a')}.pdf", "id-x" to "notes.txt", "id-c" to "${sha('c')}")
         val plan = DriveFileCleanup.plan(stored, setOf(sha('a')), mapOf(sha('a') to 0L, sha('c') to 0L), now = 90 * day)
         assertEquals(listOf("id-c"), plan.remove)
         assertTrue(plan.unusedSince.isEmpty())
@@ -63,7 +63,7 @@ class DriveFileCleanupTest {
     }
 
     @Test fun a_clock_set_back_never_brings_removal_forward() {
-        val stored = mapOf("${sha('a')}.pdf" to "id-a")
+        val stored = mapOf("id-a" to "${sha('a')}.pdf")
         // First seen "in the future" (the clock was wrong then): counts from now instead.
         val plan = DriveFileCleanup.plan(stored, emptySet(), mapOf(sha('a') to 500 * day), now = 100 * day)
         assertTrue(plan.remove.isEmpty())

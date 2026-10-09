@@ -163,6 +163,14 @@ The other save is then removed (`gone`), so on a phone that had it, it waits in 
 deleted. Every device computes the same result. `SyncDedupe` (Kotlin) and `fold`/`foldPlan`
 (extension) implement it; `vectors/cases.json` has golden `fold` cases.
 
+## Sending and fetching shared files
+
+Files under 5 MB go up in one request. Bigger ones use a Drive resumable upload in 8 MiB
+pieces; the session address is kept until the upload ends, so a later try asks Drive how far
+it got and sends only the rest (a session Drive no longer knows starts a fresh upload).
+Downloads keep what arrived as `<sha256>.part` and ask for the rest with a `Range` request;
+the whole file must still hash to its name before it is used, or the partial copy is dropped.
+
 ## Removing unused shared files
 
 Sync never removes a file from `files/` as part of a merge. Separately, a phone removes a

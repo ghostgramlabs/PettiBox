@@ -5,6 +5,8 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Big photos, videos and PDFs (5 MB and up) now sync in pieces: after a dropped connection,
+  uploads and downloads carry on where they stopped instead of starting over.
 - Removing one photo or file from a save now sticks. Before, it was only removed once the
   "Item removed" message was swiped away, and leaving the screen undid it.
 - Photos, PDFs and files that no save on any device has used for 30 days are now removed
