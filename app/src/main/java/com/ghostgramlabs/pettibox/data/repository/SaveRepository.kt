@@ -893,7 +893,18 @@ class SaveRepository @Inject constructor(
         attachmentDao.pdfAttachmentsNeedingOcr()
     suspend fun setAttachmentOcr(id: Long, text: String) = attachmentDao.setOcrText(id, text)
     suspend fun deleteAttachment(id: Long) {
-        val attachment = attachmentDao.getById(id) ?: return
+        removeAttachment(id)?.let { discardRemovedFiles(it) }
+    }
+
+    /** A file taken out of a save, kept on disk until [discardRemovedFiles] so Undo can put it back. */
+    data class RemovedAttachment(val row: AttachmentEntity, val itemBefore: SaveItemEntity?, val files: List<String>)
+
+    /**
+     * Takes one file out of a save right away (every screen and sync see it
+     * gone); its bytes stay on disk until [discardRemovedFiles] or [restoreAttachment].
+     */
+    suspend fun removeAttachment(id: Long): RemovedAttachment? {
+        val attachment = attachmentDao.getById(id) ?: return null
         val item = saveDao.getById(attachment.itemId)
         // The save's main file is often this same file (or a copy of it). Left
         // as is, it would keep pointing at the removed file, and other devices
@@ -906,9 +917,19 @@ class SaveRepository @Inject constructor(
                 saveDao.update(item.copy(localUri = next?.uri, updatedAt = System.currentTimeMillis()))
             }
         }
-        val gone = listOfNotNull(attachment.uri, item?.localUri?.takeIf { mainGoes && it != attachment.uri && it != next?.uri })
-        attachmentStore.deleteByUris(gone)
+        val files = listOfNotNull(attachment.uri, item?.localUri?.takeIf { mainGoes && it != attachment.uri && it != next?.uri })
+        return RemovedAttachment(attachment, item.takeIf { mainGoes }, files)
     }
+
+    /** Undo of [removeAttachment]: the file goes back where it was. */
+    suspend fun restoreAttachment(removed: RemovedAttachment) = database.withTransaction {
+        attachmentDao.insert(removed.row)
+        val before = removed.itemBefore ?: return@withTransaction
+        val now = saveDao.getById(before.id) ?: return@withTransaction
+        saveDao.update(now.copy(localUri = before.localUri, updatedAt = System.currentTimeMillis()))
+    }
+
+    suspend fun discardRemovedFiles(removed: RemovedAttachment) = attachmentStore.deleteByUris(removed.files)
 
     // ── Tags ──────────────────────────────────────────────────────────────
 

@@ -278,8 +278,37 @@ class DetailViewModel @Inject constructor(
         repo.removeTag(it.id, tag)
     }
 
-    fun deleteAttachment(id: Long) = viewModelScope.launch {
-        repo.deleteAttachment(id)
+    /** Removed files whose Undo is still on screen: their bytes are still on disk. */
+    private val undoable = java.util.concurrent.ConcurrentHashMap<Long, SaveRepository.RemovedAttachment>()
+
+    /**
+     * Takes the file out of the save now, so leaving the screen (or the app)
+     * can't lose the removal. False if it was already gone.
+     */
+    suspend fun removeAttachment(id: Long): Boolean {
+        val removed = repo.removeAttachment(id) ?: return false
+        undoable[id] = removed
+        return true
+    }
+
+    fun undoRemoveAttachment(id: Long) = viewModelScope.launch {
+        undoable.remove(id)?.let { repo.restoreAttachment(it) }
+    }
+
+    /** The Undo has gone: so can the file's bytes. */
+    fun finishRemoveAttachment(id: Long) = viewModelScope.launch {
+        undoable.remove(id)?.let { repo.discardRemovedFiles(it) }
+    }
+
+    override fun onCleared() {
+        // Left the screen with an Undo still showing: the removal stands.
+        val left = undoable.values.toList()
+        undoable.clear()
+        if (left.isNotEmpty()) {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                left.forEach { repo.discardRemovedFiles(it) }
+            }
+        }
     }
 }
 

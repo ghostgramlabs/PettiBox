@@ -5,6 +5,8 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Removing one photo or file from a save now sticks. Before, it was only removed once the
+  "Item removed" message was swiped away, and leaving the screen undid it.
 - Photos, PDFs and files that no save on any device has used for 30 days are now removed
   from Google Drive, so deleted files stop using your Drive storage.
 - Removing one file from a save with several no longer brings it back on other devices

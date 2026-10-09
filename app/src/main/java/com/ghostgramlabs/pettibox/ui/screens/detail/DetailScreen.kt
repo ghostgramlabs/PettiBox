@@ -151,30 +151,25 @@ fun DetailScreen(
     var showReminderSheet by remember { mutableStateOf(false) }
     var showCustomReminder by remember { mutableStateOf(false) }
     val requestNotificationPermission = rememberNotificationPermissionRequester()
-    // Per-attachment delete is two-stage: a confirm dialog, then an
-    // optimistic hide + Undo snackbar. We commit the actual repo delete
-    // only after the snackbar dismisses without Undo, so files survive
-    // long enough to restore.
+    // Per-attachment delete: a confirm dialog, then the file is taken out of
+    // the save at once, with Undo on a snackbar. Only the file's bytes wait
+    // for the snackbar, so leaving the screen never loses the removal.
     var attachmentDeleteCandidate by remember { mutableStateOf<Long?>(null) }
-    var hiddenAttachmentIds by remember { mutableStateOf(emptySet<Long>()) }
 
     val requestAttachmentDelete: (Long) -> Unit = { id ->
         attachmentDeleteCandidate = id
     }
     val confirmAttachmentDelete: (Long) -> Unit = { id ->
         attachmentDeleteCandidate = null
-        hiddenAttachmentIds = hiddenAttachmentIds + id
         scope.launch {
+            if (!viewModel.removeAttachment(id)) return@launch
             val result = snackbarHostState.showSnackbar(
                 message = "Item removed",
-                actionLabel = "Undo"
+                actionLabel = "Undo",
+                duration = SnackbarDuration.Long
             )
-            if (result == SnackbarResult.ActionPerformed) {
-                hiddenAttachmentIds = hiddenAttachmentIds - id
-            } else {
-                hiddenAttachmentIds = hiddenAttachmentIds - id
-                viewModel.deleteAttachment(id)
-            }
+            if (result == SnackbarResult.ActionPerformed) viewModel.undoRemoveAttachment(id)
+            else viewModel.finishRemoveAttachment(id)
         }
     }
 
@@ -382,7 +377,8 @@ fun DetailScreen(
                     scope.launch {
                         val result = snackbarHostState.showSnackbar(
                             message = if (!nowArchived) "Tucked away" else "Back on the shelf",
-                            actionLabel = "Undo"
+                            actionLabel = "Undo",
+                            duration = SnackbarDuration.Long
                         )
                         if (result == SnackbarResult.ActionPerformed) {
                             viewModel.setArchived(nowArchived)
@@ -405,9 +401,8 @@ fun DetailScreen(
             Spacer(Modifier.height(16.dp))
 
             // Big preview: horizontal scroll if there are multiple attachments,
-            // single hero otherwise. Attachments awaiting Undo are filtered
-            // out so the user perceives them as removed immediately.
-            val visibleAttachments = state.attachments.filter { it.id !in hiddenAttachmentIds }
+            // single hero otherwise.
+            val visibleAttachments = state.attachments
             val gallery: List<GalleryItem> = visibleAttachments.map { it.toGalleryItem() }
                 .ifEmpty {
                     listOfNotNull(item.thumbnailUri ?: item.localUri).map {
