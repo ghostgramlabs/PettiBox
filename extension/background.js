@@ -18,7 +18,7 @@ const ALARM_RETRY = 'sync-retry';
 
 async function schedule() {
   const m = await engine.meta();
-  const interval = INTERVALS.find((i) => i.id === m.interval) ?? INTERVALS.find((i) => i.id === 'HOURS_3');
+  const interval = INTERVALS.find((i) => i.id === m.interval) ?? INTERVALS.find((i) => i.id === 'MINUTES_15');
   await chrome.alarms.clear(ALARM_PERIODIC);
   if (!m.signedOut && interval.minutes > 0) await chrome.alarms.create(ALARM_PERIODIC, { periodInMinutes: interval.minutes, delayInMinutes: 1 });
 }
@@ -55,12 +55,24 @@ async function scheduleRetry(out) {
   await chrome.alarms.create(ALARM_RETRY, { delayInMinutes: Math.min(30, 2 ** (m.retryAttempt - 1)) });
 }
 
+/**
+ * The toolbar badge: "!" when sync needs the user (sign in, review), else the
+ * number of saves waiting for a version to be picked, else "↑" while changes
+ * wait to upload.
+ */
 async function updateBadge() {
   const m = await engine.meta();
-  const waiting = m.dirty.length > 0;
-  const problem = !!m.needs;
-  await chrome.action.setBadgeText({ text: problem ? '!' : waiting ? '↑' : '' });
-  await chrome.action.setBadgeBackgroundColor({ color: problem ? '#C0392B' : '#D9643A' });
+  const choices = await engine.needingChoice().catch(() => 0);
+  let text = '';
+  let color = '#D9643A';
+  if (m.needs) { text = '!'; color = '#C0392B'; }
+  else if (choices > 0) { text = String(choices); color = '#B7791F'; }
+  else if (m.dirty.length > 0) text = '↑';
+  await chrome.action.setBadgeText({ text });
+  await chrome.action.setBadgeBackgroundColor({ color });
+  await chrome.action.setTitle({
+    title: choices > 0 ? `PettiBox: ${choices} save${choices > 1 ? 's' : ''} edited on 2 devices need${choices > 1 ? '' : 's'} your choice` : 'PettiBox',
+  });
 }
 
 chrome.runtime.onInstalled.addListener(async () => {
@@ -200,6 +212,7 @@ const handlers = {
   async trash({ id }) { await engine.trash(id); soon(); return true; },
   async restore({ id }) { await engine.restore(id); soon(); return true; },
   async keepShown({ id, field }) { await engine.keepShown(id, field); soon(); return true; },
+  needingChoice: () => engine.needingChoice(),
   sync: () => syncNow(),
   async signIn() {
     const token = await getToken(true);

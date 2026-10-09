@@ -5,6 +5,9 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- A save edited on two devices at once now pulses amber in the app and the Chrome extension
+  (with a count on the extension's toolbar icon) until someone picks a version. Choosing on
+  any one device is enough: the others stop asking after their next sync.
 - PettiBox is now open source under the Apache License 2.0.
 - Locked collections: lock a collection from Edit collection and it disappears from Home,
   Browse, search, the widget and nudges until you open Browse › Locked with your fingerprint,

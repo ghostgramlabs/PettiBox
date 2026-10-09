@@ -147,6 +147,32 @@ class SyncPreferences(context: Context, fileName: String) {
         it[reconnectKey] = false
     }
 
+    private val choiceKey = stringPreferencesKey("needs_choice")
+    private val choiceIndexedKey = booleanPreferencesKey("needs_choice_indexed")
+
+    /** Sync ids of saves edited on two devices, waiting for someone to pick a version. */
+    val needingChoice: Flow<Set<String>> = store.data.map { p -> parseIds(p[choiceKey]) }
+
+    /** Adds and removes ids in one write. */
+    suspend fun updateNeedingChoice(add: Collection<String>, remove: Collection<String>) {
+        if (add.isEmpty() && remove.isEmpty()) return
+        store.edit { p ->
+            val ids = parseIds(p[choiceKey]).toMutableSet()
+            ids.removeAll(remove.toSet())
+            ids.addAll(add)
+            p[choiceKey] = org.json.JSONArray(ids.toList()).toString()
+        }
+    }
+
+    suspend fun needingChoiceIndexed(): Boolean = store.data.first()[choiceIndexedKey] ?: false
+
+    suspend fun markNeedingChoiceIndexed() = store.edit { it[choiceIndexedKey] = true }
+
+    private fun parseIds(raw: String?): Set<String> = runCatching {
+        val a = org.json.JSONArray(raw ?: return emptySet())
+        (0 until a.length()).map { a.getString(it) }.toSet()
+    }.getOrDefault(emptySet())
+
     private val devicesKey = stringPreferencesKey("devices")
 
     /** Other devices seen in Drive: id -> (name, last time their files changed). */

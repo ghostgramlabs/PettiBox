@@ -102,6 +102,7 @@ class SyncEngine @Inject constructor(
         val session = transport.open() ?: return SyncOutcome.NeedsReconnect
         val me = prefs.deviceId()
         val clock = HybridClock(prefs.clock())
+        indexChoices()
 
         // Before this device's first sync touches anything, keep a copy.
         if (!prefs.firstBackupDone()) {
@@ -264,6 +265,7 @@ class SyncEngine @Inject constructor(
             }
             if (metas.isNotEmpty()) syncDao.putMeta(metas)
             if (dirty.isNotEmpty()) syncDao.markDirty(dirty.map { SyncDirtyEntity(it) })
+            noteChoices(metas)
         }
     }
 
@@ -324,6 +326,7 @@ class SyncEngine @Inject constructor(
             if (dirty.isNotEmpty()) syncDao.markDirty(dirty.map { SyncDirtyEntity(it) })
             syncDao.clearInbox()
             syncDao.endApplying()
+            noteChoices(metas)
         }
         hooks.afterApply(followUps, now)
         return changes.size
@@ -361,6 +364,7 @@ class SyncEngine @Inject constructor(
             syncDao.putMeta(metas)
             syncDao.markDirty(metas.map { SyncDirtyEntity(it.shard) }.distinct())
             syncDao.endApplying()
+            noteChoices(metas)
         }
         hooks.afterApply(followUps, now)
     }
@@ -391,6 +395,21 @@ class SyncEngine @Inject constructor(
 
     private fun decodeOrNull(json: String): SyncRecord? = runCatching { SyncCodec.decodeString(json) }.getOrNull()
 
+    /** Keeps the "needs a choice" list (the pulsing saves) in step with records just written. */
+    private suspend fun noteChoices(written: Collection<SyncMetaEntity>) {
+        val items = written.filter { it.kind == KIND_ITEM }
+        if (items.isEmpty()) return
+        val (need, fine) = items.partition { decodeOrNull(it.recordJson)?.needsChoice == true }
+        prefs.updateNeedingChoice(add = need.map { it.syncId }, remove = fine.map { it.syncId })
+    }
+
+    /** Once, for copies synced before the list existed. */
+    private suspend fun indexChoices() {
+        if (prefs.needingChoiceIndexed()) return
+        noteChoices(syncDao.metaOfKind(KIND_ITEM))
+        prefs.markNeedingChoiceIndexed()
+    }
+
     /**
      * Settles a field edited on two devices by keeping the value shown now.
      * (Picking the other value is an ordinary edit of the save.) Written as
@@ -401,10 +420,12 @@ class SyncEngine @Inject constructor(
         if (r.alternatives(field).isEmpty()) return@withLock
         val clock = HybridClock(prefs.clock())
         val next = SyncWrite.field(r, field, r.value(field), Dot(prefs.deviceId(), clock.next()))
+        val row = SyncMetaEntity(KIND_ITEM, syncId, shardOf(syncId), SyncCodec.encodeString(next))
         db.withTransaction {
-            syncDao.putMeta(listOf(SyncMetaEntity(KIND_ITEM, syncId, shardOf(syncId), SyncCodec.encodeString(next))))
+            syncDao.putMeta(listOf(row))
             syncDao.markDirty(listOf(SyncDirtyEntity(shardOf(syncId))))
         }
+        noteChoices(listOf(row))
         prefs.saveClock(clock.current)
     }
 

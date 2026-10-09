@@ -29,6 +29,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -80,9 +81,34 @@ class DetailViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** Picks the other version: an ordinary edit, which every device then follows. */
-    fun useVersion(conflict: SyncConflict, value: String) = viewModelScope.launch {
-        val it = state.value.item ?: return@launch
+    init {
+        // A save waiting for a choice: sync now, so a choice already made on
+        // another device arrives (and the question goes) before anyone answers.
+        viewModelScope.launch {
+            if (conflicts.first { true }.isEmpty()) conflicts.first { it.isNotEmpty() }
+            SyncScheduler.now(appContext)
+        }
+    }
+
+    /**
+     * Still waiting for a choice on [field], after syncing first? A choice on
+     * any one device settles it everywhere, so this one never asks again.
+     */
+    private suspend fun stillUndecided(field: String): Boolean {
+        syncEngine.round()
+        val syncId = state.value.item?.syncId ?: return false
+        val row = syncDao.meta(SyncRecord.KIND_ITEM, syncId) ?: return false
+        val r = runCatching { SyncCodec.decodeString(row.recordJson) }.getOrNull() ?: return false
+        return r.alternatives(field).isNotEmpty()
+    }
+
+    /**
+     * Picks the other version: an ordinary edit, which every device then
+     * follows. Returns false (nothing changed) if another device chose first.
+     */
+    suspend fun useVersion(conflict: SyncConflict, value: String): Boolean {
+        if (!stillUndecided(conflict.field)) return false
+        val it = repo.getById(itemId) ?: return false
         val now = System.currentTimeMillis()
         repo.update(
             when (conflict.field) {
@@ -91,13 +117,16 @@ class DetailViewModel @Inject constructor(
                 else -> it.copy(notes = value, updatedAt = now)
             }
         )
+        return true
     }
 
-    /** Keeps what's shown and drops the other version everywhere. */
-    fun keepCurrent(conflict: SyncConflict) = viewModelScope.launch {
-        val syncId = state.value.item?.syncId ?: return@launch
+    /** Keeps what's shown and drops the other version everywhere; false if another device chose first. */
+    suspend fun keepCurrent(conflict: SyncConflict): Boolean {
+        if (!stillUndecided(conflict.field)) return false
+        val syncId = state.value.item?.syncId ?: return false
         syncEngine.keepShown(syncId, conflict.field)
         SyncScheduler.soon(appContext)
+        return true
     }
 
     /** Offline reading copy of this save's link, if one was made or attempted. */

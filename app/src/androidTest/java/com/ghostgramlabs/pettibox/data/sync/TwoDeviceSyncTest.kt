@@ -8,6 +8,7 @@ import com.ghostgramlabs.pettibox.data.local.AppDatabase
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.ItemTagCrossRef
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -149,6 +150,24 @@ class TwoDeviceSyncTest {
         assertTrue(meta.hasConflict)
         val all = (meta.alternatives(SyncRecord.F_TITLE).map { it.value } + meta.value(SyncRecord.F_TITLE)).toSet()
         assertEquals(setOf("A's title", "B's title"), all)
+    }
+
+    @Test fun a_choice_made_on_one_phone_is_not_asked_on_the_other() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        a.db.saveDao().update(a.byUrl("https://x.example")!!.copy(title = "A's title"))
+        Thread.sleep(5)
+        b.db.saveDao().update(b.byUrl("https://x.example")!!.copy(title = "B's title"))
+        syncBoth()
+        val id = a.byUrl("https://x.example")!!.syncId
+        assertTrue(id in a.prefs.needingChoice.first())
+        assertTrue(id in b.prefs.needingChoice.first())
+
+        a.engine.keepShown(id, SyncRecord.F_TITLE)
+        syncBoth()
+        assertTrue(a.prefs.needingChoice.first().isEmpty())
+        assertTrue(b.prefs.needingChoice.first().isEmpty())
+        assertEquals(a.byUrl("https://x.example")!!.title, b.byUrl("https://x.example")!!.title)
     }
 
     @Test fun a_delete_moves_to_recently_deleted_on_the_other_phone() = runBlocking {

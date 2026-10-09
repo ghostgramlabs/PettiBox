@@ -15,7 +15,7 @@ test('settings and sign-out wait for sync; wiping cannot be undone by a pending 
       async clear() { for (const k of Object.keys(data)) delete data[k]; },
     } },
     alarms: { async clear(k) { alarms.delete(k); }, async create(k, v) { alarms.set(k, v); }, onAlarm: event() },
-    action: { async setBadgeText() {}, async setBadgeBackgroundColor() {} },
+    action: { async setBadgeText() {}, async setBadgeBackgroundColor() {}, async setTitle() {} },
     runtime: { onInstalled: event(), onStartup: event(), onMessage: { addListener(fn) { receive = fn; } } },
     contextMenus: { create() {}, onClicked: event() },
     commands: { onCommand: event() },

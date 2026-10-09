@@ -58,6 +58,7 @@ async function signInUI(sendMessage) {
     replaceChildren(...kids) { this.children = kids; },
     addEventListener(type, fn) { this.listeners[type] = fn; },
     focus() {},
+    prepend(...kids) { this.children.unshift(...kids); },
   });
   const html = await readFile(new URL('../popup.html', import.meta.url), 'utf8');
   for (const [, id] of html.matchAll(/id="([^"]+)"/g)) elements.set(id, make());
@@ -120,4 +121,27 @@ test('the editor sends only the fields that were changed', async () => {
   const update = sent.find((m) => m.type === 'update');
   assert.equal(JSON.stringify(update.changes), JSON.stringify({ notes: 'new note' }));
   assert.equal('colName' in update, false);
+});
+
+test('a choice already made on another device is not asked again here', async () => {
+  const sent = [];
+  const settled = { id: 's1', title: 'Picked elsewhere', url: 'https://e.com', notes: null, fav: false, tags: [], cat: null, files: [], conflicts: [] };
+  const elements = await signInUI(async (msg) => {
+    sent.push(msg.type);
+    if (msg.type === 'sync') return { result: { ok: true } };
+    if (msg.type === 'library') return { result: { items: [settled], collections: [] } };
+    if (msg.type === 'state') return { result: { signedIn: true } };
+    return { result: null };
+  });
+  const conflicted = { ...settled, title: 'Mine', conflicts: [{ field: 'title', shown: 'Mine', others: ['Theirs'] }] };
+  await elements.__run(`openEditor(${JSON.stringify(conflicted)})`);
+  await new Promise((r) => setImmediate(r));
+  await new Promise((r) => setImmediate(r));
+  const box = elements.get('conflicts');
+  const text = JSON.stringify(box.children.map((c) => c.textContent ?? ''));
+  assert.match(text, /Already chosen on another device/);
+  // Pressing a stale "Use this" does nothing either.
+  await elements.__run(`choose('s1', 'title', 'Theirs')`);
+  assert.equal(sent.includes('update'), false);
+  assert.equal(sent.includes('keepShown'), false);
 });

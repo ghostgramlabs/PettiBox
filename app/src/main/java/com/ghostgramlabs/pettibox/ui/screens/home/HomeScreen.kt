@@ -124,6 +124,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val needingChoice by viewModel.needingChoice.collectAsStateWithLifecycle()
     val rateCardAllowed by viewModel.rateCardAllowed.collectAsStateWithLifecycle(initialValue = false)
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -527,6 +528,14 @@ fun HomeScreen(
             item(span = StaggeredGridItemSpan.FullLine) {
                 Column {
                     Greeting()
+                    if (needingChoice.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        NeedsChoiceBar(
+                            count = needingChoice.size,
+                            onClick = { onOpenItem(needingChoice.first().id) },
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                    }
                     if (state.isIndexingText) {
                         Spacer(Modifier.height(10.dp))
                         IndexingStatusChip(modifier = Modifier.padding(horizontal = 20.dp))
@@ -1496,4 +1505,38 @@ private fun readClipboardText(ctx: Context): String? {
     return runCatching {
         cm.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(ctx)?.toString()
     }.getOrNull()
+}
+
+/**
+ * "2 saves were edited on 2 devices": opens the first; picking a version on
+ * any one device settles it everywhere, and the bar goes once none are left.
+ */
+@Composable
+private fun NeedsChoiceBar(count: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(com.ghostgramlabs.pettibox.ui.components.NeedsChoiceAmber.copy(alpha = 0.14f))
+            .border(1.dp, com.ghostgramlabs.pettibox.ui.components.NeedsChoiceAmber, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    ) {
+        com.ghostgramlabs.pettibox.ui.components.NeedsChoiceDot()
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                if (count == 1) "1 save was edited on 2 devices" else "$count saves were edited on 2 devices",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                "Pick which version to keep. Choosing on any one device is enough.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Text("Choose", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.primary)
+    }
 }

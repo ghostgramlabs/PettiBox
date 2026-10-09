@@ -214,9 +214,16 @@ async function move(catId) {
 function render() {
   const words = $('search').value.toLowerCase().split(/\s+/).filter(Boolean);
   let items = library.items;
+  // The bar at the top: saves edited on two devices, waiting for a choice.
+  const waiting = library.items.filter((i) => i.conflicts.length > 0).length;
+  $('attention').hidden = waiting === 0 || filter === 'trash';
+  $('attention-text').textContent = filter === 'choose'
+    ? 'Showing saves that need your choice · Show all'
+    : `${waiting} save${waiting > 1 ? 's' : ''} edited on 2 devices need${waiting > 1 ? '' : 's'} your choice`;
+  if (filter === 'choose') items = items.filter((i) => i.conflicts.length > 0);
   // Like the phone: archived saves only show under Archive.
   if (filter === 'arch') items = items.filter((i) => i.arch);
-  else if (filter !== 'trash') items = items.filter((i) => !i.arch);
+  else if (filter !== 'trash' && filter !== 'choose') items = items.filter((i) => !i.arch);
   if (filter === 'fav') items = items.filter((i) => i.fav);
   if (words.length) {
     items = items.filter((i) => {
@@ -244,7 +251,7 @@ function row(item) {
   const main = el('div', { className: 'main' },
     el('div', { className: 'title', textContent: (item.fav ? '♥ ' : '') + item.title }),
     el('div', { className: 'meta', textContent: meta }));
-  if (item.conflicts.length) main.append(el('div', { className: 'flag', textContent: 'Edited on 2 devices: tap Edit to pick' }));
+  if (item.conflicts.length) main.append(el('div', { className: 'flag', textContent: 'Edited on 2 devices: tap Edit to pick one' }));
   main.addEventListener('click', () => {
     if (item.url) chrome.tabs.create({ url: item.url });
     else if (item.files.length) openFile(item.files[0], item.title);
@@ -253,7 +260,12 @@ function row(item) {
   const btn = filter === 'trash'
     ? chip('Restore', async () => { await ask('restore', { id: item.id }); await loadLibrary(); })
     : chip('Edit', () => openEditor(item));
-  return el('li', {}, thumbFor(item), main, btn);
+  const li = el('li', {}, thumbFor(item), main, btn);
+  if (item.conflicts.length) {
+    li.classList.add('needs-choice');
+    li.prepend(el('span', { className: 'pulse', title: 'Edited on 2 devices', ariaLabel: 'Needs your choice' }));
+  }
+  return li;
 }
 
 // ── Editor ───────────────────────────────────────────────────────────────
@@ -269,16 +281,63 @@ function openEditor(item) {
   $('edit-files').replaceChildren(...item.files.map((f, i) =>
     chip(`${TYPE_ICON[f.kind] ?? '📎'} Open ${f.kind === 'PDF' ? 'PDF' : f.kind === 'IMAGE' ? 'photo' : 'file'}${item.files.length > 1 ? ` ${i + 1}` : ''}`,
       () => openFile(f, item.title))));
-  $('conflicts').replaceChildren(...item.conflicts.map((c) => {
-    const label = { title: 'Title', notes: 'Note', url: 'Link' }[c.field] ?? c.field;
-    return el('div', { className: 'conflict' },
-      el('b', { textContent: `${label} edited on 2 devices` }),
-      version('Shown now', c.shown, 'Keep', async () => { await ask('keepShown', { id: item.id, field: c.field }); await done(); }),
-      ...c.others.map((o) => version('Other', o, 'Use this', async () => { await ask('update', { id: item.id, changes: { [c.field]: o } }); await done(); })));
-  }));
+  showConflicts(item);
+  if (item.conflicts.length) recheckConflicts(item.id);
   editedFrom = editorValues();
   $('sheet').hidden = false;
   $('edit-title').focus();
+}
+
+/**
+ * The "edited on 2 devices" choices. A choice made on any one device settles
+ * it everywhere, so before asking (and again before applying) this browser
+ * syncs: if another device already chose, nothing more is asked.
+ */
+function showConflicts(item, note = '') {
+  const parts = item.conflicts.map((c) => {
+    const label = { title: 'Title', notes: 'Note', url: 'Link' }[c.field] ?? c.field;
+    return el('div', { className: 'conflict' },
+      el('b', { textContent: `${label} edited on 2 devices` }),
+      version('Shown now', c.shown, 'Keep', () => choose(item.id, c.field, null)),
+      ...c.others.map((o) => version('Other', o, 'Use this', () => choose(item.id, c.field, o))));
+  });
+  if (note) parts.unshift(el('div', { className: 'conflict settled', textContent: note }));
+  $('conflicts').replaceChildren(...parts);
+}
+
+/** Syncs, then returns the save as it is now (or null). */
+async function fresh(id) {
+  await ask('sync').catch(() => null);
+  await loadLibrary();
+  return library.items.find((i) => i.id === id) ?? null;
+}
+
+async function recheckConflicts(id) {
+  const before = editing;
+  $('conflicts').prepend(el('div', { className: 'conflict settled', textContent: 'Checking whether another device already chose…' }));
+  const now = await fresh(id);
+  if (editing !== before || !now) return; // editor closed or switched meanwhile
+  if (now.conflicts.length === 0) {
+    // Untouched form: show the chosen values. Otherwise keep what's typed.
+    const untouched = JSON.stringify(editorValues()) === JSON.stringify(editedFrom);
+    if (untouched) openEditor(now);
+    showConflicts(now, 'Already chosen on another device. Nothing to pick here.');
+  } else {
+    showConflicts(now);
+  }
+}
+
+/** Keep the shown value ([pick] null) or use [pick], unless it was settled meanwhile. */
+async function choose(id, field, pick) {
+  const now = await fresh(id);
+  const still = now?.conflicts.find((c) => c.field === field);
+  if (!still) {
+    if (now) showConflicts(now, 'Already chosen on another device. Nothing to pick here.');
+    return;
+  }
+  if (pick === null) await ask('keepShown', { id, field });
+  else await ask('update', { id, changes: { [field]: pick } });
+  await done();
 }
 
 /** What the editor's fields say now. */
@@ -373,6 +432,13 @@ $('saved-edit').addEventListener('click', () => saved && openEditor(saved));
 $('restore-btn').addEventListener('click', guard(async () => { await ask('restore', { id: saved.id }); await done(); }));
 
 $('search').addEventListener('input', () => { shown = PAGE; render(); });
+// The attention bar shows just the saves that need a choice, and back.
+$('attention').addEventListener('click', guard(async () => {
+  filter = filter === 'choose' ? 'all' : 'choose';
+  document.querySelectorAll('.filters .chip').forEach((x) => x.classList.toggle('on', x.dataset.filter === filter));
+  shown = PAGE;
+  render();
+}));
 for (const c of document.querySelectorAll('.filters .chip')) {
   c.addEventListener('click', guard(async () => {
     document.querySelectorAll('.filters .chip').forEach((x) => x.classList.toggle('on', x === c));

@@ -118,6 +118,13 @@ data class SyncRecord(
     /** Newest write of any kind; drives the hybrid clock. */
     val maxTs: Long get() = vv.values.maxOrNull() ?: 0L
 
+    /**
+     * A save whose title, note or link was edited on two devices without
+     * either seeing the other: someone (on any one device) has to pick.
+     */
+    val needsChoice: Boolean
+        get() = kind == KIND_ITEM && !isGone && CHOICE_FIELDS.any { alternatives(it).isNotEmpty() }
+
     /** True when some field has concurrent values that differ (shown as "Edited on 2 devices"). */
     val hasConflict: Boolean get() = fields.keys.any { alternatives(it).isNotEmpty() }
 
@@ -155,6 +162,9 @@ data class SyncRecord(
         const val F_PARENT = "parent"
         const val F_USER = "user"
         const val F_LOCKED = "locked"
+
+        /** The fields a person is asked to pick between (the extension asks about the same ones). */
+        val CHOICE_FIELDS = listOf(F_TITLE, F_NOTES, F_URL)
 
         /** Written by a phone on its own, so they never undo a delete. */
         val DERIVED_FIELDS = setOf(F_OCR, F_META, F_OPENED, F_THUMB)

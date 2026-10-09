@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,7 @@ import com.ghostgramlabs.pettibox.data.preferences.ThemeMode
 import com.ghostgramlabs.pettibox.data.preferences.ThemePreferences
 import com.ghostgramlabs.pettibox.data.sync.SyncPreferences
 import com.ghostgramlabs.pettibox.data.sync.SyncScheduler
+import com.ghostgramlabs.pettibox.ui.components.LocalNeedsChoice
 import com.ghostgramlabs.pettibox.ui.nav.AppLaunch
 import com.ghostgramlabs.pettibox.ui.lock.AppLockGate
 import com.ghostgramlabs.pettibox.ui.nav.PettiBoxNavGraph
@@ -77,7 +79,10 @@ class MainActivity : FragmentActivity() {
                     color = androidx.compose.ui.graphics.Color.Transparent,
                     contentColor = MaterialTheme.colorScheme.onBackground
                 ) {
+                    // Saves edited on two devices pulse wherever they're shown.
+                    val needsChoice by syncPreferences.needingChoice.collectAsStateWithLifecycle(initialValue = emptySet())
                     AppLockGate(activity = this@MainActivity, enabled = lockEnabled) {
+                    CompositionLocalProvider(LocalNeedsChoice provides needsChoice) {
                     PettiBoxNavGraph(
                         themeMode = themeMode,
                         onThemeModeChange = { mode ->
@@ -91,6 +96,7 @@ class MainActivity : FragmentActivity() {
                             pendingLaunch = null
                         }
                     )
+                    }
                     }
                 }
             }

@@ -110,7 +110,9 @@ export class SyncEngine {
     if (!m.deviceId) { m.deviceId = randomHex(8); changed = true; }
     if (!m.deviceName) { m.deviceName = 'Chrome'; changed = true; }
     m.clock ??= 0;
-    m.interval ??= 'HOURS_3';
+    // A computer isn't short of battery: check every 15 minutes, so a choice
+    // made on a phone (or one waiting here) shows up soon.
+    m.interval ??= 'MINUTES_15';
     m.seenMd5 ??= {};
     m.devices ??= {};
     m.dirty ??= [];
@@ -256,6 +258,11 @@ export class SyncEngine {
         .map((f) => ({ field: f, shown: value(r, f), others: alternatives(r, f).map((h) => h.value) }))
         .filter((c) => c.others.length > 0),
     };
+  }
+
+  /** Saves edited on two devices that are waiting for someone to pick a version (any one device will do). */
+  async needingChoice() {
+    return (await this.library()).items.filter((i) => i.conflicts.length > 0).length;
   }
 
   /** The save holding this link, as the popup shows it (null if none, or it's in a locked collection). */

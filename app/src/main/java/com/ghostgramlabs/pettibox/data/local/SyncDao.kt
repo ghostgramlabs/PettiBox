@@ -100,6 +100,10 @@ interface SyncDao {
     @Query("SELECT * FROM save_items WHERE sync_id = :syncId LIMIT 1")
     suspend fun itemBySyncId(syncId: String): SaveItemEntity?
 
+    /** Live saves with these sync ids (the ones waiting for a choice), newest first. */
+    @Query("SELECT * FROM save_items WHERE sync_id IN (:ids) AND is_pending_delete = 0 ORDER BY updated_at DESC")
+    fun observeBySyncIds(ids: List<String>): Flow<List<SaveItemEntity>>
+
     @Query("SELECT sync_id FROM save_items WHERE id = :id")
     suspend fun syncIdOf(id: Long): String?
 

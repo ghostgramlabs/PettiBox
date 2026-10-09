@@ -546,10 +546,15 @@ fun DetailScreen(
             Column(Modifier.padding(horizontal = 20.dp)) {
                 // Edited on two devices at once: both versions were kept.
                 conflicts.forEach { conflict ->
+                    val settled: (Boolean) -> Unit = { changed ->
+                        if (!changed) scope.launch {
+                            snackbarHostState.showSnackbar("Already chosen on another device. Nothing to pick here.")
+                        }
+                    }
                     ConflictCard(
                         conflict = conflict,
-                        onUse = { value -> viewModel.useVersion(conflict, value) },
-                        onKeep = { viewModel.keepCurrent(conflict) }
+                        onUse = { value -> scope.launch { settled(viewModel.useVersion(conflict, value)) } },
+                        onKeep = { scope.launch { settled(viewModel.keepCurrent(conflict)) } }
                     )
                     Spacer(Modifier.height(12.dp))
                 }
