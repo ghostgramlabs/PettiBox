@@ -5,6 +5,9 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Chrome extension: a save with several photos, PDFs or files now opens as a gallery
+  (arrows, ← / → keys and a strip of thumbnails) instead of showing only the first file,
+  and its card shows how many files it has.
 - A save edited on two devices at once now pulses amber in the app and the Chrome extension
   (with a count on the extension's toolbar icon) until someone picks a version. Choosing on
   any one device is enough: the others stop asking after their next sync.

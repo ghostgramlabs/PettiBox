@@ -82,11 +82,16 @@ function thumbFor(item) {
     box.dataset.max = pic.max;
     lazy.observe(box);
   }
+  if (item.files.length > 1) {
+    const n = el('span', { className: 'count', textContent: String(item.files.length), title: `${item.files.length} files` });
+    return el('div', { className: 'thumb-wrap' }, box, n);
+  }
   return box;
 }
 
-function openFile(file, title) {
-  const q = new URLSearchParams({ sha: file.sha, kind: file.kind, title: title ?? '' });
+/** Opens a save's files in the viewer, at file [at]; it pages through all of them. */
+function openFiles(item, at = 0) {
+  const q = new URLSearchParams({ f: item.files.map((f) => `${f.sha}:${f.kind}`).join(','), i: String(at), title: item.title ?? '' });
   chrome.tabs.create({ url: chrome.runtime.getURL(`viewer.html?${q}`) });
 }
 
@@ -254,7 +259,7 @@ function row(item) {
   if (item.conflicts.length) main.append(el('div', { className: 'flag', textContent: 'Edited on 2 devices: tap Edit to pick one' }));
   main.addEventListener('click', () => {
     if (item.url) chrome.tabs.create({ url: item.url });
-    else if (item.files.length) openFile(item.files[0], item.title);
+    else if (item.files.length) openFiles(item);
     else openEditor(item);
   });
   const btn = filter === 'trash'
@@ -280,7 +285,7 @@ function openEditor(item) {
   $('edit-fav').checked = item.fav;
   $('edit-files').replaceChildren(...item.files.map((f, i) =>
     chip(`${TYPE_ICON[f.kind] ?? '📎'} Open ${f.kind === 'PDF' ? 'PDF' : f.kind === 'IMAGE' ? 'photo' : 'file'}${item.files.length > 1 ? ` ${i + 1}` : ''}`,
-      () => openFile(f, item.title))));
+      () => openFiles(item, i))));
   showConflicts(item);
   if (item.conflicts.length) recheckConflicts(item.id);
   editedFrom = editorValues();

@@ -253,7 +253,8 @@ export class SyncEngine {
       // Pictures and files live in Drive by content hash; the popup fetches them on demand.
       thumb: value(r, F.THUMB),
       main,
-      files: main ? [{ sha: main, kind: value(r, F.TYPE) ?? 'FILE' }, ...files] : files,
+      // A save with several files lists them all; its main file is usually the first of them.
+      files: main && !files.some((f) => f.sha === main) ? [{ sha: main, kind: value(r, F.TYPE) ?? 'FILE' }, ...files] : files,
       conflicts: [F.TITLE, F.NOTES, F.URL]
         .map((f) => ({ field: f, shown: value(r, f), others: alternatives(r, f).map((h) => h.value) }))
         .filter((c) => c.others.length > 0),
