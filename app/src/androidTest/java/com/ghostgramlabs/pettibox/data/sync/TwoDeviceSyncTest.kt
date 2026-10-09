@@ -250,6 +250,30 @@ class TwoDeviceSyncTest {
         assertTrue(drive.files.isNotEmpty())
     }
 
+    @Test fun the_same_link_saved_on_two_phones_before_syncing_becomes_one_save() = runBlocking {
+        a.turnOn(); b.turnOn(); syncBoth()
+        a.db.saveDao().insert(link("x", updated = 1_000L).copy(notes = "from A"))
+        b.db.saveDao().insert(link("x", url = "https://X.example", updated = 2_000L).copy(notes = "from B"))
+        repeat(2) { syncBoth() }
+        for (p in listOf(a, b)) {
+            assertEquals(1, p.live().size)
+            assertEquals("from A\n\nfrom B", p.live().single().notes)
+        }
+        // The newer copy waits in Recently deleted on the phone that made it
+        // (A never had it): nothing is lost.
+        assertEquals(1, b.all().count { it.isPendingDelete })
+        assertEquals(a.live().single().syncId, b.live().single().syncId)
+    }
+
+    @Test fun two_saves_of_a_link_on_one_phone_are_left_alone() = runBlocking {
+        a.turnOn(); b.turnOn(); syncBoth()
+        a.db.saveDao().insert(link("x", updated = 1_000L))
+        a.db.saveDao().insert(link("x", updated = 2_000L))
+        repeat(2) { syncBoth() }
+        assertEquals(2, a.live().size)
+        assertEquals(2, b.live().size)
+    }
+
     @Test fun turning_sync_off_stops_sending() = runBlocking {
         a.db.saveDao().insert(link("x"))
         a.turnOn(); b.turnOn(); syncBoth()

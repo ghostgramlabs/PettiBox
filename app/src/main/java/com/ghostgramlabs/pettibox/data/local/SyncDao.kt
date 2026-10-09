@@ -109,6 +109,10 @@ interface SyncDao {
     @Query("SELECT sync_id FROM save_items")
     suspend fun allItemSyncIds(): List<String>
 
+    /** Every save with a link (Recently deleted included): just enough to spot the same link twice. */
+    @Query("SELECT sync_id AS syncId, url FROM save_items WHERE url IS NOT NULL AND url != ''")
+    suspend fun linkIndex(): List<SyncLink>
+
     /** Saves this device has never synced (no merged copy yet): first-sync match candidates. */
     @Query("SELECT * FROM save_items WHERE sync_id NOT IN (SELECT sync_id FROM sync_meta WHERE kind = 'item')")
     suspend fun unsyncedItems(): List<SaveItemEntity>

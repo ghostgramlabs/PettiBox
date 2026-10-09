@@ -176,3 +176,20 @@ test('synced data deleted from Drive stops this browser, keeps its library, and 
   assert.equal((await a.round()).ok, true);
   assert.ok(drive.files.size > 0);
 });
+
+test('a link saved in Chrome and on another device before syncing ends up as one save', async () => {
+  const drive = fakeDrive();
+  const a = browser(drive);
+  const b = browser(drive);
+  await a.saveLink({ url: 'https://example.com/x', title: 'X', notes: 'from A', tags: ['Red'] });
+  await new Promise((r) => setTimeout(r, 5)); // B's save is the newer one
+  await b.saveLink({ url: 'https://EXAMPLE.com/x', title: 'X', notes: 'from B', tags: ['Blue'] });
+  for (let i = 0; i < 3; i++) { await a.round(); await b.round(); }
+  for (const e of [a, b]) {
+    const lib = await e.library();
+    assert.equal(lib.items.length, 1);
+    assert.equal(lib.items[0].notes, 'from A\n\nfrom B');
+    assert.deepEqual(lib.items[0].tags.sort(), ['Blue', 'Red']);
+    assert.equal((await e.library({ trash: true })).items.length, 0); // removed for good in the browser's copy
+  }
+});

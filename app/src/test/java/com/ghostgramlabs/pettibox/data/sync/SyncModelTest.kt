@@ -150,6 +150,63 @@ class SyncModelTest {
         assertFalse(merge(gone, restored).isGone)
     }
 
+    // ── The same link saved on two devices ───────────────────────────────
+
+    private fun link(id: String, dev: String, ts: Long, url: String, extra: Map<String, Any?> = emptyMap(), tags: Map<String, String> = emptyMap()) =
+        SyncDiff.apply(
+            null,
+            LocalRecord(
+                KIND_ITEM, id, ts,
+                mapOf(F_TITLE to "T $id", F_URL to url, F_NOTES to null, F_FAV to false, F_TRASH to null, SyncRecord.F_TYPE to "LINK") + extra,
+                tags
+            ),
+            Dot(dev, ts)
+        )!!
+
+    @Test fun `the same link saved on two devices folds into the older save`() {
+        val phone = link("aaa", "P", 100, "https://example.com/x", mapOf(F_NOTES to "from phone", SyncRecord.F_CAT to "recipes"), mapOf("bread" to "Bread"))
+        val chrome = link("bbb", "C", 200, "https://EXAMPLE.com/x", mapOf(F_NOTES to "from chrome", F_FAV to true), mapOf("later" to "Later"))
+        val plan = SyncDedupe.plan(listOf(chrome, phone)) { com.ghostgramlabs.pettibox.data.util.TextUtils.urlDedupeKey(it) }
+        assertEquals(1, plan.size)
+        val (keep, others) = plan.single()
+        assertEquals("aaa", keep.id)
+        val (kept, removed) = SyncDedupe.fold(keep, others.single(), Dot("P", 300))
+        assertEquals("from phone\n\nfrom chrome", kept.value(F_NOTES))
+        assertEquals("recipes", kept.value(SyncRecord.F_CAT))
+        assertEquals(true, kept.value(F_FAV))
+        assertEquals(setOf("bread", "later"), kept.presentTags().keys)
+        assertEquals("T aaa", kept.value(F_TITLE)) // the kept title isn't replaced
+        assertTrue(removed.isGone)
+        assertFalse(kept.hasConflict)
+    }
+
+    @Test fun `two devices folding at once agree`() {
+        val a = link("aaa", "P", 100, "https://example.com/x", mapOf(F_NOTES to "one"))
+        val b = link("bbb", "C", 200, "https://example.com/x", mapOf(F_NOTES to "two"))
+        val (k1, r1) = SyncDedupe.fold(a, b, Dot("P", 300))
+        val (k2, r2) = SyncDedupe.fold(a, b, Dot("C", 301))
+        val k = merge(k1, k2)
+        assertEquals("one\n\ntwo", k.value(F_NOTES))
+        assertFalse(k.hasConflict) // same values from both: no "edited on 2 devices"
+        assertTrue(merge(r1, r2).isGone)
+    }
+
+    @Test fun `two saves of a link made on one device are left alone`() {
+        val a = link("aaa", "P", 100, "https://example.com/x")
+        val b = link("bbb", "P", 200, "https://example.com/x")
+        assertTrue(SyncDedupe.plan(listOf(a, b)) { it }.isEmpty())
+    }
+
+    @Test fun `a note already contained is not repeated, and a live copy brings a deleted one back`() {
+        val a = SyncDiff.apply(link("aaa", "P", 100, "https://e.com", mapOf(F_NOTES to "long note here")),
+            LocalRecord(KIND_ITEM, "aaa", 100, mapOf(F_TITLE to "T aaa", F_URL to "https://e.com", F_NOTES to "long note here",
+                F_FAV to false, F_TRASH to 150L, SyncRecord.F_TYPE to "LINK")), Dot("P", 150))!!
+        val b = link("bbb", "C", 200, "https://e.com", mapOf(F_NOTES to "note"))
+        val (kept, _) = SyncDedupe.fold(a, b, Dot("C", 300))
+        assertEquals("long note here", kept.value(F_NOTES))
+        assertFalse(kept.isTrashed)
+    }
+
     // ── Merge laws and the format ────────────────────────────────────────
 
     @Test fun `merge is commutative, associative and idempotent`() {

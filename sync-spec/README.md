@@ -150,6 +150,19 @@ present tags, present files) into its merged copy with one new dot:
    `trash = null`. Either way, a save that an unseen edit brought back stays back even if
    that edit is later undone.
 
+## The same link saved twice
+
+Two live saves with the same link (compared like `TextUtils.urlDedupeKey`: scheme and host
+in lower case) are folded together when they were created on **different** devices (origin =
+the device of the earliest `type` write); two saves of a link made on one device were made
+on purpose and stay. The save that stays is the oldest (`c`, then `id`). It takes what only
+the other has: notes are joined with a blank line unless one contains the other; a missing
+title, collection, reminder, file, picture or text is taken; favorite and pinned if either
+is; it leaves Archive or Recently deleted if the other is live; tags and files are added.
+The other save is then removed (`gone`), so on a phone that had it, it waits in Recently
+deleted. Every device computes the same result. `SyncDedupe` (Kotlin) and `fold`/`foldPlan`
+(extension) implement it; `vectors/cases.json` has golden `fold` cases.
+
 ## Applying a merged record on a device
 
 - Show the shown values; trashed → in Recently deleted with `trashedAt`.

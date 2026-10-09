@@ -66,6 +66,9 @@ data class SyncFileEntity(
     val sha256: String
 )
 
+/** A save's sync id and link (a query projection, not a table). */
+data class SyncLink(val syncId: String, val url: String)
+
 /** Shards of this device's Drive copy that changed and still need uploading. */
 @Entity(tableName = "sync_dirty")
 data class SyncDirtyEntity(@PrimaryKey val shard: Int)

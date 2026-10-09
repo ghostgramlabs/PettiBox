@@ -192,6 +192,9 @@ async function move(catId) {
 function render() {
   const words = $('search').value.toLowerCase().split(/\s+/).filter(Boolean);
   let items = library.items;
+  // Like the phone: archived saves only show under Archive.
+  if (filter === 'arch') items = items.filter((i) => i.arch);
+  else if (filter !== 'trash') items = items.filter((i) => !i.arch);
   if (filter === 'fav') items = items.filter((i) => i.fav);
   if (words.length) {
     items = items.filter((i) => {
@@ -203,6 +206,7 @@ function render() {
   const empty = $('empty');
   empty.hidden = items.length > 0;
   empty.textContent = filter === 'trash' ? 'Nothing in Recently deleted.'
+    : filter === 'arch' ? 'Nothing archived.'
     : words.length ? 'Nothing matched.' : 'Nothing here yet.';
 }
 

@@ -408,6 +408,92 @@ object SyncDiff {
     }
 }
 
+/**
+ * Two saves of the same link, made on different devices before they synced
+ * (or one saved in Chrome before its popup knew the phone had it). Every
+ * device folds them together the same way: the older save stays, takes in
+ * what only the other one has, and the other is removed (so it waits in
+ * Recently deleted on each phone; nothing is lost).
+ */
+object SyncDedupe {
+
+    /** The save that stays: oldest first, then smallest id. Same on every device. */
+    val keepOrder: Comparator<SyncRecord> = compareBy<SyncRecord>({ it.created }, { it.id })
+
+    /**
+     * Folds [other] into [keep] with writes stamped [dot]. Returns the new
+     * (keep, other). Only adds: nothing [keep] has is overwritten, except
+     * that it comes back from Recently deleted or Archive if [other] is live.
+     */
+    fun fold(keep: SyncRecord, other: SyncRecord, dot: Dot): Pair<SyncRecord, SyncRecord> {
+        var k = keep
+        fun str(r: SyncRecord, f: String) = (r.value(f) as? String)?.takeIf { it.isNotBlank() }
+        fun write(f: String, v: Any?) { k = SyncWrite.field(k, f, v, dot) }
+
+        val kn = str(keep, SyncRecord.F_NOTES)
+        val on = str(other, SyncRecord.F_NOTES)
+        val notes = when {
+            on == null -> kn
+            kn == null -> on
+            kn.contains(on) -> kn
+            on.contains(kn) -> on
+            else -> kn + "\n\n" + on
+        }
+        if (notes != kn) write(SyncRecord.F_NOTES, notes)
+        // A title that's just the link is a placeholder; a real one wins.
+        val kt = str(keep, SyncRecord.F_TITLE)
+        val ot = str(other, SyncRecord.F_TITLE)
+        if (ot != null && (kt == null || kt == keep.value(SyncRecord.F_URL)) && ot != kt) write(SyncRecord.F_TITLE, ot)
+        for (f in listOf(SyncRecord.F_CAT, SyncRecord.F_REMIND, SyncRecord.F_MAIN, SyncRecord.F_THUMB, SyncRecord.F_OCR, SyncRecord.F_META)) {
+            if (keep.value(f) == null && other.value(f) != null) write(f, other.value(f))
+        }
+        for (f in listOf(SyncRecord.F_FAV, SyncRecord.F_PIN)) {
+            if (keep.value(f) != true && other.value(f) == true) write(f, true)
+        }
+        if (keep.value(SyncRecord.F_ARCH) == true && other.value(SyncRecord.F_ARCH) != true) write(SyncRecord.F_ARCH, false)
+        if (keep.isTrashed && !other.isTrashed) k = SyncWrite.trash(k, null, dot)
+        val tags = keep.presentTags()
+        for ((key, name) in other.presentTags()) if (key !in tags) k = SyncWrite.addTag(k, key, name, dot)
+        val files = keep.presentFiles()
+        var next = (files.values.maxOfOrNull { it.order } ?: -1L) + 1
+        for ((sha, f) in other.presentFiles().entries.sortedWith(compareBy({ it.value.order }, { it.key }))) {
+            if (sha !in files) k = SyncWrite.addFile(k, sha, f.kind, next++, dot)
+        }
+        for (name in other.fields.keys.filter { it.startsWith(SyncRecord.FILE_OCR_PREFIX) }) {
+            if (keep.value(name) == null && other.value(name) != null) write(name, other.value(name))
+        }
+        return k to SyncWrite.gone(other, dot)
+    }
+
+    /**
+     * The device that created a save: the writer of its content type, which
+     * is written once at creation and practically never again.
+     */
+    fun origin(r: SyncRecord): String? = r.fields[SyncRecord.F_TYPE]?.minByOrNull { it.dot }?.dot?.dev
+
+    /**
+     * What to fold: for each link saved more than once, the save that stays
+     * and the others to fold into it. Only saves made on *different* devices
+     * are folded: those were made without knowing of each other. Two saves of
+     * a link made on one device were made on purpose (the phone warns, then
+     * allows it), and are left alone. Saves without a link, and ones already
+     * removed, are never folded. The same on every device.
+     */
+    fun plan(records: Collection<SyncRecord>, key: (String) -> String): List<Pair<SyncRecord, List<SyncRecord>>> =
+        records.asSequence()
+            .filter { it.kind == SyncRecord.KIND_ITEM && !it.isGone }
+            .mapNotNull { r -> (r.value(SyncRecord.F_URL) as? String)?.takeIf { it.isNotBlank() }?.let { key(it) to r } }
+            .groupBy({ it.first }, { it.second })
+            .values
+            .filter { it.size > 1 }
+            .mapNotNull { group ->
+                val sorted = group.sortedWith(keepOrder)
+                val keep = sorted.first()
+                val others = sorted.drop(1).filter { origin(it) != origin(keep) }
+                if (others.isEmpty()) null else keep to others
+            }
+}
+
 /** Which of a device's 16 Drive files a record lives in (FNV-1a of the id). */
 fun shardOf(id: String): Int {
     var h = 0x811c9dc5.toInt()

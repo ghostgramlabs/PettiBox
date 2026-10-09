@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
-  merge, diff, isGone, isTrashed, trashedAt, value, hasConflict, presentTags, presentFiles, shardOf,
+  merge, diff, fold, isGone, isTrashed, trashedAt, value, hasConflict, presentTags, presentFiles, shardOf,
 } from '../sync/model.js';
 import { decodeRecord, encodeRecord, decodeShard, encodeShard, SyncFormatError } from '../sync/codec.js';
 
@@ -49,6 +49,14 @@ test(`local diff reproduces all ${cases.diff.length} Kotlin cases`, () => {
     };
     const out = diff(meta, local, { dev: c.dot.d, ts: c.dot.t });
     assert.equal(canonical(out === null ? null : encodeRecord(out)), canonical(c.result), `diff case ${i}`);
+  });
+});
+
+test(`folding duplicates reproduces all ${cases.fold.length} Kotlin cases`, () => {
+  cases.fold.forEach((c, i) => {
+    const [kept, removed] = fold(decodeRecord(c.keep), decodeRecord(c.other), { dev: c.dot.d, ts: c.dot.t });
+    assert.equal(canonical(encodeRecord(kept)), canonical(c.kept), `fold case ${i} (kept)`);
+    assert.equal(canonical(encodeRecord(removed)), canonical(c.removed), `fold case ${i} (removed)`);
   });
 });
 

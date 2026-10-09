@@ -158,7 +158,9 @@ class SyncEngine @Inject constructor(
         if (devices.isNotEmpty()) prefs.rememberDevices(devices)
 
         val remote = remoteRecords()
-        adoptMatchingSaves(remote)
+        // A device's very first sync only: later duplicates are folded instead
+        // (foldDuplicates), the same way on every device and the extension.
+        if (prefs.status.first().lastSyncAt == 0L) adoptMatchingSaves(remote)
         commitLocal(me, clock)
 
         val decision = prefs.takeReviewDecision()
@@ -171,6 +173,7 @@ class SyncEngine @Inject constructor(
         }
         prefs.saveSeenMd5(newSeen)
         prefs.setPendingReview(0)
+        foldDuplicates(me, clock, now)
 
         // Edits made while the round ran are back in the outbox; send them too.
         commitLocal(me, clock)
@@ -324,6 +327,42 @@ class SyncEngine @Inject constructor(
         }
         hooks.afterApply(followUps, now)
         return changes.size
+    }
+
+    /**
+     * The same link saved on two devices before they synced: fold the newer
+     * save into the older (see [SyncDedupe]). The other one goes to Recently
+     * deleted here; every device does the same, so they agree.
+     */
+    private suspend fun foldDuplicates(me: String, clock: HybridClock, now: Long) {
+        val groups = syncDao.linkIndex().groupBy { TextUtils.urlDedupeKey(it.url) }.values.filter { it.size > 1 }
+        if (groups.isEmpty()) return
+        val candidates = groups.flatten().mapNotNull { link ->
+            syncDao.meta(KIND_ITEM, link.syncId)?.let { decodeOrNull(it.recordJson) }
+        }
+        val plan = SyncDedupe.plan(candidates, TextUtils::urlDedupeKey)
+        if (plan.isEmpty()) return
+        val followUps = ArrayList<LocalLibrary.Applied>()
+        db.withTransaction {
+            syncDao.beginApplying()
+            val metas = ArrayList<SyncMetaEntity>()
+            for ((keep0, others) in plan) {
+                val dot = Dot(me, clock.next())
+                var keep = keep0
+                for (other in others) {
+                    val (k, removed) = SyncDedupe.fold(keep, other, dot)
+                    keep = k
+                    metas += SyncMetaEntity(KIND_ITEM, removed.id, shardOf(removed.id), SyncCodec.encodeString(removed))
+                    followUps += library.apply(removed, now)
+                }
+                metas += SyncMetaEntity(KIND_ITEM, keep.id, shardOf(keep.id), SyncCodec.encodeString(keep))
+                followUps += library.apply(keep, now)
+            }
+            syncDao.putMeta(metas)
+            syncDao.markDirty(metas.map { SyncDirtyEntity(it.shard) }.distinct())
+            syncDao.endApplying()
+        }
+        hooks.afterApply(followUps, now)
     }
 
     /** Live here now, and the merged state would take it off the shelf. */

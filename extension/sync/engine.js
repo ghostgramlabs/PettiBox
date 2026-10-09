@@ -11,7 +11,7 @@
 
 import {
   F, KIND_COLLECTION, KIND_ITEM, HybridClock, merge, diff, value, trashedAt, isGone, isTrashed,
-  presentTags, presentFiles, maxTs, shardOf, alternatives, Write,
+  presentTags, presentFiles, maxTs, shardOf, alternatives, Write, fold, foldPlan,
 } from './model.js';
 import { encodeRecord, decodeRecord, encodeShard, decodeShard, SyncFormatError } from './codec.js';
 
@@ -439,6 +439,25 @@ export class SyncEngine {
       }
       if (changed.length) {
         const shards = await this.putRecords(changed);
+        m.dirty = [...new Set([...m.dirty, ...shards])];
+      }
+
+      // The same link saved here and on another device before they synced:
+      // fold the newer save into the older, as the phones do.
+      const plan = foldPlan([...(await this.records()).values()], urlKey);
+      if (plan.length) {
+        const folded = [];
+        for (const [keep0, others] of plan) {
+          const dot = { dev: m.deviceId, ts: clock.next() };
+          let keep = keep0;
+          for (const other of others) {
+            const [k, removed] = fold(keep, other, dot);
+            keep = k;
+            folded.push(removed);
+          }
+          folded.push(keep);
+        }
+        const shards = await this.putRecords(folded);
         m.dirty = [...new Set([...m.dirty, ...shards])];
       }
       m.seenMd5 = newSeen;

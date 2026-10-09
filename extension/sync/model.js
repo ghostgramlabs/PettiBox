@@ -314,6 +314,86 @@ function writeAll(base, local, dot) {
   return r;
 }
 
+// ── The same link saved on two devices (port of SyncDedupe) ──────────────
+
+/** The save that stays: oldest first, then smallest id. Same on every device. */
+export function keepOrder(a, b) {
+  if (a.created !== b.created) return a.created < b.created ? -1 : 1;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+/** The device that created a save: the writer of its content type. */
+export function origin(r) {
+  const heads = r.fields[F.TYPE] ?? [];
+  let first = null;
+  for (const h of heads) if (first === null || cmpDot(h.dot, first.dot) < 0) first = h;
+  return first ? first.dot.dev : null;
+}
+
+/** Folds [other] into [keep]; returns [keep', other'] (other' removed). Only adds. */
+export function fold(keep, other, dot) {
+  let k = keep;
+  const str = (r, f) => { const v = value(r, f); return typeof v === 'string' && v.trim() !== '' ? v : null; };
+  const write = (f, v) => { k = Write.field(k, f, v, dot); };
+
+  const kn = str(keep, F.NOTES);
+  const on = str(other, F.NOTES);
+  let notes;
+  if (on === null) notes = kn;
+  else if (kn === null) notes = on;
+  else if (kn.includes(on)) notes = kn;
+  else if (on.includes(kn)) notes = on;
+  else notes = kn + '\n\n' + on;
+  if (notes !== kn) write(F.NOTES, notes);
+  const kt = str(keep, F.TITLE);
+  const ot = str(other, F.TITLE);
+  if (ot !== null && (kt === null || kt === value(keep, F.URL)) && ot !== kt) write(F.TITLE, ot);
+  for (const f of [F.CAT, F.REMIND, F.MAIN, F.THUMB, F.OCR, F.META]) {
+    if (value(keep, f) == null && value(other, f) != null) write(f, value(other, f));
+  }
+  for (const f of [F.FAV, F.PIN]) {
+    if (value(keep, f) !== true && value(other, f) === true) write(f, true);
+  }
+  if (value(keep, F.ARCH) === true && value(other, F.ARCH) !== true) write(F.ARCH, false);
+  if (isTrashed(keep) && !isTrashed(other)) k = Write.trash(k, null, dot);
+  const tags = presentTags(keep);
+  for (const [key, name] of Object.entries(presentTags(other))) if (!(key in tags)) k = Write.addTag(k, key, name, dot);
+  const files = presentFiles(keep);
+  let next = Math.max(-1, ...Object.values(files).map((f) => f.order)) + 1;
+  const otherFiles = Object.entries(presentFiles(other))
+    .sort(([sa, a], [sb, b]) => (a.order - b.order) || (sa < sb ? -1 : sa > sb ? 1 : 0));
+  for (const [sha, f] of otherFiles) if (!(sha in files)) k = Write.addFile(k, sha, f.kind, next++, dot);
+  for (const name of Object.keys(other.fields).filter((n) => n.startsWith(FILE_OCR_PREFIX))) {
+    if (value(keep, name) == null && value(other, name) != null) write(name, value(other, name));
+  }
+  return [k, Write.gone(other, dot)];
+}
+
+/**
+ * For each link saved more than once on different devices: the save that
+ * stays and the others to fold in. Same-device duplicates are left alone.
+ */
+export function foldPlan(records, key) {
+  const groups = new Map();
+  for (const r of records) {
+    if (r.kind !== KIND_ITEM || isGone(r)) continue;
+    const url = value(r, F.URL);
+    if (typeof url !== 'string' || !url.trim()) continue;
+    const k = key(url);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  }
+  const plan = [];
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    group.sort(keepOrder);
+    const keep = group[0];
+    const others = group.slice(1).filter((r) => origin(r) !== origin(keep));
+    if (others.length) plan.push([keep, others]);
+  }
+  return plan;
+}
+
 /** Which of a device's 16 files a record lives in: FNV-1a over UTF-8, top 4 bits. */
 export function shardOf(id) {
   const bytes = new TextEncoder().encode(id);
