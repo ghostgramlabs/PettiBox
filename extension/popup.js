@@ -14,6 +14,10 @@ let filter = 'all';
 let tab = null;
 let saved = null; // the save holding this page, if any
 let editing = null;
+let editedFrom = null; // the editor's values when it opened
+let pageRender = 0;
+const PAGE = 200;
+let shown = PAGE; // how many results the list shows; "Show more" adds a page
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -90,13 +94,18 @@ function openFile(file, title) {
 
 async function showState() {
   const s = await ask('state');
-  $('signin').hidden = s.signedIn;
-  $('app').hidden = !s.signedIn;
-  $('account').textContent = s.account || '';
+  $('signin').hidden = s.signedIn && !s.needs;
+  $('app').hidden = false;
+  $('account').textContent = s.signedIn ? (s.account || 'Signed in') : 'Not signed in';
   const status = $('status');
   status.classList.toggle('err', !!s.lastError);
   status.textContent = s.lastError ? s.lastError : (s.waiting ? 'changes waiting · ' : '') + ago(s.lastSyncAt);
   status.title = status.textContent;
+  $('review').hidden = s.needs !== 'review';
+  $('review-text').textContent = `Another device wants to remove or archive ${s.pendingReview || 'several'} saves. Nothing has changed here yet.`;
+  // The review card says it all; don't repeat it as an error.
+  $('error').hidden = !s.lastError || s.needs === 'review';
+  $('error').textContent = s.lastError || '';
   return s;
 }
 
@@ -134,13 +143,15 @@ function recentCollections(n) {
 // ── The page you're on ───────────────────────────────────────────────────
 
 async function showPage() {
+  const renderId = ++pageRender;
   [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const url = tab?.url ?? '';
   if (!/^https?:/i.test(url)) { $('page').hidden = true; return; }
   $('page').hidden = false;
   $('page-url').textContent = host(url) + new URL(url).pathname.replace(/\/$/, '');
   $('page-url').title = url;
-  $('page-favicon').src = chrome.runtime.getURL(`/_favicon/?pageUrl=${encodeURIComponent(url)}&size=32`);
+  $('page-pic').replaceChildren(el('img', { id: 'page-favicon', alt: '',
+    src: chrome.runtime.getURL(`/_favicon/?pageUrl=${encodeURIComponent(url)}&size=32`) }));
   saved = await ask('savedPage', { url }).catch(() => null);
   if (saved) saved = normalize(saved);
   $('page-title').value = saved?.title ?? tab.title ?? url;
@@ -150,7 +161,7 @@ async function showPage() {
 
   if (saved) {
     const pic = pictureOf(saved);
-    if (pic) fileUrl(pic.sha, pic.max).then((src) => { if (src) $('page-pic').replaceChildren(el('img', { src, className: 'cover', alt: '' })); });
+    if (pic) fileUrl(pic.sha, pic.max).then((src) => { if (src && renderId === pageRender) $('page-pic').replaceChildren(el('img', { src, className: 'cover', alt: '' })); });
     const col = colOf(saved.cat);
     $('saved-line').textContent = `Saved ${col ? `to ${col.emoji} ${col.name}` : ''} · ${day(saved.created)}`;
     $('move-chips').replaceChildren(
@@ -167,11 +178,22 @@ async function showPage() {
 
 function chip(label, onClick, cls = '') {
   const b = el('button', { textContent: label, className: cls });
-  b.addEventListener('click', async () => {
+  b.addEventListener('click', guard(async () => {
     b.disabled = true;
     try { await onClick(); } finally { b.disabled = false; }
-  });
+  }));
   return b;
+}
+
+/** Wraps a handler so any failure is shown, never swallowed. */
+function guard(fn) {
+  return async (...args) => {
+    try {
+      await fn(...args);
+    } catch (e) {
+      showError(e);
+    }
+  };
 }
 
 async function save({ cat = null, colName = '', tags = [], notes = '' }) {
@@ -202,7 +224,12 @@ function render() {
       return words.every((w) => hay.includes(w));
     });
   }
-  $('results').replaceChildren(...items.slice(0, 200).map(row));
+  const rows = items.slice(0, shown).map(row);
+  if (items.length > shown) {
+    rows.push(el('li', { className: 'more' },
+      chip(`Show more (${items.length - shown} left)`, () => { shown += PAGE; render(); })));
+  }
+  $('results').replaceChildren(...rows);
   const empty = $('empty');
   empty.hidden = items.length > 0;
   empty.textContent = filter === 'trash' ? 'Nothing in Recently deleted.'
@@ -249,8 +276,21 @@ function openEditor(item) {
       version('Shown now', c.shown, 'Keep', async () => { await ask('keepShown', { id: item.id, field: c.field }); await done(); }),
       ...c.others.map((o) => version('Other', o, 'Use this', async () => { await ask('update', { id: item.id, changes: { [c.field]: o } }); await done(); })));
   }));
+  editedFrom = editorValues();
   $('sheet').hidden = false;
   $('edit-title').focus();
+}
+
+/** What the editor's fields say now. */
+function editorValues() {
+  return {
+    title: $('edit-title').value.trim() || 'Untitled',
+    url: $('edit-url').value.trim(),
+    notes: $('edit-note').value,
+    fav: $('edit-fav').checked,
+    tags: tagsOf($('edit-tags').value).join(','),
+    col: $('edit-col').value.trim(),
+  };
 }
 
 function version(label, text, action, onClick) {
@@ -271,86 +311,121 @@ async function done() {
 
 $('signin-btn').addEventListener('click', async () => {
   $('signin-btn').disabled = true;
+  $('signin-btn').textContent = 'Signing in…';
   try {
     const out = await ask('signIn');
-    if (!out?.ok) $('signin-btn').textContent = 'Sign-in was cancelled. Try again';
+    if (!out?.ok) throw new Error('Sign-in was cancelled. Please try again.');
     await start();
+  } catch (e) {
+    showError(e);
   } finally {
+    $('signin-btn').textContent = 'Sign in with Google';
     $('signin-btn').disabled = false;
   }
 });
 
-$('sync').addEventListener('click', async () => {
-  $('sync').classList.add('spin');
-  try { await ask('sync'); } finally { $('sync').classList.remove('spin'); }
-  await loadLibrary();
-  await showPage();
-  await showState();
-});
+function showError(e) {
+  $('error').hidden = false;
+  $('error').textContent = e?.message ?? String(e);
+  $('status').classList.add('err');
+  $('status').textContent = e?.message ?? String(e);
+  $('status').title = $('status').textContent;
+}
 
-$('page-title').addEventListener('keydown', async (e) => {
+async function runSync() {
+  $('sync').classList.add('spin');
+  $('sync').disabled = true;
+  $('status').classList.remove('err');
+  $('status').textContent = 'Syncing with Google Drive…';
+  $('error').hidden = true;
+  try {
+    await ask('sync');
+    await loadLibrary();
+    await showPage();
+    await showState();
+  } catch (e) {
+    showError(e);
+  } finally {
+    $('sync').classList.remove('spin');
+    $('sync').disabled = false;
+  }
+}
+
+$('sync').addEventListener('click', runSync);
+
+$('page-title').addEventListener('keydown', guard(async (e) => {
   if (e.key !== 'Enter') return;
   e.preventDefault();
   if (saved) { await ask('update', { id: saved.id, changes: { title: $('page-title').value.trim() || saved.title } }); await loadLibrary(); }
   else await save({});
-});
-$('page-title').addEventListener('blur', async () => {
+}));
+$('page-title').addEventListener('blur', guard(async () => {
   const t = $('page-title').value.trim();
   if (saved && t && t !== saved.title) { await ask('update', { id: saved.id, changes: { title: t } }); await loadLibrary(); }
-});
+}));
 
-$('save-btn').addEventListener('click', () => save({
+$('save-btn').addEventListener('click', guard(() => save({
   colName: $('save-col').value.trim(),
   tags: tagsOf($('save-tags').value),
   notes: $('save-note').value,
-}));
+})));
 $('saved-edit').addEventListener('click', () => saved && openEditor(saved));
-$('restore-btn').addEventListener('click', async () => { await ask('restore', { id: saved.id }); await done(); });
+$('restore-btn').addEventListener('click', guard(async () => { await ask('restore', { id: saved.id }); await done(); }));
 
-$('search').addEventListener('input', render);
+$('search').addEventListener('input', () => { shown = PAGE; render(); });
 for (const c of document.querySelectorAll('.filters .chip')) {
-  c.addEventListener('click', async () => {
+  c.addEventListener('click', guard(async () => {
     document.querySelectorAll('.filters .chip').forEach((x) => x.classList.toggle('on', x === c));
     filter = c.dataset.filter;
+    shown = PAGE;
     await loadLibrary();
-  });
+  }));
+}
+
+// "Another device wants to remove N saves": the choice goes to the worker.
+for (const [id, keep] of [['review-keep', true], ['review-apply', false]]) {
+  $(id).addEventListener('click', guard(async () => {
+    $('review').hidden = true;
+    await ask('review', { keep });
+    await loadLibrary();
+    await showPage();
+    await showState();
+  }));
 }
 
 $('edit-cancel').addEventListener('click', () => { $('sheet').hidden = true; editing = null; });
-$('edit-save').addEventListener('click', async () => {
+// Sends only what was changed in the editor, so a value that synced in from
+// another device while it was open isn't overwritten with the old one.
+$('edit-save').addEventListener('click', guard(async () => {
   if (!editing) return;
-  await ask('update', {
-    id: editing.id,
-    colName: $('edit-col').value.trim(),
-    changes: {
-      title: $('edit-title').value.trim() || 'Untitled',
-      url: $('edit-url').value.trim(),
-      notes: $('edit-note').value,
-      fav: $('edit-fav').checked,
-      tags: tagsOf($('edit-tags').value),
-    },
-  });
+  const now = editorValues();
+  const changes = {};
+  for (const f of ['title', 'url', 'notes', 'fav']) if (now[f] !== editedFrom[f]) changes[f] = now[f];
+  if (now.tags !== editedFrom.tags) changes.tags = tagsOf($('edit-tags').value);
+  const msg = { id: editing.id, changes };
+  if (now.col !== editedFrom.col) msg.colName = now.col;
+  if (Object.keys(changes).length || 'colName' in msg) await ask('update', msg);
   await done();
-});
-$('edit-delete').addEventListener('click', async () => {
+}));
+$('edit-delete').addEventListener('click', guard(async () => {
   if (!editing) return;
   await ask('trash', { id: editing.id });
   await done();
-});
+}));
 $('options').addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
 $('where').addEventListener('click', (e) => { e.preventDefault(); chrome.tabs.create({ url: chrome.runtime.getURL('options.html#where') }); });
 
 async function start() {
-  const s = await showState();
-  if (!s.signedIn) return;
-  await loadLibrary();
-  await showPage();
-  // Opening the popup syncs, so what's shown catches up within a moment.
-  $('sync').classList.add('spin');
-  ask('sync')
-    .then(async () => { await loadLibrary(); await showPage(); })
-    .catch(() => {})
-    .finally(async () => { $('sync').classList.remove('spin'); await showState(); });
+  try {
+    const s = await showState();
+    await loadLibrary();
+    await showPage();
+    if (!s.signedIn || s.needs) return;
+    // Opening the popup syncs, so what's shown catches up within a moment.
+    void runSync();
+  } catch (e) {
+    showError(e);
+  }
 }
 
 start();

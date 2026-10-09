@@ -193,3 +193,107 @@ test('a link saved in Chrome and on another device before syncing ends up as one
     assert.equal((await e.library({ trash: true })).items.length, 0); // removed for good in the browser's copy
   }
 });
+
+
+test('concurrent first-use requests keep one device identity', async () => {
+  const a = browser(fakeDrive());
+  const states = await Promise.all(Array.from({ length: 10 }, () => a.meta()));
+  assert.equal(new Set(states.map((m) => m.deviceId)).size, 1);
+});
+
+test('a worker interrupted after saving a record retains upload intent and clock', async () => {
+  const backing = memoryStore();
+  let saved = false;
+  const store = {
+    get: (keys) => backing.get(keys),
+    async set(items) {
+      if (saved) throw new Error('worker interrupted');
+      await backing.set(items);
+      if (Object.keys(items).some((k) => k.startsWith('shard:'))) saved = true;
+    },
+  };
+  const drive = fakeDrive();
+  const a = new SyncEngine(store, drive);
+  await assert.rejects(a.saveLink({ url: 'https://example.com/restart', title: 'Survives' }));
+  const restarted = new SyncEngine(backing, drive);
+  const m = await restarted.meta();
+  assert.ok(m.dirty.length > 0);
+  assert.ok(m.clock >= (await restarted.library()).items[0].updated);
+  assert.equal((await restarted.round()).ok, true);
+  const b = browser(drive);
+  await b.round();
+  assert.equal((await b.library()).items[0].title, 'Survives');
+});
+
+test('a retained library cannot sync into a different Google account', async () => {
+  const drive = fakeDrive();
+  const a = browser(drive);
+  await a.saveLink({ url: 'https://example.com/private', title: 'Private' });
+  await a.round();
+  const before = [...drive.files.values()].map((f) => f.json);
+  const open = drive.open.bind(drive);
+  drive.open = async () => ({ ...(await open()), accountEmail: async () => 'other@example.com' });
+  await a.restart();
+  const out = await a.round();
+  assert.equal(out.needs, 'account');
+  assert.deepEqual([...drive.files.values()].map((f) => f.json), before);
+  assert.equal((await a.library()).items.length, 1);
+});
+
+test('explicit sign-out blocks sync even if Chrome still supplies a token', async () => {
+  const a = new SyncEngine(memoryStore(), { open: async () => { throw new Error('must not open'); } });
+  const m = await a.meta();
+  m.signedOut = true;
+  await a.saveMeta(m);
+  assert.equal((await a.round()).needs, 'signin');
+});
+
+test('authentication failures while opening Drive ask for reconnect', async () => {
+  const a = new SyncEngine(memoryStore(), { open: async () => { throw { status: 401 }; } });
+  const result = await a.round();
+  assert.equal(result.needs, 'signin');
+  assert.equal(result.retry, false);
+});
+
+test('many removals from another device wait for the user; Keep mine puts them back everywhere', async () => {
+  const drive = fakeDrive();
+  const a = browser(drive);
+  const b = browser(drive);
+  const ids = [];
+  for (let i = 0; i < 30; i++) ids.push((await a.saveLink({ url: `https://example.com/${i}`, title: `S${i}` })).id);
+  await a.round(); await b.round();
+  for (const id of ids) await a.trash(id);
+  await a.round();
+  const held = await b.round();
+  assert.equal(held.needs, 'review');
+  assert.equal((await b.library()).items.length, 30); // nothing applied yet
+  const m = await b.meta();
+  m.reviewDecision = 'keep';
+  await b.saveMeta(m);
+  assert.equal((await b.round()).ok, true);
+  await a.round();
+  assert.equal((await b.library()).items.length, 30);
+  assert.equal((await a.library()).items.length, 30); // restored on the device that deleted too
+});
+
+test('a save removed for good elsewhere stays restorable in Recently deleted here', async () => {
+  const drive = fakeDrive();
+  const a = browser(drive);
+  const b = browser(drive);
+  const { id } = await a.saveLink({ url: 'https://example.com/a', title: 'A', notes: 'keep me' });
+  await a.round(); await b.round();
+  // A removes it for good (as a phone's 30-day expiry or "Delete for good" would).
+  await a.edit('item', id, () => null);
+  await a.round(); await b.round();
+  assert.equal((await b.library()).items.length, 0);
+  const bin = (await b.library({ trash: true })).items;
+  assert.equal(bin.length, 1);
+  await b.restore(id);
+  await b.round(); await a.round();
+  for (const e of [a, b]) {
+    const lib = (await e.library()).items;
+    assert.equal(lib.length, 1);
+    assert.equal(lib[0].notes, 'keep me');
+  }
+  assert.equal((await b.library({ trash: true })).items.length, 0);
+});

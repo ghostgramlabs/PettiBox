@@ -25,7 +25,8 @@ export async function getToken(interactive) {
   try {
     const result = await chrome.identity.getAuthToken({ interactive });
     return (typeof result === 'string' ? result : result?.token) || null;
-  } catch {
+  } catch (e) {
+    if (interactive) throw new Error(`Google sign-in failed: ${e?.message ?? e}`);
     return null;
   }
 }
@@ -38,12 +39,25 @@ export async function signOut() {
   await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`, { method: 'POST' }).catch(() => {});
 }
 
+/** No answer within this long counts as a network failure (bigger for file transfers). */
+const TIMEOUT_MS = 30_000;
+const TRANSFER_TIMEOUT_MS = 120_000;
+
 async function call(token, url, init = {}) {
+  const transfer = url.includes('alt=media') || url.startsWith(UPLOAD);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), transfer ? TRANSFER_TIMEOUT_MS : TIMEOUT_MS);
   let res;
   try {
-    res = await fetch(url, { ...init, headers: { ...(init.headers ?? {}), Authorization: `Bearer ${token}` } });
+    res = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: { ...(init.headers ?? {}), Authorization: `Bearer ${token}` },
+    });
   } catch (e) {
-    throw new DriveError(0, 'network error');
+    throw new DriveError(0, controller.signal.aborted ? 'Google Drive took too long to answer' : 'network error');
+  } finally {
+    clearTimeout(timer);
   }
   if (res.status === 401) {
     // A stale cached token: drop it so the next attempt gets a fresh one.

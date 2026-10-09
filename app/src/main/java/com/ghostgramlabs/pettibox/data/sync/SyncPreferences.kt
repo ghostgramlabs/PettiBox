@@ -31,7 +31,8 @@ enum class SyncInterval(val label: String, val minutes: Long) {
     HOURS_3("3 hours", 180),
     DAILY("Daily", 24 * 60),
     WEEKLY("Weekly", 7 * 24 * 60),
-    MANUAL("Manual only", 0);
+    // No background syncing; the app still syncs while open and after edits.
+    MANUAL("Only while in use", 0);
 }
 
 data class SyncStatus(

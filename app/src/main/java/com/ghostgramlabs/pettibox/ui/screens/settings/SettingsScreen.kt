@@ -1304,7 +1304,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Sync between your devices",
-                    body = "Turn on Sync between devices on each phone or tablet, signed in to the same Google account. Your library travels through your own Google Drive (a \"PettiBox\" folder). PettiBox syncs when you open it, about a minute after you change something, and on the schedule you pick (30 minutes to weekly, or only when you tap Sync now). Photos and files follow, on Wi-Fi by default. Reminders ring on every device that has the save.",
+                    body = "Turn on Sync between devices on each phone or tablet, signed in to the same Google account. Your library travels through your own Google Drive (a \"PettiBox\" folder). PettiBox syncs when you open it, about a minute after you change something, and in the background on the schedule you pick (15 minutes to weekly, or \"Only while in use\" for none). Photos and files follow, on Wi-Fi by default. Reminders ring on every device that has the save.",
                     icon = Icons.Rounded.Sync
                 )
                 HelpItem(

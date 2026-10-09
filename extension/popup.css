@@ -130,3 +130,8 @@ details summary { cursor: pointer; color: var(--accent); font-size: 13px; margin
 .where { text-align: center; margin: 6px 0 0; }
 .where a { color: var(--ink-3); text-decoration: none; }
 .where a:hover { color: var(--accent); }
+
+#error { background: var(--wash); color: var(--danger); border-radius: 10px; padding: 7px 10px; margin: 0 0 10px; font-size: 13px; }
+.review { border-color: var(--accent); }
+.review .actions button.primary { width: auto; }
+.results li.more { justify-content: center; border-top: 0; }

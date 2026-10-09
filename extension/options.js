@@ -12,7 +12,8 @@ function when(ts) {
 async function refresh() {
   const s = await ask('state');
   $('account').textContent = s.signedIn ? (s.account || 'Signed in') : 'Not signed in';
-  $('signin').hidden = s.signedIn;
+  $('signin').hidden = s.signedIn && !s.needs;
+  $('signin').textContent = s.signedIn ? 'Reconnect sync' : 'Sign in with Google';
   $('signout').hidden = !s.signedIn;
   $('last').textContent = `Last synced: ${when(s.lastSyncAt)}${s.waiting ? ' · changes waiting to upload' : ''}`;
   $('error').hidden = !s.lastError;
@@ -34,21 +35,50 @@ async function refresh() {
   }));
 }
 
-$('signin').addEventListener('click', async () => { await ask('signIn'); await refresh(); });
+$('signin').addEventListener('click', async () => {
+  $('signin').disabled = true;
+  $('signin').textContent = 'Signing in…';
+  try {
+    const out = await ask('signIn');
+    if (!out?.ok) throw new Error('Sign-in was cancelled. Please try again.');
+    await refresh();
+    $('last').textContent = 'Signed in · syncing with Google Drive…';
+    await ask('sync');
+    await refresh();
+  } catch (e) {
+    $('error').hidden = false;
+    $('error').textContent = e?.message ?? String(e);
+  } finally {
+    $('signin').disabled = false;
+    $('signin').textContent = 'Sign in with Google';
+  }
+});
+/** Wraps a handler so any failure is shown on the page, never swallowed. */
+function guard(fn) {
+  return async (...args) => {
+    try {
+      await fn(...args);
+    } catch (e) {
+      $('error').hidden = false;
+      $('error').textContent = e?.message ?? String(e);
+    }
+  };
+}
+
 $('signout').addEventListener('click', () => { $('signout-choice').hidden = false; });
-$('signout-keep').addEventListener('click', async () => { await ask('signOut', { wipe: false }); $('signout-choice').hidden = true; await refresh(); });
-$('signout-wipe').addEventListener('click', async () => { await ask('signOut', { wipe: true }); $('signout-choice').hidden = true; await refresh(); });
-$('sync').addEventListener('click', async () => {
+$('signout-keep').addEventListener('click', guard(async () => { await ask('signOut', { wipe: false }); $('signout-choice').hidden = true; await refresh(); }));
+$('signout-wipe').addEventListener('click', guard(async () => { await ask('signOut', { wipe: true }); $('signout-choice').hidden = true; await refresh(); }));
+$('sync').addEventListener('click', guard(async () => {
   $('sync').disabled = true;
   try { await ask('sync'); } finally { $('sync').disabled = false; }
   await refresh();
-});
-$('interval').addEventListener('change', async (e) => { await ask('setInterval', { interval: e.target.value }); });
-$('rename').addEventListener('click', async () => { await ask('setName', { name: $('name').value }); await refresh(); });
+}));
+$('interval').addEventListener('change', guard(async (e) => { await ask('setInterval', { interval: e.target.value }); }));
+$('rename').addEventListener('click', guard(async () => { await ask('setName', { name: $('name').value }); await refresh(); }));
 
 /** The library as a standard bookmarks file (the format every browser imports). */
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-$('download').addEventListener('click', async () => {
+$('download').addEventListener('click', guard(async () => {
   const { items, collections } = await ask('library', { trash: false });
   const byCol = new Map([[null, []], ...collections.map((c) => [c.id, []])]);
   for (const i of items) if (i.url) (byCol.get(i.cat) ?? byCol.get(null)).push(i);
@@ -70,6 +100,6 @@ $('download').addEventListener('click', async () => {
   });
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
-});
+}));
 
-refresh();
+guard(refresh)();

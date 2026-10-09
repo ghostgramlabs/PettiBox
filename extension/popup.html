@@ -12,6 +12,18 @@
     <span id="status" class="status" aria-live="polite"></span>
     <button id="sync" class="icon-btn" title="Sync now" aria-label="Sync now">⟳</button>
   </header>
+  <p id="error" role="alert" hidden></p>
+
+  <!-- Another device wants to take many saves off the shelf -->
+  <section id="review" class="card review" hidden>
+    <h2>Sync is paused</h2>
+    <p id="review-text"></p>
+    <div class="row actions">
+      <button id="review-keep" class="primary">Keep mine</button>
+      <button id="review-apply">Apply</button>
+    </div>
+    <p class="muted">Keep mine puts them back on every device. Apply moves them to Recently deleted or Archive here too.</p>
+  </section>
 
   <!-- Signed out -->
   <section id="signin" class="card" hidden>

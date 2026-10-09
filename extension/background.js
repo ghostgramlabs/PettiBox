@@ -14,12 +14,13 @@ const engine = new SyncEngine(store, driveTransport);
 
 const ALARM_PERIODIC = 'sync-periodic';
 const ALARM_SOON = 'sync-soon';
+const ALARM_RETRY = 'sync-retry';
 
 async function schedule() {
   const m = await engine.meta();
   const interval = INTERVALS.find((i) => i.id === m.interval) ?? INTERVALS.find((i) => i.id === 'HOURS_3');
   await chrome.alarms.clear(ALARM_PERIODIC);
-  if (interval.minutes > 0) chrome.alarms.create(ALARM_PERIODIC, { periodInMinutes: interval.minutes, delayInMinutes: 1 });
+  if (!m.signedOut && interval.minutes > 0) await chrome.alarms.create(ALARM_PERIODIC, { periodInMinutes: interval.minutes, delayInMinutes: 1 });
 }
 
 /** About half a minute after a change (Chrome's shortest alarm); each change pushes it back. */
@@ -30,8 +31,28 @@ function soon() {
 
 async function syncNow() {
   const out = await engine.round();
+  await scheduleRetry(out);
   await updateBadge();
   return out;
+}
+
+/**
+ * A round that failed for a passing reason (no network, Drive busy) tries
+ * again by itself: after 1, 2, 4… minutes, at most 30. Success resets it.
+ */
+async function scheduleRetry(out) {
+  const m = await engine.meta();
+  if (out?.ok || !out?.retry) {
+    if (m.retryAttempt) {
+      m.retryAttempt = 0;
+      await engine.saveMeta(m);
+    }
+    await chrome.alarms.clear(ALARM_RETRY);
+    return;
+  }
+  m.retryAttempt = (m.retryAttempt ?? 0) + 1;
+  await engine.saveMeta(m);
+  await chrome.alarms.create(ALARM_RETRY, { delayInMinutes: Math.min(30, 2 ** (m.retryAttempt - 1)) });
 }
 
 async function updateBadge() {
@@ -55,7 +76,7 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === ALARM_PERIODIC || alarm.name === ALARM_SOON) syncNow();
+  if (alarm.name === ALARM_PERIODIC || alarm.name === ALARM_SOON || alarm.name === ALARM_RETRY) syncNow();
 });
 
 // ── Pictures and files the phones shared ────────────────────────────────
@@ -65,6 +86,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 const FILE_CACHE = 'pettibox-files';
 const fileKey = (sha) => `https://files.pettibox.invalid/${sha}`;
 let shared = null; // { session, files, at }
+// Bumped when the library is removed from this browser. A download that
+// started before can't put its file back into the emptied cache.
+let generation = 0;
 
 async function sharedFiles(refresh = false) {
   if (!shared || refresh || Date.now() - shared.at > 10 * 60_000) {
@@ -75,10 +99,17 @@ async function sharedFiles(refresh = false) {
   return shared;
 }
 
-/** Makes sure a shared file is in the cache. [maxBytes] skips big files (list previews). */
+/**
+ * Makes sure a shared file is in the cache. [maxBytes] skips big files (list
+ * previews). Runs outside the edit queue, so pictures never wait for a sync
+ * round and a big file never holds up a save.
+ */
 async function ensureFile(sha, maxBytes) {
+  const started = generation;
+  const m = await engine.meta();
   const cache = await caches.open(FILE_CACHE);
   if (await cache.match(fileKey(sha))) return { ok: true };
+  if (m.signedOut) return { ok: false, reason: 'signin' };
   let s = await sharedFiles();
   if (!s) return { ok: false, reason: 'signin' };
   let f = s.files[sha];
@@ -96,6 +127,7 @@ async function ensureFile(sha, maxBytes) {
   const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer()))]
     .map((b) => b.toString(16).padStart(2, '0')).join('');
   if (digest !== sha) return { ok: false, reason: 'damaged' };
+  if (started !== generation || (await engine.meta()).signedOut) return { ok: false, reason: 'signin' };
   await cache.put(fileKey(sha), new Response(blob, { headers: { 'Content-Type': f.mime } }));
   return { ok: true };
 }
@@ -131,16 +163,28 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 const handlers = {
   async state() {
     const m = await engine.meta();
-    const signedIn = !!(await getToken(false));
+    const signedIn = !m.signedOut && !!(await getToken(false));
     return {
       signedIn, account: m.account, deviceName: m.deviceName, interval: m.interval, intervals: INTERVALS,
       lastSyncAt: m.lastSyncAt, lastError: m.lastError, needs: m.needs, waiting: m.dirty.length > 0,
+      pendingReview: m.pendingReview ?? 0,
       devices: m.devices,
     };
   },
   library: ({ trash }) => engine.library({ trash }),
   savedPage: ({ url }) => engine.savedPage(url),
   file: ({ sha, maxBytes }) => ensureFile(sha, maxBytes),
+  /** The answer to "another device wants to remove N saves". */
+  async review({ keep }) {
+    await engine.exclusive(async () => {
+      const m = await engine.meta();
+      m.reviewDecision = keep ? 'keep' : 'apply';
+      m.needs = null;
+      m.lastError = '';
+      await engine.saveMeta(m);
+    });
+    return syncNow();
+  },
   async save({ colName, cat = null, ...args }) {
     if (!cat && colName) cat = await engine.collectionNamed(colName);
     const r = await engine.saveLink({ ...args, cat });
@@ -162,26 +206,33 @@ const handlers = {
     if (!token) return { ok: false };
     await engine.restart();
     await schedule();
-    const out = await syncNow();
-    return { ok: true, sync: out };
+    // Reply as soon as authentication is ready. The UI starts the first
+    // sync separately; the alarm also covers the popup closing during OAuth.
+    await chrome.alarms.create(ALARM_SOON, { delayInMinutes: 0.5 });
+    return { ok: true };
   },
   /** [wipe]: also remove the library from this browser (a shared computer, say). */
   async signOut({ wipe }) {
     await signOut();
+    shared = null;
+    generation++;
+    await chrome.alarms.clear(ALARM_SOON);
+    await chrome.alarms.clear(ALARM_PERIODIC);
+    await chrome.alarms.clear(ALARM_RETRY);
     if (wipe) {
       await chrome.storage.local.clear();
       await caches.delete(FILE_CACHE);
-      shared = null;
-    } else {
-      const m = await engine.meta();
-      m.knownReset = null;
-      await engine.saveMeta(m);
     }
+    const m = await engine.meta();
+    m.signedOut = true;
+    m.knownReset = null;
+    await engine.saveMeta(m);
     await updateBadge();
     return true;
   },
   async setInterval({ interval }) {
     const m = await engine.meta();
+    if (!INTERVALS.some((i) => i.id === interval)) throw new Error('Unknown sync interval');
     m.interval = interval;
     await engine.saveMeta(m);
     await schedule();
@@ -198,6 +249,12 @@ const handlers = {
     return true;
   },
 };
+
+// These mutate metadata or clear storage, so they must wait for sync/edits too.
+for (const type of ['signOut', 'setInterval', 'setName']) {
+  const handler = handlers[type];
+  handlers[type] = (msg) => engine.exclusive(() => handler(msg));
+}
 
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
   const handler = handlers[msg?.type];

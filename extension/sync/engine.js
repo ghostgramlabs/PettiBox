@@ -22,10 +22,20 @@ export const INTERVALS = [
   { id: 'HOURS_3', label: '3 hours', minutes: 180 },
   { id: 'DAILY', label: 'Daily', minutes: 1440 },
   { id: 'WEEKLY', label: 'Weekly', minutes: 10080 },
-  { id: 'MANUAL', label: 'Manual only', minutes: 0 },
+  // No background syncing; it still syncs when the popup opens and after edits.
+  { id: 'MANUAL', label: 'Only while in use', minutes: 0 },
 ];
 
 const META = 'meta';
+/** More removals than this in one round wait for the user (as on the phones). */
+const MASS_LIMIT = 25;
+/** How long a save removed for good elsewhere stays restorable here. */
+const GONE_KEEP_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** On the shelf: a live, unarchived save (what a removal takes away). */
+function onShelf(r) {
+  return r.kind === KIND_ITEM && !isGone(r) && !isTrashed(r) && value(r, F.ARCH) !== true;
+}
 const shardKey = (n) => 'shard:' + n;
 const recKey = (kind, id) => kind + ':' + id;
 const SHARD_KEYS = Array.from({ length: 16 }, (_, n) => shardKey(n));
@@ -82,6 +92,18 @@ export class SyncEngine {
   // ── State ──────────────────────────────────────────────────────────────
 
   async meta() {
+    // State/badge requests can arrive together on a fresh worker.
+    if (!this.initializingMeta) {
+      this.initializingMeta = this.loadMeta().catch((e) => {
+        this.initializingMeta = null;
+        throw e;
+      });
+    }
+    await this.initializingMeta;
+    return this.loadMeta();
+  }
+
+  async loadMeta() {
     const got = await this.store.get([META]);
     const m = got[META] ?? {};
     let changed = false;
@@ -113,6 +135,7 @@ export class SyncEngine {
       const m = await this.meta();
       const held = new Set([...(await this.records()).values()].map((r) => shardOf(r.id)));
       m.stopped = false;
+      m.signedOut = false;
       m.knownReset = null;
       m.seenMd5 = {};
       m.dirty = [...held];
@@ -135,7 +158,7 @@ export class SyncEngine {
   }
 
   /** Writes records back, one storage key per shard touched. Returns the shards. */
-  async putRecords(list) {
+  async putRecords(list, m) {
     const byShard = new Map();
     for (const r of list) {
       const n = shardOf(r.id);
@@ -149,6 +172,13 @@ export class SyncEngine {
       const shard = { ...(got[shardKey(n)] ?? {}) };
       for (const r of recs) shard[recKey(r.kind, r.id)] = encodeRecord(r);
       out[shardKey(n)] = shard;
+    }
+    // Persist records with their upload intent and clock in one storage write.
+    // A worker restart must never leave a saved edit marked as already synced.
+    if (m) {
+      m.dirty = [...new Set([...m.dirty, ...byShard.keys()])];
+      for (const r of list) m.clock = Math.max(m.clock, maxTs(r));
+      out[META] = m;
     }
     await this.store.set(out);
     return [...byShard.keys()];
@@ -176,11 +206,19 @@ export class SyncEngine {
     collections.sort((a, b) => a.name.localeCompare(b.name));
     const known = new Set(collections.map((c) => c.id));
     const items = [];
+    // Saves removed for good on another device show in Recently deleted for
+    // this browser's own 30 days, as on a phone, so they can be restored.
+    const goneAt = trash ? ((await this.meta()).goneAt ?? {}) : {};
+    const cutoff = this.now() - GONE_KEEP_MS;
     for (const r of recs.values()) {
-      if (r.kind !== KIND_ITEM || isGone(r)) continue;
-      if (isTrashed(r) !== trash) continue;
+      if (r.kind !== KIND_ITEM) continue;
       const cat = value(r, F.CAT);
       if (cat && locked.has(cat)) continue;
+      if (isGone(r)) {
+        if (trash && (goneAt[r.id] ?? 0) > cutoff) items.push({ ...SyncEngine.itemView(r, known), trashed: true, trashedAt: goneAt[r.id] });
+        continue;
+      }
+      if (isTrashed(r) !== trash) continue;
       items.push(SyncEngine.itemView(r, known));
     }
     items.sort((a, b) => (b.pin - a.pin) || (b.created - a.created));
@@ -255,7 +293,8 @@ export class SyncEngine {
     local = change(structuredClone(local));
     const next = diff(current, local, { dev: m.deviceId, ts: clock.next() });
     if (!next) return current;
-    const shards = await this.putRecords([next]);
+    if (m.goneAt && !isGone(next)) delete m.goneAt[next.id]; // restored
+    const shards = await this.putRecords([next], m);
     m.clock = clock.last;
     m.dirty = [...new Set([...m.dirty, ...shards])];
     await this.saveMeta(m);
@@ -364,7 +403,7 @@ export class SyncEngine {
     const r = (await this.records()).get(recKey(KIND_ITEM, id));
     if (!r || alternatives(r, field).length === 0) return;
     const next = Write.field(r, field, value(r, field), { dev: m.deviceId, ts: clock.next() });
-    const shards = await this.putRecords([next]);
+    const shards = await this.putRecords([next], m);
     m.clock = clock.last;
     m.dirty = [...new Set([...m.dirty, ...shards])];
     await this.saveMeta(m);
@@ -380,15 +419,25 @@ export class SyncEngine {
 
   async roundOnce() {
     const m = await this.meta();
+    if (m.signedOut) return this.fail(m, 'Sign in to Google to sync', false, 'signin');
     let session;
     try {
       session = await this.transport.open();
     } catch (e) {
+      if (e?.status === 401) return this.fail(m, 'Sign in to Google again to sync', false, 'signin');
       return this.fail(m, 'Couldn\'t reach Google Drive', true);
     }
     if (!session) return this.fail(m, 'Sign in to Google to sync', false, 'signin');
     if (m.stopped) return this.fail(m, m.lastError || 'Sync is off. Sign in again to start over.', false, 'reset');
     try {
+      // A retained library belongs to its original account. Never silently
+      // upload it into a different account after reconnecting Chrome.
+      const account = await session.accountEmail();
+      if (m.account && account && m.account.toLowerCase() !== account.toLowerCase()) {
+        return this.fail(m, 'This library belongs to another Google account. Sign back into that account, or sign out and remove this browser’s library before switching.', false, 'account');
+      }
+      if (account) m.account = account;
+      await this.saveMeta(m);
       // Synced data deleted from Drive since this browser signed in? Stop
       // rather than upload everything again; what's here stays.
       const marker = (await session.resetMarker?.()) ?? '';
@@ -430,15 +479,52 @@ export class SyncEngine {
       // Merge in (state-based: everything we have is kept, plus what's new).
       const mine = await this.records();
       const changed = [];
+      const removals = []; // [before, merged] for saves this round would take off the shelf
       for (const [k, r] of received) {
         clock.observe(maxTs(r));
         const cur = mine.get(k);
         const merged = cur ? merge(cur, r) : r;
         if (cur && JSON.stringify(encodeRecord(merged)) === JSON.stringify(encodeRecord(cur))) continue;
+        if (cur && onShelf(cur) && !onShelf(merged)) removals.push([cur, merged]);
         changed.push(merged);
       }
+
+      // Like the phones: many removals at once (a wiped device, a mistake)
+      // wait for the user. Nothing from this round is applied or marked as
+      // read until then, so the same files come down again after the choice.
+      const live = [...mine.values()].filter(onShelf).length;
+      const big = removals.length > MASS_LIMIT || (removals.length >= 5 && removals.length * 10 > live);
+      const decision = m.reviewDecision ?? null;
+      if (big && !decision) {
+        m.pendingReview = removals.length;
+        await this.saveMeta(m);
+        return this.fail(m, `Another device wants to remove or archive ${removals.length} saves. Choose Keep mine or Apply.`, false, 'review');
+      }
+      m.reviewDecision = null;
+      m.pendingReview = 0;
+      if (big && decision === 'keep') {
+        // Keep mine: put them back for every device, as a new edit here.
+        const dot = { dev: m.deviceId, ts: clock.next() };
+        const restored = new Map();
+        for (const [, merged] of removals) {
+          const local = SyncEngine.localOf(merged);
+          local.fields[F.TRASH] = null;
+          if (F.ARCH in local.fields) local.fields[F.ARCH] = false;
+          restored.set(recKey(merged.kind, merged.id), diff(merged, local, dot) ?? merged);
+        }
+        for (let i = 0; i < changed.length; i++) {
+          changed[i] = restored.get(recKey(changed[i].kind, changed[i].id)) ?? changed[i];
+        }
+      }
+      // Removed for good elsewhere: keep it restorable here for 30 days, like
+      // a phone's Recently deleted.
+      m.goneAt ??= {};
+      for (const r of changed) {
+        const cur = mine.get(recKey(r.kind, r.id));
+        if (r.kind === KIND_ITEM && cur && !isGone(cur) && isGone(r)) m.goneAt[r.id] = this.now();
+      }
       if (changed.length) {
-        const shards = await this.putRecords(changed);
+        const shards = await this.putRecords(changed, m);
         m.dirty = [...new Set([...m.dirty, ...shards])];
       }
 
@@ -457,7 +543,7 @@ export class SyncEngine {
           }
           folded.push(keep);
         }
-        const shards = await this.putRecords(folded);
+        const shards = await this.putRecords(folded, m);
         m.dirty = [...new Set([...m.dirty, ...shards])];
       }
       m.seenMd5 = newSeen;
@@ -475,7 +561,6 @@ export class SyncEngine {
         await this.saveMeta(m);
         sent++;
       }
-      m.account = (await session.accountEmail().catch(() => null)) || m.account;
       m.lastSyncAt = this.now();
       m.lastError = damaged ? `Skipped ${damaged} damaged file(s) from another device; nothing from them was applied` : '';
       m.needs = null;
