@@ -173,6 +173,25 @@ class SyncPreferences(context: Context, fileName: String) {
         (0 until a.length()).map { a.getString(it) }.toSet()
     }.getOrDefault(emptySet())
 
+    private val cleanRoundKey = longPreferencesKey("clean_round_at")
+    private val unusedFilesKey = stringPreferencesKey("unused_files")
+    private val fileCleanupKey = longPreferencesKey("file_cleanup_at")
+
+    /** When a round last read every device's copy without skipping any (0: the last one didn't). */
+    suspend fun cleanRoundAt(): Long = store.data.first()[cleanRoundKey] ?: 0L
+    suspend fun setCleanRoundAt(at: Long) = store.edit { it[cleanRoundKey] = at }
+
+    /** Files in Drive nothing uses: sha256 -> first time seen unused. */
+    suspend fun unusedFiles(): Map<String, Long> = runCatching {
+        val o = JSONObject(store.data.first()[unusedFilesKey] ?: return emptyMap())
+        o.keys().asSequence().associateWith { o.getLong(it) }
+    }.getOrDefault(emptyMap())
+
+    suspend fun setUnusedFiles(files: Map<String, Long>) = store.edit { it[unusedFilesKey] = JSONObject(files).toString() }
+
+    suspend fun fileCleanupAt(): Long = store.data.first()[fileCleanupKey] ?: 0L
+    suspend fun setFileCleanupAt(at: Long) = store.edit { it[fileCleanupKey] = at }
+
     private val devicesKey = stringPreferencesKey("devices")
 
     /** Other devices seen in Drive: id -> (name, last time their files changed). */
@@ -245,6 +264,8 @@ class SyncPreferences(context: Context, fileName: String) {
     /** Turning sync off forgets what was read from Drive, so turning it on again reads everything. */
     suspend fun resetForDisable() = store.edit {
         it.remove(md5Key)
+        it.remove(cleanRoundKey)
+        it.remove(unusedFilesKey)
         it[reviewKey] = 0
         it[reviewDecisionKey] = ""
         it[progressKey] = ""

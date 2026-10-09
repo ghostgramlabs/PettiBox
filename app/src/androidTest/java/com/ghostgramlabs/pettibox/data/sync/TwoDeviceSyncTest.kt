@@ -283,9 +283,11 @@ class TwoDeviceSyncTest {
         val out = b.sync()
         assertTrue(out is SyncOutcome.Ok && out.damaged == 1)
         assertTrue(b.saves().isEmpty())
+        assertEquals(0L, b.prefs.cleanRoundAt()) // so no shared file may be cleaned up
         drive.corrupt = null
         assertTrue(b.sync() is SyncOutcome.Ok)
         assertEquals(1, b.saves().size) // picked up once it's readable
+        assertTrue(b.prefs.cleanRoundAt() > 0L)
     }
 
     @Test fun deleting_synced_data_elsewhere_stops_sync_here_and_keeps_the_library() = runBlocking {

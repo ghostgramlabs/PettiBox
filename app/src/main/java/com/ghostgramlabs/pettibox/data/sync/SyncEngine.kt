@@ -130,6 +130,7 @@ class SyncEngine @Inject constructor(
         val newSeen = HashMap(seen)
         val ours = HashMap<String, String>() // our file name -> its id
         var damaged = 0
+        var unreadable = 0 // written by a newer app: fine, but this round didn't see all of it
         val devices = LinkedHashMap<String, Pair<String, Long>>()
         for (f in files) {
             val dev = DriveSyncClient.deviceOf(f.name) ?: continue
@@ -139,7 +140,7 @@ class SyncEngine @Inject constructor(
             }
             if (f.md5.isNotBlank() && seen[f.name] == f.md5) continue
             prefs.setProgress("Receiving changes…")
-            val shard = try {
+            val decoded = try {
                 SyncCodec.decodeShard(session.read(f), now)
             } catch (e: SyncFormatException) {
                 // Skipped whole and reported; never part-applied. Not marked
@@ -147,7 +148,12 @@ class SyncEngine @Inject constructor(
                 Log.w(TAG, "skipping ${f.name}: ${e.message}")
                 damaged++
                 continue
-            } ?: continue // a newer app's format: leave it for a newer app
+            }
+            if (decoded == null) {
+                unreadable++ // a newer app's format: leave it for a newer app
+                continue
+            }
+            val shard = decoded
             if (shard.device != dev) {
                 damaged++
                 continue
@@ -170,6 +176,7 @@ class SyncEngine @Inject constructor(
             // Held back for review: still send this device's own changes.
             uploadDirty(session, me, ours, now)
             prefs.saveClock(clock.current)
+            prefs.setCleanRoundAt(0L)
             return SyncOutcome.NeedsReview(-applied)
         }
         prefs.saveSeenMd5(newSeen)
@@ -181,6 +188,8 @@ class SyncEngine @Inject constructor(
         val sent = uploadDirty(session, me, ours, now)
         prefs.saveClock(clock.current)
         session.accountEmail()?.let { prefs.setAccountEmail(it) }
+        // Only a round that saw every device's copy may tell which shared files are unused.
+        prefs.setCleanRoundAt(if (damaged == 0 && unreadable == 0) now else 0L)
         hooks.syncFiles(prefs.status.first().filesOnWifiOnly)
         if (damaged > 0) {
             prefs.recordError("Skipped $damaged damaged file(s) from another device; nothing from them was applied")

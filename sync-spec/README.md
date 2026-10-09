@@ -163,6 +163,21 @@ The other save is then removed (`gone`), so on a phone that had it, it waits in 
 deleted. Every device computes the same result. `SyncDedupe` (Kotlin) and `fold`/`foldPlan`
 (extension) implement it; `vectors/cases.json` has golden `fold` cases.
 
+## Removing unused shared files
+
+Sync never removes a file from `files/` as part of a merge. Separately, a phone removes a
+file from Drive, at most once a day, only when all of these hold:
+
+- the last sync round, within 6 hours, read every device file without skipping one
+  (damaged, or in a newer format) and left nothing waiting for review;
+- no record that isn't gone uses it: not in `files`, nor as any value (concurrent ones
+  included) of `main` or `thumb`; saves in Recently deleted count as using it;
+- no file on the phone itself has that content;
+- it has been unused for 30 days in a row (counted by that phone).
+
+A file needed after all is uploaded again by any device that still has it; until then the
+save shows it as missing. The extension never removes shared files.
+
 ## Applying a merged record on a device
 
 - Show the shown values; trashed → in Recently deleted with `trashedAt`.

@@ -197,7 +197,7 @@ fun SyncSettingsCard(
             Column(Modifier.weight(1f)) {
                 Text("Photos and files on Wi-Fi only", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = scheme.onSurface)
                 Text(
-                    "Text always syncs. Photos, PDFs and files use your Drive storage.",
+                    "Text always syncs. Photos, PDFs and files use your Drive storage; ones no save has used for 30 days are removed from Drive.",
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant
                 )

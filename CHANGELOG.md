@@ -5,6 +5,8 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Photos, PDFs and files that no save on any device has used for 30 days are now removed
+  from Google Drive, so deleted files stop using your Drive storage.
 - Removing one file from a save with several no longer brings it back on other devices
   (it reappeared in the Chrome extension when it was the first file).
 - Chrome extension: a save with several photos, PDFs or files now opens as a gallery

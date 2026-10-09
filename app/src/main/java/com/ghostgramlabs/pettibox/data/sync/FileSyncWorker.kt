@@ -35,8 +35,8 @@ import java.util.concurrent.TimeUnit
  * Moves photos, PDFs and other files between this phone and
  * "PettiBox/Sync/files/", separately from the text sync so text never waits
  * for them. Files are named by their sha256 (plus extension), uploaded once,
- * and checked against that hash when they come down. Nothing here deletes a
- * file anywhere.
+ * and checked against that hash when they come down. The only removal is
+ * [cleanUp]: files in Drive that no save anywhere has used for 30 days.
  *
  * Two jobs: card pictures only (tens of KB each, on any connection), and
  * everything (photos, PDFs, files) on the network the user allowed.
@@ -60,10 +60,12 @@ class FileSyncWorker @AssistedInject constructor(
         val token = auth.silentAccessToken() ?: return Result.success()
         return try {
             val folder = client.filesFolder(token, client.syncFolder(token))
-            val stored = client.listStoredFiles(token, folder).associateBy { it.name.substringBefore('.') }
+            val listed = client.listStoredFiles(token, folder)
+            val stored = listed.associateBy { it.name.substringBefore('.') }
             val thumbsOnly = inputData.getBoolean(KEY_THUMBS_ONLY, false)
             upload(token, folder, stored.keys, thumbsOnly)
             download(token, stored, thumbsOnly)
+            if (!thumbsOnly) cleanUp(token, listed)
             Result.success()
         } catch (e: DriveSyncException) {
             if (e.transient && runAttemptCount < 5) Result.retry() else Result.success()
@@ -116,7 +118,44 @@ class FileSyncWorker @AssistedInject constructor(
         }.awaitAll()
     }
 
+    /**
+     * About once a day, removes shared files nothing has used for 30 days
+     * (rules in [DriveFileCleanup]). Skipped unless the last sync round read
+     * every device's copy cleanly, recently, with nothing left waiting.
+     */
+    private suspend fun cleanUp(token: String, listed: List<DriveSyncFile>) {
+        val now = System.currentTimeMillis()
+        val clean = prefs.cleanRoundAt()
+        if (clean == 0L || now - clean > CLEAN_ROUND_MAX_AGE_MS) return
+        if (now - prefs.fileCleanupAt() < CLEANUP_EVERY_MS) return
+        if (syncDao.inboxCount() > 0) return
+        val records = syncDao.metaOfKind(SyncRecord.KIND_ITEM).map {
+            // A copy that can't be read could use any file: then remove nothing.
+            runCatching { SyncCodec.decodeString(it.recordJson) }.getOrNull() ?: return
+        }
+        val used = HashSet(DriveFileCleanup.referenced(records.asSequence()))
+        // Whatever this phone holds is kept too, even if not synced yet.
+        val local = saveDao.allForExport().flatMap { listOfNotNull(it.localUri, it.thumbnailUri) } +
+            attachmentDao.allForExport().map { it.uri }
+        for (uri in local.distinct()) {
+            if (uri.startsWith("http")) continue
+            library.shaOf(uri)?.let { used += it } // a file missing here is covered by the records above
+        }
+        val plan = DriveFileCleanup.plan(listed.associate { it.name to it.id }, used, prefs.unusedFiles(), now)
+        for (id in plan.remove) {
+            try {
+                client.delete(token, id)
+            } catch (e: DriveSyncException) {
+                if (e.status != 404) throw e // already gone (another phone) is fine
+            }
+        }
+        prefs.setUnusedFiles(plan.unusedSince)
+        prefs.setFileCleanupAt(now)
+    }
+
     companion object {
+        private const val CLEAN_ROUND_MAX_AGE_MS = 6L * 60 * 60 * 1000
+        private const val CLEANUP_EVERY_MS = 20L * 60 * 60 * 1000
         private const val NAME = "sync_files"
         private const val THUMBS = "sync_thumbs"
         private const val KEY_THUMBS_ONLY = "thumbs_only"
