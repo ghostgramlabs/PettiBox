@@ -797,7 +797,7 @@ fun DetailScreen(
                     accent = accent,
                     onAdd = { tag ->
                         viewModel.addTag(tag)
-                        val clean = tag.trim().removePrefix("#")
+                        val clean = tag.trim().trimStart('#').trim()
                         if (clean.isNotBlank() && clean.length <= 24) {
                             scope.launch {
                                 val r = snackbarHostState.showSnackbar(

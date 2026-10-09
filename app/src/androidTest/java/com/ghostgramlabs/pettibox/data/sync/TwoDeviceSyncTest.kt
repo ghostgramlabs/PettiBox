@@ -140,6 +140,50 @@ class TwoDeviceSyncTest {
         }
     }
 
+    private fun repoOf(p: Phone) = SaveRepository(p.db, p.db.saveDao(), p.db.categoryDao(), p.db.attachmentDao(), p.db.tagDao(), p.db.articleDao(), AttachmentStore(context))
+    private suspend fun tagsOn(p: Phone, url: String) = p.db.tagDao().tagsForItem(p.byUrl(url)!!.id).map { it.name }.sorted()
+
+    @Test fun tags_added_removed_and_replaced_the_way_the_app_does_reach_the_other_phone() = runBlocking {
+        val url = "https://x.example"
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        val ra = repoOf(a); val rb = repoOf(b)
+
+        ra.addTag(a.byUrl(url)!!.id, "Bread")
+        syncBoth()
+        assertEquals(listOf("Bread"), tagsOn(b, url))
+
+        rb.addTag(b.byUrl(url)!!.id, "sourdough")
+        syncBoth()
+        assertEquals(listOf("Bread", "sourdough"), tagsOn(a, url))
+
+        ra.removeTag(a.byUrl(url)!!.id, "Bread")
+        syncBoth()
+        assertEquals(listOf("sourdough"), tagsOn(b, url))
+
+        rb.setTagsForItem(b.byUrl(url)!!.id, listOf("weekend", "Recipes"))
+        syncBoth()
+        assertEquals(listOf("Recipes", "weekend"), tagsOn(a, url))
+
+        // Removed on one phone while the other adds a different one: both changes stand.
+        ra.removeTag(a.byUrl(url)!!.id, "weekend")
+        rb.addTag(b.byUrl(url)!!.id, "quick")
+        syncBoth()
+        assertEquals(listOf("Recipes", "quick"), tagsOn(a, url))
+        assertEquals(listOf("Recipes", "quick"), tagsOn(b, url))
+    }
+
+    @Test fun a_tag_the_other_phone_already_uses_elsewhere_still_links() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        b.db.saveDao().insert(link("y"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        repoOf(b).addTag(b.byUrl("https://y.example")!!.id, "bread") // b already has "bread"
+        repoOf(a).addTag(a.byUrl("https://x.example")!!.id, "Bread")
+        syncBoth()
+        assertEquals(listOf("bread"), tagsOn(b, "https://x.example").map { it.lowercase() })
+        assertEquals(listOf("bread"), tagsOn(a, "https://y.example").map { it.lowercase() })
+    }
+
     @Test fun the_same_field_edited_on_both_keeps_both_versions() = runBlocking {
         a.db.saveDao().insert(link("x"))
         a.turnOn(); b.turnOn(); syncBoth()

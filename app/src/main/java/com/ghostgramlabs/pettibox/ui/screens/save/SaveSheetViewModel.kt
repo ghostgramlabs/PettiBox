@@ -570,7 +570,7 @@ class SaveSheetViewModel @Inject constructor(
     private fun parseTagInput(input: String): List<String> {
         if (input.isBlank()) return emptyList()
         return input.split(Regex("[,\\n]+"))
-            .map { it.trim().removePrefix("#") }
+            .map { it.trim().trimStart('#').trim() }
             .filter { it.isNotBlank() && it.length <= 24 }
             .distinct()
     }

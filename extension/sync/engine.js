@@ -69,6 +69,15 @@ function randomHex(bytes) {
   return [...a].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/**
+ * Tags as the app reads them: trimmed, without a leading "#", at most 24
+ * characters. Read the same way on both sides, a tag never changes shape
+ * (or seems to vanish) on its way between Chrome and a phone.
+ */
+export function cleanTags(names) {
+  return names.map((x) => String(x).trim().replace(/^#+/, '').trim()).filter((t) => t && t.length <= 24);
+}
+
 export class SyncEngine {
   constructor(store, transport, now = () => Date.now()) {
     this.store = store;
@@ -337,7 +346,7 @@ export class SyncEngine {
     const id = randomHex(16);
     const now = this.now();
     const tagMap = {};
-    for (const t of tags.map((x) => x.trim()).filter(Boolean)) tagMap[t.toLowerCase()] ??= t;
+    for (const t of cleanTags(tags)) tagMap[t.toLowerCase()] ??= t;
     await this.editNow(KIND_ITEM, id, (l) => l, {
       kind: KIND_ITEM, id, created: now,
       fields: {
@@ -386,7 +395,7 @@ export class SyncEngine {
       }
       if (changes.tags) {
         l.tags = {};
-        for (const t of changes.tags.map((x) => x.trim()).filter(Boolean)) l.tags[t.toLowerCase()] ??= t;
+        for (const t of cleanTags(changes.tags)) l.tags[t.toLowerCase()] ??= t;
       }
       return l;
     });

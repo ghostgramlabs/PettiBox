@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
-import { SyncEngine, memoryStore, deviceOf, shardName, urlKey } from '../sync/engine.js';
+import { SyncEngine, memoryStore, deviceOf, shardName, urlKey, cleanTags } from '../sync/engine.js';
 import { encodeShard } from '../sync/codec.js';
 import { diff, KIND_COLLECTION, KIND_ITEM, F } from '../sync/model.js';
 import { gzip, gunzip, md5 } from '../sync/bytes.js';
@@ -311,4 +311,8 @@ test('a file removed on the phone is not shown again here, even if the main file
     fields: { [F.TITLE]: 'One PDF', [F.TYPE]: 'PDF', [F.MAIN]: 'ccc' }, tags: {}, files: {},
   }, { dev: 'aaaaaaaaaaaaaaaa', ts: 5 });
   assert.deepEqual(SyncEngine.itemView(single, new Set()).files, [{ sha: 'ccc', kind: 'PDF' }]);
+});
+
+test('tags are read the way the app reads them', () => {
+  assert.deepEqual(cleanTags([' #Bread ', 'sourdough', '#', '', '##weekend', 'x'.repeat(25)]), ['Bread', 'sourdough', 'weekend']);
 });

@@ -5,6 +5,8 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Tags read the same way in the app and the Chrome extension (a leading # is dropped and
+  tags are up to 24 characters), so a tag no longer changes shape on its way between them.
 - Big photos, videos and PDFs (5 MB and up) now sync in pieces: after a dropped connection,
   uploads and downloads carry on where they stopped instead of starting over.
 - Removing one photo or file from a save now sticks. Before, it was only removed once the

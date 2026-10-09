@@ -268,7 +268,7 @@ class DetailViewModel @Inject constructor(
 
     fun addTag(tag: String) = viewModelScope.launch {
         val it = state.value.item ?: return@launch
-        val clean = tag.trim().removePrefix("#")
+        val clean = tag.trim().trimStart('#').trim()
         if (clean.isBlank() || clean.length > 24) return@launch
         repo.addTag(it.id, clean)
     }
