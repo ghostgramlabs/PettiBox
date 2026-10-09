@@ -100,8 +100,19 @@ async function showState() {
   return s;
 }
 
+/**
+ * Fills in lists a save may lack, so the popup never breaks on one: for
+ * instance while Chrome still runs an older background worker after an
+ * update, until the extension is reloaded.
+ */
+function normalize(item) {
+  return { ...item, files: item.files ?? [], tags: item.tags ?? [], conflicts: item.conflicts ?? [] };
+}
+
 async function loadLibrary() {
   library = await ask('library', { trash: filter === 'trash' });
+  library.items = (library.items ?? []).map(normalize);
+  library.collections ??= [];
   if (filter === 'trash') {
     // Chips and the page card need the live collections even in this view.
     library.collections = (await ask('library', { trash: false })).collections;
@@ -130,7 +141,8 @@ async function showPage() {
   $('page-url').textContent = host(url) + new URL(url).pathname.replace(/\/$/, '');
   $('page-url').title = url;
   $('page-favicon').src = chrome.runtime.getURL(`/_favicon/?pageUrl=${encodeURIComponent(url)}&size=32`);
-  saved = await ask('savedPage', { url });
+  saved = await ask('savedPage', { url }).catch(() => null);
+  if (saved) saved = normalize(saved);
   $('page-title').value = saved?.title ?? tab.title ?? url;
   $('page-new').hidden = !!saved;
   $('page-saved').hidden = !saved || saved.trashed;
