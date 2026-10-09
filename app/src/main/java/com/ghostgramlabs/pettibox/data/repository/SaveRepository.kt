@@ -894,8 +894,20 @@ class SaveRepository @Inject constructor(
     suspend fun setAttachmentOcr(id: Long, text: String) = attachmentDao.setOcrText(id, text)
     suspend fun deleteAttachment(id: Long) {
         val attachment = attachmentDao.getById(id) ?: return
-        attachmentDao.delete(id)
-        attachmentStore.deleteByUris(listOf(attachment.uri))
+        val item = saveDao.getById(attachment.itemId)
+        // The save's main file is often this same file (or a copy of it). Left
+        // as is, it would keep pointing at the removed file, and other devices
+        // would show it again; the next file in the gallery takes its place.
+        val mainGoes = item?.localUri != null && attachmentStore.sameContent(item.localUri, attachment.uri)
+        val next = if (mainGoes) attachmentDao.forItem(attachment.itemId).filter { it.id != id }.minByOrNull { it.sortOrder } else null
+        database.withTransaction {
+            attachmentDao.delete(id)
+            if (mainGoes && item != null) {
+                saveDao.update(item.copy(localUri = next?.uri, updatedAt = System.currentTimeMillis()))
+            }
+        }
+        val gone = listOfNotNull(attachment.uri, item?.localUri?.takeIf { mainGoes && it != attachment.uri && it != next?.uri })
+        attachmentStore.deleteByUris(gone)
     }
 
     // ── Tags ──────────────────────────────────────────────────────────────

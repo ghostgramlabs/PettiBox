@@ -122,6 +122,11 @@ class LocalLibrary @Inject constructor(
             files[sha] = a.kind to a.sortOrder.toLong()
             fields[FILE_OCR_PREFIX + sha] = a.ocrText
         }
+        // A save with files shows those; a main file outside them is one that
+        // was removed (older versions left it behind), so the first one stands in.
+        if (files.isNotEmpty() && !unreadable && fields[F_MAIN] !in files.keys) {
+            fields[F_MAIN] = files.entries.minByOrNull { it.value.second }!!.key
+        }
         if (unreadable && meta != null) {
             files.clear()
             for ((sha, f) in meta.presentFiles()) files[sha] = f.kind to f.order

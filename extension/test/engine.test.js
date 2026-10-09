@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import { SyncEngine, memoryStore, deviceOf, shardName, urlKey } from '../sync/engine.js';
 import { encodeShard } from '../sync/codec.js';
-import { diff, KIND_COLLECTION, F } from '../sync/model.js';
+import { diff, KIND_COLLECTION, KIND_ITEM, F } from '../sync/model.js';
 import { gzip, gunzip, md5 } from '../sync/bytes.js';
 
 /** The Drive folder: name -> { id, json, md5 }. */
@@ -296,4 +296,19 @@ test('a save removed for good elsewhere stays restorable in Recently deleted her
     assert.equal(lib[0].notes, 'keep me');
   }
   assert.equal((await b.library({ trash: true })).items.length, 0);
+});
+
+test('a file removed on the phone is not shown again here, even if the main file still names it', () => {
+  const r = diff(null, {
+    kind: KIND_ITEM, id: 'twopdfs', created: 1,
+    // Older phones left the main file pointing at the removed first PDF.
+    fields: { [F.TITLE]: 'Two PDFs', [F.TYPE]: 'PDF', [F.MAIN]: 'aaa' },
+    tags: {}, files: { bbb: { kind: 'PDF', order: 1 } },
+  }, { dev: 'aaaaaaaaaaaaaaaa', ts: 5 });
+  assert.deepEqual(SyncEngine.itemView(r, new Set()).files, [{ sha: 'bbb', kind: 'PDF' }]);
+  const single = diff(null, {
+    kind: KIND_ITEM, id: 'onepdf', created: 1,
+    fields: { [F.TITLE]: 'One PDF', [F.TYPE]: 'PDF', [F.MAIN]: 'ccc' }, tags: {}, files: {},
+  }, { dev: 'aaaaaaaaaaaaaaaa', ts: 5 });
+  assert.deepEqual(SyncEngine.itemView(single, new Set()).files, [{ sha: 'ccc', kind: 'PDF' }]);
 });

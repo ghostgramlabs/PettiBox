@@ -45,7 +45,8 @@ const TYPE_ICON = { IMAGE: '🖼', PDF: '📄', FILE: '📎', NOTE: '📝', LINK
 /** A picture to show for a save: its card picture, or the photo itself when small enough. */
 function pictureOf(item) {
   if (item.thumb) return { sha: item.thumb, max: 2_000_000 };
-  if (item.type === 'IMAGE' && item.main) return { sha: item.main, max: 3_000_000 };
+  const first = item.files[0];
+  if (item.type === 'IMAGE' && first?.kind === 'IMAGE') return { sha: first.sha, max: 3_000_000 };
   return null;
 }
 

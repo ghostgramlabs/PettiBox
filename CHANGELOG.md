@@ -5,6 +5,8 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Removing one file from a save with several no longer brings it back on other devices
+  (it reappeared in the Chrome extension when it was the first file).
 - Chrome extension: a save with several photos, PDFs or files now opens as a gallery
   (arrows, ← / → keys and a strip of thumbnails) instead of showing only the first file,
   and its card shows how many files it has.

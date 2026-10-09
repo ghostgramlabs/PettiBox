@@ -5,6 +5,9 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ghostgramlabs.pettibox.data.local.AppDatabase
+import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
+import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.data.util.AttachmentStore
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.ItemTagCrossRef
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
@@ -168,6 +171,40 @@ class TwoDeviceSyncTest {
         assertTrue(a.prefs.needingChoice.first().isEmpty())
         assertTrue(b.prefs.needingChoice.first().isEmpty())
         assertEquals(a.byUrl("https://x.example")!!.title, b.byUrl("https://x.example")!!.title)
+    }
+
+    @Test fun removing_the_first_of_two_pdfs_stays_removed_everywhere() = runBlocking {
+        val dir = java.io.File(context.filesDir, "attachments").apply { mkdirs() }
+        fun file(text: String) = java.io.File(dir, "${UUID.randomUUID()}.pdf").apply { writeText(text) }.toURI().toString()
+        val one = file("%PDF first ${UUID.randomUUID()}")
+        val two = file("%PDF second ${UUID.randomUUID()}")
+        val mainCopy = file(java.io.File(java.net.URI(one)).readText()) // the main file is a copy of the first
+        val id = a.db.saveDao().insert(
+            SaveItemEntity(title = "Two PDFs", contentType = "PDF", sourceApp = "FILES", localUri = mainCopy)
+        )
+        a.db.attachmentDao().insertAll(listOf(
+            AttachmentEntity(itemId = id, uri = one, kind = "PDF", sortOrder = 0),
+            AttachmentEntity(itemId = id, uri = two, kind = "PDF", sortOrder = 1)
+        ))
+        a.turnOn(); b.turnOn(); syncBoth()
+        val syncId = a.db.saveDao().getById(id)!!.syncId
+        val bId = b.db.syncDao().itemBySyncId(syncId)!!.id
+        assertEquals(2, b.db.attachmentDao().forItem(bId).size)
+
+        val repo = SaveRepository(a.db, a.db.saveDao(), a.db.categoryDao(), a.db.attachmentDao(), a.db.tagDao(), a.db.articleDao(), AttachmentStore(context))
+        repo.deleteAttachment(a.db.attachmentDao().forItem(id).first { it.sortOrder == 0 }.id)
+        syncBoth(); syncBoth()
+
+        val shaTwo = a.library.shaOf(two)
+        assertEquals(two, a.db.saveDao().getById(id)!!.localUri) // the second file is the main one now
+        assertEquals(listOf(two), a.db.attachmentDao().forItem(id).map { it.uri })
+        val onB = b.db.attachmentDao().forItem(bId)
+        assertEquals(listOf(shaTwo), onB.map { b.library.shaOf(it.uri) })
+        for (p in listOf(a, b)) {
+            val r = SyncCodec.decodeString(p.db.syncDao().meta("item", syncId)!!.recordJson)
+            assertEquals(setOf(shaTwo), r.presentFiles().keys)
+            assertEquals(shaTwo, r.value(SyncRecord.F_MAIN))
+        }
     }
 
     @Test fun a_delete_moves_to_recently_deleted_on_the_other_phone() = runBlocking {
