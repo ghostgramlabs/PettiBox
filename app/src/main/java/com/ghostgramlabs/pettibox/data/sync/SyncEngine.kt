@@ -44,8 +44,10 @@ sealed interface SyncOutcome {
  *    would remove or archive many saves waits for the user instead.
  * 5. Upload this device's files that changed.
  *
- * Failure anywhere leaves both sides as they were; the next round picks up.
- * Rounds never overlap (one lock per engine).
+ * A round is not one transaction across devices: steps that finished stay
+ * done (local changes recorded, some files sent) and every step is safe to
+ * repeat, so a failure part-way is finished by the next round. Each local
+ * step is all-or-nothing on its own. Rounds never overlap (one lock per engine).
  */
 @Singleton
 class SyncEngine @Inject constructor(
@@ -96,6 +98,26 @@ class SyncEngine @Inject constructor(
         }
     }
 
+    /** The synced data was deleted from Drive on another device: stop here; the library stays. */
+    private suspend fun stopForReset(): SyncOutcome {
+        prefs.setEnabled(false)
+        prefs.resetForDisable()
+        prefs.recordError("Sync was turned off because the synced data was deleted from Google Drive on another device. Everything on this phone is still here; turn sync on again to start over.")
+        // Last: stopping cancels background sync work, possibly this very round.
+        hooks.stopSync()
+        return SyncOutcome.ResetElsewhere
+    }
+
+    /**
+     * Before writing records stamped by [clock]: saves a ceiling above every
+     * stamp they can carry, so a phone that dies before the round's end
+     * never starts again below a stamp it already wrote (which would make its
+     * next edit lose to its own older one).
+     */
+    private suspend fun reserve(clock: HybridClock, count: Int) {
+        prefs.saveClock(maxOf(clock.current, System.currentTimeMillis()) + count + CLOCK_MARGIN_MS)
+    }
+
     private suspend fun reconnect() {
         prefs.setNeedsReconnect(true)
         prefs.recordError("Google Drive needs reconnecting")
@@ -103,7 +125,25 @@ class SyncEngine @Inject constructor(
 
     private suspend fun roundLocked(now: Long): SyncOutcome {
         if (!prefs.isEnabled()) return SyncOutcome.Off
+        // Until this round ends well, no earlier round vouches for which shared files are unused.
+        prefs.setCleanRoundAt(0L)
         val session = transport.open() ?: return SyncOutcome.NeedsReconnect
+        // This library syncs with one Google account. If Drive is now signed
+        // in as another (switched in Backup settings, say), touch nothing.
+        val account = session.accountEmail()
+        val owner = prefs.status.first().accountEmail
+        if (account != null && owner.isNotBlank() && !account.equals(owner, ignoreCase = true)) {
+            return SyncOutcome.Failed(
+                "Google Drive is signed in as $account, but this library syncs with $owner. Switch back to $owner, or turn sync off and on again to sync with $account.",
+                retry = false
+            )
+        }
+        if (account != null && owner.isBlank()) prefs.setAccountEmail(account)
+        // Follow-up work (reminders, link pictures) a round applied but didn't get to finish.
+        prefs.pendingFollowUps().takeIf { it.isNotEmpty() }?.let { ids ->
+            hooks.afterApply(library.followUpsFor(ids), now)
+            prefs.setPendingFollowUps(emptyList())
+        }
         val (me, copied) = prefs.ownDeviceId()
         if (copied) {
             // Moved here from another phone: publish everything under this
@@ -113,10 +153,12 @@ class SyncEngine @Inject constructor(
         val clock = HybridClock(prefs.clock())
         indexChoices()
 
-        // Before this device's first sync touches anything, keep a copy.
+        // Before this device's first sync touches anything, keep a copy. If
+        // that fails (no space, say) it's tried again next round; sync goes on,
+        // since it never deletes anything.
         if (!prefs.firstBackupDone()) {
-            hooks.safetyBackup()
-            prefs.markFirstBackupDone()
+            if (hooks.safetyBackup()) prefs.markFirstBackupDone()
+            else prefs.recordError("Couldn't save a safety copy of your library before syncing. It will be tried again next time.")
         }
 
         prefs.setProgress("Checking Google Drive…")
@@ -127,13 +169,9 @@ class SyncEngine @Inject constructor(
         if (known == null) {
             prefs.setKnownReset(marker)
         } else if (marker != known) {
-            prefs.setEnabled(false)
-            prefs.resetForDisable()
-            prefs.recordError("Sync was turned off because the synced data was deleted from Google Drive on another device. Everything on this phone is still here; turn sync on again to start over.")
-            // Last: stopping cancels background sync work, possibly this very round.
-            hooks.stopSync()
-            return SyncOutcome.ResetElsewhere
+            return stopForReset()
         }
+        val epoch = known ?: marker
         val files = session.list()
         val seen = prefs.seenMd5()
         val newSeen = HashMap(seen)
@@ -163,8 +201,14 @@ class SyncEngine @Inject constructor(
                 continue
             }
             val shard = decoded
-            if (shard.device != dev) {
+            if (shard.device != dev || shard.shard != DriveSyncClient.shardOfName(f.name)) {
                 damaged++
+                continue
+            }
+            // Written before the last "Delete synced data" by a device that
+            // hadn't noticed yet: not part of this library any more.
+            if (shard.epoch != epoch) {
+                newSeen[f.name] = f.md5
                 continue
             }
             devices[dev] = shard.name to f.modifiedAt
@@ -172,6 +216,10 @@ class SyncEngine @Inject constructor(
             newSeen[f.name] = f.md5
         }
         if (devices.isNotEmpty()) prefs.rememberDevices(devices)
+        // This phone's own files that Drive no longer has (removed by hand,
+        // say): send them again. A reset was ruled out above.
+        val missing = syncDao.shardsInUse().filter { ours[DriveSyncClient.shardName(me, it)] == null }
+        if (missing.isNotEmpty()) syncDao.markDirty(missing.map { SyncDirtyEntity(it) })
 
         val remote = remoteRecords()
         // A device's very first sync only: later duplicates are folded instead
@@ -184,9 +232,8 @@ class SyncEngine @Inject constructor(
         val applied = applyInbox(remote, me, clock, now, decision)
         if (applied < 0) {
             // Held back for review: still send this device's own changes.
-            uploadDirty(session, me, ours, now)
+            if (uploadDirty(session, me, ours, now, epoch) < 0) return stopForReset()
             prefs.saveClock(clock.current)
-            prefs.setCleanRoundAt(0L)
             return SyncOutcome.NeedsReview(-applied)
         }
         prefs.saveSeenMd5(newSeen)
@@ -195,14 +242,16 @@ class SyncEngine @Inject constructor(
 
         // Edits made while the round ran are back in the outbox; send them too.
         commitLocal(me, clock)
-        val sent = uploadDirty(session, me, ours, now)
+        val sent = uploadDirty(session, me, ours, now, epoch)
+        if (sent < 0) return stopForReset()
         prefs.saveClock(clock.current)
-        session.accountEmail()?.let { prefs.setAccountEmail(it) }
         // Only a round that saw every device's copy may tell which shared files are unused.
         prefs.setCleanRoundAt(if (damaged == 0 && unreadable == 0) now else 0L)
         hooks.syncFiles(prefs.status.first().filesOnWifiOnly)
         if (damaged > 0) {
             prefs.recordError("Skipped $damaged damaged file(s) from another device; nothing from them was applied")
+        } else if (unreadable > 0) {
+            prefs.recordError("Another device uses a newer version of PettiBox. Update this app to see everything it saved.")
         }
         return SyncOutcome.Ok(applied, sent, damaged)
     }
@@ -256,7 +305,9 @@ class SyncEngine @Inject constructor(
         val rows = syncDao.outbox()
         if (rows.isEmpty()) return
         prefs.setProgress("Preparing your changes…")
-        for (chunk in rows.chunked(200)) db.withTransaction {
+        for (chunk in rows.chunked(200)) {
+          reserve(clock, chunk.size)
+          db.withTransaction {
             val dirty = HashSet<Int>()
             val metas = ArrayList<SyncMetaEntity>()
             for (row in chunk) {
@@ -268,7 +319,8 @@ class SyncEngine @Inject constructor(
                     // win over newer edits made elsewhere (it merges as a
                     // concurrent version instead).
                     if (local == null) null else {
-                        val ts = library.editedAt(row.kind, row.syncId)?.takeIf { it > 0 } ?: clock.next()
+                        val ts = library.editedAt(row.kind, row.syncId)?.takeIf { it > 0 }
+                            ?.coerceAtMost(System.currentTimeMillis()) ?: clock.next()
                         clock.observe(ts)
                         SyncDiff.apply(null, local, Dot(me, ts))
                     }
@@ -285,6 +337,7 @@ class SyncEngine @Inject constructor(
             if (metas.isNotEmpty()) syncDao.putMeta(metas)
             if (dirty.isNotEmpty()) syncDao.markDirty(dirty.map { SyncDirtyEntity(it) })
             noteChoices(metas)
+          }
         }
     }
 
@@ -303,25 +356,40 @@ class SyncEngine @Inject constructor(
         }
         prefs.setProgress("Updating your library…")
         val changes = ArrayList<Pair<SyncRecord?, SyncRecord>>()
-        var removals = 0
+        val removing = ArrayList<String>()
         for (r in remote) {
             clock.observe(r.maxTs)
             val meta = syncDao.meta(r.kind, r.id)?.let { decodeOrNull(it.recordJson) }
             val merged = meta?.let { merge(it, r) } ?: r
             if (merged == meta) continue
-            if (r.kind == KIND_ITEM && wouldRemove(r.id, merged)) removals++
+            if (r.kind == KIND_ITEM && wouldRemove(r.id, merged)) removing += r.id
             changes += meta to merged
         }
         if (changes.isEmpty()) {
             syncDao.clearInbox()
             return 0
         }
+        val removals = removing.size
         val big = removals > MASS_LIMIT || (removals >= 5 && removals * 10 > syncDao.liveCount())
-        if (big && decision == null) {
+        // A choice holds only for the saves it was shown for: if more
+        // removals arrived since, ask again.
+        val key = removing.sorted().joinToString(",")
+        val choice = decision?.takeIf { prefs.reviewKey() == key }
+        if (big && choice == null) {
+            prefs.setReviewKey(key)
             prefs.setPendingReview(removals)
             return -removals
         }
-        if (big) hooks.safetyBackup()
+        if (big && !hooks.safetyBackup()) {
+            // No safety copy, no mass removal: ask again once there's room.
+            prefs.recordError("Couldn't save a safety copy before removing saves, so nothing was removed. Free some space and choose again.")
+            prefs.setPendingReview(removals)
+            return -removals
+        }
+        reserve(clock, changes.size * 2)
+        // Remembered before applying, so reminders and link pictures for
+        // these saves are still set up if the app stops right after.
+        prefs.setPendingFollowUps(changes.map { it.second }.filter { it.kind == KIND_ITEM }.map { it.id })
 
         val followUps = ArrayList<LocalLibrary.Applied>()
         db.withTransaction {
@@ -334,12 +402,14 @@ class SyncEngine @Inject constructor(
                 // that edit now, on top of what it was based on, and merge it
                 // in, so the copy from another device can't overwrite it.
                 syncDao.outboxRow(merged.kind, merged.id)?.let { row ->
+                    // No local copy means it was removed for good here: that
+                    // removal is recorded too (it only wins over writes it saw).
                     val local = library.snapshot(merged.kind, merged.id, before)
-                    val mine = if (local == null) null else SyncDiff.apply(before, local, Dot(me, clock.next()))
+                    val mine = if (before == null && local == null) null else SyncDiff.apply(before, local, Dot(me, clock.next()))
                     if (mine != null) merged = merge(mine, merged)
                     syncDao.clearOutbox(row.kind, row.syncId, row.ts)
                 }
-                if (decision == REVIEW_KEEP && merged.kind == KIND_ITEM && wouldRemove(merged.id, merged)) {
+                if (choice == REVIEW_KEEP && merged.kind == KIND_ITEM && wouldRemove(merged.id, merged)) {
                     // "Keep mine": undo the removal for every device by writing
                     // this phone's state back as a new edit.
                     val local = library.snapshot(KIND_ITEM, merged.id, merged)
@@ -362,6 +432,7 @@ class SyncEngine @Inject constructor(
             noteChoices(metas)
         }
         hooks.afterApply(followUps, now)
+        prefs.setPendingFollowUps(emptyList())
         return changes.size
     }
 
@@ -379,6 +450,7 @@ class SyncEngine @Inject constructor(
         val plan = SyncDedupe.plan(candidates, TextUtils::urlDedupeKey)
         if (plan.isEmpty()) return
         val followUps = ArrayList<LocalLibrary.Applied>()
+        reserve(clock, plan.size)
         db.withTransaction {
             syncDao.beginApplying()
             val metas = ArrayList<SyncMetaEntity>()
@@ -410,16 +482,23 @@ class SyncEngine @Inject constructor(
     }
 
     /** Uploads this device's files that changed. Returns how many. */
-    private suspend fun uploadDirty(session: SyncTransport.Session, me: String, ours: Map<String, String>, now: Long): Int {
+    /**
+     * Sends this phone's changed files, stamped with the reset [epoch]. The
+     * marker is checked again before each one, so a "Delete synced data" made
+     * meanwhile isn't undone (returns -1 then); readers skip files from
+     * another epoch, which covers the moment between check and send.
+     */
+    private suspend fun uploadDirty(session: SyncTransport.Session, me: String, ours: Map<String, String>, now: Long, epoch: String): Int {
         val dirty = syncDao.dirtyShards()
         if (dirty.isEmpty()) return 0
         prefs.setProgress("Sending your changes…")
         val name = prefs.deviceName()
         var sent = 0
         for (shard in dirty.sorted()) {
+            if ((session.resetMarker() ?: "") != epoch) return -1
             val records = syncDao.metaInShard(shard).mapNotNull { decodeOrNull(it.recordJson) }
             val fileName = DriveSyncClient.shardName(me, shard)
-            session.write(fileName, SyncCodec.encodeShard(me, name, shard, now, records), ours[fileName])
+            session.write(fileName, SyncCodec.encodeShard(me, name, shard, now, records, epoch), ours[fileName])
             syncDao.clearDirty(shard)
             sent++
         }
@@ -466,14 +545,15 @@ class SyncEngine @Inject constructor(
         val r = syncDao.meta(KIND_ITEM, syncId)?.let { decodeOrNull(it.recordJson) } ?: return@withLock
         if (r.alternatives(field).isEmpty()) return@withLock
         val clock = HybridClock(prefs.clock())
+        clock.observe(r.maxTs)
         val next = SyncWrite.field(r, field, r.value(field), Dot(prefs.deviceId(), clock.next()))
         val row = SyncMetaEntity(KIND_ITEM, syncId, shardOf(syncId), SyncCodec.encodeString(next))
+        prefs.saveClock(clock.current) // before the write: the clock never falls behind a saved stamp
         db.withTransaction {
             syncDao.putMeta(listOf(row))
             syncDao.markDirty(listOf(SyncDirtyEntity(shardOf(syncId))))
         }
         noteChoices(listOf(row))
-        prefs.saveClock(clock.current)
     }
 
     companion object {
@@ -481,6 +561,8 @@ class SyncEngine @Inject constructor(
 
         /** More removals than this in one round wait for the user. */
         const val MASS_LIMIT = 25
+        /** Headroom in a saved clock ceiling: no round writes for longer than this between saves. */
+        const val CLOCK_MARGIN_MS = 60_000L
 
         const val REVIEW_APPLY = "apply"
         const val REVIEW_KEEP = "keep"

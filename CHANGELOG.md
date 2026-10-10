@@ -5,6 +5,14 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Sync hardening from the design audit (audit/SYNC_SYSTEM_DESIGN_AUDIT.md): a library only syncs
+  with its own Google account; "Delete synced data" can't be undone by a device that was mid-sync;
+  unused photos go to Drive's trash (recoverable) instead of being deleted, and come back if a save
+  needs them; duplicate Drive folders are merged without deleting anything; damaged or malformed
+  sync files are rejected whole; a device re-sends its own files if they go missing; a pending
+  "removal review" no longer holds back your own changes, and is asked again if more removals
+  arrive; a newer app version on another device is reported; and no safety copy means no mass
+  removal.
 - Sync fixes from an architecture review: a save that reaches a device before its collection is
   filed into it when the collection arrives (and is never taken out of it); an edit made while a
   sync is applying changes is no longer overwritten; and a phone set up by copying another one

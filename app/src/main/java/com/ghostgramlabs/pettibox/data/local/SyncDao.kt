@@ -18,12 +18,19 @@ interface SyncDao {
     @Query("SELECT COUNT(*) FROM sync_outbox")
     fun observeOutboxCount(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM sync_outbox")
+    suspend fun outboxCount(): Int
+
     /** Clears a row only if nothing changed it since it was read (same ts). */
     @Query("DELETE FROM sync_outbox WHERE kind = :kind AND sync_id = :syncId AND ts = :ts")
     suspend fun clearOutbox(kind: String, syncId: String, ts: Long)
 
     @Query("DELETE FROM sync_outbox")
     suspend fun clearAllOutbox()
+
+    /** Which of this device's 16 files hold records. */
+    @Query("SELECT DISTINCT shard FROM sync_meta")
+    suspend fun shardsInUse(): List<Int>
 
     @Query("SELECT * FROM sync_outbox WHERE kind = :kind AND sync_id = :syncId")
     suspend fun outboxRow(kind: String, syncId: String): SyncOutboxEntity?
@@ -152,6 +159,13 @@ interface SyncDao {
     suspend fun pendingFiles(): List<String>
 
     /** Card pictures waiting to download: small, so they come down even on mobile data. */
+    /** Whether anything still waits for this placeholder (another job may have filled it meanwhile). */
+    @Query(
+        "SELECT EXISTS(SELECT 1 FROM attachments WHERE uri = :placeholder) OR " +
+            "EXISTS(SELECT 1 FROM save_items WHERE local_uri = :placeholder OR thumbnail_uri = :placeholder)"
+    )
+    suspend fun placeholderInUse(placeholder: String): Boolean
+
     @Query("SELECT DISTINCT thumbnail_uri FROM save_items WHERE thumbnail_uri LIKE 'pettibox-sync:%'")
     suspend fun pendingThumbnails(): List<String>
 

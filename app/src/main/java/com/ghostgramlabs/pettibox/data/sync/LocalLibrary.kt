@@ -75,6 +75,16 @@ class LocalLibrary @Inject constructor(
         else -> null
     }
 
+    /** Follow-up work for saves a round applied: their reminders, and link pictures still missing. */
+    suspend fun followUpsFor(syncIds: List<String>): List<Applied> = syncIds.mapNotNull { id ->
+        val s = syncDao.itemBySyncId(id) ?: return@mapNotNull null
+        Applied(
+            itemId = s.id,
+            isNewLink = s.contentType == "LINK" && s.url != null && s.thumbnailUri == null,
+            remindChanged = true
+        )
+    }
+
     /** Last-edited time of a record here, used for its first sync (so old copies don't win). */
     suspend fun editedAt(kind: String, id: String): Long? = when (kind) {
         KIND_ITEM -> syncDao.itemBySyncId(id)?.updatedAt

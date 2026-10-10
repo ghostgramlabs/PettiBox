@@ -49,6 +49,15 @@ export function deviceOf(name) {
   return m ? m[1] : null;
 }
 
+/** Which of the device's 16 files a file name is, or null. */
+export function shardOfName(name) {
+  const m = /^d-[0-9a-f]{8,32}-([0-9a-f])\.json\.gz$/.exec(name);
+  return m ? parseInt(m[1], 16) : null;
+}
+
+/** A stable key for a set of saves under review, so a choice applies only to the set it was made for. */
+const reviewKey = (ids) => [...ids].sort().join(',');
+
 /** Same rule as TextUtils.urlDedupeKey: scheme and host are case-insensitive, the rest isn't. */
 export function urlKey(url) {
   const t = url.trim();
@@ -473,6 +482,7 @@ export class SyncEngine {
       const received = new Map();
       const newSeen = { ...m.seenMd5 };
       let damaged = 0;
+      let newer = 0;
       for (const f of files) {
         const dev = deviceOf(f.name);
         if (!dev) continue;
@@ -485,8 +495,11 @@ export class SyncEngine {
           if (e instanceof SyncFormatError) { damaged++; continue; }
           throw e;
         }
-        if (!shard) continue; // newer format: leave it for a newer version
-        if (shard.device !== dev) { damaged++; continue; }
+        if (!shard) { newer++; continue; } // newer format: leave it for a newer version
+        if (shard.device !== dev || shard.shard !== shardOfName(f.name)) { damaged++; continue; }
+        // Written before the last "Delete synced data" (a writer that hadn't
+        // noticed yet): not part of this library any more.
+        if (shard.epoch !== (m.knownReset ?? '')) { newSeen[f.name] = f.md5; continue; }
         m.devices[dev] = { name: shard.name, seen: Math.max(f.modifiedAt ?? 0, m.devices[dev]?.seen ?? 0) };
         for (const r of shard.records) {
           const k = recKey(r.kind, r.id);
@@ -497,6 +510,10 @@ export class SyncEngine {
 
       // Merge in (state-based: everything we have is kept, plus what's new).
       const mine = await this.records();
+      // This browser's own files that Drive no longer has (removed by hand,
+      // say): send them again. A reset was ruled out above.
+      const held = new Set([...mine.values()].map((r) => shardOf(r.id)));
+      for (const n of held) if (!ours[shardName(m.deviceId, n)]) m.dirty = [...new Set([...m.dirty, n])];
       const changed = [];
       const removals = []; // [before, merged] for saves this round would take off the shelf
       for (const [k, r] of received) {
@@ -513,13 +530,22 @@ export class SyncEngine {
       // read until then, so the same files come down again after the choice.
       const live = [...mine.values()].filter(onShelf).length;
       const big = removals.length > MASS_LIMIT || (removals.length >= 5 && removals.length * 10 > live);
-      const decision = m.reviewDecision ?? null;
+      // A choice holds only for the saves it was shown for: if more removals
+      // arrived since, ask again.
+      const key = reviewKey(removals.map(([cur]) => cur.id));
+      const decision = m.reviewDecision && m.reviewKey === key ? m.reviewDecision : null;
       if (big && !decision) {
         m.pendingReview = removals.length;
+        m.reviewKey = key;
+        m.reviewDecision = null;
+        m.clock = Math.max(m.clock, clock.last);
         await this.saveMeta(m);
+        // Nothing incoming is applied, but this browser's own changes still go out.
+        await this.upload(session, m, ours, now);
         return this.fail(m, `Another device wants to remove or archive ${removals.length} saves. Choose Keep mine or Apply.`, false, 'review');
       }
       m.reviewDecision = null;
+      m.reviewKey = null;
       m.pendingReview = 0;
       if (big && decision === 'keep') {
         // Keep mine: put them back for every device, as a new edit here.
@@ -569,19 +595,14 @@ export class SyncEngine {
       m.clock = Math.max(m.clock, clock.last);
       await this.saveMeta(m);
 
-      // Upload this browser's files that changed.
-      let sent = 0;
-      const all = await this.records();
-      for (const n of [...m.dirty].sort((a, b) => a - b)) {
-        const recs = [...all.values()].filter((r) => shardOf(r.id) === n);
-        const name = shardName(m.deviceId, n);
-        await session.write(name, encodeShard(m.deviceId, m.deviceName, n, now, recs), ours[name] ?? null);
-        m.dirty = m.dirty.filter((x) => x !== n);
-        await this.saveMeta(m);
-        sent++;
+      const sent = await this.upload(session, m, ours, now);
+      if (sent < 0) {
+        m.stopped = true;
+        return this.fail(m, 'Sync was turned off because the synced data was deleted from Google Drive. Your library is still here; sign in again to start over.', false, 'reset');
       }
       m.lastSyncAt = this.now();
-      m.lastError = damaged ? `Skipped ${damaged} damaged file(s) from another device; nothing from them was applied` : '';
+      m.lastError = damaged ? `Skipped ${damaged} damaged file(s) from another device; nothing from them was applied`
+        : newer ? 'Another device uses a newer PettiBox. Update this extension to see everything it saved.' : '';
       m.needs = null;
       await this.saveMeta(m);
       return { ok: true, received: changed.length, sent, damaged };
@@ -590,6 +611,28 @@ export class SyncEngine {
       const transient = !e?.status || e.status === 403 || e.status === 429 || e.status >= 500;
       return this.fail(m, e?.status ? `Google Drive had a problem (${e.status})` : 'Couldn\'t reach Google Drive', transient);
     }
+  }
+
+  /**
+   * Sends this browser's changed files, each stamped with the reset epoch.
+   * Before each one it checks the reset marker again, so a "Delete synced
+   * data" made meanwhile isn't undone; returns -1 if one was. Readers skip
+   * files from another epoch, which covers the moment between check and send.
+   */
+  async upload(session, m, ours, now) {
+    let sent = 0;
+    const all = await this.records();
+    for (const n of [...m.dirty].sort((a, b) => a - b)) {
+      const marker = (await session.resetMarker?.()) ?? '';
+      if (marker !== (m.knownReset ?? '')) return -1;
+      const recs = [...all.values()].filter((r) => shardOf(r.id) === n);
+      const name = shardName(m.deviceId, n);
+      await session.write(name, encodeShard(m.deviceId, m.deviceName, n, now, recs, m.knownReset ?? ''), ours[name] ?? null);
+      m.dirty = m.dirty.filter((x) => x !== n);
+      await this.saveMeta(m);
+      sent++;
+    }
+    return sent;
   }
 
   async fail(m, message, retry, needs = null) {

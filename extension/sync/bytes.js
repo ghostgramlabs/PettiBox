@@ -6,9 +6,24 @@ export async function gzip(text) {
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-export async function gunzip(bytes) {
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-  return new Response(stream).text();
+/** Larger than this once unpacked is corrupt (or hostile), not a library. Same as the phones. */
+export const MAX_UNPACKED_BYTES = 256 * 1024 * 1024;
+
+export async function gunzip(bytes, limit = MAX_UNPACKED_BYTES) {
+  const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip')).getReader();
+  const parts = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.length;
+    if (size > limit) {
+      await reader.cancel().catch(() => {});
+      throw new Error('file too large once unpacked');
+    }
+    parts.push(value);
+  }
+  return new TextDecoder().decode(await new Blob(parts).arrayBuffer());
 }
 
 // MD5 (RFC 1321). Web Crypto has no MD5, and Drive's checksum is MD5.

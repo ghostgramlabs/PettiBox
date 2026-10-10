@@ -43,41 +43,77 @@ export async function signOut() {
 const TIMEOUT_MS = 30_000;
 const TRANSFER_TIMEOUT_MS = 120_000;
 
+/**
+ * One Drive request. The time limit covers the whole answer, body included:
+ * the reply's json(), text(), arrayBuffer() and blob() still run under it, so
+ * a reply that stalls half-way fails (and is retried) instead of holding the
+ * sync queue. A body nobody reads is released when the limit passes.
+ */
 async function call(token, url, init = {}) {
   const transfer = url.includes('alt=media') || url.startsWith(UPLOAD);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), transfer ? TRANSFER_TIMEOUT_MS : TIMEOUT_MS);
+  let timedOut = false;
+  let onTimeout = () => {};
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); onTimeout(); }, transfer ? TRANSFER_TIMEOUT_MS : TIMEOUT_MS);
+  timer.unref?.(); // where timers can keep a process open (tests), a reply nobody reads must not
+  const expired = new Promise((_, reject) => {
+    onTimeout = () => reject(new DriveError(0, 'Google Drive took too long to answer'));
+  });
+  expired.catch(() => {});
   let res;
   try {
-    res = await fetch(url, {
+    res = await Promise.race([fetch(url, {
       ...init,
       signal: controller.signal,
       headers: { ...(init.headers ?? {}), Authorization: `Bearer ${token}` },
-    });
+    }), expired]);
   } catch (e) {
-    throw new DriveError(0, controller.signal.aborted ? 'Google Drive took too long to answer' : 'network error');
-  } finally {
     clearTimeout(timer);
+    if (e instanceof DriveError) throw e;
+    throw new DriveError(0, timedOut || controller.signal.aborted ? 'Google Drive took too long to answer' : 'network error');
   }
   if (res.status === 401) {
     // A stale cached token: drop it so the next attempt gets a fresh one.
     await chrome.identity.removeCachedAuthToken({ token }).catch(() => {});
   }
-  if (!res.ok) throw new DriveError(res.status, `Drive request failed (${res.status})`);
-  return res;
+  if (!res.ok) {
+    clearTimeout(timer);
+    throw new DriveError(res.status, `Drive request failed (${res.status})`);
+  }
+  const body = (read) => async () => {
+    try {
+      return await Promise.race([read(), expired]);
+    } catch (e) {
+      if (e instanceof DriveError) throw e;
+      throw new DriveError(0, timedOut ? 'Google Drive took too long to answer' : 'network error');
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  return {
+    ok: true,
+    status: res.status,
+    headers: res.headers,
+    json: body(() => res.json()),
+    text: body(() => res.text()),
+    arrayBuffer: body(() => res.arrayBuffer()),
+    blob: body(() => res.blob()),
+  };
 }
 
 const q = (s) => encodeURIComponent(s);
 
-/** Folders matching [query], oldest first: [{ id, parents }]. */
+/** Files and folders matching [query], oldest first: [{ id, parents, name, folder }]. */
 async function folders(token, query) {
   const out = [];
   let page = null;
   do {
-    const url = `${API}/files?q=${q(query)}&orderBy=createdTime&pageSize=1000&fields=${q('nextPageToken,files(id,parents)')}` +
+    const url = `${API}/files?q=${q(query)}&orderBy=createdTime&pageSize=1000&fields=${q('nextPageToken,files(id,parents,name,mimeType)')}` +
       (page ? `&pageToken=${q(page)}` : '');
     const body = await (await call(token, url)).json();
-    for (const f of body.files ?? []) out.push({ id: f.id, parents: f.parents ?? [] });
+    for (const f of body.files ?? []) {
+      out.push({ id: f.id, parents: f.parents ?? [], name: f.name, folder: f.mimeType === FOLDER_MIME });
+    }
     page = body.nextPageToken ?? null;
   } while (page);
   return out;
@@ -95,10 +131,26 @@ async function move(token, id, { to, from = [], name }) {
   });
 }
 
-/** Moves everything in [from] into [into], then removes the empty [from]. */
+/**
+ * Moves everything in [from] into [into]; a sub-folder [into] already has
+ * (two "files" folders, say) is merged the same way rather than moved
+ * alongside. [from] is never deleted: once a fresh look finds it empty it
+ * goes to Drive's trash, so anything a device put there at that very moment
+ * can still be recovered, and devices stop using it (see openFolder).
+ */
 async function mergeInto(token, from, into) {
-  for (const f of await folders(token, `'${from}' in parents and trashed = false`)) await move(token, f.id, { to: into, from: f.parents });
-  await call(token, `${API}/files/${from}`, { method: 'DELETE' }).catch(() => {});
+  const existing = await folders(token, `'${into}' in parents and trashed = false and mimeType = '${FOLDER_MIME}'`);
+  for (const f of await folders(token, `'${from}' in parents and trashed = false`)) {
+    const same = f.folder ? existing.find((e) => e.name === f.name) : null;
+    if (same) await mergeInto(token, f.id, same.id);
+    else await move(token, f.id, { to: into, from: f.parents });
+  }
+  if ((await folders(token, `'${from}' in parents and trashed = false`)).length) return; // more arrived: next time
+  await call(token, `${API}/files/${from}?fields=id`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify({ trashed: true }),
+  }).catch(() => {});
 }
 
 /** The oldest of several same-named folders; the rest are folded into it. */
@@ -146,15 +198,26 @@ async function findFolder(token, name, parent) {
   return found.length ? found[0].id : null;
 }
 
-// The folder hardly ever changes; look it up once per worker lifetime and account.
+// The folder hardly ever changes; look it up once per worker lifetime and
+// account, and check it's still in use (not trashed by a merge) each round.
 let known = null; // { token, id }
+
+async function stillInUse(token, id) {
+  try {
+    const body = await (await call(token, `${API}/files/${id}?fields=${q('trashed')}`)).json();
+    return body.trashed !== true;
+  } catch (e) {
+    if (e?.status === 404) return false;
+    throw e;
+  }
+}
 
 /** The SyncTransport the engine uses. */
 export const driveTransport = {
   async open() {
     const token = await getToken(false);
     if (!token) return null;
-    if (known?.token !== token) known = { token, id: await syncFolder(token) };
+    if (known?.token !== token || !(await stillInUse(token, known.id))) known = { token, id: await syncFolder(token) };
     const folder = known.id;
     return {
       async list() {
@@ -202,7 +265,8 @@ export const driveTransport = {
       },
       /** Photos, PDFs and pictures the phones shared: sha -> { id, size, mime }. */
       async storedFiles() {
-        const files = await findFolder(token, 'files', folder);
+        // Two devices may each have made a files folder: fold them into one.
+        const files = await settle(token, await folders(token, named('files', folder)));
         const out = {};
         if (!files) return out;
         let page = null;
@@ -221,11 +285,19 @@ export const driveTransport = {
       async readFile(id) {
         return (await call(token, `${API}/files/${id}?alt=media`)).blob();
       },
+      /**
+       * The reset marker's content (null if sync was never reset). Two
+       * devices resetting at once can leave two markers: every device takes
+       * the smallest content, so all agree on the same one.
+       */
       async resetMarker() {
         const query = `'${folder}' in parents and trashed = false and name = 'pettibox-sync-reset.json'`;
         const body = await (await call(token, `${API}/files?q=${q(query)}&fields=${q('files(id)')}`)).json();
-        const f = (body.files ?? [])[0];
-        return f ? (await call(token, `${API}/files/${f.id}?alt=media`)).text() : null;
+        const found = body.files ?? [];
+        if (!found.length) return null;
+        const texts = [];
+        for (const f of found) texts.push(await (await call(token, `${API}/files/${f.id}?alt=media`)).text());
+        return texts.sort()[0];
       },
       async accountEmail() {
         const body = await (await call(token, `${API}/about?fields=${q('user(emailAddress)')}`)).json();

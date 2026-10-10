@@ -1520,7 +1520,7 @@ fun SettingsScreen(
                         val ok = viewModel.deleteSyncedData()
                         snackbarHostState.showSnackbar(
                             if (ok) "Synced data deleted from Google Drive. Sync is off on all your devices."
-                            else "Couldn't reach Google Drive. Nothing was deleted."
+                            else "Couldn't finish deleting from Google Drive. Some synced data may already be gone; try again to finish. Your library on this phone is untouched."
                         )
                     }
                 },

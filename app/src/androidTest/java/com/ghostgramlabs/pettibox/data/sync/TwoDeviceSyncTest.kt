@@ -17,6 +17,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -39,6 +40,7 @@ class TwoDeviceSyncTest {
         val files = LinkedHashMap<String, Triple<String, String, String>>() // name -> (id, json, md5)
         var corrupt: String? = null
         var marker: String? = null
+        var account = "test@example.com"
         /** Files not listed yet (uploaded, but not seen by the reader at this moment). */
         val hidden = HashSet<String>()
 
@@ -53,13 +55,15 @@ class TwoDeviceSyncTest {
                 val md5 = MessageDigest.getInstance("MD5").digest(bytes).joinToString("") { "%02x".format(it) }
                 files[name] = Triple(files[name]?.first ?: UUID.randomUUID().toString(), json, md5)
             }
-            override suspend fun accountEmail() = "test@example.com"
+            override suspend fun accountEmail() = account
             override suspend fun resetMarker() = marker
         }
     }
 
     private class NoHooks : SyncHooks {
-        override suspend fun safetyBackup() {}
+        var backupWorks = true
+        var backups = 0
+        override suspend fun safetyBackup(): Boolean { backups++; return backupWorks }
         override suspend fun afterApply(applied: List<LocalLibrary.Applied>, now: Long) {}
         override suspend fun syncFiles(wifiOnly: Boolean) {}
         var stopped = false
@@ -303,6 +307,120 @@ class TwoDeviceSyncTest {
         syncBoth()
         assertEquals(parent, b.db.categoryDao().getById(child)!!.parentId)
         assertEquals(parent, a.db.categoryDao().getById(child)!!.parentId)
+    }
+
+    // ── Audit acceptance tests (audit/SYNC_SYSTEM_DESIGN_AUDIT.md) ───────────
+
+    @Test fun d02_a_library_never_syncs_into_another_google_account() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn()
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        val before = drive.files.toMap()
+        a.db.saveDao().update(a.byUrl("https://x.example")!!.copy(title = "edited"))
+        drive.account = "someone.else@example.com" // Drive now signed in as another account
+        val out = a.sync()
+        assertTrue("got $out", out is SyncOutcome.Failed)
+        assertEquals(before, drive.files.toMap()) // nothing written
+        assertTrue(a.prefs.status.first().lastError.contains("someone.else@example.com"))
+    }
+
+    @Test fun d03_the_saved_clock_is_never_behind_a_written_stamp_even_if_the_round_dies() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn()
+        a.engine.beforeApply = { throw IllegalStateException("app killed") } // after local changes are written
+        a.sync()
+        a.engine.beforeApply = {}
+        val stamps = a.db.syncDao().metaOfKind("item").map { SyncCodec.decodeString(it.recordJson).maxTs }
+        assertTrue(stamps.isNotEmpty())
+        assertTrue(a.prefs.clock() >= stamps.max())
+    }
+
+    @Test fun d04_a_save_deleted_for_good_while_a_sync_applies_changes_stays_deleted() = runBlocking {
+        val url = "https://x.example"
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        val syncId = a.byUrl(url)!!.syncId
+        // A only opens it (a phone's own bookkeeping, not an edit).
+        a.db.saveDao().update(a.byUrl(url)!!.copy(openedAt = System.currentTimeMillis()))
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        // B deletes it for good at the moment B applies that.
+        b.engine.beforeApply = {
+            b.engine.beforeApply = {}
+            b.db.saveDao().delete(b.db.syncDao().itemBySyncId(syncId)!!.id)
+        }
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        syncBoth()
+        assertNull(b.db.syncDao().itemBySyncId(syncId)) // not brought back here
+        assertTrue(SyncCodec.decodeString(b.db.syncDao().meta("item", syncId)!!.recordJson).isGone)
+        assertTrue(a.db.syncDao().itemBySyncId(syncId)!!.isPendingDelete) // and Recently deleted on A
+    }
+
+    @Test fun d05_files_written_before_a_reset_are_never_read_after_it() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn()
+        assertTrue(a.sync() is SyncOutcome.Ok) // A's files carry no reset epoch
+        drive.marker = "reset-1" // deleted from Drive elsewhere; A hasn't noticed and its files linger
+        b.turnOn()
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        assertTrue(b.live().isEmpty())
+        assertTrue(a.sync() is SyncOutcome.ResetElsewhere)
+    }
+
+    @Test fun d05_a_reset_during_a_round_stops_its_uploads() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn()
+        a.engine.beforeApply = { drive.marker = "reset-2" }
+        val out = a.sync()
+        a.engine.beforeApply = {}
+        assertTrue("got $out", out is SyncOutcome.ResetElsewhere)
+        assertTrue(drive.files.isEmpty())
+    }
+
+    @Test fun d11_this_phones_files_missing_from_drive_are_sent_again() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn()
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        drive.files.clear()
+        val out = a.sync()
+        assertTrue(out is SyncOutcome.Ok && out.sent > 0)
+        b.turnOn()
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        assertEquals(1, b.live().size)
+    }
+
+    @Test fun d12_a_review_choice_applies_only_to_the_saves_it_was_shown_for() = runBlocking {
+        repeat(30) { a.db.saveDao().insert(link("s$it")) }
+        a.turnOn(); b.turnOn(); syncBoth()
+        val all = a.saves()
+        for (s in all.take(26)) a.db.saveDao().setPendingDelete(s.id, true)
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertTrue(b.sync() is SyncOutcome.NeedsReview)
+        b.prefs.setReviewDecision(SyncEngine.REVIEW_APPLY)
+        // More removals arrive before B syncs again: the choice was for 26, not these.
+        for (s in all.drop(26)) a.db.saveDao().setPendingDelete(s.id, true)
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertTrue(b.sync() is SyncOutcome.NeedsReview)
+        assertEquals(30, b.live().size)
+    }
+
+    @Test fun o02_without_a_safety_copy_nothing_is_mass_removed_and_the_first_copy_is_retried() = runBlocking {
+        repeat(30) { a.db.saveDao().insert(link("s$it")) }
+        a.turnOn(); b.turnOn()
+        b.hooks.backupWorks = false
+        syncBoth()
+        assertFalse(b.prefs.firstBackupDone())
+        for (s in a.saves()) a.db.saveDao().setPendingDelete(s.id, true)
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertTrue(b.sync() is SyncOutcome.NeedsReview)
+        b.prefs.setReviewDecision(SyncEngine.REVIEW_APPLY)
+        assertTrue(b.sync() is SyncOutcome.NeedsReview) // no copy, so not applied
+        assertEquals(30, b.live().size)
+        b.hooks.backupWorks = true
+        assertTrue(b.sync() is SyncOutcome.NeedsReview)
+        b.prefs.setReviewDecision(SyncEngine.REVIEW_APPLY)
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        assertTrue(b.prefs.firstBackupDone())
+        assertEquals(0, b.live().size)
     }
 
     @Test fun the_same_field_edited_on_both_keeps_both_versions() = runBlocking {

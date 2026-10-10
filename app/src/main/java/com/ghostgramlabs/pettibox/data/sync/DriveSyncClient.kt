@@ -3,6 +3,8 @@ package com.ghostgramlabs.pettibox.data.sync
 import com.ghostgramlabs.pettibox.data.drive.DriveFolders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.Mutex
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -49,13 +51,49 @@ class DriveSyncClient(
 ) {
     @Inject constructor(folders: DriveFolders) : this(folders, API, UPLOAD)
 
+    /**
+     * One transfer per file at a time across this app's jobs (the picture job
+     * and the full-file job can want the same one): each holds the file's lock
+     * for its whole upload or download, so two never share a partial file or
+     * upload session.
+     */
+    suspend fun <T> exclusiveFile(sha: String, block: suspend () -> T): T =
+        transfers.computeIfAbsent(sha) { Mutex() }.withLock { block() }
+
+    /** Uploaded by this app in the last while: another job needn't send it again. */
+    fun recentlySent(sha: String): Boolean = (sent[sha] ?: 0L) > System.currentTimeMillis() - SENT_MEMORY_MS
+    fun markSent(sha: String) { sent[sha] = System.currentTimeMillis() }
+
+    /**
+     * Moves a shared file to Drive's trash instead of deleting it: Drive keeps
+     * it 30 days, and [restoreTrashed] brings it back if a save needs it.
+     */
+    suspend fun trash(token: String, fileId: String) = withContext(Dispatchers.IO) {
+        val conn = open("$api/files/$fileId?fields=id", "PATCH", token)
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+        conn.doOutput = true
+        conn.outputStream.use { it.write("{\"trashed\":true}".toByteArray(Charsets.UTF_8)) }
+        readResponse(conn)
+        Unit
+    }
+
+    /** A shared file put in the trash by a clean-up, taken out again; null if there's none. */
+    suspend fun restoreTrashed(token: String, filesFolder: String, sha: String): DriveSyncFile? = withContext(Dispatchers.IO) {
+        val f = list(token, "'$filesFolder' in parents and trashed = true and name contains '$sha'")
+            .firstOrNull { it.name.substringBefore('.') == sha } ?: return@withContext null
+        val conn = open("$api/files/${f.id}?fields=id", "PATCH", token)
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+        conn.doOutput = true
+        conn.outputStream.use { it.write("{\"trashed\":false}".toByteArray(Charsets.UTF_8)) }
+        readResponse(conn)
+        f
+    }
+
     /** My Drive/PettiBox/Sync, made if missing (see DriveFolders for the layout and moving old folders). */
     suspend fun syncFolder(token: String): String = folders.sync(token)
 
-    suspend fun filesFolder(token: String, syncFolder: String): String = withContext(Dispatchers.IO) {
-        findFolder(token, FILES_FOLDER, syncFolder) ?: createFolder(token, FILES_FOLDER, syncFolder)
-            .let { findFolder(token, FILES_FOLDER, syncFolder) ?: it }
-    }
+    /** PettiBox/Sync/files: one folder even if two devices made one (see DriveFolders.files). */
+    suspend fun filesFolder(token: String, syncFolder: String): String = folders.files(token, syncFolder)
 
     /** Every device file in the folder, with checksums, across all pages. */
     suspend fun listDeviceFiles(token: String, folder: String): List<DriveSyncFile> =
@@ -79,7 +117,20 @@ class DriveSyncClient(
             }
         }
         try {
-            GZIPInputStream(bytes.inputStream()).bufferedReader(Charsets.UTF_8).use { it.readText() }
+            val out = ByteArrayOutputStream()
+            GZIPInputStream(bytes.inputStream()).use { input ->
+                val buf = ByteArray(64 * 1024)
+                while (true) {
+                    val n = input.read(buf)
+                    if (n < 0) break
+                    out.write(buf, 0, n)
+                    // Corrupt or hostile, not a library: don't unpack without limit.
+                    if (out.size() > SyncCodec.MAX_UNPACKED_BYTES) throw SyncFormatException("${file.name} is too large once unpacked")
+                }
+            }
+            out.toString(Charsets.UTF_8.name())
+        } catch (e: SyncFormatException) {
+            throw e
         } catch (e: Exception) {
             throw SyncFormatException("${file.name} isn't a valid sync file")
         }
@@ -317,9 +368,11 @@ class DriveSyncClient(
 
     /** Content of the "sync was reset" marker, or null if sync was never reset. */
     suspend fun readResetMarker(token: String, folder: String): String? = withContext(Dispatchers.IO) {
-        val f = list(token, "'$folder' in parents and trashed = false and name = '$RESET_MARKER'").firstOrNull()
-            ?: return@withContext null
-        String(download(token, f.id), Charsets.UTF_8)
+        // Two devices resetting at once can leave two markers: every device
+        // takes the smallest content, so all agree on the same one.
+        val found = list(token, "'$folder' in parents and trashed = false and name = '$RESET_MARKER'")
+        if (found.isEmpty()) return@withContext null
+        found.map { String(download(token, it.id), Charsets.UTF_8) }.minOrNull()
     }
 
     /**
@@ -381,26 +434,6 @@ class DriveSyncClient(
             page = root.optString("nextPageToken").ifBlank { null }
         } while (page != null)
         out
-    }
-
-    private fun findFolder(token: String, name: String, parent: String?): String? {
-        val q = "name = '$name' and mimeType = '$FOLDER_MIME' and trashed = false" +
-            (parent?.let { " and '$it' in parents" } ?: "")
-        val response = readResponse(
-            open("$api/files?q=${enc(q)}&orderBy=createdTime&fields=${enc("files(id)")}", "GET", token)
-        )
-        val files = JSONObject(response).optJSONArray("files")
-        return if (files != null && files.length() > 0) files.getJSONObject(0).getString("id") else null
-    }
-
-    private fun createFolder(token: String, name: String, parent: String?): String {
-        val conn = open("$api/files?fields=id", "POST", token)
-        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-        conn.doOutput = true
-        val body = JSONObject().put("name", name).put("mimeType", FOLDER_MIME)
-        if (parent != null) body.put("parents", JSONArray().put(parent))
-        conn.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
-        return JSONObject(readResponse(conn)).getString("id")
     }
 
     private fun multipartCreate(token: String, folder: String, name: String, mime: String, data: InputStream, length: Long): String {
@@ -495,12 +528,18 @@ class DriveSyncClient(
         const val FILES_FOLDER = "files"
         /** Present once someone chose "Delete synced data from Google Drive". */
         const val RESET_MARKER = "pettibox-sync-reset.json"
-        private const val FOLDER_MIME = "application/vnd.google-apps.folder"
         private const val API = "https://www.googleapis.com/drive/v3"
         private const val UPLOAD = "https://www.googleapis.com/upload/drive/v3"
         private const val DONE = -1L
+        private const val SENT_MEMORY_MS = 10L * 60 * 1000
+        private val transfers = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.sync.Mutex>()
+        private val sent = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
         fun shardName(device: String, shard: Int) = "d-$device-${shard.toString(16)}.json.gz"
+
+        /** Which of the device's 16 files a file name is, or null. */
+        fun shardOfName(name: String): Int? =
+            Regex("^d-[0-9a-f]{8,32}-([0-9a-f])\\.json\\.gz$").find(name)?.groupValues?.get(1)?.toInt(16)
 
         /** Device id from a shard file name, or null if it isn't one. */
         fun deviceOf(name: String): String? =

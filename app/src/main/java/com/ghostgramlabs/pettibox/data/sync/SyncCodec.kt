@@ -13,7 +13,9 @@ data class DeviceShard(
     val name: String,
     val shard: Int,
     val generated: Long,
-    val records: List<SyncRecord>
+    val records: List<SyncRecord>,
+    /** The reset marker it was written under ("" before any reset). */
+    val epoch: String = ""
 )
 
 /**
@@ -26,15 +28,81 @@ object SyncCodec {
     /** Timestamps further ahead than this are corrupt, not a fast clock. */
     private const val MAX_FUTURE_MS = 10L * 365 * 24 * 60 * 60 * 1000
 
-    fun encodeShard(device: String, name: String, shard: Int, generated: Long, records: List<SyncRecord>): String =
+    /** Bounds shared with codec.js: larger is corrupt, not a big library. */
+    const val MAX_SHARD_RECORDS = 200_000
+    const val MAX_UNPACKED_BYTES = 256L * 1024 * 1024
+    private const val MAX_ID = 200
+    /** The largest whole number JavaScript holds exactly; the extension must read every time we write. */
+    private const val MAX_STAMP = 9_007_199_254_740_991L
+
+    /**
+     * The type each known field must have (null is always allowed). Unknown
+     * fields may hold any plain value and pass through untouched.
+     */
+    private val FIELD_TYPES: Map<String, Class<*>> = buildMap {
+        for (f in listOf(
+            SyncRecord.F_TITLE, SyncRecord.F_URL, SyncRecord.F_NOTES, SyncRecord.F_OCR, SyncRecord.F_META,
+            SyncRecord.F_CAT, SyncRecord.F_TYPE, SyncRecord.F_SRC, SyncRecord.F_MAIN, SyncRecord.F_THUMB,
+            SyncRecord.F_NAME, SyncRecord.F_EMOJI, SyncRecord.F_PARENT
+        )) put(f, String::class.java)
+        for (f in listOf(SyncRecord.F_FAV, SyncRecord.F_PIN, SyncRecord.F_ARCH, SyncRecord.F_USER, SyncRecord.F_LOCKED)) {
+            put(f, java.lang.Boolean::class.java)
+        }
+        for (f in listOf(SyncRecord.F_REMIND, SyncRecord.F_OPENED, SyncRecord.F_TRASH, SyncRecord.F_COLOR, SyncRecord.F_ORDER)) {
+            put(f, java.lang.Long::class.java)
+        }
+    }
+
+    private fun typeOf(field: String): Class<*>? =
+        FIELD_TYPES[field] ?: if (field.startsWith(SyncRecord.FILE_OCR_PREFIX)) String::class.java else null
+
+    /**
+     * [epoch]: the reset marker this file is written under ("" before any
+     * reset). Readers skip files from another epoch, so nothing written before
+     * a "Delete synced data" can come back after it.
+     */
+    fun encodeShard(device: String, name: String, shard: Int, generated: Long, records: List<SyncRecord>, epoch: String = ""): String =
         JSONObject()
             .put("format", FORMAT)
             .put("device", device)
             .put("name", name)
             .put("shard", shard)
             .put("generated", generated)
+            .apply { if (epoch.isNotEmpty()) put("epoch", epoch) }
             .put("records", JSONArray().apply { records.sortedBy { it.kind + ":" + it.id }.forEach { put(encode(it)) } })
             .toString()
+
+    /**
+     * Checks a record from another device before anything of it is kept:
+     * known fields have their type, and its clock covers every write in it
+     * (so no write can hide past the future-date check, and merges stay sound).
+     */
+    fun validate(r: SyncRecord) {
+        if (r.id.length > MAX_ID) throw SyncFormatException("id too long")
+        if (r.created !in 0..MAX_STAMP) throw SyncFormatException("${r.id}: bad created time")
+        fun covered(dot: Dot, where: String) {
+            val seen = r.vv[dot.dev] ?: -1L
+            if (seen < dot.ts) throw SyncFormatException("${r.id}: $where written outside its clock")
+        }
+        for ((name, heads) in r.fields) {
+            val type = typeOf(name)
+            for (h in heads) {
+                covered(h.dot, name)
+                val v = h.value
+                if (type != null && v != null && !type.isInstance(v)) {
+                    throw SyncFormatException("${r.id}.$name: not a ${type.simpleName.lowercase()}")
+                }
+            }
+        }
+        for ((key, dots) in r.tags) {
+            if (key.length > MAX_ID) throw SyncFormatException("${r.id}: tag too long")
+            for (t in dots) covered(t.dot, "tag $key")
+        }
+        for ((sha, dots) in r.files) {
+            if (!Regex("^[0-9a-f]{1,64}$").matches(sha)) throw SyncFormatException("${r.id}: bad file name")
+            for (f in dots) covered(f.dot, "file")
+        }
+    }
 
     /**
      * Decodes and validates a device file. Returns null for a newer format
@@ -52,21 +120,27 @@ object SyncCodec {
         if (format != FORMAT) throw SyncFormatException("bad format $format")
         val device = root.optString("device").takeIf { it.isNotBlank() } ?: throw SyncFormatException("no device")
         val arr = root.optJSONArray("records") ?: throw SyncFormatException("no records")
+        if (arr.length() > MAX_SHARD_RECORDS) throw SyncFormatException("too many records")
+        val shard = (root.opt("shard") as? Int)?.takeIf { it in 0..15 } ?: throw SyncFormatException("bad shard ${root.opt("shard")}")
         val records = ArrayList<SyncRecord>(arr.length())
         val limit = now + MAX_FUTURE_MS
+        val seen = HashSet<String>()
         for (i in 0 until arr.length()) {
             val o = arr.optJSONObject(i) ?: throw SyncFormatException("record $i not an object")
             val r = decode(o)
+            validate(r)
             if (r.maxTs > limit) throw SyncFormatException("record ${r.id} is dated far in the future")
+            if (!seen.add(r.kind + ":" + r.id)) throw SyncFormatException("record ${r.id} appears twice")
             records += r
         }
         return DeviceShard(
             format = format,
             device = device,
             name = root.optString("name", ""),
-            shard = root.optInt("shard", 0),
+            shard = shard,
             generated = root.optLong("generated", 0L),
-            records = records
+            records = records,
+            epoch = root.optString("epoch", "")
         )
     }
 
@@ -164,21 +238,28 @@ object SyncCodec {
 
     private fun ctx(c: Ctx): JSONObject = JSONObject().apply { for ((dev, ts) in c) put(dev, ts) }
 
+    /** A time: a whole, non-negative number both apps can hold exactly; null if not. */
+    private fun stampOf(v: Any?): Long? = when (v) {
+        is Int, is Long -> (v as Number).toLong()
+        is Double -> if (v % 1.0 == 0.0) v.toLong() else null
+        else -> null
+    }?.takeIf { it in 0..MAX_STAMP }
+
     private fun ctxOf(o: JSONObject): Ctx {
         val out = HashMap<String, Long>()
         for (dev in o.keys()) {
-            val ts = o.opt(dev)
-            if (ts !is Number) throw SyncFormatException("bad clock for $dev")
-            out[dev] = ts.toLong()
+            val ts = stampOf(o.opt(dev))
+            if (ts == null || dev.isBlank()) throw SyncFormatException("bad clock for $dev")
+            out[dev] = ts
         }
         return out
     }
 
     private fun dotOf(o: JSONObject, where: String): Dot {
-        val ts = o.opt("t")
+        val ts = stampOf(o.opt("t"))
         val dev = o.optString("d")
-        if (ts !is Number || dev.isBlank()) throw SyncFormatException("$where: bad write stamp")
-        return Dot(dev, ts.toLong())
+        if (ts == null || dev.isBlank()) throw SyncFormatException("$where: bad write stamp")
+        return Dot(dev, ts)
     }
 
     /** Field values are strings, whole numbers, booleans or null. */

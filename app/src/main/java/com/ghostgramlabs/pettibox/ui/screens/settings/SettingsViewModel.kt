@@ -129,7 +129,8 @@ class SettingsViewModel @Inject constructor(
      * Deletes everything sync put in Google Drive and stops sync on every
      * device (each sees the marker and turns itself off rather than
      * re-uploading). No device's library is touched. Returns false if Drive
-     * couldn't be reached; then nothing changed.
+     * couldn't be reached or stopped answering part-way: some synced data may
+     * already be gone from Drive then, and trying again finishes the job.
      */
     suspend fun deleteSyncedData(): Boolean {
         val ok = runCatching {

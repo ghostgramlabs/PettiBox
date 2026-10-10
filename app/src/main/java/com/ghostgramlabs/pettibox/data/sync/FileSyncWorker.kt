@@ -25,6 +25,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import java.io.File
@@ -59,13 +60,22 @@ class FileSyncWorker @AssistedInject constructor(
         if (!prefs.isEnabled()) return Result.success()
         val token = auth.silentAccessToken() ?: return Result.success()
         return try {
-            val folder = client.filesFolder(token, client.syncFolder(token))
+            // Only the Google account this library syncs with (the sync round
+            // explains a mismatch); and nothing goes into a library someone
+            // just deleted from Drive (the next round turns sync off).
+            val owner = prefs.status.first().accountEmail
+            val account = client.accountEmail(token)
+            if (owner.isNotBlank() && account != null && !account.equals(owner, ignoreCase = true)) return Result.success()
+            val syncFolder = client.syncFolder(token)
+            val known = prefs.knownReset()
+            if (known != null && (client.readResetMarker(token, syncFolder) ?: "") != known) return Result.success()
+            val folder = client.filesFolder(token, syncFolder)
             val listed = client.listStoredFiles(token, folder)
             val stored = listed.associateBy { it.name.substringBefore('.') }
             val thumbsOnly = inputData.getBoolean(KEY_THUMBS_ONLY, false)
             upload(token, folder, stored.keys, thumbsOnly)
-            download(token, stored, thumbsOnly)
-            if (!thumbsOnly) cleanUp(token, listed)
+            download(token, folder, stored, thumbsOnly)
+            if (!thumbsOnly) cleanUp(token, syncFolder, listed)
             Result.success()
         } catch (e: DriveSyncException) {
             if (e.transient && runAttemptCount < 5) Result.retry() else Result.success()
@@ -86,12 +96,18 @@ class FileSyncWorker @AssistedInject constructor(
             val file = Uri.parse(uri).path?.let(::File)?.takeIf { it.exists() } ?: continue
             val ext = file.extension.lowercase().ifBlank { "bin" }
             val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "application/octet-stream"
-            client.uploadFile(token, folder, "$sha.$ext", file, mime, prefs.uploadSession(sha)) { prefs.setUploadSession(sha, it) }
+            client.exclusiveFile(sha) {
+                // The other job may have sent it while this one waited.
+                if (!client.recentlySent(sha)) {
+                    client.uploadFile(token, folder, "$sha.$ext", file, mime, prefs.uploadSession(sha)) { prefs.setUploadSession(sha, it) }
+                    client.markSent(sha)
+                }
+            }
         }
     }
 
     /** Fills placeholders for files other devices added, three at a time. */
-    private suspend fun download(token: String, inDrive: Map<String, DriveSyncFile>, thumbsOnly: Boolean) = coroutineScope {
+    private suspend fun download(token: String, folder: String, inDrive: Map<String, DriveSyncFile>, thumbsOnly: Boolean) = coroutineScope {
         val pending = (syncDao.pendingThumbnails() + if (thumbsOnly) emptyList() else syncDao.pendingFiles()).distinct()
         if (pending.isEmpty()) return@coroutineScope
         val dir = File(applicationContext.filesDir, "attachments").apply { mkdirs() }
@@ -103,18 +119,24 @@ class FileSyncWorker @AssistedInject constructor(
             async {
                 gate.withPermit {
                     val sha = placeholder.removePrefix(PENDING_FILE_SCHEME)
-                    val remote = inDrive[sha] ?: return@withPermit // not uploaded yet; next time
-                    val ext = remote.name.substringAfter('.', "bin")
-                    val target = File(dir, "${UUID.randomUUID()}.$ext")
-                    client.downloadFile(token, remote.id, sha, target)
-                    val uri = target.toUri().toString()
-                    db.withTransaction {
-                        syncDao.beginApplying() // swapping in the file is not an edit
-                        syncDao.putFile(SyncFileEntity(uri, sha))
-                        syncDao.fillAttachment(placeholder, uri)
-                        syncDao.fillMainFile(placeholder, uri)
-                        syncDao.fillThumbnail(placeholder, uri)
-                        syncDao.endApplying()
+                    client.exclusiveFile(sha) {
+                        // The other job may have brought it down while this one waited.
+                        if (!syncDao.placeholderInUse(placeholder)) return@exclusiveFile
+                        // Put in Drive's trash by a clean-up although a save needs it: take it back out.
+                        val remote = inDrive[sha] ?: client.restoreTrashed(token, folder, sha)
+                            ?: return@exclusiveFile // not uploaded yet; next time
+                        val ext = remote.name.substringAfter('.', "bin")
+                        val target = File(dir, "${UUID.randomUUID()}.$ext")
+                        client.downloadFile(token, remote.id, sha, target)
+                        val uri = target.toUri().toString()
+                        db.withTransaction {
+                            syncDao.beginApplying() // swapping in the file is not an edit
+                            syncDao.putFile(SyncFileEntity(uri, sha))
+                            syncDao.fillAttachment(placeholder, uri)
+                            syncDao.fillMainFile(placeholder, uri)
+                            syncDao.fillThumbnail(placeholder, uri)
+                            syncDao.endApplying()
+                        }
                     }
                 }
             }
@@ -126,12 +148,19 @@ class FileSyncWorker @AssistedInject constructor(
      * (rules in [DriveFileCleanup]). Skipped unless the last sync round read
      * every device's copy cleanly, recently, with nothing left waiting.
      */
-    private suspend fun cleanUp(token: String, listed: List<DriveSyncFile>) {
+    private suspend fun cleanUp(token: String, syncFolder: String, listed: List<DriveSyncFile>) {
         val now = System.currentTimeMillis()
         val clean = prefs.cleanRoundAt()
         if (clean == 0L || now - clean > CLEAN_ROUND_MAX_AGE_MS) return
         if (now - prefs.fileCleanupAt() < CLEANUP_EVERY_MS) return
-        if (syncDao.inboxCount() > 0) return
+        if (syncDao.inboxCount() > 0 || syncDao.outboxCount() > 0) return
+        // The library this phone knows must still be everyone's latest: if any
+        // other device's file changed since that round (a restore, a new
+        // photo), wait for the next round to read it first.
+        val me = prefs.deviceId()
+        val seen = prefs.seenMd5()
+        val now2 = client.listDeviceFiles(token, syncFolder)
+        if (now2.any { DriveSyncClient.deviceOf(it.name)?.let { d -> d != me } == true && seen[it.name] != it.md5 }) return
         val records = syncDao.metaOfKind(SyncRecord.KIND_ITEM).map {
             // A copy that can't be read could use any file: then remove nothing.
             runCatching { SyncCodec.decodeString(it.recordJson) }.getOrNull() ?: return
@@ -145,9 +174,11 @@ class FileSyncWorker @AssistedInject constructor(
             library.shaOf(uri)?.let { used += it } // a file missing here is covered by the records above
         }
         val plan = DriveFileCleanup.plan(listed.associate { it.id to it.name }, used, prefs.unusedFiles(), now)
+        // To Drive's trash, not deleted: recoverable for Drive's 30 days, and a
+        // phone that finds a save needing one takes it back out (see download).
         for (id in plan.remove) {
             try {
-                client.delete(token, id)
+                client.trash(token, id)
             } catch (e: DriveSyncException) {
                 if (e.status != 404) throw e // already gone (another phone) is fine
             }

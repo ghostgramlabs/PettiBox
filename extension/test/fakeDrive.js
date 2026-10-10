@@ -15,6 +15,8 @@ export function installFakeDrive() {
     return id;
   };
 
+  // In Drive, anything inside a trashed folder counts as trashed too.
+  const inTrash = (f) => f.trashed || f.parents.some((p) => files.get(p) && inTrash(files.get(p)));
   const matches = (f, q) => q.split(' and ').every((term) => {
     let m;
     if ((m = /^name = '(.*)'$/.exec(term))) return f.name === m[1];
@@ -22,7 +24,7 @@ export function installFakeDrive() {
     if ((m = /^name contains '(.*)'$/.exec(term))) return f.name.includes(m[1]);
     if ((m = /^mimeType = '(.*)'$/.exec(term))) return f.mimeType === m[1];
     if ((m = /^'(.*)' in parents$/.exec(term))) return f.parents.includes(m[1]);
-    if (term === 'trashed = false') return true;
+    if (term === 'trashed = false') return !inTrash(f);
     throw new Error('fake Drive: unsupported query term: ' + term);
   });
 
@@ -77,9 +79,11 @@ export function installFakeDrive() {
         f.parents = [...f.parents.filter((p) => !remove.includes(p)), ...(add ? [add] : [])];
         const meta = init.body ? JSON.parse(init.body) : {};
         if (meta.name) f.name = meta.name;
+        if (meta.trashed !== undefined) f.trashed = meta.trashed;
         return json({ id: f.id });
       }
       if (url.searchParams.get('alt') === 'media') return new Response(f.content, { status: 200 });
+      if (method === 'GET') return json({ id: f.id, name: f.name, trashed: inTrash(f) });
     }
     if (path === '/drive/v3/about') return json({ user: { emailAddress: 'me@example.com' } });
     throw new Error(`fake Drive: unhandled ${method} ${url}`);
@@ -96,7 +100,7 @@ export function installFakeDrive() {
   /** Folders by path, e.g. tree() -> ['PettiBox', 'PettiBox/Sync', 'PettiBox/Sync/d-…']. */
   const tree = () => {
     const pathOf = (f) => (f.parents[0] === 'root' ? '' : pathOf(files.get(f.parents[0])) + '/') + f.name;
-    return [...files.values()].map(pathOf).sort();
+    return [...files.values()].filter((f) => !inTrash(f)).map(pathOf).sort();
   };
   return { files, folder, make, tree };
 }

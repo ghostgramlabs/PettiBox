@@ -37,7 +37,8 @@ interface SyncTransport {
 
 /** What a round does besides syncing data: safety copies, alarms, background fetches, files. */
 interface SyncHooks {
-    suspend fun safetyBackup()
+    /** A full local copy of the library; false if it couldn't be made. */
+    suspend fun safetyBackup(): Boolean
     suspend fun afterApply(applied: List<LocalLibrary.Applied>, now: Long)
     suspend fun syncFiles(wifiOnly: Boolean)
     /** Another device deleted the synced data: stop syncing here (the library stays). */
@@ -73,13 +74,11 @@ class AppSyncHooks @Inject constructor(
     private val setup: SyncSetup
 ) : SyncHooks {
 
-    override suspend fun safetyBackup() {
-        runCatching {
-            val file = backupStore.createSafetyBackupFile()
-            repository.exportBackupZip(file)
-            backupStore.pruneSafetyBackups()
-        }.onFailure { Log.w("PettiBoxSync", "safety backup failed", it) }
-    }
+    override suspend fun safetyBackup(): Boolean = runCatching {
+        val file = backupStore.createSafetyBackupFile()
+        repository.exportBackupZip(file)
+        backupStore.pruneSafetyBackups()
+    }.onFailure { Log.w("PettiBoxSync", "safety backup failed", it) }.isSuccess
 
     override suspend fun afterApply(applied: List<LocalLibrary.Applied>, now: Long) {
         for (a in applied) {

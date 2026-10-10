@@ -239,6 +239,18 @@ class SyncPreferences(context: Context, fileName: String) {
     }
 
     private val installMarkedKey = booleanPreferencesKey("install_marked")
+    private val reviewKeyKey = stringPreferencesKey("review_key")
+    private val followUpsKey = stringPreferencesKey("pending_follow_ups")
+
+    /** Which saves the pending removal review is about (sorted ids), so a choice applies to that set only. */
+    suspend fun reviewKey(): String = store.data.first()[reviewKeyKey].orEmpty()
+    suspend fun setReviewKey(key: String) = store.edit { it[reviewKeyKey] = key }
+
+    /** Saves whose reminders and link pictures still need setting up after a round applied them. */
+    suspend fun pendingFollowUps(): List<String> = parseIds(store.data.first()[followUpsKey]).toList()
+    suspend fun setPendingFollowUps(ids: List<String>) = store.edit {
+        if (ids.isEmpty()) it.remove(followUpsKey) else it[followUpsKey] = org.json.JSONArray(ids).toString()
+    }
 
     private val devicesKey = stringPreferencesKey("devices")
 
@@ -312,6 +324,9 @@ class SyncPreferences(context: Context, fileName: String) {
     /** Turning sync off forgets what was read from Drive, so turning it on again reads everything. */
     suspend fun resetForDisable() = store.edit {
         it.remove(md5Key)
+        // Turning sync on again (perhaps with another Google account) starts a new binding.
+        it.remove(accountKey)
+        it.remove(reviewKeyKey)
         it.remove(cleanRoundKey)
         it.remove(unusedFilesKey)
         it[reviewKey] = 0

@@ -6,6 +6,7 @@ import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.net.InetAddress
@@ -21,12 +22,14 @@ import kotlin.concurrent.thread
  */
 class DriveFoldersTest {
 
-    private data class F(val id: String, var name: String, val folder: Boolean, var parents: MutableList<String>, val created: Int)
+    private data class F(val id: String, var name: String, val folder: Boolean, var parents: MutableList<String>, val created: Int, var trashed: Boolean = false)
 
     private val files = LinkedHashMap<String, F>()
     private var seq = 0
     private lateinit var server: ServerSocket
     private lateinit var folders: DriveFolders
+    private var lateIn: String? = null
+    private var lateLooks = 0
 
     private fun make(name: String, parent: String = "root", folder: Boolean = true): String {
         val id = "f${++seq}"
@@ -35,13 +38,15 @@ class DriveFoldersTest {
     }
 
     private fun path(f: F): String = (files[f.parents.first()]?.let { path(it) + "/" } ?: "") + f.name
-    private fun tree() = files.values.map(::path).sorted()
+    /** Anything in a trashed folder counts as trashed, as in Drive. */
+    private fun inTrash(f: F): Boolean = f.trashed || f.parents.any { p -> files[p]?.let(::inTrash) == true }
+    private fun tree() = files.values.filterNot(::inTrash).map(::path).sorted()
 
     private fun matches(f: F, q: String) = q.split(" and ").all { term ->
         Regex("^name = '(.*)'$").find(term)?.let { return@all f.name == it.groupValues[1] }
         Regex("^'(.*)' in parents$").find(term)?.let { return@all it.groupValues[1] in f.parents }
         if (term == "mimeType = 'application/vnd.google-apps.folder'") return@all f.folder
-        if (term == "trashed = false") return@all true
+        if (term == "trashed = false") return@all !inTrash(f)
         error("unsupported query term: $term")
     }
 
@@ -53,9 +58,19 @@ class DriveFoldersTest {
         val path = uri.path
         return when {
             path == "/files" && method == "GET" -> {
+                val q = query["q"].orEmpty()
+                lateIn?.let { b ->
+                    if (q == "'$b' in parents and trashed = false") {
+                        lateLooks++
+                        if (lateLooks == 2) make("late.zip", b, folder = false)
+                    }
+                }
                 val list = files.values.filter { matches(it, query["q"].orEmpty()) }.sortedBy { it.created }
                 200 to JSONObject().put("files", JSONArray().apply {
-                    list.forEach { put(JSONObject().put("id", it.id).put("parents", JSONArray(it.parents))) }
+                    list.forEach {
+                        put(JSONObject().put("id", it.id).put("parents", JSONArray(it.parents)).put("name", it.name)
+                            .put("mimeType", if (it.folder) "application/vnd.google-apps.folder" else "application/octet-stream"))
+                    }
                 }).toString()
             }
             path == "/files" && method == "POST" -> {
@@ -66,8 +81,14 @@ class DriveFoldersTest {
                 val f = files.getValue(path.removePrefix("/files/"))
                 val remove = query["removeParents"].orEmpty().split(",").filter { it.isNotBlank() }
                 f.parents = (f.parents.filterNot { it in remove } + listOfNotNull(query["addParents"])).toMutableList()
-                JSONObject(body.ifBlank { "{}" }).optString("name").takeIf { it.isNotBlank() }?.let { f.name = it }
+                val meta = JSONObject(body.ifBlank { "{}" })
+                meta.optString("name").takeIf { it.isNotBlank() }?.let { f.name = it }
+                if (meta.has("trashed")) f.trashed = meta.getBoolean("trashed")
                 200 to JSONObject().put("id", f.id).toString()
+            }
+            path.startsWith("/files/") && method == "GET" -> {
+                val f = files[path.removePrefix("/files/")] ?: return 404 to "{}"
+                200 to JSONObject().put("id", f.id).put("trashed", inTrash(f)).toString()
             }
             path.startsWith("/files/") && method == "DELETE" -> {
                 fun drop(id: String) {
@@ -169,6 +190,27 @@ class DriveFoldersTest {
             listOf("PettiBox", "PettiBox/Backups", "PettiBox/Backups/pettibox-auto-backup-a.zip", "PettiBox/Backups/pettibox-auto-backup-b.zip"),
             tree()
         )
-        assertFalse(files.containsKey(b))
+        assertTrue(files.getValue(b).trashed) // trashed once empty (recoverable), never deleted
+    }
+
+    @Test fun `two files folders under Sync are merged so every photo is found`() = runBlocking {
+        val sync = folders.sync("t")
+        val first = make("files", sync)
+        val second = make("files", sync)
+        make("${"ab".repeat(32)}.jpg", second, folder = false)
+        val id = folders.files("t", sync)
+        assertEquals(first, id)
+        assertTrue(tree().contains("PettiBox/Sync/files/${"ab".repeat(32)}.jpg"))
+    }
+
+    @Test fun `a folder that gets something new while being merged is kept`() = runBlocking {
+        val a = make("PettiBox")
+        val b = make("PettiBox")
+        make("one.zip", b, folder = false)
+        // Another device adds a file to b after it was emptied but before it's trashed.
+        lateIn = b
+        folders.backups("t", create = true)
+        assertFalse(files.getValue(b).trashed) // not empty on the fresh look: left for next time
+        assertTrue(files.values.any { it.name == "late.zip" })
     }
 }

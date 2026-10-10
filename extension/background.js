@@ -41,11 +41,21 @@ function soon() {
 }
 const EDIT_PAUSE_MS = 3000;
 
-async function syncNow() {
-  const out = await engine.round();
-  await scheduleRetry(out);
-  await updateBadge();
-  return out;
+/**
+ * One round plus its follow-up. Callers that arrive while it runs (a tap,
+ * an alarm, an edit) share it, so the retry bookkeeping runs once per round.
+ */
+let syncing = null;
+function syncNow() {
+  if (!syncing) {
+    syncing = (async () => {
+      const out = await engine.round();
+      await scheduleRetry(out);
+      await updateBadge();
+      return out;
+    })().finally(() => { syncing = null; });
+  }
+  return syncing;
 }
 
 /**
@@ -53,18 +63,19 @@ async function syncNow() {
  * again by itself: after 1, 2, 4… minutes, at most 30. Success resets it.
  */
 async function scheduleRetry(out) {
-  const m = await engine.meta();
-  if (out?.ok || !out?.retry) {
-    if (m.retryAttempt) {
-      m.retryAttempt = 0;
+  // Read and written inside the engine's queue: an edit made meanwhile
+  // can't be overwritten with this older copy of the settings.
+  const attempt = await engine.exclusive(async () => {
+    const m = await engine.meta();
+    const next = out?.ok || !out?.retry ? 0 : (m.retryAttempt ?? 0) + 1;
+    if ((m.retryAttempt ?? 0) !== next) {
+      m.retryAttempt = next;
       await engine.saveMeta(m);
     }
-    await chrome.alarms.clear(ALARM_RETRY);
-    return;
-  }
-  m.retryAttempt = (m.retryAttempt ?? 0) + 1;
-  await engine.saveMeta(m);
-  await chrome.alarms.create(ALARM_RETRY, { delayInMinutes: Math.min(30, 2 ** (m.retryAttempt - 1)) });
+    return next;
+  });
+  if (attempt === 0) await chrome.alarms.clear(ALARM_RETRY);
+  else await chrome.alarms.create(ALARM_RETRY, { delayInMinutes: Math.min(30, 2 ** (attempt - 1)) });
 }
 
 /**
