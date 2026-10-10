@@ -184,6 +184,39 @@ class TwoDeviceSyncTest {
         assertEquals(listOf("bread"), tagsOn(a, "https://y.example").map { it.lowercase() })
     }
 
+    @Test fun moving_a_save_is_the_only_change_and_still_reaches_the_other_phone() = runBlocking {
+        val url = "https://x.example"
+        a.db.categoryDao().upsert(CategoryEntity("user_r", "Recipes", "🍞", 0xFFAA0000))
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        assertNotNull(b.db.categoryDao().getById("user_r"))
+
+        // The way the app's "Move to" does it: only the collection changes.
+        a.db.saveDao().update(a.byUrl(url)!!.copy(categoryId = "user_r", updatedAt = System.currentTimeMillis()))
+        syncBoth()
+        assertEquals("user_r", b.byUrl(url)!!.categoryId)
+
+        // To a collection made just now, on the other phone.
+        b.db.categoryDao().upsert(CategoryEntity("user_w", "Weekend", "🌤", 0xFF00AA00))
+        b.db.saveDao().update(b.byUrl(url)!!.copy(categoryId = "user_w", updatedAt = System.currentTimeMillis()))
+        syncBoth()
+        assertEquals("user_w", a.byUrl(url)!!.categoryId)
+
+        // And out of any collection.
+        a.db.saveDao().update(a.byUrl(url)!!.copy(categoryId = null, updatedAt = System.currentTimeMillis()))
+        syncBoth()
+        assertEquals(null, b.byUrl(url)!!.categoryId)
+    }
+
+    @Test fun one_sync_each_is_enough_for_a_change_to_arrive() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        a.db.saveDao().update(a.byUrl("https://x.example")!!.copy(title = "new title"))
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        assertEquals("new title", b.byUrl("https://x.example")!!.title)
+    }
+
     @Test fun the_same_field_edited_on_both_keeps_both_versions() = runBlocking {
         a.db.saveDao().insert(link("x"))
         a.turnOn(); b.turnOn(); syncBoth()

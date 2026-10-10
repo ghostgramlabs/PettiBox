@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -125,11 +126,19 @@ class PettiBoxApp : Application(), Configuration.Provider {
             syncSetup.reconcile(sync.enabled)
             SyncScheduler.apply(this@PettiBoxApp, sync.enabled, sync.interval)
         }
-        // About a minute after the last edit, send it. Each edit pushes the
-        // round back, so a burst of edits is one round.
+        // A few seconds after the last edit, send it. Each edit restarts the
+        // wait, so a burst of edits (typing a note) is one round.
         appScope.launch {
             combine(syncPreferences.enabled, syncDao.observeOutboxCount()) { on, queued -> on && queued > 0 }
-                .collect { pending -> if (pending) SyncScheduler.soon(this@PettiBoxApp) }
+                .collectLatest { pending ->
+                    if (pending) {
+                        kotlinx.coroutines.delay(EDIT_PAUSE_MS)
+                        SyncScheduler.nowUnlessWaiting(this@PettiBoxApp)
+                    }
+                }
         }
     }
 }
+
+/** How long edits must pause before they're sent. */
+private const val EDIT_PAUSE_MS = 3_000L

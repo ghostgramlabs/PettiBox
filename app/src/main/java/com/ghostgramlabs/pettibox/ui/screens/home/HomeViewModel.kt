@@ -71,6 +71,12 @@ class HomeViewModel @Inject constructor(
     private val syncDao: com.ghostgramlabs.pettibox.data.local.SyncDao,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
+    /** Sync between devices, for the button on Home (null until read). */
+    val syncStatus: kotlinx.coroutines.flow.StateFlow<com.ghostgramlabs.pettibox.data.sync.SyncStatus?> = syncPreferences.status
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), null)
+
+    fun syncNow() = com.ghostgramlabs.pettibox.data.sync.SyncScheduler.now(appContext)
+
     /** Saves edited on two devices, waiting for someone (on any one device) to pick a version. */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val needingChoice: kotlinx.coroutines.flow.StateFlow<List<SaveItemEntity>> = syncPreferences.needingChoice

@@ -23,11 +23,23 @@ async function schedule() {
   if (!m.signedOut && interval.minutes > 0) await chrome.alarms.create(ALARM_PERIODIC, { periodInMinutes: interval.minutes, delayInMinutes: 1 });
 }
 
-/** About half a minute after a change (Chrome's shortest alarm); each change pushes it back. */
+/**
+ * A few seconds after a change; each change restarts the wait, so a burst
+ * of edits is one round. The alarm is the fallback if Chrome stops this
+ * worker first (half a minute is the shortest alarm Chrome allows).
+ */
+let soonTimer = null;
 function soon() {
   chrome.alarms.create(ALARM_SOON, { delayInMinutes: 0.5 });
+  clearTimeout(soonTimer);
+  soonTimer = setTimeout(() => {
+    soonTimer = null;
+    chrome.alarms.clear(ALARM_SOON);
+    syncNow();
+  }, EDIT_PAUSE_MS);
   updateBadge();
 }
+const EDIT_PAUSE_MS = 3000;
 
 async function syncNow() {
   const out = await engine.round();

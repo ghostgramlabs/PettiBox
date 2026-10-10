@@ -41,6 +41,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AttachFile
 import androidx.compose.material.icons.rounded.Close
@@ -125,6 +126,10 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val needingChoice by viewModel.needingChoice.collectAsStateWithLifecycle()
+    val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
+    val greeting: @Composable () -> Unit = {
+        Greeting(sync = syncStatus?.takeIf { it.enabled }, onSync = viewModel::syncNow)
+    }
     val rateCardAllowed by viewModel.rateCardAllowed.collectAsStateWithLifecycle(initialValue = false)
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -461,7 +466,7 @@ fun HomeScreen(
     ) { padding ->
         if (state.isLoading) {
             Column(Modifier.padding(padding).fillMaxSize()) {
-                Greeting()
+                greeting()
                 Text(
                     "Loading your shelf...",
                     style = MaterialTheme.typography.bodyMedium,
@@ -474,7 +479,7 @@ fun HomeScreen(
 
         if (state.recent.isEmpty() && state.pinned.isEmpty() && state.favorites.isEmpty()) {
             Column(Modifier.padding(padding).fillMaxSize()) {
-                Greeting()
+                greeting()
                 if (state.archivedCount > 0) {
                     // The shelf isn't empty, the user has archived all of
                     // it. Pointing them at the Share menu would imply
@@ -527,7 +532,7 @@ fun HomeScreen(
             // Header - full-width span
             item(span = StaggeredGridItemSpan.FullLine) {
                 Column {
-                    Greeting()
+                    greeting()
                     if (needingChoice.isNotEmpty()) {
                         Spacer(Modifier.height(10.dp))
                         NeedsChoiceBar(
@@ -1033,8 +1038,67 @@ private fun GuideStep(
 }
 
 @Composable
-private fun Greeting() {
-    ScreenHeading(title = "What's on the shelf?")
+private fun Greeting(sync: com.ghostgramlabs.pettibox.data.sync.SyncStatus? = null, onSync: () -> Unit = {}) {
+    ScreenHeading(
+        title = "What's on the shelf?",
+        subtitle = sync?.let { s ->
+            when {
+                s.progress.isNotBlank() -> "Syncing…"
+                s.needsReconnect -> "Sync paused: reconnect Google Drive in Settings"
+                s.lastError.isNotBlank() && s.lastErrorAt >= s.lastSyncAt -> "Sync problem: see Settings"
+                s.lastSyncAt > 0 -> "Synced " + android.text.format.DateUtils.getRelativeTimeSpanString(
+                    s.lastSyncAt, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS
+                )
+                else -> null
+            }
+        },
+        trailing = sync?.let { { SyncButton(it, onSync) } }
+    )
+}
+
+/**
+ * Sync now, on Home (only while sync is on). Spins from the tap until that
+ * round is done, and turns red when the last one failed; "Synced 2 min
+ * ago" (or the problem) is in its description for screen readers.
+ */
+@Composable
+private fun SyncButton(sync: com.ghostgramlabs.pettibox.data.sync.SyncStatus, onSync: () -> Unit) {
+    var askedAt by remember { mutableStateOf(0L) }
+    val finished = maxOf(sync.lastSyncAt, sync.lastErrorAt)
+    val running = sync.progress.isNotBlank() || (askedAt > 0 && finished < askedAt)
+    LaunchedEffect(askedAt) {
+        // No answer within a minute (offline, say): stop spinning; the round still runs when it can.
+        if (askedAt > 0) {
+            kotlinx.coroutines.delay(60_000)
+            askedAt = 0
+        }
+    }
+    val failed = !running && (sync.needsReconnect || (sync.lastError.isNotBlank() && sync.lastErrorAt >= sync.lastSyncAt))
+    val spin = rememberInfiniteTransition(label = "sync-spin")
+    val angle by spin.animateFloat(
+        initialValue = 0f, targetValue = -360f,
+        animationSpec = infiniteRepeatable(tween(1100, easing = androidx.compose.animation.core.LinearEasing), RepeatMode.Restart),
+        label = "angle"
+    )
+    val label = when {
+        running -> "Syncing…"
+        failed -> "Sync problem: ${sync.lastError.ifBlank { "reconnect Google Drive in Settings" }}"
+        sync.lastSyncAt > 0 -> "Synced " + android.text.format.DateUtils.getRelativeTimeSpanString(
+            sync.lastSyncAt, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS
+        )
+        else -> "Not synced yet"
+    }
+    androidx.compose.material3.IconButton(
+        onClick = { askedAt = System.currentTimeMillis(); onSync() },
+        modifier = Modifier.padding(top = 6.dp)
+    ) {
+        Icon(
+            Icons.Rounded.Sync,
+            contentDescription = "Sync now. $label",
+            tint = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = if (running) Modifier.rotate(angle) else Modifier
+        )
+    }
 }
 
 @Composable

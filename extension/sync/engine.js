@@ -232,7 +232,8 @@ export class SyncEngine {
       if (isTrashed(r) !== trash) continue;
       items.push(SyncEngine.itemView(r, known));
     }
-    items.sort((a, b) => (b.pin - a.pin) || (b.created - a.created));
+    // As on the phones: pinned first, then newest; equal times by id, so every device agrees.
+    items.sort((a, b) => (b.pin - a.pin) || (b.created - a.created) || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
     return { items, collections };
   }
 

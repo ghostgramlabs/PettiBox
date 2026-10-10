@@ -119,6 +119,13 @@ data class SyncRecord(
     val maxTs: Long get() = vv.values.maxOrNull() ?: 0L
 
     /**
+     * When a person last changed this save, on any device: the newest of
+     * their writes, not counting work a phone does by itself. The same on
+     * every device, so "Recently edited" lists agree.
+     */
+    val editedAt: Long get() = maxOf(created, userDots(false).maxOfOrNull { it.ts } ?: created)
+
+    /**
      * A save whose title, note or link was edited on two devices without
      * either seeing the other: someone (on any one device) has to pick.
      */

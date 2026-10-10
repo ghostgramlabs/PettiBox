@@ -244,7 +244,7 @@ class LocalLibrary @Inject constructor(
             else localUri,
             thumbnailUri = thumbnail,
             createdAt = minOf(base.createdAt, r.created),
-            updatedAt = minOf(maxOf(base.updatedAt, r.maxTs), now)
+            updatedAt = minOf(r.editedAt, now)
         )
         val itemId = if (existing == null) saveDao.insert(updated) else {
             if (updated != existing) saveDao.update(updated)

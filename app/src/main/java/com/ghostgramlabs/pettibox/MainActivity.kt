@@ -113,10 +113,10 @@ class MainActivity : FragmentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 while (true) {
                     val sync = syncPreferences.status.first()
-                    if (sync.enabled && System.currentTimeMillis() - sync.lastSyncAt >= 55_000L) {
-                        SyncScheduler.now(this@MainActivity)
+                    if (sync.enabled && System.currentTimeMillis() - sync.lastSyncAt >= 25_000L) {
+                        SyncScheduler.nowUnlessWaiting(this@MainActivity)
                     }
-                    delay(60_000L)
+                    delay(30_000L)
                 }
             }
         }

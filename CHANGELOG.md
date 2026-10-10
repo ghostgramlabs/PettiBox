@@ -5,6 +5,12 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Sync is quicker to show changes: an edit goes out about 3 seconds after you stop (it used to
+  wait a minute on the phone and half a minute in Chrome), the app checks for changes every
+  30 seconds while it's open, and tapping Sync during a sync runs one more after it.
+- Home has a Sync button and a "Synced 2 min ago" line while sync is on.
+- Saves list in the same order on every device: "Recently edited" uses the time of the last
+  real edit, and saves with the same time are always ordered the same way.
 - Tags read the same way in the app and the Chrome extension (a leading # is dropped and
   tags are up to 24 characters), so a tag no longer changes shape on its way between them.
 - Big photos, videos and PDFs (5 MB and up) now sync in pieces: after a dropped connection,

@@ -14,6 +14,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 
 /** Runs one sync round. Rounds never overlap: [SyncEngine] holds one lock. */
@@ -64,25 +65,29 @@ object SyncScheduler {
         wm.enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, request)
     }
 
-    /** "Sync now", and opening the app. Joins a round already running. */
+    /**
+     * "Sync now", opening the app, and a few seconds after an edit. Asked for
+     * while a round is already running, one more round follows it: the
+     * running one may have started before the change it's asked for.
+     */
     fun now(context: Context) {
         val request = OneTimeWorkRequestBuilder<SyncWorker>()
             .setConstraints(network)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork(NOW, ExistingWorkPolicy.KEEP, request)
+        WorkManager.getInstance(context).enqueueUniqueWork(NOW, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
+    /** After a local edit: the app waits for the edits to pause (see PettiBoxApp), then [now]. */
+    fun soon(context: Context) = now(context)
+
     /**
-     * About a minute after the last local edit. Each edit pushes it back, so a
-     * burst of edits is one round, not one per edit.
+     * [now], unless a round is already waiting to start (offline, say): that
+     * one will see everything, so automatic asks don't pile up behind it.
      */
-    fun soon(context: Context) {
-        val request = OneTimeWorkRequestBuilder<SyncWorker>()
-            .setInitialDelay(60, TimeUnit.SECONDS)
-            .setConstraints(network)
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
-            .build()
-        WorkManager.getInstance(context).enqueueUniqueWork(SOON, ExistingWorkPolicy.REPLACE, request)
+    suspend fun nowUnlessWaiting(context: Context) {
+        val waiting = WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(NOW).first()
+            .any { it.state == androidx.work.WorkInfo.State.ENQUEUED || it.state == androidx.work.WorkInfo.State.BLOCKED }
+        if (!waiting) now(context)
     }
 }
