@@ -5,6 +5,10 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Sync fixes from an architecture review: a save that reaches a device before its collection is
+  filed into it when the collection arrives (and is never taken out of it); an edit made while a
+  sync is applying changes is no longer overwritten; and a phone set up by copying another one
+  (phone-to-phone transfer) gets its own sync identity instead of overwriting the other's files.
 - Sync is quicker to show changes: an edit goes out about 3 seconds after you stop (it used to
   wait a minute on the phone and half a minute in Chrome), the app checks for changes every
   30 seconds while it's open, and tapping Sync during a sync runs one more after it.

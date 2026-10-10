@@ -71,7 +71,7 @@ class LocalLibrary @Inject constructor(
 
     suspend fun snapshot(kind: String, id: String, meta: SyncRecord?): LocalRecord? = when (kind) {
         KIND_ITEM -> snapshotItem(id, meta)
-        KIND_COLLECTION -> snapshotCollection(id)
+        KIND_COLLECTION -> snapshotCollection(id, meta)
         else -> null
     }
 
@@ -135,8 +135,11 @@ class LocalLibrary @Inject constructor(
         return LocalRecord(KIND_ITEM, syncId, s.createdAt, fields, tags, files)
     }
 
-    private suspend fun snapshotCollection(id: String): LocalRecord? {
+    private suspend fun snapshotCollection(id: String, meta: SyncRecord?): LocalRecord? {
         val c = categoryDao.getById(id) ?: return null
+        // A parent that isn't on this phone yet (or was removed elsewhere) is
+        // not an edit: report what the merged copy has, as for a save's collection.
+        val parent = c.parentId ?: (meta?.value(F_PARENT) as? String)?.takeIf { categoryDao.getById(it) == null }
         return LocalRecord(
             KIND_COLLECTION, id, c.createdAt,
             linkedMapOf(
@@ -144,7 +147,7 @@ class LocalLibrary @Inject constructor(
                 F_EMOJI to c.emoji,
                 F_COLOR to c.colorHex,
                 F_ORDER to c.sortOrder.toLong(),
-                F_PARENT to c.parentId,
+                F_PARENT to parent,
                 F_USER to c.userCreated,
                 F_LOCKED to c.isLocked
             )

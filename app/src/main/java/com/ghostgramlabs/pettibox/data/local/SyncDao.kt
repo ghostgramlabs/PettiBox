@@ -25,6 +25,17 @@ interface SyncDao {
     @Query("DELETE FROM sync_outbox")
     suspend fun clearAllOutbox()
 
+    @Query("SELECT * FROM sync_outbox WHERE kind = :kind AND sync_id = :syncId")
+    suspend fun outboxRow(kind: String, syncId: String): SyncOutboxEntity?
+
+    /** Files a save into its collection once that collection is here (it may arrive after the save). */
+    @Query("UPDATE save_items SET category_id = :categoryId WHERE sync_id = :syncId AND category_id IS NULL")
+    suspend fun linkCategory(syncId: String, categoryId: String)
+
+    /** The same for a collection whose parent arrived after it. */
+    @Query("UPDATE categories SET parent_id = :parentId WHERE id = :id AND parent_id IS NULL AND id != :parentId")
+    suspend fun linkParent(id: String, parentId: String)
+
     @Query("UPDATE OR REPLACE sync_outbox SET sync_id = :newId WHERE kind = 'item' AND sync_id = :oldId")
     suspend fun renameOutbox(oldId: String, newId: String)
 

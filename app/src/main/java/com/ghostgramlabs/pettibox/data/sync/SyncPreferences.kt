@@ -55,6 +55,13 @@ data class SyncStatus(
 @Singleton
 class SyncPreferences(context: Context, fileName: String) {
 
+    /**
+     * Holds this install's device id where Android never backs up or moves
+     * files (no_backup). Phone-to-phone transfer copies the settings but not
+     * this, so a copy can tell it is one (see [deviceId]).
+     */
+    private val installMark = java.io.File(context.noBackupFilesDir, "$fileName.install")
+
     @Inject constructor(@ApplicationContext context: Context) : this(context, "sync_preferences")
 
     // One instance per file per process (DataStore's rule): Hilt keeps this a
@@ -122,13 +129,39 @@ class SyncPreferences(context: Context, fileName: String) {
     suspend fun setAccountEmail(email: String) = store.edit { it[accountKey] = email }
 
     /** This install's id, made once: 16 random hex characters. */
-    suspend fun deviceId(): String {
-        store.data.first()[deviceIdKey]?.let { return it }
-        val bytes = ByteArray(8).also { SecureRandom().nextBytes(it) }
-        val id = bytes.joinToString("") { "%02x".format(it) }
-        var kept = id
-        store.edit { p -> kept = p[deviceIdKey] ?: id.also { p[deviceIdKey] = it } }
-        return kept
+    suspend fun deviceId(): String = ownDeviceId().first
+
+    /**
+     * This device's id, and whether it was just replaced because these
+     * settings were copied from another phone (a phone-to-phone transfer).
+     * Two devices writing under one id would overwrite each other's files in
+     * Drive, so a copy takes a new id and carries on as a device of its own.
+     */
+    suspend fun ownDeviceId(): Pair<String, Boolean> {
+        val p = store.data.first()
+        val id = p[deviceIdKey]
+        val mark = runCatching { installMark.readText().trim() }.getOrNull()
+        if (id != null && mark == id) return id to false
+        if (id != null && mark == null && p[installMarkedKey] != true) {
+            // Set up before installs were marked: this is the original. Mark it.
+            writeMark(id)
+            store.edit { it[installMarkedKey] = true }
+            return id to false
+        }
+        val fresh = ByteArray(8).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
+        store.edit {
+            it[deviceIdKey] = fresh
+            it[installMarkedKey] = true
+        }
+        writeMark(fresh)
+        return fresh to (id != null)
+    }
+
+    private fun writeMark(id: String) {
+        runCatching {
+            installMark.parentFile?.mkdirs()
+            installMark.writeText(id)
+        }
     }
 
     suspend fun deviceName(): String = store.data.first()[deviceNameKey] ?: defaultDeviceName()
@@ -204,6 +237,8 @@ class SyncPreferences(context: Context, fileName: String) {
         if (uri == null) o.remove(sha) else o.put(sha, uri)
         p[uploadSessionsKey] = o.toString()
     }
+
+    private val installMarkedKey = booleanPreferencesKey("install_marked")
 
     private val devicesKey = stringPreferencesKey("devices")
 

@@ -58,6 +58,10 @@ class SyncEngine @Inject constructor(
 ) {
     private val lock = Mutex()
 
+    /** Tests only: runs just before incoming changes are applied, to stand in for an edit at that moment. */
+    @androidx.annotation.VisibleForTesting
+    internal var beforeApply: suspend () -> Unit = {}
+
     suspend fun round(now: Long = System.currentTimeMillis()): SyncOutcome = lock.withLock {
         try {
             val outcome = roundLocked(now)
@@ -100,7 +104,12 @@ class SyncEngine @Inject constructor(
     private suspend fun roundLocked(now: Long): SyncOutcome {
         if (!prefs.isEnabled()) return SyncOutcome.Off
         val session = transport.open() ?: return SyncOutcome.NeedsReconnect
-        val me = prefs.deviceId()
+        val (me, copied) = prefs.ownDeviceId()
+        if (copied) {
+            // Moved here from another phone: publish everything under this
+            // phone's new id; the old phone keeps its own.
+            syncDao.markDirty((0 until 16).map { SyncDirtyEntity(it) })
+        }
         val clock = HybridClock(prefs.clock())
         indexChoices()
 
@@ -171,6 +180,7 @@ class SyncEngine @Inject constructor(
         commitLocal(me, clock)
 
         val decision = prefs.takeReviewDecision()
+        beforeApply()
         val applied = applyInbox(remote, me, clock, now, decision)
         if (applied < 0) {
             // Held back for review: still send this device's own changes.
@@ -320,6 +330,15 @@ class SyncEngine @Inject constructor(
             val dirty = HashSet<Int>()
             for ((before, mergedIn) in changes) {
                 var merged = mergedIn
+                // Edited here since this round gathered local changes: record
+                // that edit now, on top of what it was based on, and merge it
+                // in, so the copy from another device can't overwrite it.
+                syncDao.outboxRow(merged.kind, merged.id)?.let { row ->
+                    val local = library.snapshot(merged.kind, merged.id, before)
+                    val mine = if (local == null) null else SyncDiff.apply(before, local, Dot(me, clock.next()))
+                    if (mine != null) merged = merge(mine, merged)
+                    syncDao.clearOutbox(row.kind, row.syncId, row.ts)
+                }
                 if (decision == REVIEW_KEEP && merged.kind == KIND_ITEM && wouldRemove(merged.id, merged)) {
                     // "Keep mine": undo the removal for every device by writing
                     // this phone's state back as a new edit.
@@ -332,6 +351,11 @@ class SyncEngine @Inject constructor(
                 followUps += library.apply(merged, now)
             }
             syncDao.putMeta(metas)
+            // Each device's copy is 16 files, read as they come: a save can
+            // arrive before its collection. Once the collection is here, file
+            // the saves (and sub-collections) that were waiting for it.
+            val arrived = changes.map { it.second }.filter { it.kind == KIND_COLLECTION && !it.isGone }.map { it.id }.toSet()
+            if (arrived.isNotEmpty()) linkWaiting(arrived)
             if (dirty.isNotEmpty()) syncDao.markDirty(dirty.map { SyncDirtyEntity(it) })
             syncDao.clearInbox()
             syncDao.endApplying()
@@ -403,6 +427,20 @@ class SyncEngine @Inject constructor(
     }
 
     private fun decodeOrNull(json: String): SyncRecord? = runCatching { SyncCodec.decodeString(json) }.getOrNull()
+
+    /** Files saves and sub-collections into the collections in [arrived], where their synced copy says so. */
+    private suspend fun linkWaiting(arrived: Set<String>) {
+        for (row in syncDao.metaOfKind(KIND_ITEM)) {
+            val r = decodeOrNull(row.recordJson) ?: continue
+            val cat = r.value(SyncRecord.F_CAT) as? String ?: continue
+            if (cat in arrived && !r.isGone) syncDao.linkCategory(r.id, cat)
+        }
+        for (row in syncDao.metaOfKind(KIND_COLLECTION)) {
+            val r = decodeOrNull(row.recordJson) ?: continue
+            val parent = r.value(SyncRecord.F_PARENT) as? String ?: continue
+            if (parent in arrived && !r.isGone) syncDao.linkParent(r.id, parent)
+        }
+    }
 
     /** Keeps the "needs a choice" list (the pulsing saves) in step with records just written. */
     private suspend fun noteChoices(written: Collection<SyncMetaEntity>) {

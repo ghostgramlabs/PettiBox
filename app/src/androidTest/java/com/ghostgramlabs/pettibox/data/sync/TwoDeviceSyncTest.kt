@@ -39,9 +39,11 @@ class TwoDeviceSyncTest {
         val files = LinkedHashMap<String, Triple<String, String, String>>() // name -> (id, json, md5)
         var corrupt: String? = null
         var marker: String? = null
+        /** Files not listed yet (uploaded, but not seen by the reader at this moment). */
+        val hidden = HashSet<String>()
 
         override suspend fun open() = object : SyncTransport.Session {
-            override suspend fun list() = files.map { (name, f) -> DriveSyncFile(f.first, name, f.third, 0L) }
+            override suspend fun list() = files.filterKeys { it !in hidden }.map { (name, f) -> DriveSyncFile(f.first, name, f.third, 0L) }
             override suspend fun read(file: DriveSyncFile): String {
                 if (file.name == corrupt) throw SyncFormatException("damaged")
                 return files.getValue(file.name).second
@@ -66,7 +68,8 @@ class TwoDeviceSyncTest {
 
     private class Phone(context: Context, name: String, drive: FakeDrive) {
         val db: AppDatabase = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
-        val prefs = SyncPreferences(context, "sync-test-$name-${UUID.randomUUID()}")
+        val prefsFile = "sync-test-$name-${UUID.randomUUID()}"
+        val prefs = SyncPreferences(context, prefsFile)
         val setup = SyncSetup(db)
         val library = LocalLibrary(context, db.saveDao(), db.categoryDao(), db.tagDao(), db.attachmentDao(), db.syncDao())
         val hooks = NoHooks()
@@ -215,6 +218,91 @@ class TwoDeviceSyncTest {
         assertTrue(a.sync() is SyncOutcome.Ok)
         assertTrue(b.sync() is SyncOutcome.Ok)
         assertEquals("new title", b.byUrl("https://x.example")!!.title)
+    }
+
+    @Test fun a_phone_copied_to_a_new_phone_takes_its_own_identity() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        val before = a.prefs.deviceId()
+        // A phone-to-phone transfer copies settings but not no_backup files.
+        java.io.File(context.noBackupFilesDir, "${a.prefsFile}.install").delete()
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        val after = a.prefs.deviceId()
+        assertTrue(after != before)
+        // It published its whole copy under the new id; nothing was lost anywhere.
+        assertEquals(16, drive.files.keys.count { DriveSyncClient.deviceOf(it) == after })
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        assertEquals(1, b.live().size)
+        // And it stays that id from now on.
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertEquals(after, a.prefs.deviceId())
+    }
+
+    @Test fun an_edit_made_while_a_sync_applies_changes_is_kept() = runBlocking {
+        val url = "https://x.example"
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        a.db.saveDao().update(a.byUrl(url)!!.copy(notes = "note from A"))
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        // B's user edits the title at the moment B applies A's note.
+        b.engine.beforeApply = {
+            b.engine.beforeApply = {}
+            b.db.saveDao().update(b.byUrl(url)!!.copy(title = "title from B"))
+        }
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        syncBoth()
+        for (p in listOf(a, b)) {
+            val s = p.byUrl(url)!!
+            assertEquals("title from B", s.title)
+            assertEquals("note from A", s.notes)
+        }
+    }
+
+    @Test fun a_save_that_arrives_before_its_collection_is_filed_when_the_collection_comes() = runBlocking {
+        val url = "https://x.example"
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        a.db.categoryDao().upsert(CategoryEntity("user_late", "Late", "🕰", 0xFF123456))
+        a.db.saveDao().update(a.byUrl(url)!!.copy(categoryId = "user_late"))
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        // B sees the save's file before the collection's.
+        val me = a.prefs.deviceId()
+        val colFile = DriveSyncClient.shardName(me, shardOf("user_late"))
+        val itemFile = DriveSyncClient.shardName(me, shardOf(a.byUrl(url)!!.syncId))
+        org.junit.Assume.assumeTrue(colFile != itemFile)
+        drive.hidden += colFile
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        assertEquals(null, b.byUrl(url)!!.categoryId)
+        // An edit on B now must not take the save out of the collection everywhere.
+        b.db.saveDao().update(b.byUrl(url)!!.copy(title = "edited on B"))
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        drive.hidden.clear()
+        syncBoth()
+        for (p in listOf(a, b)) {
+            val s = p.byUrl(url)!!
+            assertEquals("user_late", s.categoryId)
+            assertEquals("edited on B", s.title)
+        }
+    }
+
+    @Test fun a_sub_collection_that_arrives_before_its_parent_is_put_under_it() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        // Ids chosen to land in different files.
+        var parent = "user_p0"
+        var child = "user_c0"
+        var i = 0
+        while (shardOf(parent) == shardOf(child)) { i++; child = "user_c$i" }
+        a.db.categoryDao().upsert(CategoryEntity(parent, "Parent", "📁", 0xFF111111))
+        a.db.categoryDao().upsert(CategoryEntity(child, "Child", "📂", 0xFF222222, parentId = parent))
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        drive.hidden += DriveSyncClient.shardName(a.prefs.deviceId(), shardOf(parent))
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        assertEquals(null, b.db.categoryDao().getById(child)!!.parentId)
+        drive.hidden.clear()
+        syncBoth()
+        assertEquals(parent, b.db.categoryDao().getById(child)!!.parentId)
+        assertEquals(parent, a.db.categoryDao().getById(child)!!.parentId)
     }
 
     @Test fun the_same_field_edited_on_both_keeps_both_versions() = runBlocking {

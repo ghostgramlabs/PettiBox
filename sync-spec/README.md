@@ -191,6 +191,19 @@ save shows it as missing. The extension never removes shared files.
 - Show the shown values; trashed → in Recently deleted with `trashedAt`.
 - Gone → if the save is live here, move it to Recently deleted for a fresh 30 days; sync
   never permanently deletes anything. The device's own 30-day expiry removes it.
+- A reference to a record this device doesn't have yet (a save's collection, a collection's
+  parent) is left unset locally, never written back as "none": a device's 16 files are read
+  as they come, so a save can arrive before its collection. When that collection arrives,
+  every save and sub-collection whose merged copy names it is filed under it.
+- An edit made on the device while incoming records are being applied is diffed against the
+  copy it was based on and merged in, inside the same transaction, so it can't be overwritten.
+
+## Device identity
+
+A device id belongs to one install. Android copies app settings in a phone-to-phone transfer,
+so the app also keeps its id in a no-backup file; settings whose id doesn't match that file
+are a copy, which takes a fresh id and publishes all 16 files under it. (Installs from before
+the no-backup file existed are marked on their first round.)
 
 ## Guarantees (tested)
 
