@@ -49,7 +49,9 @@ data class SyncStatus(
     /** Saves another device wants to remove or archive, waiting for the user's OK (0 = none). */
     val pendingReview: Int,
     /** Progress of a running round, "" when idle. */
-    val progress: String
+    val progress: String,
+    /** Why photos and files aren't all synced, "" when they are. */
+    val filesProblem: String = ""
 )
 
 @Singleton
@@ -110,7 +112,8 @@ class SyncPreferences(context: Context, fileName: String) {
             lastErrorAt = p[lastErrorAtKey] ?: 0L,
             needsReconnect = p[reconnectKey] ?: false,
             pendingReview = p[reviewKey] ?: 0,
-            progress = p[progressKey].orEmpty()
+            progress = p[progressKey].orEmpty(),
+            filesProblem = p[filesProblemKey].orEmpty()
         )
     }
 
@@ -226,6 +229,10 @@ class SyncPreferences(context: Context, fileName: String) {
     suspend fun setFileCleanupAt(at: Long) = store.edit { it[fileCleanupKey] = at }
 
     private val uploadSessionsKey = stringPreferencesKey("upload_sessions")
+    private val filesProblemKey = stringPreferencesKey("files_problem")
+
+    /** Why photos and files aren't all synced right now, in plain words ("" when they are). */
+    suspend fun setFilesProblem(text: String) = store.edit { if (text.isEmpty()) it.remove(filesProblemKey) else it[filesProblemKey] = text }
 
     /** A big file's unfinished resumable upload (sha256 -> session address), so it carries on. */
     suspend fun uploadSession(sha: String): String? = runCatching {
@@ -324,9 +331,12 @@ class SyncPreferences(context: Context, fileName: String) {
     /** Turning sync off forgets what was read from Drive, so turning it on again reads everything. */
     suspend fun resetForDisable() = store.edit {
         it.remove(md5Key)
-        // Turning sync on again (perhaps with another Google account) starts a new binding.
+        // Turning sync on again (perhaps with another Google account) starts a
+        // new binding: nothing from the old one (upload sessions included) carries over.
         it.remove(accountKey)
         it.remove(reviewKeyKey)
+        it.remove(uploadSessionsKey)
+        it.remove(filesProblemKey)
         it.remove(cleanRoundKey)
         it.remove(unusedFilesKey)
         it[reviewKey] = 0

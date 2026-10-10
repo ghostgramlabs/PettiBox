@@ -58,17 +58,21 @@ class FileSyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         if (!prefs.isEnabled()) return Result.success()
-        val token = auth.silentAccessToken() ?: return Result.success()
+        val token = auth.silentAccessToken() ?: run {
+            prefs.setFilesProblem("Photos and files are waiting: reconnect Google Drive in Settings.")
+            return Result.success()
+        }
         return try {
             // Only the Google account this library syncs with (the sync round
             // explains a mismatch); and nothing goes into a library someone
             // just deleted from Drive (the next round turns sync off).
             val owner = prefs.status.first().accountEmail
-            val account = client.accountEmail(token)
-            if (owner.isNotBlank() && account != null && !account.equals(owner, ignoreCase = true)) return Result.success()
+            val account = client.accountEmail(token) // throws if it can't be told: tried again later
+            if (owner.isBlank() || !account.equals(owner, ignoreCase = true)) return Result.success()
             val syncFolder = client.syncFolder(token)
-            val known = prefs.knownReset()
-            if (known != null && (client.readResetMarker(token, syncFolder) ?: "") != known) return Result.success()
+            val known = prefs.knownReset() ?: return Result.success() // no round has run yet
+            resetCheck = { (client.readResetMarker(token, syncFolder) ?: "") == known }
+            if (!stillSameLibrary(force = true)) return Result.success()
             val folder = client.filesFolder(token, syncFolder)
             val listed = client.listStoredFiles(token, folder)
             val stored = listed.associateBy { it.name.substringBefore('.') }
@@ -76,10 +80,30 @@ class FileSyncWorker @AssistedInject constructor(
             upload(token, folder, stored.keys, thumbsOnly)
             download(token, folder, stored, thumbsOnly)
             if (!thumbsOnly) cleanUp(token, syncFolder, listed)
+            prefs.setFilesProblem("")
             Result.success()
         } catch (e: DriveSyncException) {
-            if (e.transient && runAttemptCount < 5) Result.retry() else Result.success()
+            if (e.transient && runAttemptCount < 5) Result.retry() else {
+                prefs.setFilesProblem("Some photos and files couldn't be sent or fetched. They'll be tried again on the next sync.")
+                Result.success()
+            }
+        } catch (e: LibraryReset) {
+            Result.success() // the next sync round turns sync off and says why
         }
+    }
+
+    private class LibraryReset : Exception()
+
+    /** Whether the synced library is still the one this job started with (no "Delete synced data" since). */
+    private var resetCheck: suspend () -> Boolean = { true }
+    private var checkedAt = 0L
+
+    /** Checked at the start and again every half minute during a long batch. */
+    private suspend fun stillSameLibrary(force: Boolean = false): Boolean {
+        val now = System.currentTimeMillis()
+        if (!force && now - checkedAt < RESET_RECHECK_MS) return true
+        checkedAt = now
+        return resetCheck()
     }
 
     /** Every file this phone's saves use that Drive doesn't have yet. */
@@ -96,11 +120,12 @@ class FileSyncWorker @AssistedInject constructor(
             val file = Uri.parse(uri).path?.let(::File)?.takeIf { it.exists() } ?: continue
             val ext = file.extension.lowercase().ifBlank { "bin" }
             val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "application/octet-stream"
+            if (!stillSameLibrary()) throw LibraryReset()
             client.exclusiveFile(sha) {
                 // The other job may have sent it while this one waited.
-                if (!client.recentlySent(sha)) {
+                if (!client.recentlySent(folder, sha)) {
                     client.uploadFile(token, folder, "$sha.$ext", file, mime, prefs.uploadSession(sha)) { prefs.setUploadSession(sha, it) }
-                    client.markSent(sha)
+                    client.markSent(folder, sha)
                 }
             }
         }
@@ -189,6 +214,7 @@ class FileSyncWorker @AssistedInject constructor(
 
     companion object {
         private const val CLEAN_ROUND_MAX_AGE_MS = 6L * 60 * 60 * 1000
+        private const val RESET_RECHECK_MS = 30_000L
         private const val CLEANUP_EVERY_MS = 20L * 60 * 60 * 1000
         private const val NAME = "sync_files"
         private const val THUMBS = "sync_thumbs"

@@ -52,15 +52,19 @@ class DriveTransport @Inject constructor(
 ) : SyncTransport {
     override suspend fun open(): SyncTransport.Session? {
         val token = auth.silentAccessToken() ?: return null
-        val folder = client.syncFolder(token)
         return object : SyncTransport.Session {
-            override suspend fun list() = client.listDeviceFiles(token, folder)
+            // Found (and duplicate folders merged) only when first needed: the
+            // engine checks the account before anything touches Drive.
+            private var folderId: String? = null
+            private suspend fun folder() = folderId ?: client.syncFolder(token).also { folderId = it }
+
+            override suspend fun list() = client.listDeviceFiles(token, folder())
             override suspend fun read(file: DriveSyncFile) = client.downloadShard(token, file)
             override suspend fun write(name: String, json: String, existingId: String?) {
-                client.uploadShard(token, folder, name, json, existingId)
+                client.uploadShard(token, folder(), name, json, existingId)
             }
             override suspend fun accountEmail() = client.accountEmail(token)
-            override suspend fun resetMarker() = client.readResetMarker(token, folder)
+            override suspend fun resetMarker() = client.readResetMarker(token, folder())
         }
     }
 }

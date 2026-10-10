@@ -460,8 +460,10 @@ export class SyncEngine {
     try {
       // A retained library belongs to its original account. Never silently
       // upload it into a different account after reconnecting Chrome.
+      // Unknown means "try later", never "go ahead".
       const account = await session.accountEmail();
-      if (m.account && account && m.account.toLowerCase() !== account.toLowerCase()) {
+      if (!account) return this.fail(m, 'Couldn\'t tell which Google account is signed in. Trying again soon.', true);
+      if (m.account && m.account.toLowerCase() !== account.toLowerCase()) {
         return this.fail(m, 'This library belongs to another Google account. Sign back into that account, or sign out and remove this browser’s library before switching.', false, 'account');
       }
       if (account) m.account = account;
@@ -497,6 +499,8 @@ export class SyncEngine {
         }
         if (!shard) { newer++; continue; } // newer format: leave it for a newer version
         if (shard.device !== dev || shard.shard !== shardOfName(f.name)) { damaged++; continue; }
+        // Every record must be in the file its id belongs to.
+        if (shard.records.some((r) => shardOf(r.id) !== shard.shard)) { damaged++; continue; }
         // Written before the last "Delete synced data" (a writer that hadn't
         // noticed yet): not part of this library any more.
         if (shard.epoch !== (m.knownReset ?? '')) { newSeen[f.name] = f.md5; continue; }
@@ -541,7 +545,10 @@ export class SyncEngine {
         m.clock = Math.max(m.clock, clock.last);
         await this.saveMeta(m);
         // Nothing incoming is applied, but this browser's own changes still go out.
-        await this.upload(session, m, ours, now);
+        if ((await this.upload(session, m, ours, now)) < 0) {
+          m.stopped = true;
+          return this.fail(m, 'Sync was turned off because the synced data was deleted from Google Drive. Your library is still here; sign in again to start over.', false, 'reset');
+        }
         return this.fail(m, `Another device wants to remove or archive ${removals.length} saves. Choose Keep mine or Apply.`, false, 'review');
       }
       m.reviewDecision = null;

@@ -143,7 +143,7 @@ function valueOf(v, where) {
   if (v === null || v === undefined) return null;
   if (typeof v === 'string' || typeof v === 'boolean') return v;
   if (typeof v === 'number') {
-    if (!Number.isInteger(v)) throw new SyncFormatError(`${where}: not a whole number`);
+    if (!Number.isSafeInteger(v)) throw new SyncFormatError(`${where}: not a safe whole number`);
     return v;
   }
   throw new SyncFormatError(`${where}: unsupported value`);

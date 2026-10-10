@@ -65,11 +65,15 @@ class SyncEngine @Inject constructor(
     internal var beforeApply: suspend () -> Unit = {}
 
     suspend fun round(now: Long = System.currentTimeMillis()): SyncOutcome = lock.withLock {
+        val started = System.currentTimeMillis()
         try {
             val outcome = roundLocked(now)
+            // A warning this round recorded (a skipped file, a newer app, no
+            // safety copy) stays on show although the round itself succeeded.
+            val warned = prefs.status.first().let { it.lastError.isNotBlank() && it.lastErrorAt >= started }
             when (outcome) {
-                is SyncOutcome.Ok -> prefs.recordSuccess(keepError = outcome.damaged > 0)
-                is SyncOutcome.NeedsReview -> prefs.recordSuccess()
+                is SyncOutcome.Ok -> prefs.recordSuccess(keepError = warned)
+                is SyncOutcome.NeedsReview -> prefs.recordSuccess(keepError = warned)
                 is SyncOutcome.Failed -> prefs.recordError(outcome.message)
                 SyncOutcome.NeedsReconnect -> reconnect()
                 SyncOutcome.ResetElsewhere -> {}
@@ -115,7 +119,10 @@ class SyncEngine @Inject constructor(
      * next edit lose to its own older one).
      */
     private suspend fun reserve(clock: HybridClock, count: Int) {
-        prefs.saveClock(maxOf(clock.current, System.currentTimeMillis()) + count + CLOCK_MARGIN_MS)
+        val ceiling = maxOf(clock.current, System.currentTimeMillis()) + count + CLOCK_MARGIN_MS
+        prefs.saveClock(ceiling)
+        // Enforced, not assumed: however long the writes take, no stamp passes it.
+        clock.ceiling = ceiling
     }
 
     private suspend fun reconnect() {
@@ -130,15 +137,15 @@ class SyncEngine @Inject constructor(
         val session = transport.open() ?: return SyncOutcome.NeedsReconnect
         // This library syncs with one Google account. If Drive is now signed
         // in as another (switched in Backup settings, say), touch nothing.
-        val account = session.accountEmail()
+        val account = session.accountEmail() ?: throw DriveSyncException(503, "Google Drive didn't say which account this is")
         val owner = prefs.status.first().accountEmail
-        if (account != null && owner.isNotBlank() && !account.equals(owner, ignoreCase = true)) {
+        if (owner.isNotBlank() && !account.equals(owner, ignoreCase = true)) {
             return SyncOutcome.Failed(
                 "Google Drive is signed in as $account, but this library syncs with $owner. Switch back to $owner, or turn sync off and on again to sync with $account.",
                 retry = false
             )
         }
-        if (account != null && owner.isBlank()) prefs.setAccountEmail(account)
+        if (owner.isBlank()) prefs.setAccountEmail(account)
         // Follow-up work (reminders, link pictures) a round applied but didn't get to finish.
         prefs.pendingFollowUps().takeIf { it.isNotEmpty() }?.let { ids ->
             hooks.afterApply(library.followUpsFor(ids), now)
@@ -202,6 +209,11 @@ class SyncEngine @Inject constructor(
             }
             val shard = decoded
             if (shard.device != dev || shard.shard != DriveSyncClient.shardOfName(f.name)) {
+                damaged++
+                continue
+            }
+            // Every record must be in the file its id belongs to.
+            if (shard.records.any { shardOf(it.id) != shard.shard }) {
                 damaged++
                 continue
             }
@@ -451,6 +463,7 @@ class SyncEngine @Inject constructor(
         if (plan.isEmpty()) return
         val followUps = ArrayList<LocalLibrary.Applied>()
         reserve(clock, plan.size)
+        prefs.setPendingFollowUps(plan.flatMap { (keep, others) -> listOf(keep.id) + others.map { it.id } })
         db.withTransaction {
             syncDao.beginApplying()
             val metas = ArrayList<SyncMetaEntity>()
@@ -472,6 +485,7 @@ class SyncEngine @Inject constructor(
             noteChoices(metas)
         }
         hooks.afterApply(followUps, now)
+        prefs.setPendingFollowUps(emptyList())
     }
 
     /** Live here now, and the merged state would take it off the shelf. */
@@ -561,7 +575,7 @@ class SyncEngine @Inject constructor(
 
         /** More removals than this in one round wait for the user. */
         const val MASS_LIMIT = 25
-        /** Headroom in a saved clock ceiling: no round writes for longer than this between saves. */
+        /** Headroom in a saved clock ceiling, so stamps can follow the wall clock for a while (the ceiling is enforced). */
         const val CLOCK_MARGIN_MS = 60_000L
 
         const val REVIEW_APPLY = "apply"

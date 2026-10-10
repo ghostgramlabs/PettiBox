@@ -50,8 +50,8 @@ class DriveFolders(private val api: String) {
         lock.withLock {
             val key = "$token|$syncFolder/$FILES"
             cache[key]?.takeIf { inUse(token, it) }?.let { return@withLock it }
-            val id = settle(token, children(token, FILES, syncFolder), syncFolder)
-                ?: createFolder(token, FILES, syncFolder).let { settle(token, children(token, FILES, syncFolder), syncFolder) ?: it }
+            val id = settle(token, FILES, syncFolder)
+                ?: createFolder(token, FILES, syncFolder).let { settle(token, FILES, syncFolder) ?: it }
             id.also { cache[key] = it }
         }
     }
@@ -73,7 +73,7 @@ class DriveFolders(private val api: String) {
                 // all their backups there. Then the PettiBox folder is made to
                 // move it into.
                 val root = root(token, create || legacyFolders(token, legacy).isNotEmpty()) ?: return@withLock null
-                val current = settle(token, children(token, name, parent = root), parent = root)
+                val current = settle(token, name, root)
                 val child = if (current != null) {
                     // An older app version on another device may have made the
                     // old top-level folder again: fold its contents in.
@@ -81,7 +81,7 @@ class DriveFolders(private val api: String) {
                     current
                 } else {
                     moveLegacy(token, legacy, name, root)
-                        ?: if (create) createFolder(token, name, root).let { settle(token, children(token, name, root), root) ?: it } else null
+                        ?: if (create) createFolder(token, name, root).let { settle(token, name, root) ?: it } else null
                 }
                 child?.also { cache["$token|$name"] = it }
             }
@@ -89,8 +89,8 @@ class DriveFolders(private val api: String) {
 
     private fun root(token: String, create: Boolean): String? {
         cache["$token|$ROOT"]?.let { return it }
-        val found = settle(token, children(token, ROOT, parent = "root"), parent = "root")
-            ?: if (create) createFolder(token, ROOT, "root").let { settle(token, children(token, ROOT, "root"), "root") ?: it } else null
+        val found = settle(token, ROOT, "root")
+            ?: if (create) createFolder(token, ROOT, "root").let { settle(token, ROOT, "root") ?: it } else null
         return found?.also { cache["$token|$ROOT"] = it }
     }
 
@@ -108,12 +108,41 @@ class DriveFolders(private val api: String) {
         return keep.first
     }
 
-    /** The oldest of [found]; any others have their contents moved into it and are removed. */
-    private fun settle(token: String, found: List<Pair<String, String>>, parent: String): String? {
+    /**
+     * The oldest folder called [name] in [parent]; any others have their
+     * contents moved into it, and anything that reached a retired one late is
+     * brought back (see [drain]).
+     */
+    private fun settle(token: String, name: String, parent: String): String? {
+        val found = children(token, name, parent)
         if (found.isEmpty()) return null
         val keep = found.first().first
         for (extra in found.drop(1)) mergeInto(token, from = extra.first, into = keep)
+        drain(token, keep, name, parent)
         return keep
+    }
+
+    /**
+     * Moves into [into] anything put in a folder PettiBox merged into it after
+     * that folder was trashed (a device still using it at that moment). Only
+     * folders PettiBox retired itself are drained, never ones a person trashed.
+     */
+    private fun drain(token: String, into: String, name: String, parent: String) {
+        val retired = entries(token, "name = '$name' and mimeType = '$FOLDER_MIME' and trashed = true and '$parent' in parents")
+            .filter { it.mergedInto == into }
+        for (r in retired) {
+            val existing = entries(token, "'$into' in parents and mimeType = '$FOLDER_MIME' and trashed = false")
+            for (c in entries(token, "'${r.id}' in parents")) {
+                if (c.explicitlyTrashed) continue
+                val same = if (c.folder) existing.firstOrNull { it.name == c.name } else null
+                if (same != null) {
+                    drain(token, same.id, c.name, r.id)
+                    mergeInto(token, from = c.id, into = same.id)
+                } else {
+                    patch(token, c.id, JSONObject(), addParent = into, removeParents = c.parents)
+                }
+            }
+        }
     }
 
     /**
@@ -131,10 +160,16 @@ class DriveFolders(private val api: String) {
             else patch(token, f.id, JSONObject(), addParent = into, removeParents = f.parents)
         }
         if (entries(token, "'$from' in parents and trashed = false").isNotEmpty()) return // more arrived: next time
-        runCatching { patch(token, from, JSONObject().put("trashed", true), addParent = null, removeParents = "") }
+        // Labelled, so anything a device puts in it from now on is drained back.
+        runCatching {
+            patch(token, from, JSONObject().put("trashed", true).put("appProperties", JSONObject().put(MERGED_INTO, into)), addParent = null, removeParents = "")
+        }
     }
 
-    private class Entry(val id: String, val parents: String, val name: String, val folder: Boolean)
+    private class Entry(
+        val id: String, val parents: String, val name: String, val folder: Boolean,
+        val explicitlyTrashed: Boolean = false, val mergedInto: String? = null
+    )
 
     /** Files and folders matching [query], oldest first. */
     private fun entries(token: String, query: String): List<Entry> {
@@ -142,13 +177,17 @@ class DriveFolders(private val api: String) {
         var page: String? = null
         do {
             val url = "$api/files?q=${enc(query)}&orderBy=createdTime&pageSize=1000" +
-                "&fields=${enc("nextPageToken,files(id,parents,name,mimeType)")}" + (page?.let { "&pageToken=${enc(it)}" } ?: "")
+                "&fields=${enc("nextPageToken,files(id,parents,name,mimeType,explicitlyTrashed,appProperties)")}" + (page?.let { "&pageToken=${enc(it)}" } ?: "")
             val root = JSONObject(readResponse(open(url, "GET", token)))
             val files = root.optJSONArray("files") ?: JSONArray()
             for (i in 0 until files.length()) {
                 val f = files.getJSONObject(i)
                 val parents = f.optJSONArray("parents")?.let { p -> (0 until p.length()).joinToString(",") { p.getString(it) } }.orEmpty()
-                out += Entry(f.getString("id"), parents, f.optString("name"), f.optString("mimeType") == FOLDER_MIME)
+                out += Entry(
+                    f.getString("id"), parents, f.optString("name"), f.optString("mimeType") == FOLDER_MIME,
+                    explicitlyTrashed = f.optBoolean("explicitlyTrashed", false),
+                    mergedInto = f.optJSONObject("appProperties")?.optString(MERGED_INTO)?.ifBlank { null }
+                )
             }
             page = root.optString("nextPageToken").ifBlank { null }
         } while (page != null)
@@ -231,6 +270,8 @@ class DriveFolders(private val api: String) {
         const val BACKUPS = "Backups"
         const val SYNC = "Sync"
         const val FILES = "files"
+        /** Set on a folder PettiBox trashed after merging it: the folder it went into. */
+        private const val MERGED_INTO = "pettiboxMergedInto"
         const val LEGACY_BACKUPS = "PettiBox Backups"
         const val LEGACY_SYNC = "PettiBox Sync"
         private const val FOLDER_MIME = "application/vnd.google-apps.folder"

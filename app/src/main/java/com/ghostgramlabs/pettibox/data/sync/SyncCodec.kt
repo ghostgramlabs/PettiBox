@@ -266,9 +266,10 @@ object SyncCodec {
     private fun valueOf(v: Any?, where: String): Any? = when (v) {
         null, JSONObject.NULL -> null
         is String, is Boolean -> v
-        is Int, is Long -> (v as Number).toLong()
-        is Double -> if (v % 1.0 == 0.0) v.toLong() else throw SyncFormatException("$where: not a whole number")
-        is Number -> v.toLong()
+        // Whole numbers only, within what the extension holds exactly.
+        is Int, is Long -> (v as Number).toLong().also { if (it !in -MAX_STAMP..MAX_STAMP) throw SyncFormatException("$where: number too large") }
+        is Double -> if (v % 1.0 == 0.0 && kotlin.math.abs(v) <= MAX_STAMP.toDouble()) v.toLong() else throw SyncFormatException("$where: not a safe whole number")
+        is Number -> throw SyncFormatException("$where: number too large")
         else -> throw SyncFormatException("$where: unsupported value")
     }
 }

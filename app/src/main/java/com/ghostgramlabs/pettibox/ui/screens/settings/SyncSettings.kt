@@ -141,6 +141,11 @@ fun SyncSettingsCard(
                 TextButton(onClick = onReconnect) { Text("Reconnect Google Drive", fontWeight = FontWeight.Bold) }
             }
         }
+        // Text synced, but photos and files not all there yet: said separately.
+        if (status.filesProblem.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Text(status.filesProblem, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+        }
 
         // Another device wants to take many saves off the shelf.
         if (status.pendingReview > 0) {

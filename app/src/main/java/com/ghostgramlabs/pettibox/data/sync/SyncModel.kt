@@ -310,12 +310,25 @@ object SyncWrite {
 class HybridClock(private var last: Long, private val now: () -> Long = System::currentTimeMillis) {
     val current: Long get() = last
 
+    /**
+     * The highest stamp saved to disk ahead of the writes now being made
+     * (Long.MAX_VALUE when none was). [next] never goes above it: past it,
+     * the wall clock is ignored and stamps just count up, and if even that
+     * would pass it the writing stops rather than outrun what's saved.
+     */
+    var ceiling: Long = Long.MAX_VALUE
+
     fun observe(ts: Long) {
         if (ts > last) last = ts
     }
 
     fun next(): Long {
-        last = maxOf(now(), last + 1)
+        val candidate = maxOf(now(), last + 1)
+        last = when {
+            candidate <= ceiling -> candidate
+            last + 1 <= ceiling -> last + 1
+            else -> throw IllegalStateException("clock reservation used up")
+        }
         return last
     }
 }

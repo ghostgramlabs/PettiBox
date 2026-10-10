@@ -25,8 +25,8 @@ test('an old top-level "PettiBox Sync" is moved in, contents intact', async () =
   const old = drive.folder('PettiBox Sync');
   drive.make({ name: 'd-aaaaaaaaaaaaaaaa-1.json.gz', parents: [old] }, new Uint8Array([1, 2, 3]));
   const s = await transport.open();
+  assert.equal((await s.list()).length, 1); // folders are settled on first use
   assert.deepEqual(drive.tree(), ['PettiBox', 'PettiBox/Sync', 'PettiBox/Sync/d-aaaaaaaaaaaaaaaa-1.json.gz']);
-  assert.equal((await s.list()).length, 1);
 });
 
 test('folders made twice at the same moment are merged into the oldest', async () => {
@@ -45,7 +45,7 @@ test('folders made twice at the same moment are merged into the oldest', async (
 });
 
 test('an old folder made again by an older app version is folded in', async () => {
-  await transport.open(); // PettiBox/Sync exists now
+  await (await transport.open()).list(); // PettiBox/Sync exists now
   const old = drive.folder('PettiBox Sync');
   drive.make({ name: 'd-cccccccccccccccc-2.json.gz', parents: [old] });
   ({ driveTransport: transport } = await import(`../drive.js?run=${Math.random()}`));

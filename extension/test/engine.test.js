@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import { SyncEngine, memoryStore, deviceOf, shardName, urlKey, cleanTags } from '../sync/engine.js';
 import { encodeShard } from '../sync/codec.js';
-import { diff, KIND_COLLECTION, KIND_ITEM, F } from '../sync/model.js';
+import { diff, KIND_COLLECTION, KIND_ITEM, F, shardOf } from '../sync/model.js';
 import { gzip, gunzip, md5 } from '../sync/bytes.js';
 
 /** The Drive folder: name -> { id, json, md5 }. */
@@ -99,7 +99,8 @@ test('locked collections and their saves never show in the browser', async () =>
     fields: { [F.NAME]: 'Secret', [F.EMOJI]: '🔒', [F.COLOR]: 1, [F.ORDER]: 0, [F.PARENT]: null, [F.USER]: true, [F.LOCKED]: true },
     tags: {}, files: {},
   }, { dev: 'aaaaaaaaaaaaaaaa', ts: 5 });
-  await drive.open().then((s) => s.write(shardName('aaaaaaaaaaaaaaaa', 0), encodeShard('aaaaaaaaaaaaaaaa', 'Phone', 0, 5, [col]), null));
+  const n = shardOf(col.id);
+  await drive.open().then((s) => s.write(shardName('aaaaaaaaaaaaaaaa', n), encodeShard('aaaaaaaaaaaaaaaa', 'Phone', n, 5, [col]), null));
   await phone.round();
   const { id } = await phone.saveLink({ url: 'https://example.com/private', title: 'Private', cat: 'user_secret' });
   await phone.saveLink({ url: 'https://example.com/open', title: 'Open' });

@@ -60,9 +60,9 @@ class DriveSyncClient(
     suspend fun <T> exclusiveFile(sha: String, block: suspend () -> T): T =
         transfers.computeIfAbsent(sha) { Mutex() }.withLock { block() }
 
-    /** Uploaded by this app in the last while: another job needn't send it again. */
-    fun recentlySent(sha: String): Boolean = (sent[sha] ?: 0L) > System.currentTimeMillis() - SENT_MEMORY_MS
-    fun markSent(sha: String) { sent[sha] = System.currentTimeMillis() }
+    /** Uploaded into [folder] by this app in the last while: another job needn't send it again. */
+    fun recentlySent(folder: String, sha: String): Boolean = (sent["$folder/$sha"] ?: 0L) > System.currentTimeMillis() - SENT_MEMORY_MS
+    fun markSent(folder: String, sha: String) { sent["$folder/$sha"] = System.currentTimeMillis() }
 
     /**
      * Moves a shared file to Drive's trash instead of deleting it: Drive keeps
@@ -79,14 +79,26 @@ class DriveSyncClient(
 
     /** A shared file put in the trash by a clean-up, taken out again; null if there's none. */
     suspend fun restoreTrashed(token: String, filesFolder: String, sha: String): DriveSyncFile? = withContext(Dispatchers.IO) {
-        val f = list(token, "'$filesFolder' in parents and trashed = true and name contains '$sha'")
+        // Anywhere PettiBox can see (a retired duplicate folder too), back into the files folder.
+        val f = list(token, "trashed = true and name contains '$sha'")
             .firstOrNull { it.name.substringBefore('.') == sha } ?: return@withContext null
-        val conn = open("$api/files/${f.id}?fields=id", "PATCH", token)
+        val parents = parentsOf(token, f.id)
+        val conn = open(
+            "$api/files/${f.id}?addParents=${enc(filesFolder)}" +
+                (if (parents.isNotBlank()) "&removeParents=${enc(parents)}" else "") + "&fields=id",
+            "PATCH", token
+        )
         conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
         conn.doOutput = true
         conn.outputStream.use { it.write("{\"trashed\":false}".toByteArray(Charsets.UTF_8)) }
         readResponse(conn)
         f
+    }
+
+    private fun parentsOf(token: String, id: String): String {
+        val o = JSONObject(readResponse(open("$api/files/$id?fields=parents", "GET", token)))
+        val p = o.optJSONArray("parents") ?: return ""
+        return (0 until p.length()).joinToString(",") { p.getString(it) }
     }
 
     /** My Drive/PettiBox/Sync, made if missing (see DriveFolders for the layout and moving old folders). */
@@ -381,14 +393,18 @@ class DriveSyncClient(
      * instead of re-uploading. Libraries on the devices are not touched.
      */
     suspend fun resetEverything(token: String, folder: String, marker: String) = withContext(Dispatchers.IO) {
-        // Marker first: a device syncing mid-reset sees it and stops.
-        val existing = list(token, "'$folder' in parents and trashed = false and name = '$RESET_MARKER'").firstOrNull()
-        if (existing != null) {
-            val conn = open("$upload/files/${existing.id}?uploadType=media", "PATCH", token)
-            conn.setRequestProperty("Content-Type", "application/json")
-            conn.doOutput = true
-            conn.outputStream.use { it.write(marker.toByteArray(Charsets.UTF_8)) }
-            readResponse(conn)
+        // Marker first: a device syncing mid-reset sees it and stops. Every
+        // marker gets the new content (two can exist if two devices reset at
+        // once), so readers, who take the smallest, always see this reset.
+        val existing = list(token, "'$folder' in parents and trashed = false and name = '$RESET_MARKER'")
+        if (existing.isNotEmpty()) {
+            for (m in existing) {
+                val conn = open("$upload/files/${m.id}?uploadType=media", "PATCH", token)
+                conn.setRequestProperty("Content-Type", "application/json")
+                conn.doOutput = true
+                conn.outputStream.use { it.write(marker.toByteArray(Charsets.UTF_8)) }
+                readResponse(conn)
+            }
         } else {
             val bytes = marker.toByteArray(Charsets.UTF_8)
             multipartCreate(token, folder, RESET_MARKER, "application/json", bytes.inputStream(), bytes.size.toLong())
@@ -404,11 +420,15 @@ class DriveSyncClient(
     }
 
     /** Email of the Google account behind the token (Drive `about`, allowed under drive.file). */
-    suspend fun accountEmail(token: String): String? = withContext(Dispatchers.IO) {
-        runCatching {
-            JSONObject(readResponse(open("$api/about?fields=${enc("user(emailAddress)")}", "GET", token)))
-                .optJSONObject("user")?.optString("emailAddress")?.ifBlank { null }
-        }.getOrNull()
+    /**
+     * The signed-in account's email. A failed lookup throws (try again later)
+     * rather than answering "unknown": sync only goes ahead once it knows
+     * whose Drive it is talking to.
+     */
+    suspend fun accountEmail(token: String): String = withContext(Dispatchers.IO) {
+        JSONObject(readResponse(open("$api/about?fields=${enc("user(emailAddress)")}", "GET", token)))
+            .optJSONObject("user")?.optString("emailAddress")?.ifBlank { null }
+            ?: throw DriveSyncException(503, "Google Drive didn't say which account this is")
     }
 
     // ── Plumbing ─────────────────────────────────────────────────────────

@@ -253,6 +253,25 @@ partial download or an upload session.
   encrypted). Locked collections are hidden in the extension, not encrypted. Records removed
   for good keep their last field values in their tombstone.
 
+## Scale (measured, not a hard limit)
+
+Measured with realistic saves (title, link, note, tags, card picture), October 2026:
+
+| Saves | One device's copy in Drive (gzip) | One file after an edit | Extension list build |
+|---|---|---|---|
+| 1,000 | 0.14 MB | ~9 KB | <5 ms |
+| 10,000 | 1.4 MB | ~90 KB | ~20 ms |
+| 50,000 | 7.3 MB | ~460 KB | ~110 ms |
+
+Supported: up to 20,000 saves comfortably, 50,000 working; beyond that a new device's
+first sync and the extension get slow. Every device keeps a full copy, so Drive holds one
+copy per device. There is no compaction of tombstones or of removed devices' contexts yet.
+
+**File recovery window:** a shared file nothing uses for 30 days goes to Drive's trash,
+where Drive keeps it 30 more days; any app that needs it in that time takes it back out. A
+device offline for longer than both (about 60 days) can come back to a save whose file is
+gone, unless some device still has the file and uploads it again.
+
 ## Device identity
 
 A device id belongs to one install. Android copies app settings in a phone-to-phone transfer,

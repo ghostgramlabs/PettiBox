@@ -105,7 +105,7 @@ test('D06a: merging folders never deletes something put there at that moment', a
     return fetchDrive(url, init);
   };
   const { driveTransport } = await import('../drive.js?audit-race');
-  await driveTransport.open();
+  await (await driveTransport.open()).list(); // folders are settled on first use
   assert.ok(late);
   assert.ok(fake.files.has(late)); // in Drive's trash with its folder at worst: recoverable, never deleted
   assert.ok(fake.files.has(root1));
@@ -141,7 +141,8 @@ test('D09: a reply that stalls half-way times out instead of hanging', async () 
   globalThis.setTimeout = (fn, ms, ...args) => realTimer(fn, Math.min(ms, 5), ...args);
   try {
     const { driveTransport } = await import('../drive.js?audit-timeout');
-    await assert.rejects(driveTransport.open(), /too long/);
+    const session = await driveTransport.open();
+    await assert.rejects(session.list(), /too long/);
     assert.equal(signal.aborted, true);
   } finally {
     globalThis.setTimeout = realTimer;
@@ -221,4 +222,98 @@ test('O01: a newer-format file is reported, not silently skipped', async () => {
   d.files.set(shardName('aaaaaaaaaaaaaaaa', 0), { json: '{"format":2}', md5: 'v2' });
   await a.round();
   assert.match((await a.meta()).lastError, /newer PettiBox/);
+});
+
+// ── Recheck (audit/sync-design-recheck.mjs): the residual cases, now required to pass ──
+
+test('recheck D02: if Drive can\'t say which account it is, nothing is synced', async () => {
+  const d = drive();
+  const a = new SyncEngine(memoryStore(), d);
+  await a.saveLink({ url: 'https://audit.example/who', title: 'A' });
+  const open = d.open.bind(d);
+  d.open = async () => ({ ...(await open()), accountEmail: async () => null });
+  const out = await a.round();
+  assert.equal(out.ok, false);
+  assert.equal(out.retry, true);
+  assert.equal(d.files.size, 0);
+});
+
+test('recheck D05: a reset noticed while a review waits stops sync at once', async () => {
+  const d = drive();
+  const a = new SyncEngine(memoryStore(), d);
+  const b = new SyncEngine(memoryStore(), d);
+  const ids = [];
+  for (let i = 0; i < 6; i++) ids.push((await a.saveLink({ url: 'https://audit.example/r/' + i, title: String(i) })).id);
+  await a.round(); await b.round();
+  for (const id of ids) await b.trash(id);
+  await b.round();
+  await a.saveLink({ url: 'https://audit.example/r/new', title: 'new' });
+  const marker = d.open.bind(d);
+  let calls = 0;
+  d.open = async () => {
+    const s = await marker();
+    return { ...s, resetMarker: async () => (++calls > 1 ? 'reset-3' : '') };
+  };
+  const out = await a.round();
+  assert.equal(out.needs, 'reset');
+  assert.equal((await a.meta()).stopped, true);
+});
+
+test('recheck D06: a photo put in a duplicate files folder as it is retired is found again', async () => {
+  const fake = installFakeDrive();
+  const root = fake.folder('PettiBox');
+  const folder = fake.folder('Sync', root);
+  fake.folder('files', folder);
+  const duplicate = fake.folder('files', folder);
+  const sha = 'ab'.repeat(32);
+  const driveFetch = globalThis.fetch;
+  let late;
+  globalThis.fetch = async (url, init = {}) => {
+    if (!late && init.method === 'PATCH' && new URL(url).pathname.endsWith('/' + duplicate) && String(init.body).includes('trashed')) {
+      late = fake.make({ name: sha + '.jpg', parents: [duplicate] });
+    }
+    return driveFetch(url, init);
+  };
+  const { driveTransport } = await import('../drive.js?recheck-folders');
+  const session = await driveTransport.open();
+  await session.storedFiles();
+  assert.ok(late);
+  const next = await driveTransport.open();
+  assert.ok((await next.storedFiles())[sha]); // drained back into the live folder
+});
+
+test('recheck D08: a file a clean-up trashed is taken back out when a save needs it', async () => {
+  const fake = installFakeDrive();
+  const root = fake.folder('PettiBox');
+  const folder = fake.folder('Sync', root);
+  const files = fake.folder('files', folder);
+  const sha = 'cd'.repeat(32);
+  const id = fake.make({ name: sha + '.pdf', parents: [files] });
+  fake.files.get(id).trashed = true;
+  const { driveTransport } = await import('../drive.js?recheck-restore');
+  const session = await driveTransport.open();
+  assert.equal((await session.storedFiles())[sha], undefined);
+  assert.ok(await session.restoreFile(sha));
+  assert.ok((await session.storedFiles())[sha]);
+});
+
+test('recheck D10: a record in the wrong file, or a number Chrome can\'t hold exactly, rejects the file', async () => {
+  const device = 'bbbbbbbbbbbbbbbb';
+  const id = 'wrong-placement';
+  const wrongShard = (shardOf(id) + 1) % 16;
+  const record = { kind: 'item', id, created: 1, vv: { [device]: 1 },
+    fields: { title: [{ value: 'Wrong shard', dot: { dev: device, ts: 1 } }] }, tags: {}, files: {}, gone: null };
+  const json = encodeShard(device, 'Other', wrongShard, 1, [record]);
+  const engine = new SyncEngine(memoryStore(), { async open() { return {
+    accountEmail: async () => 'recheck@example.com', resetMarker: async () => '',
+    list: async () => [{ id: 'remote', name: shardName(device, wrongShard), md5: 'one' }],
+    read: async () => json, write: async () => {},
+  }; } });
+  const outcome = await engine.round();
+  assert.equal(outcome.damaged, 1);
+  assert.equal((await engine.records()).size, 0);
+
+  const big = JSON.stringify({ format: 1, device, shard: shardOf(id), records: [{ k: 'item', id, c: 1, vv: { [device]: 1 },
+    f: { remind: [{ v: Number.MAX_SAFE_INTEGER + 1, t: 1, d: device }] } }] });
+  assert.throws(() => decodeShard(big), /safe whole number/);
 });

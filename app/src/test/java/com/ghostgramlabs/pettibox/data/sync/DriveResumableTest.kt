@@ -47,6 +47,9 @@ class DriveResumableTest {
     @Volatile private var dropDownloadAfter: Int? = null
     private val ranges = ArrayList<String?>()
 
+    // Reset markers: two left by two devices resetting at once.
+    private val markers = linkedMapOf("m1" to "old-1", "m2" to "old-2")
+
     @Before fun start() {
         server = ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))
         thread(isDaemon = true) {
@@ -116,6 +119,18 @@ class DriveResumableTest {
                 bytesSent += piece.size
                 if (start == received.size().toLong()) received.write(piece)
                 if (done()) reply(200, body = """{"id":"f1"}""".toByteArray()) else reply(308, sofar())
+            }
+            method == "GET" && target.startsWith("/drive/files?") -> {
+                input.readNBytes(length)
+                val q = java.net.URLDecoder.decode(target.substringAfter("q=").substringBefore('&'), "UTF-8")
+                val list = if (q.contains("name = 'pettibox-sync-reset.json'")) markers.keys.toList() else emptyList()
+                val files = list.joinToString(",") { "{\"id\":\"$it\",\"name\":\"pettibox-sync-reset.json\"}" }
+                reply(200, body = "{\"files\":[$files]}".toByteArray())
+            }
+            method == "POST" && target.startsWith("/upload/files/") && headers["x-http-method-override"] == "PATCH" -> {
+                val id = target.removePrefix("/upload/files/").substringBefore('?')
+                markers[id] = input.readNBytes(length).toString(Charsets.UTF_8)
+                reply(200, body = "{}".toByteArray())
             }
             method == "GET" && target.startsWith("/drive/files/") -> {
                 val range = headers["range"]
@@ -192,6 +207,11 @@ class DriveResumableTest {
         assertArrayEquals(stored, target.readBytes())
         assertEquals(listOf(null, "bytes=300000-"), ranges)
         assertFalse(part.exists())
+    }
+
+    @Test fun a_reset_updates_every_marker_so_readers_always_see_it() = runBlocking {
+        client.resetEverything("t", "folder", "new-reset")
+        assertEquals(listOf("new-reset", "new-reset"), markers.values.toList())
     }
 
     @Test fun a_damaged_partial_download_is_thrown_away() = runBlocking {

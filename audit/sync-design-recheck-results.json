@@ -1,0 +1,21 @@
+{
+  "reviewedRevision": "17b36760ee3fc2c66654e2c42308a77595567d5e",
+  "type": "Residual-defect probes, not acceptance tests",
+  "findings": [
+    {
+      "id": "D05",
+      "evidence": "Production Chrome reader plus modeled Android write selection",
+      "result": "Updating one of two reset markers can leave the effective epoch unchanged across a later reset."
+    },
+    {
+      "id": "D06",
+      "evidence": "Production Chrome transport with fake Drive",
+      "result": "A late blob survives physically but is stranded under the trashed duplicate and remains undiscoverable next round."
+    },
+    {
+      "id": "D10",
+      "evidence": "Production Chrome codec and engine",
+      "result": "A record in the wrong shard with an unsafe integer reminder is accepted and persisted."
+    }
+  ]
+}

@@ -25,6 +25,7 @@ export function installFakeDrive() {
     if ((m = /^mimeType = '(.*)'$/.exec(term))) return f.mimeType === m[1];
     if ((m = /^'(.*)' in parents$/.exec(term))) return f.parents.includes(m[1]);
     if (term === 'trashed = false') return !inTrash(f);
+    if (term === 'trashed = true') return inTrash(f);
     throw new Error('fake Drive: unsupported query term: ' + term);
   });
 
@@ -45,7 +46,7 @@ export function installFakeDrive() {
     if (path === '/drive/v3/files' && method === 'GET') {
       const q = url.searchParams.get('q') ?? '';
       const list = [...files.values()].filter((f) => matches(f, q)).sort((a, b) => a.createdTime - b.createdTime);
-      return json({ files: list.map((f) => ({ id: f.id, name: f.name, parents: f.parents, mimeType: f.mimeType, size: String(f.content.length), md5Checksum: '', modifiedTime: new Date(f.createdTime).toISOString() })) });
+      return json({ files: list.map((f) => ({ id: f.id, name: f.name, parents: f.parents, mimeType: f.mimeType, size: String(f.content.length), md5Checksum: '', modifiedTime: new Date(f.createdTime).toISOString(), explicitlyTrashed: f.trashed === true, appProperties: f.appProperties })) });
     }
     if (path === '/drive/v3/files' && method === 'POST') {
       return json({ id: make(JSON.parse(init.body)) });
@@ -80,6 +81,7 @@ export function installFakeDrive() {
         const meta = init.body ? JSON.parse(init.body) : {};
         if (meta.name) f.name = meta.name;
         if (meta.trashed !== undefined) f.trashed = meta.trashed;
+        if (meta.appProperties) f.appProperties = { ...(f.appProperties ?? {}), ...meta.appProperties };
         return json({ id: f.id });
       }
       if (url.searchParams.get('alt') === 'media') return new Response(f.content, { status: 200 });

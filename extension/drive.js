@@ -108,11 +108,14 @@ async function folders(token, query) {
   const out = [];
   let page = null;
   do {
-    const url = `${API}/files?q=${q(query)}&orderBy=createdTime&pageSize=1000&fields=${q('nextPageToken,files(id,parents,name,mimeType)')}` +
+    const url = `${API}/files?q=${q(query)}&orderBy=createdTime&pageSize=1000&fields=${q('nextPageToken,files(id,parents,name,mimeType,explicitlyTrashed,appProperties)')}` +
       (page ? `&pageToken=${q(page)}` : '');
     const body = await (await call(token, url)).json();
     for (const f of body.files ?? []) {
-      out.push({ id: f.id, parents: f.parents ?? [], name: f.name, folder: f.mimeType === FOLDER_MIME });
+      out.push({
+        id: f.id, parents: f.parents ?? [], name: f.name, folder: f.mimeType === FOLDER_MIME,
+        explicitlyTrashed: f.explicitlyTrashed === true, mergedInto: f.appProperties?.pettiboxMergedInto ?? null,
+      });
     }
     page = body.nextPageToken ?? null;
   } while (page);
@@ -146,17 +149,38 @@ async function mergeInto(token, from, into) {
     else await move(token, f.id, { to: into, from: f.parents });
   }
   if ((await folders(token, `'${from}' in parents and trashed = false`)).length) return; // more arrived: next time
+  // Labelled, so anything a device puts in it from now on is moved out
+  // again (see drain) rather than lost with it.
   await call(token, `${API}/files/${from}?fields=id`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-    body: JSON.stringify({ trashed: true }),
+    body: JSON.stringify({ trashed: true, appProperties: { pettiboxMergedInto: into } }),
   }).catch(() => {});
 }
 
-/** The oldest of several same-named folders; the rest are folded into it. */
-async function settle(token, found) {
+/**
+ * Brings back into [into] anything put in a folder PettiBox merged into it
+ * after it was trashed (a device still using the old folder at that moment).
+ * Only folders PettiBox itself retired are drained, never ones a person trashed.
+ */
+async function drain(token, into, name, parent) {
+  const retired = await folders(token, `name = '${name}' and mimeType = '${FOLDER_MIME}' and trashed = true and '${parent}' in parents`);
+  for (const r of retired.filter((x) => x.mergedInto === into)) {
+    const existing = await folders(token, `'${into}' in parents and trashed = false and mimeType = '${FOLDER_MIME}'`);
+    for (const c of await folders(token, `'${r.id}' in parents`)) {
+      if (c.explicitlyTrashed) continue;
+      const same = c.folder ? existing.find((x) => x.name === c.name) : null;
+      if (same) await drain(token, same.id, c.name, r.id).then(() => mergeInto(token, c.id, same.id));
+      else await move(token, c.id, { to: into, from: c.parents });
+    }
+  }
+}
+
+/** The oldest of several same-named folders; the rest are folded into it (and late arrivals drained back). */
+async function settle(token, found, name, parent) {
   if (!found.length) return null;
   for (const extra of found.slice(1)) await mergeInto(token, extra.id, found[0].id);
+  if (name) await drain(token, found[0].id, name, parent);
   return found[0].id;
 }
 
@@ -169,18 +193,18 @@ async function createFolder(token, name, parent) {
 }
 
 async function findOrCreate(token, name, parent) {
-  const found = await settle(token, await folders(token, named(name, parent)));
+  const found = await settle(token, await folders(token, named(name, parent)), name, parent);
   if (found) return found;
   await createFolder(token, name, parent);
   // Another device may have made one at the same moment: settle on the oldest.
-  return settle(token, await folders(token, named(name, parent)));
+  return settle(token, await folders(token, named(name, parent)), name, parent);
 }
 
 /** My Drive/PettiBox/Sync, with an older top-level "PettiBox Sync" moved in. */
 async function syncFolder(token) {
   const root = await findOrCreate(token, ROOT, 'root');
   const legacy = await folders(token, named(LEGACY_SYNC));
-  const current = await settle(token, await folders(token, named(SYNC, root)));
+  const current = await settle(token, await folders(token, named(SYNC, root)), SYNC, root);
   if (current) {
     for (const old of legacy) await mergeInto(token, old.id, current);
     return current;
@@ -217,14 +241,22 @@ export const driveTransport = {
   async open() {
     const token = await getToken(false);
     if (!token) return null;
-    if (known?.token !== token || !(await stillInUse(token, known.id))) known = { token, id: await syncFolder(token) };
-    const folder = known.id;
+    // Found (and duplicates merged) only when first needed, after the
+    // engine has checked whose Drive this is.
+    let checked = false;
+    const folder = async () => {
+      if (!checked) {
+        if (known?.token !== token || !(await stillInUse(token, known.id))) known = { token, id: await syncFolder(token) };
+        checked = true;
+      }
+      return known.id;
+    };
     return {
       async list() {
         const out = [];
         let page = null;
         do {
-          const query = `'${folder}' in parents and trashed = false and name contains 'd-'`;
+          const query = `'${await folder()}' in parents and trashed = false and name contains 'd-'`;
           const url = `${API}/files?q=${q(query)}&pageSize=1000&fields=${q('nextPageToken,files(id,name,md5Checksum,modifiedTime)')}` +
             (page ? `&pageToken=${q(page)}` : '');
           const body = await (await call(token, url)).json();
@@ -254,7 +286,7 @@ export const driveTransport = {
         }
         const boundary = 'pettibox-sync-' + crypto.randomUUID();
         const head = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n` +
-          JSON.stringify({ name, parents: [folder] }) +
+          JSON.stringify({ name, parents: [await folder()] }) +
           `\r\n--${boundary}\r\nContent-Type: application/gzip\r\n\r\n`;
         const tail = `\r\n--${boundary}--\r\n`;
         await call(token, `${UPLOAD}/files?uploadType=multipart&fields=id`, {
@@ -266,7 +298,7 @@ export const driveTransport = {
       /** Photos, PDFs and pictures the phones shared: sha -> { id, size, mime }. */
       async storedFiles() {
         // Two devices may each have made a files folder: fold them into one.
-        const files = await settle(token, await folders(token, named('files', folder)));
+        const files = await settle(token, await folders(token, named('files', await folder())), 'files', await folder());
         const out = {};
         if (!files) return out;
         let page = null;
@@ -282,6 +314,25 @@ export const driveTransport = {
         } while (page);
         return out;
       },
+      /**
+       * A shared file a phone's clean-up put in Drive's trash although a save
+       * needs it: taken back out into the files folder. Null if there's none.
+       */
+      async restoreFile(sha) {
+        const query = `name contains '${sha}' and trashed = true`;
+        const body = await (await call(token, `${API}/files?q=${q(query)}&fields=${q('files(id,name,parents,size,mimeType)')}`)).json();
+        const f = (body.files ?? []).find((x) => x.name.split('.')[0] === sha);
+        if (!f) return null;
+        const files = await settle(token, await folders(token, named('files', await folder())), 'files', await folder())
+          ?? (await createFolder(token, 'files', await folder()), await findFolder(token, 'files', await folder()));
+        const params = `addParents=${q(files)}` + ((f.parents ?? []).length ? `&removeParents=${q(f.parents.join(','))}` : '') + '&fields=id';
+        await call(token, `${API}/files/${f.id}?${params}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+          body: JSON.stringify({ trashed: false }),
+        });
+        return { id: f.id, size: Number(f.size ?? 0), mime: f.mimeType ?? 'application/octet-stream' };
+      },
       async readFile(id) {
         return (await call(token, `${API}/files/${id}?alt=media`)).blob();
       },
@@ -291,7 +342,7 @@ export const driveTransport = {
        * the smallest content, so all agree on the same one.
        */
       async resetMarker() {
-        const query = `'${folder}' in parents and trashed = false and name = 'pettibox-sync-reset.json'`;
+        const query = `'${await folder()}' in parents and trashed = false and name = 'pettibox-sync-reset.json'`;
         const body = await (await call(token, `${API}/files?q=${q(query)}&fields=${q('files(id)')}`)).json();
         const found = body.files ?? [];
         if (!found.length) return null;
@@ -299,9 +350,11 @@ export const driveTransport = {
         for (const f of found) texts.push(await (await call(token, `${API}/files/${f.id}?alt=media`)).text());
         return texts.sort()[0];
       },
+      /** The signed-in account's email; throws if Drive can't say (sync then waits). */
       async accountEmail() {
         const body = await (await call(token, `${API}/about?fields=${q('user(emailAddress)')}`)).json();
-        return body.user?.emailAddress ?? null;
+        if (!body.user?.emailAddress) throw new DriveError(503, 'Google Drive didn\'t say which account this is');
+        return body.user.emailAddress;
       },
     };
   },

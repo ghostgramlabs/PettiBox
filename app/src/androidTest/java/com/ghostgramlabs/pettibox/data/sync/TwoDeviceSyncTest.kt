@@ -40,7 +40,7 @@ class TwoDeviceSyncTest {
         val files = LinkedHashMap<String, Triple<String, String, String>>() // name -> (id, json, md5)
         var corrupt: String? = null
         var marker: String? = null
-        var account = "test@example.com"
+        var account: String? = "test@example.com"
         /** Files not listed yet (uploaded, but not seen by the reader at this moment). */
         val hidden = HashSet<String>()
 
@@ -421,6 +421,30 @@ class TwoDeviceSyncTest {
         assertTrue(b.sync() is SyncOutcome.Ok)
         assertTrue(b.prefs.firstBackupDone())
         assertEquals(0, b.live().size)
+    }
+
+    @Test fun recheck_d02_if_drive_cant_say_which_account_it_is_nothing_syncs() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn()
+        drive.account = null
+        val out = a.sync()
+        assertTrue("got $out", out is SyncOutcome.Failed && out.retry)
+        assertTrue(drive.files.isEmpty())
+    }
+
+    @Test fun recheck_o01_a_newer_version_warning_stays_after_the_round_succeeds() = runBlocking {
+        a.turnOn()
+        drive.files["d-cccccccccccccccc-0.json.gz"] = Triple("x", "{\"format\":99}", "m")
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertTrue(a.prefs.status.first().lastError.contains("newer version"))
+    }
+
+    @Test fun recheck_o02_a_failed_safety_copy_warning_stays_after_the_round_succeeds() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn()
+        a.hooks.backupWorks = false
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertTrue(a.prefs.status.first().lastError.contains("safety copy"))
     }
 
     @Test fun the_same_field_edited_on_both_keeps_both_versions() = runBlocking {

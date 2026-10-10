@@ -1,298 +1,205 @@
 # PettiBox sync and system-design audit
 
-**Date:** 2026-10-10 (America/Chicago)  
-**Reviewed revision:** 2ebb9c9afe42f8297741f44362fc3384988d9c82  
-**Scope:** Android metadata sync, Chrome extension, Google Drive layout, account/reset lifecycle, attachment transfer and cleanup, persistence, validation, and test coverage.
+**Rechecked:** 2026-10-10 (America/Chicago)
 
-## Assessment
+**Current reviewed revision:** 17b36760ee3fc2c66654e2c42308a77595567d5e
 
-**The merge model has useful compatibility coverage, but the complete sync system cannot yet be described as correct under failure and concurrency.** The most serious gaps are outside the pure merge function: retry metadata writes, Android account ownership and clock persistence, deletion capture, reset fencing, and destructive folder reconciliation.
+**Original audit revision:** 2ebb9c9afe42f8297741f44362fc3384988d9c82
 
-This audit identifies **12 primary findings** and **3 additional design/observability concerns**. Evidence is explicitly distinguished:
+**Scope:** Chrome sign-in feedback, metadata sync, Android persistence, accounts, reset, Drive folders, attachment transfers/cleanup, validation, and user-visible status.
 
-- **Reproduced:** executed production JavaScript modules/functions with isolated memory storage and fake Drive.
-- **Source-confirmed:** the problematic branch/order is present; Android runtime execution was unavailable.
-- **Design risk:** a concrete allowed interleaving violates an intended guarantee, but the full scenario was not executed.
+## Current assessment
 
-**P1** means address before claiming reliable cross-device operation because of data loss, unintended disclosure, or serious integrity risk. **P2** means a reliability, recovery, or usability defect. These priorities reflect impact, not measured production frequency.
+**Not all reported issues are fixed.** Of the 15 original findings, **6 are fixed for the reported failure**, **8 remain partially fixed or mitigated**, and **1 is documented with implementation work deferred**. The previous resolution appendix overstated closure; this recheck replaces it with the verified statuses below.
 
-No product implementation or real user data was changed. The accompanying probes assert current defects; they are evidence scripts, not acceptance tests that should remain green after fixes.
+All **49 extension tests passed**, including sign-in UI tests and 10 added audit regressions. Three additional isolated probes demonstrate remaining reset-marker, attachment-discovery, and validation gaps. Android changes were inspected, but Android tests could not start because the Gradle wrapper required an unavailable download. No live OAuth, Chrome installation, Android device, or real Drive data was exercised.
 
-## System as implemented
+“Fixed — tested” means the relevant automated JavaScript regression passed, not that every live-device failure mode was tested. “Fixed — source reviewed” means the reported branch is corrected, with Android runtime verification still pending. Partial findings remain open. P1/P2 are the original impact priorities, not measured production frequency.
+
+## Status of every reported finding
+
+| ID | Priority | Current status | Verification and remaining work |
+|---|---|---|---|
+| D01 | P1 | **Fixed — tested** | Retry bookkeeping uses the engine queue; one bookkeeping pass per shared round. |
+| D02 | P1 | **Partially fixed — open** | Known account mismatch is blocked, but identity lookup failure permits sync; transfer state is not account/epoch scoped. |
+| D03 | P1 | **Partially fixed — open** | A clock ceiling is saved first, but wall-clock-based allocation can exceed it after a delay or time jump. |
+| D04 | P1 | **Fixed — source reviewed** | A null late local snapshot becomes a deletion tombstone; Android regression exists but was not run. |
+| D05 | P1 | **Partially fixed — open** | Metadata epochs help; duplicate markers can conceal a later reset, and blob transfers lack complete fencing. |
+| D06 | P1 | **Partially fixed — open** | Duplicate attachment folders merge; late children can still be stranded under a trashed folder. |
+| D07 | P1 | **Fixed — source reviewed** | A process-wide per-hash lock prevents the reported simultaneous transfer collision. Android concurrency test still required. |
+| D08 | P1 | **Mitigated — open** | Cleanup revalidates and trashes instead of permanently deleting; global reference and recovery guarantees remain incomplete. |
+| D09 | P2 | **Fixed — tested** | Request deadline covers body consumption. Live MV3 termination/resume remains untested. |
+| D10 | P1 | **Partially fixed — open** | Original malformed inputs are rejected; unsafe numeric field values and misplaced records still enter durable state. |
+| D11 | P2 | **Fixed — tested in Chrome; Android source reviewed** | Missing owned shards are marked dirty and republished. Android test exists but was not run. |
+| D12 | P2 | **Fixed — tested in Chrome; Android source reviewed** | Local saves upload during review; a changed removal-ID set requires another decision. |
+| O01 | P2 | **Partially fixed — open** | Chrome upgrade warning works; Android clears its warning on success; per-file failure status remains absent. |
+| O02 | P2 | **Partially fixed — open** | Backup outcome and mass-removal gate added; warning persistence and duplicate-fold follow-up durability still need work. |
+| O03 | Design | **Documented; implementation deferred** | Privacy/retention and decoder limits are stated; compaction and measured capacity are not delivered. |
+
+### Earlier sign-in UI report
+
+**Fixed in the tested popup flow.** The suite confirms that sign-in refreshes the popup before slow sync finishes, sync/authentication errors appear, and sign-in can be retried. See the [popup regression tests](../extension/test/popup.test.js). This does not establish that the installed extension has been rebuilt/reloaded or that its real OAuth configuration is correct; neither was verified here.
+
+## Current system
 
 ```mermaid
 flowchart LR
-    A[Android UI and local jobs] --> DB[(Room library)]
-    DB --> T[SQL triggers / outbox]
-    T --> E[Android SyncEngine]
-    E <--> M[(Room sync_meta / inbox / dirty)]
-    E <--> P[(DataStore clock / account / checksums)]
-    C[Chrome popup and options] --> W[Service worker]
-    W --> Q[SyncEngine edit queue]
+    A[Android UI and jobs] --> DB[(Room library / outbox)]
+    DB <--> E[Android SyncEngine]
+    E <--> M[(Room metadata / inbox / dirty)]
+    E <--> P[(DataStore clock / account / status)]
+    C[Chrome popup and options] --> Q[Service worker / serialized engine]
     Q <--> L[(chrome.storage.local)]
-    E <-->|gzip JSON shards| D[(Drive: PettiBox/Sync)]
-    Q <-->|gzip JSON shards| D
-    F[Android thumbnail and full-file workers] <--> B[(Drive files: content hashes)]
-    W <-->|on-demand downloads| B
-    F --> G[Unused-file cleanup]
+    E <-->|gzip JSON shards + epoch| D[(Drive PettiBox/Sync)]
+    Q <-->|gzip JSON shards + epoch| D
+    F[Android file workers / hash lock] <--> B[(Shared blobs)]
+    Q <-->|on-demand downloads| B
+    F --> G[Reference check / trash cleanup]
     G --> B
 ```
 
-Each device holds the merged library and publishes up to 16 shards under its own device ID. Records use version vectors and concurrent field values, with observed-remove behavior for tags/files. Blob transfer is separate from metadata. There is no server coordinating writers, resets, folder moves, or cleanup, so those operations need explicit distributed-systems rules.
+Sync remains eventually consistent. Each device publishes the merged library in up to 16 shards; blob transfer is separate. Completed steps survive a later failure. The Android engine's earlier misleading all-or-nothing comment has been corrected. There is no coordinator making account changes, folder migration, reset, and cleanup atomic across devices.
 
-This is **eventual consistency**, not an atomic multi-device transaction. A round can commit local changes and upload several shards before a later upload fails. The comment at SyncEngine.kt:47 claiming failure leaves both sides unchanged overstates the implementation. Completed steps are retained and must be safe to retry.
+## Detailed recheck
 
-## Findings at a glance
+### D01 — Retry bookkeeping: fixed
 
-| ID | Priority | Area | Finding | Evidence |
-|---|---|---|---|---|
-| D01 | P1 | Chrome persistence | Retry bookkeeping can erase a new edit's upload intent | Reproduced |
-| D02 | P1 | Android accounts | Backup account switching changes shared credentials without a sync ownership check | Source-confirmed; account-picker behavior needs device test |
-| D03 | P1 | Android persistence | Clock is not committed atomically with records | Source-confirmed + model reproduction |
-| D04 | P1 | Android apply | A permanent deletion during apply can be discarded | Source-confirmed |
-| D05 | P1 | Reset | Reset does not fence uploads already in progress | Chrome reproduction; Android source trace |
-| D06 | P1 | Drive folders | Consolidation can delete late uploads; duplicate attachment folders are hidden | Two reproductions |
-| D07 | P1 | Android files | Two workers can modify the same partial download | Source-confirmed concurrency risk |
-| D08 | P1 | Blob cleanup | Recent successful sync is not proof a blob remains unused | Design risk |
-| D09 | P2 | Chrome network | Timeout ends at headers; stalled bodies can hold the edit queue | Reproduced |
-| D10 | P1 | Validation | Invalid known-field types and causal metadata enter durable state | Reproduced |
-| D11 | P2 | Recovery | Missing clean shards are not republished automatically | Chrome reproduction; Android source trace |
-| D12 | P2 | Chrome review | Pending removal review blocks unrelated uploads | Reproduced |
+[background.js](../extension/background.js) now reads and updates retry metadata inside engine.exclusive. syncNow shares the round and its completion work. The D01 acceptance test pauses retry persistence while an edit is enqueued, then proves its dirty flag and peer-visible title survive. The original stale whole-metadata overwrite is corrected.
 
-## D01 — Retry bookkeeping bypasses the Chrome write queue
+### D02 — Account ownership: partially fixed
 
-**Evidence:** [background.js:44](../extension/background.js#L44), [background.js:55](../extension/background.js#L55), [engine.js:95](../extension/sync/engine.js#L95). Probe D01.
+The engine and file worker compare a known owner with the current email. However, [DriveSyncClient.kt:407](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/DriveSyncClient.kt#L407) catches account lookup failures and returns null. Both guards require a non-null account before rejecting a mismatch: [SyncEngine.kt:133](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L133) and [FileSyncWorker.kt:66](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L66).
 
-The round releases the queue before scheduleRetry reads and rewrites the whole metadata object. An edit can run between that read and write. Retry persistence then overwrites the edit's new dirty set and clock with stale values. Multiple callers joining the same round also invoke retry bookkeeping separately.
+**Remaining failure:** switch credentials from A to B, let the identity request fail transiently, then let later Drive calls succeed. The retained A library is allowed to continue using B's token. Also, [SyncPorts.kt:53](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncPorts.kt#L53) resolves/mutates folders before the engine checks identity. Resumable sessions remain keyed only by hash, and resetForDisable does not clear them ([SyncPreferences.kt:228](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncPreferences.kt#L228), [325](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncPreferences.kt#L325)); the process-wide recently-sent cache also lacks account/epoch scope.
 
-**Observed:** the local title changed, its pending shard was erased, and a later successful round left the peer with the old title. The save remains local but silently fails to propagate.
+**Required:** fail closed when identity cannot be established, validate before folder mutations, and scope/reset transfer state and running jobs on account/generation transitions. Add null-identity and interrupted-transfer account-switch tests. The existing d02 Android test covers a successful lookup returning a different email only.
 
-**Fix:** serialize every metadata read-modify-write, including retry completion, through the engine queue. Prefer a dedicated engine method for retry state. Schedule once per completed round, not once per caller.
+### D03 — Durable clock: partially fixed
 
-**Acceptance test:** pause retry persistence, commit an edit and rename, finish persistence, restart the worker, and prove both changes reach another device. Repeat with concurrent manual/alarm callers and sign-out.
+[SyncEngine.kt:117](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L117) now persists max(clock, wall time) + write count + 60 seconds before record-writing transactions. keepShown also persists its timestamp first. This addresses the ordinary crash window covered by the new d03 test.
 
-## D02 — Android sync lacks account ownership isolation
+**Remaining design gap:** [HybridClock.next](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncModel.kt#L317) still uses current wall time without enforcing the reserved ceiling. A transaction wait, large-file hashing during snapshot, process suspension, or forward clock change can exceed the minute. A later Room commit followed by death before the final save can again leave a durable dot above the saved clock; restart with a backward clock recreates the original problem. The comment asserting writes never exceed a minute is not an enforced bound.
 
-**Evidence:** [SettingsViewModel.kt:416](../app/src/main/java/com/ghostgramlabs/pettibox/ui/screens/settings/SettingsViewModel.kt#L416), [DriveAuth.kt:33](../app/src/main/java/com/ghostgramlabs/pettibox/data/drive/DriveAuth.kt#L33), [SyncPorts.kt:52](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncPorts.kt#L52), [SyncEngine.kt:104](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L104), [FileSyncWorker.kt:58](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L58).
+**Required:** use an enforced durable allocation range, reserve each candidate before emission, or persist the clock with records in Room. Test exceeding the reservation, then crash/restart with time rollback. This residual is source/design evidence, not an executed Android crash reproduction.
 
-The backup account picker and sync share DriveAuth. Sync opens the currently authorized account, reads and writes data, then stores its email at SyncEngine.kt:200. It never compares that identity against the account owning the retained library. The independent file worker also lacks that check. Upload-session URLs are keyed only by content hash in SyncPreferences.kt:228.
+### D04 — Late permanent deletion: fixed in source
 
-**Scenario:** enable sync under A; switch the backup account to B while sync remains enabled; edit a save. If Play Services subsequently supplies B's token as the wrapper intends, sync can merge B's records and upload A-derived records into B. Reset-marker differences may sometimes stop metadata sync but are not account isolation; file transfers use an independent path.
+[SyncEngine.kt:404](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L404) passes a null local snapshot to SyncDiff when a prior record exists, merges the tombstone, and clears the outbox in the transaction. The added d04 instrumentation test deletes an item during apply while a derived opened-time update arrives. The source corrects the reported defect; execute this test and the collection equivalent on Android before release.
 
-**Fix:** bind each library to a stable account identity and library ID. Scope caches, checksums, upload sessions, and transfer jobs accordingly. Pause both workers before switching; require explicit migration or separate account partitions. Validate ownership before all folder mutations and data I/O.
+### D05 — Reset: partially fixed
 
-**Acceptance test:** use two actual Google test accounts. Switch through backup and sync screens with dirty records and an interrupted upload. Assert no A-to-B transfer without explicit migration. Live OAuth behavior was not exercised here.
+Shards now carry epochs, readers reject different epochs, and metadata writers check the marker before each shard. Chrome D05 tests pass. The file worker checks the marker at startup. Partial deletion failure text now acknowledges that some remote data may already be gone.
 
-## D03 — Android can persist a write but lose its logical clock
+**Remaining gaps:**
 
-**Evidence:** [SyncEngine.kt:113](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L113), [SyncEngine.kt:255](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L255), [SyncEngine.kt:198](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L198), [SyncEngine.kt:465](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L465). Probe D03-model.
+- Both readers select the smallest marker content, while [resetEverything](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/DriveSyncClient.kt#L383) updates only the first matching marker. With two markers left by concurrent creation, later resets can keep the same effective epoch. The recheck probe demonstrates this using the production Chrome reader and a modeled Android write selection: marker contents 1/2 become 3/2 and then 4/2; readers see 2 for both resets. This is not an executed Android reset test.
+- [FileSyncWorker.kt:70](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L70) checks only before its batch. Upload/download/resume work can continue across a reset, and blob names/sessions lack an epoch namespace. The metadata fix does not establish blob fencing.
+- Chrome's pending-review path ignores upload's negative reset result ([engine.js:544](../extension/sync/engine.js#L544)), reporting review instead of immediately recording reset/stopped state.
 
-Room commits records and dirty flags before DataStore persists the clock. Process death or an upload exception can leave the clock behind durable records. The next commitLocal allocates dots from that stale clock without first observing the existing record's maximum timestamp. This matters with wall-clock rollback or previously observed remote time ahead of local time.
+**Required:** give every reset an unambiguous advancing generation even with duplicate markers; fence blob jobs and sessions; handle the review-branch reset result. Test successive resets after duplicate creation, in-flight blob uploads, and interrupted reset recovery.
 
-**Model reproduction:** a durable write at 100 followed by a restarted writer at 50 loses the title when merged with the peer's copy. This uses production JavaScript rules checked against Kotlin vectors, not an executed Android crash test.
+### D06 — Folder reconciliation: partially fixed
 
-**Fix:** persist the high-water mark in the same Room transaction as records, or reserve a durable monotonic range before emitting writes. No startup/local-write path may allocate a dot below an already emitted durable dot. Saving the clock only after successful upload is insufficient.
+Recursive merging and settling duplicate files folders fix the original static split-folder reproduction. Permanent deletion has been replaced with trashing after a second empty listing. Chrome D06b passes, and Android DriveFolders has matching changes.
 
-**Acceptance test:** inject death/failure after each record commit and before clock persistence; restart with a backward clock, edit the same field, and verify retention and convergence.
+**Remaining reproduced failure:** a blob arrives after that final listing but before the duplicate files folder is trashed. It survives in the fake Drive store, but storedFiles cannot discover it in this or the next round. [drive.js:141](../extension/drive.js#L141) and [DriveFolders.kt:126](../app/src/main/java/com/ghostgramlabs/pettibox/data/drive/DriveFolders.kt#L126) still have a list-then-trash race. Android's restoreTrashed searches the canonical folder, not a retired sibling containing the late child.
 
-## D04 — Permanent deletion in Android's apply window is discarded
+The existing D06a test only asserts that bytes remain in the fake store; it does not establish discoverability or automatic recovery. **Required:** retain discoverable migration aliases or scan/drain retired locations until writers have transitioned. Assert late-child availability after migration, not merely physical survival.
 
-**Evidence:** [SyncEngine.kt:336](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L336), [LocalLibrary.kt:85](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/LocalLibrary.kt#L85), [LocalLibrary.kt:221](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/LocalLibrary.kt#L221), [SyncModel.kt:355](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncModel.kt#L355).
+### D07 — Shared partial-download collision: fixed in source
 
-Late-edit reconciliation calls SyncDiff.apply only for a non-null local snapshot. Permanent deletion produces null. The branch still clears the outbox row and applies the incoming record. The model already supports a null local snapshot as a permanent-removal tombstone; this caller bypasses it.
+[DriveSyncClient.kt:60](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/DriveSyncClient.kt#L60) uses a companion-level per-hash mutex shared across client instances. [FileSyncWorker.kt:99](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L99) and [122](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L122) hold it across upload/download and placeholder promotion; waiting jobs recheck whether work is needed. This addresses the reported simultaneous thumbnail/full-worker collision in the app process.
 
-**Scenario:** permanently delete an item after commitLocal while an incoming OCR/thumbnail-only change waits to apply. The deletion should stand under the user-versus-derived-write rule. Instead its event is cleared and applyItem can recreate it. Collection deletion has an analogous path. This is distinct from the intentional rule that a genuinely unseen user edit can revive a deletion.
+Runtime verification remains: overlap both workers on the same hash with interruption/resume and verify the promoted bytes. Hash-only account/epoch cache concerns remain tracked under D02/D05 rather than being treated as resolved by this lock.
 
-**Fix:** pass null snapshots through diff and merge their tombstones; clear the outbox only after durably capturing the deletion.
+### D08 — Blob cleanup: mitigated
 
-**Acceptance test:** use the existing beforeApply hook to permanently delete a save while only a remote derived change arrives. Verify the record remains gone and propagates. Add the collection equivalent.
+[FileSyncWorker.kt:151](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L151) now requires empty inbox/outbox, checks remote checksums again, and trashes candidates. Each metadata round clears the previous clean flag. Android can restore a missing hash from trash in the canonical files folder.
 
-## D05 — Reset marker checks do not fence concurrent writers
+This narrows the original stale-snapshot problem but is not a global deletion protocol: another writer can add a reference after revalidation; an offline device can return outside the documented recovery window. Chrome lists untrashed files only and cannot itself perform Android's restore path. A browser-only reader may remain unable to open a needed quarantined file.
 
-**Evidence:** [engine.js:462](../extension/sync/engine.js#L462), [engine.js:575](../extension/sync/engine.js#L575), [SyncEngine.kt:125](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L125), [DriveSyncClient.kt:330](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/DriveSyncClient.kt#L330), [FileSyncWorker.kt:58](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L58). Probe D05.
+**Required:** define and test a recovery window and offline-device policy, provide consistent restoration across clients, and add a placeholder-only restore racing cleanup test. Do not claim that a recent clean round proves permanent global non-use.
 
-Metadata sync checks the marker once, then may upload much later. A writer already past that check can create a shard after the reset's deletion list is processed. The Android file worker never checks the marker. Marker-first deletion therefore does not ensure every writer stops before uploading again.
+### D09 — Response-body timeout: fixed
 
-**Observed:** a new shard was created after reset; the round reported success; only the next round stopped. The probe creates a previously absent shard, so it is a valid create rather than PATCH to a deleted file.
+[drive.js:52](../extension/drive.js#L52) keeps the deadline through json/text/arrayBuffer/blob consumption and races it against body reads. The stalled-body regression passes. This closes the reported timer-cleared-at-headers defect. Network operations still hold the engine queue, and real Chrome service-worker termination/restart remains a release test rather than a verified guarantee.
 
-Reset can also partially fail after writing the marker or deleting some children, contradicting SettingsViewModel.kt:128's “nothing changed” failure description. Concurrent first resets can create two same-named markers; readers choose one rather than resolve a generation.
+### D10 — Input validation: partially fixed
 
-**Fix:** define a library generation/epoch in shard and blob namespaces. Readers accept only the active generation. Rechecking before uploads mitigates races but is not an atomic fence. Make reset resumable with visible partial-completion status, coordinate local cancellation across workers, and define cleanup of stale physical uploads.
+Both codecs now enforce known-field types, safe nonnegative causal stamps, dot coverage by the version vector, shard range, duplicate record rejection, and record/decompression limits. Engines compare filename device/shard with the envelope. Both D10 Chrome regressions and the shared vector tests pass; the original numeric URL, invalid shard range, and out-of-vector head cases are corrected.
 
-**Acceptance test:** pause before each metadata/blob upload, reset elsewhere, release the writer, and prove old-generation data is never accepted. Repeat interrupted deletion and simultaneous resets.
+**Remaining reproduced failure:** a shard envelope and filename can agree while the contained record hashes to a different shard. An unsafe integer reminder value is also accepted by [codec.js:119](../extension/sync/codec.js#L119) and [142](../extension/sync/codec.js#L142). The recheck feeds both into the production engine: it reports success with zero damaged files and persists the record. Android's known numeric fields likewise require Long type, without the shared safe-integer bound used for causal stamps ([SyncCodec.kt:87](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncCodec.kt#L87)).
 
-## D06 — Folder reconciliation is destructive without excluding writers
+**Required:** validate each record's shard placement and consumer-specific numeric ranges before persistence, consistently across Kotlin/JS. Add whole-file rejection tests for these cases. The new checks are substantial but do not satisfy the original complete validation acceptance criteria.
 
-**Evidence:** [DriveFolders.kt:96](../app/src/main/java/com/ghostgramlabs/pettibox/data/drive/DriveFolders.kt#L96), [drive.js:99](../extension/drive.js#L99), [DriveSyncClient.kt:55](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/DriveSyncClient.kt#L55), [drive.js:204](../extension/drive.js#L204). Probes D06a and D06b.
+### D11 — Missing own shards: fixed
 
-**A — Late-upload deletion:** consolidation lists children, moves that snapshot, and permanently deletes the source. A device caching the source ID can create a child between listing and deletion. That child is removed with the folder. This was reproduced in fake Drive; real Drive also deletes owned descendants with a folder. [Google Drive files.delete](https://developers.google.com/workspace/drive/api/reference/rest/v3/files/delete).
+[engine.js:513](../extension/sync/engine.js#L513) and [SyncEngine.kt:220](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L220) mark locally held shards missing from Drive dirty. The Chrome test deletes the remote files, syncs without another edit, and confirms a fresh peer receives the data. An Android d11 test exists but was not run. Reset-protocol gaps are tracked separately in D05.
 
-**B — Attachment-folder split:** merging root/Sync folders moves child files folders without recursively combining them. Both clients then use only the first files folder. Concurrent attachment-folder creation can produce the same split. An attachment placed in the second folder was invisible in the probe. Drive names are not unique identifiers. [Google Drive files resource](https://developers.google.com/workspace/drive/api/reference/rest/v3/files).
+### D12 — Outgoing saves during review: fixed
 
-**Fix:** use stable namespace IDs and non-destructive migration aliases. Read all recognized legacy locations until writers transition. Do not permanently delete a folder based on one emptied snapshot. Discover/reconcile all attachment directories and invalidate stale cached IDs on 404/migration.
+[engine.js:537](../extension/sync/engine.js#L537) uploads local dirty records while retaining incoming removals for review. Decisions on both platforms are tied to the sorted removal-ID set. The Chrome test confirms an unrelated save uploads and additional removals require another review. Android has a corresponding changed-set test.
 
-**Acceptance test:** concurrent creation, equal-time candidates, cached old writers, late child creation, and blobs split across folders. Assert complete discovery and no deletion of live children.
+This binding covers the reviewed IDs, not a full content/version snapshot. If product requirements require renewed consent when destructive content changes for the same IDs, add version/generation binding. The demonstrated outgoing-upload blockage and changed-ID-set decision reuse are corrected. Reset status in this branch remains D05.
 
-## D07 — Android workers share mutable partial-download files
+### O01 — Truthful sync/file status: partially fixed
 
-**Evidence:** [FileSyncWorker.kt:94](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L94), [FileSyncWorker.kt:167](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L167), [DriveSyncClient.kt:262](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/DriveSyncClient.kt#L262).
+The Chrome newer-format warning passes its regression test. Android records a warning at [SyncEngine.kt:253](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L253), then returns Ok with damaged = 0. [round:71](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L71) calls recordSuccess(keepError = false), and [SyncPreferences.kt:174](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncPreferences.kt#L174) clears it. Thus the claimed persistent Android upgrade warning is not fixed when only newer-format files were skipped.
 
-Thumbnail and full-file workers have different unique work names, so both can execute together. Both download pending thumbnails. Each semaphore is local to its own worker, but downloadFile always uses the same <sha>.part path. No cross-worker per-hash lock exists.
+The file worker still returns success for missing authorization or exhausted transfer retries without per-file user feedback ([FileSyncWorker.kt:59](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L59)). **Required:** preserve degraded metadata outcomes through final status, distinguish metadata completion from file availability, and test the final persisted UI state.
 
-**Risk:** one worker can truncate, append, rename, or delete the other's partial file. The digest is accumulated from each worker's incoming stream rather than an exclusive final disk read, so concurrent disk mutation also undermines the verification argument. Concurrent uploads can create duplicate files or competing resumable sessions.
+### O02 — Backup and follow-up durability: partially fixed
 
-**Fix:** coordinate transfers by account, epoch, and hash, with one active owner, atomic verified promotion, and exclusive partial-file ownership. Deduplicate upload discovery before creating sessions.
+safetyBackup now returns success, firstBackupDone is set only on success, and failed safety backup blocks mass-removal apply. A durable pending-follow-up list is saved before applyInbox and replayed on the next round. These are substantive fixes.
 
-**Acceptance test:** run both workers on the same hash, interrupt/resume one, and verify exactly one valid promoted file and consistent session state. Not executed on Android here.
+Two gaps remain. First, backup error messages recorded within the round are erased by recordSuccess for Ok/NeedsReview outcomes, leaving the user without the failure reason. Second, [foldDuplicates](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L444) still commits Room changes before afterApply without saving pending follow-ups. Death in that gap can lose reminder/link scheduling or cancellation. The new o02 test checks the backup gate, not status retention or crash recovery of follow-ups.
 
-## D08 — Cleanup treats an old snapshot as current global knowledge
+**Required:** preserve the backup warning, journal follow-ups for every apply path, and test death after duplicate-fold commit plus replay after restart. Initial sync is explicitly allowed to continue when the first backup fails; this is a product policy, not a guarantee that a pre-sync copy exists.
 
-**Evidence:** [FileSyncWorker.kt:129](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/FileSyncWorker.kt#L129), [DriveFileCleanup.kt:51](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/DriveFileCleanup.kt#L51), [SyncEngine.kt:202](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L202).
+### O03 — Scale, retention and privacy: documented, not implemented
 
-A metadata round up to six hours old permits permanent deletion of blobs previously observed unused for 30 days. Another device can restore/add a reference after that round but before deletion. Cleanup does not check whether remote shards still match its snapshot. Later failed rounds do not universally invalidate the previous clean timestamp. Repeated local observations are not proof of continuous global non-use.
+[sync-spec/README.md](../sync-spec/README.md) now states the privacy boundary and payload retention: locked collections are hidden in Chrome but synced in readable gzip JSON, and tombstones retain field values. Decoder record/unpacked-size limits are also documented. Safe metadata compaction and measured supported-library capacity remain absent. Supported scale, device retirement, and deletion/retention guarantees still need explicit contracts and benchmarks. This is documentation progress, not an encryption or compaction fix.
 
-**Impact:** currently referenced attachments can disappear. Repair requires a device with the physical bytes; a restored record containing only a placeholder cannot recreate them. The documented design allows some temporary missing-file behavior but cannot guarantee safe global reclamation.
-
-**Fix:** prefer reversible quarantine. Tie candidates to account/epoch and a validated reference snapshot, revalidate before quarantine, and define offline-device leases/retirement and restore guarantees. Revalidation narrows the race but does not replace a distributed deletion protocol.
-
-**Acceptance test:** age an unused candidate for 30 days, restore it elsewhere after the cleaner's last round, then clean. Include a restoring device with only a placeholder; require recoverability through the documented restore window.
-
-## D09 — Chrome deadlines stop at headers, not body completion
-
-**Evidence:** [drive.js:46](../extension/drive.js#L46), [drive.js:175](../extension/drive.js#L175), [engine.js:434](../extension/sync/engine.js#L434). Probe D09.
-
-The abort timer is cleared when fetch returns headers. Callers consume JSON, bytes, text, or blobs afterward. A stalled body has no application deadline. Metadata sync holds the edit queue, so a slow read can delay local saves. A 120-second transfer timer also cannot guarantee MV3 worker survival; Chrome documents shutdown conditions including delayed fetch responses. [Chrome worker lifecycle](https://developer.chrome.com/docs/extensions/develop/concepts/service-workers/lifecycle).
-
-**Observed:** with the deadline shortened to 5 ms, a stalled response body remained unaborted after 25 ms.
-
-**Fix:** keep deadlines active through body consumption, checkpoint work, and consider network downloads outside the local-edit queue followed by a short revalidated merge/commit. Preserve intervening edits and test worker termination.
-
-**Acceptance test:** delayed headers, stalled bodies, mid-body disconnects, and worker death. Local saves remain durable and sync resumes safely.
-
-## D10 — Validation does not enforce merge or consumer invariants
-
-**Evidence:** [codec.js:34](../extension/sync/codec.js#L34), [codec.js:114](../extension/sync/codec.js#L114), [SyncCodec.kt:44](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncCodec.kt#L44), [SyncCodec.kt:167](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncCodec.kt#L167). Probe D10.
-
-Primitive values are accepted without the required types for known fields. Version vectors need not cover their heads/tag/file dots. The future-time check examines the vector, allowing an inconsistent vector to hide a future head. Shard range and filename/body/record placement are not enforced. Dot timestamps are truncated instead of strictly checked. Decompression and record counts are unbounded before materialization.
-
-**Observed:** a numeric URL, shard 99, and a head timestamp beyond its vector were accepted and persisted. The round returned success; savedPage then threw because the URL was not a string.
-
-**Fix:** validate known-field types, bounded finite safe integers shared by Kotlin/JS, nonnegative causal stamps, vector coverage, identifier/hash syntax, shard placement, and resource limits before persistence. Preserve unknown fields under a bounded schema. Quarantine corrupt local entries with diagnostics rather than silently omit them when republishing.
-
-**Acceptance test:** malformed but valid JSON/gzip, inconsistent vectors, oversized decompression, conflicting duplicate records, unsafe integers, and field-type mismatches. Require whole-file rejection with unchanged local state.
-
-## D11 — Disappearing clean shards are not healed
-
-**Evidence:** [engine.js:479](../extension/sync/engine.js#L479), [engine.js:575](../extension/sync/engine.js#L575), [SyncEngine.kt:146](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L146), [SyncEngine.kt:413](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L413). Probe D11.
-
-Both clients discover their remote files but upload only dirty shards. They do not compare locally required shards with those still in Drive. Replica removal or accidental deletion leaves them absent until that shard changes or sync is explicitly restarted.
-
-**Observed:** deleting an owned shard without changing the reset marker was followed by a successful round sending zero files. The local copy survived, but a new device could not recover it from Drive.
-
-**Fix:** after account/epoch validation, mark missing owned shards dirty. Distinguish replica repair from intentional retirement. Never let repair undo a global reset.
-
-**Acceptance test:** remove one/all owned shards, sync without edits, and verify repair in the same epoch; verify no repair into a reset or retired generation.
-
-## D12 — Chrome removal review blocks unrelated outgoing saves
-
-**Evidence:** [engine.js:515](../extension/sync/engine.js#L515), contrasted with [SyncEngine.kt:185](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncEngine.kt#L185). Probe D12.
-
-Chrome returns before upload when incoming removals require review. Unrelated local saves remain queued until the user answers. Android explicitly uploads local dirty shards in that branch.
-
-**Fix:** retain a durable review snapshot while continuing safe outbound local work. Bind the decision to the reviewed snapshot/generation rather than a global choice that may apply to a different set next round.
-
-**Acceptance test:** during pending mass-removal review, an unrelated new save reaches peers while removals remain pending. New destructive changes arriving after the prompt require appropriate fresh review.
-
-## Additional concerns
-
-### O01 — “Synced” does not establish complete understanding or file availability (P2)
-
-Probe O01 confirms Chrome silently ignores a newer-format shard and reports clean success. Android tracks unreadable shards to inhibit cleanup but can still report metadata success without an upgrade warning. FileSyncWorker.kt:58–72 can convert missing authorization or exhausted transfer retries into worker success without per-file user feedback.
-
-Distinguish local saved, metadata uploaded, remote changes applied, files pending, unsupported protocol, and review pending. Upload success is not acknowledgement that a peer received the edit.
-
-### O02 — Backup and post-apply side effects are not durable guarantees (P2)
-
-[SyncPorts.kt:76](../app/src/main/java/com/ghostgramlabs/pettibox/data/sync/SyncPorts.kt#L76) catches/logs backup failure, after which SyncEngine.kt:117–120 marks first backup complete. There may be no safety backup before initial merge or mass-change apply. Return a typed outcome and define whether failure blocks or asks for an explicit proceed choice.
-
-The inbox is cleared before afterApply schedules reminders/link work at SyncEngine.kt:360–364. Death between these steps can lose follow-up work unless another subsystem reconstructs it. Persist a side-effect outbox in the same transaction and drain it idempotently. This audit did not establish that all reminder/article startup paths repair every case; end-to-end impact needs validation.
-
-### O03 — Scale, payload retention, and privacy need explicit contracts
-
-Every device republishes full merged metadata through 16 fixed shards. Tombstones retain field contents; removing one replica does not remove those contents from others. There is no specified safe metadata compaction or maximum record/library size. Benchmark large libraries and many devices; define retirement, causal-summary compaction, and retention before promising a deletion SLA.
-
-Locked collections are a presentation/access-control feature, not end-to-end encrypted sync. LocalLibrary snapshots their records and transport uploads gzip JSON; Chrome hides them after receiving the metadata. If locked data must never reach Chrome or Drive in readable form, encryption and key distribution require separate design. This is a trust-boundary clarification, not evidence that the product currently promises end-to-end encryption.
-
-## Existing verification and previous improvements
-
-The current extension suite passed **39/39 tests**, including 250 Kotlin merge vectors, 200 local-diff vectors, and 120 duplicate-fold vectors. It covers representative convergence, deletion/restoration, mass-removal review, signed-out gating, Chrome account mismatch, record/dirty persistence, sign-in UI feedback, and editor changed-field submission.
-
-Earlier items such as missing retries, absent browser review/recovery, all-fields editor submission, and the literal “Manual only” label are now addressed. They are **not listed as still unfixed**. D01/D09 concern defects in newer retry/timeout implementations.
-
-Passing merge-model and representative-flow tests does not establish atomic Room/DataStore persistence, safe destructive Drive operations, or correct concurrent workers.
-
-## Validation and limits
+## Verification performed in this recheck
 
 | Check | Result |
 |---|---|
-| node --test test/*.test.js from extension/ | 39 passed, 0 failed |
-| node audit/sync-design-probes.mjs from repository root | 10 scenarios reproduced; one is a model-only Android clock consequence |
-| Android sync unit-test attempt | Could not start: wrapper needed Gradle 8.11.1 download; network permission denied even with --offline |
-| Live Android/Chrome/Google OAuth/Drive | Not performed |
-| Android findings | Source review; device/instrumentation reproduction required |
-| Product code and real user data | Unchanged |
+| node --test extension/test/*.test.js | **49 passed, 0 failed**; includes sign-in UI, 10 audit regressions, 250 merge vectors, 200 diff vectors, 120 folding vectors. |
+| node audit/sync-design-recheck.mjs | **3 residual scenarios demonstrated**: marker generation unchanged, late blob undiscoverable, invalid placement/unsafe numeric value persisted. |
+| gradlew.bat testDebugUnitTest --offline --console=plain | **Did not start tests.** Wrapper attempted Gradle 8.11.1 download; network failed with Permission denied. --offline cannot supply the missing wrapper distribution. |
+| Android instrumentation tests | **Not run.** Added test source was inspected; no emulator execution is claimed. |
+| Real Chrome/OAuth/Drive and Android devices | **Not performed.** Installed build behavior remains unverified. |
+| Product code / user data | **Unchanged by this recheck.** Only audit documentation and isolated evidence artifacts were added/updated. |
 
-Evidence: [probe script](sync-design-probes.mjs), [captured results](sync-design-probe-results.json). These are isolated in-memory scenarios, not real OAuth/Drive. The reset transport models missing update targets as 404; its reproduction creates a new shard.
+Reproducible current evidence: [residual probe](sync-design-recheck.mjs) and [captured results](sync-design-recheck-results.json). The D05 probe models Android's marker-write choice; D06/D10 execute production JavaScript against isolated fake services. These probes assert remaining defects and must change when fixes land; green probe execution is not a clean bill of health.
 
-## Remediation order
+The [original probes](sync-design-probes.mjs) and [original results](sync-design-probe-results.json) describe the earlier revision. Do not rerun them as if they were acceptance tests for this revision or use their historical results as current failures.
 
-1. **Stop silent lost edits and unintended account movement:** D01–D04. Add serialized/transactional ownership and failure-injection tests.
-2. **Protect destructive operations:** D05–D08. Do not claim reset, permanent cleanup, and folder consolidation are fully safe until their acceptance tests pass.
-3. **Bound failures and recover:** D09–D11. Strict validation, complete deadlines, generation-aware repair, and crash-resumable work.
-4. **Complete user-facing guarantees:** D12, O01, O02. Safe outbound sync during review, partial/degraded status, durable side effects, verifiable backups.
-5. **Document scale and retention:** O03. Realistic benchmarks and clear distinctions between sync, backup, retirement, and permanent deletion.
+## Remaining release priorities
 
-Target invariants: every successful local edit has durable upload intent; every emitted dot exceeds the writer's durable high-water mark; account and epoch govern all I/O; destructive operations do not trust an unprotected listing; malformed input cannot enter durable state; and status distinguishes saved, uploaded, received, and file-complete.
+1. Close account-lookup failure and account/epoch transfer-state gaps (D02).
+2. Remove the timing assumption from durable clock allocation (D03).
+3. Correct repeated-reset generation selection and fence blob work (D05).
+4. Preserve automatic discovery during folder migration and define cleanup recovery (D06/D08).
+5. Complete record placement/numeric validation and persist truthful warnings/follow-up work (D10/O01/O02).
+6. Execute Android instrumentation and live cross-device tests: account switching, process death, reset during uploads, dual file workers, offline restoration, and Chrome sign-in/reload.
 
-## Release verification matrix
+This is a bounded recheck of the stated revision. It establishes specific fixes and remaining defects, not a guarantee that every sync path is issue-free.
 
-| Scenario | Required result |
-|---|---|
-| Offline edits plus retry/settings/sign-out races | No edit or upload intent disappears |
-| Death between persistence steps | Clock never regresses; values retained |
-| Android backup account switch with sync enabled | No implicit transfer of the old account's library |
-| Permanent delete during derived update | Delete captured and propagated |
-| Reset during shard/blob upload | Old-generation writes excluded |
-| Folder migration with cached writers | Complete discovery; no live subtree deleted |
-| Two workers downloading one hash | One verified promotion; no shared partial-file collision |
-| Restore just before blob cleanup | Referenced bytes remain recoverable |
-| Stalled headers/body and Chrome worker death | Safe resume; truthful UI |
-| Invalid/oversized/new-version shard | Whole-file rejection or explicit upgrade status |
-| Owned shard removed without reset | Safe repair |
-| Pending review plus unrelated local save | Safe local changes still reach peers |
+## Developer changes after this recheck — awaiting re-verification
 
-This is a bounded audit of the stated revision, not proof that no other defects exist. Re-run probes and acceptance tests after changes and update the guarantees accordingly.
+*Added by the developer, not by the reviewer. These are claims for the next recheck to verify; the statuses above are unchanged.*
 
-## Resolution — 2026-10-10
+| ID | Change | Evidence the developer ran |
+|---|---|---|
+| D02 | Account lookup failure now throws and the round/file job retry later (fail closed); the sync folder is resolved lazily, only after the identity check, on both clients; Chrome's file path checks the owner too; upload sessions and files status are cleared on turn-off; the recently-sent cache is keyed by files folder. | `recheck_d02_…` (emulator), `recheck D02` (node) |
+| D03 | `HybridClock.ceiling` is enforced: past the saved ceiling stamps only count up, and exhausting the reserved range throws instead of exceeding it. | `ClockCeilingTest` (3) |
+| D05 | `resetEverything` writes the new content to every marker; the file job re-checks the marker every 30 s during uploads; Chrome's review branch handles a reset found during upload. | `DriveResumableTest.a_reset_updates_every_marker…`, `recheck D05` (node) |
+| D06 | A retired folder is labelled (`appProperties.pettiboxMergedInto`); every settle drains such folders' non-explicitly-trashed children back into the live folder; trashed-file restore searches anywhere and moves the file into the files folder. | `recheck D06` (node), `DriveFoldersTest` "moved back" |
+| D08 | Chrome can take a trashed file back out (`restoreFile`), as Android does; the recovery window (30 + 30 days) and offline-device limit are stated in sync-spec. | `recheck D08` (node) |
+| D10 | Engines reject a file containing a record outside its shard; field numbers must be safe integers in both codecs. | `recheck D10` (node) |
+| O01 | Warnings recorded during a round persist through its success; photo/file problems (no authorization, retries exhausted) are recorded and shown in Settings. | `recheck_o01_…` (emulator) |
+| O02 | Duplicate-fold follow-ups are journaled before commit and cleared after. | `recheck_o02_…` (emulator, warning retention) |
+| O03 | Measured scale table and recovery window added to sync-spec; compaction still not implemented. | — |
 
-Every finding was addressed on `feature/device-sync`. Acceptance tests replace the probes: `extension/test/audit.test.js` (Chrome, 10 tests) and the `d0…`/`o02` tests in `TwoDeviceSyncTest` (Android, on an emulator), plus new `DriveFoldersTest` and `DriveResumableTest` cases. The original probe script now stops at its first assertion because the defect no longer reproduces.
-
-| ID | Status | Change | Test |
-|---|---|---|---|
-| D01 | Fixed | Retry bookkeeping reads and writes metadata inside the engine queue; concurrent callers share one round and one bookkeeping pass. | audit.test.js D01 |
-| D02 | Fixed | A library is bound to the account it first synced with; rounds and the file job do no I/O under another account and say why. Turning sync off ends the binding (explicit migration). | d02 |
-| D03 | Fixed | A clock ceiling (max(now, clock) + writes + 60 s) is persisted before every Room write that emits dots; first-sync stamps are capped at now; keepShown saves before writing. | d03 |
-| D04 | Fixed | Late-edit reconciliation passes a null snapshot through SyncDiff, so a permanent deletion becomes a tombstone that is merged in. | d04 |
-| D05 | Fixed (fenced by epoch) | Shards carry the reset marker as `epoch`; readers skip other epochs; writers re-check the marker before every shard; the file job checks it before uploading; concurrent markers resolve to the smallest content; reset failure text no longer claims nothing changed. Stray blobs from a stale writer are reclaimed by cleanup. | audit.test.js D05, d05 ×2 |
-| D06 | Fixed | Consolidation merges same-named sub-folders recursively, never deletes: an emptied duplicate is trashed only if a fresh listing is still empty. Cached folder ids are re-validated (not trashed) each round. Duplicate `files` folders are settled on both clients. | audit.test.js D06a/D06b, DriveFoldersTest |
-| D07 | Fixed | Process-wide per-hash lock around every upload and download; a job that waited re-checks whether the placeholder is still pending or the file was just sent. | (concurrency by construction; resumable/partial tests in DriveResumableTest) |
-| D08 | Mitigated | Cleanup trashes (30-day recoverable) instead of deleting; re-validates that no other device's shard changed since the clean round; requires empty inbox/outbox; any round start clears the clean flag; a device needing a missing hash restores it from trash. A full distributed deletion protocol (leases for long-offline devices) is not implemented; the residual window is documented in sync-spec. | DriveFileCleanupTest, code review |
-| D09 | Fixed | The Chrome deadline covers body consumption (json/text/arrayBuffer/blob race the timer). | audit.test.js D09 |
-| D10 | Fixed | Shared validation in both codecs: field types, safe non-negative integer stamps, vv coverage of every dot, shard range and file-name match, duplicate records, record and unpacked-size limits. | audit.test.js D10 ×2, vectors |
-| D11 | Fixed | Owned shards holding records but absent from Drive are marked dirty (after the reset check). | audit.test.js D11, d11 |
-| D12 | Fixed | Chrome uploads local work while a review is pending; on both clients a decision is bound to the reviewed set and a different set asks again. | audit.test.js D12, d12 |
-| O01 | Fixed (metadata) | Newer-format shards produce a visible "another device uses a newer version" status on both clients. Per-file transfer status is still not surfaced. | audit.test.js O01 |
-| O02 | Fixed | `safetyBackup()` returns success; first-sync backup is retried until it works; mass removal is not applied without one. Follow-ups are recorded before apply and re-run next round. | o02 |
-| O03 | Documented | Retention, scale and the trust boundary are stated in sync-spec: locked collections are hidden in Chrome but synced to the user's Drive unencrypted; tombstones keep field values. | — |
-
-Remaining known limits: no cross-device lease protocol for blob reclamation (D08); per-file transfer progress is not shown in the UI (O01); metadata compaction is not implemented (O03).
+Runs on 2026-10-10: extension 55/55; Android unit tests all passing; Android instrumentation 43/43 on the Pixel 5 API 36 emulator; headless Chrome smoke clean. `audit/sync-design-recheck.mjs` now stops at its D06 assertion (the late blob is discoverable); its D05 block models the old single-marker write rather than executing Android code, so it still passes by construction. Not performed: live two-account OAuth, real Drive reset, process-death injection on a device.

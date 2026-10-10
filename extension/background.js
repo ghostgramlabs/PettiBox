@@ -129,6 +129,10 @@ async function sharedFiles(refresh = false) {
   if (!shared || refresh || Date.now() - shared.at > 10 * 60_000) {
     const session = await driveTransport.open();
     if (!session) return null;
+    // Only from the Google account this library belongs to.
+    const owner = (await engine.meta()).account;
+    const account = await session.accountEmail();
+    if (!owner || owner.toLowerCase() !== account.toLowerCase()) return null;
     shared = { session, files: await session.storedFiles(), at: Date.now() };
   }
   return shared;
@@ -149,6 +153,11 @@ async function ensureFile(sha, maxBytes) {
   if (!s) return { ok: false, reason: 'signin' };
   let f = s.files[sha];
   if (!f) { s = await sharedFiles(true); f = s?.files[sha]; }
+  // A phone's clean-up may have put it in Drive's trash although a save needs it.
+  if (!f && s) {
+    f = await s.session.restoreFile?.(sha).catch(() => null);
+    if (f) s.files[sha] = f;
+  }
   // Not uploaded yet: phones send full files on Wi-Fi by default.
   if (!f) return { ok: false, reason: 'missing' };
   if (maxBytes && f.size > maxBytes) return { ok: false, reason: 'large' };

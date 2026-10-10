@@ -22,13 +22,14 @@ import kotlin.concurrent.thread
  */
 class DriveFoldersTest {
 
-    private data class F(val id: String, var name: String, val folder: Boolean, var parents: MutableList<String>, val created: Int, var trashed: Boolean = false)
+    private data class F(val id: String, var name: String, val folder: Boolean, var parents: MutableList<String>, val created: Int, var trashed: Boolean = false, var mergedInto: String? = null)
 
     private val files = LinkedHashMap<String, F>()
     private var seq = 0
     private lateinit var server: ServerSocket
     private lateinit var folders: DriveFolders
     private var lateIn: String? = null
+    private var trashHook: ((String) -> Unit)? = null
     private var lateLooks = 0
 
     private fun make(name: String, parent: String = "root", folder: Boolean = true): String {
@@ -47,6 +48,7 @@ class DriveFoldersTest {
         Regex("^'(.*)' in parents$").find(term)?.let { return@all it.groupValues[1] in f.parents }
         if (term == "mimeType = 'application/vnd.google-apps.folder'") return@all f.folder
         if (term == "trashed = false") return@all !inTrash(f)
+        if (term == "trashed = true") return@all inTrash(f)
         error("unsupported query term: $term")
     }
 
@@ -69,7 +71,9 @@ class DriveFoldersTest {
                 200 to JSONObject().put("files", JSONArray().apply {
                     list.forEach {
                         put(JSONObject().put("id", it.id).put("parents", JSONArray(it.parents)).put("name", it.name)
-                            .put("mimeType", if (it.folder) "application/vnd.google-apps.folder" else "application/octet-stream"))
+                            .put("mimeType", if (it.folder) "application/vnd.google-apps.folder" else "application/octet-stream")
+                            .put("explicitlyTrashed", it.trashed)
+                            .apply { it.mergedInto?.let { m -> put("appProperties", JSONObject().put("pettiboxMergedInto", m)) } })
                     }
                 }).toString()
             }
@@ -83,7 +87,11 @@ class DriveFoldersTest {
                 f.parents = (f.parents.filterNot { it in remove } + listOfNotNull(query["addParents"])).toMutableList()
                 val meta = JSONObject(body.ifBlank { "{}" })
                 meta.optString("name").takeIf { it.isNotBlank() }?.let { f.name = it }
-                if (meta.has("trashed")) f.trashed = meta.getBoolean("trashed")
+                if (meta.has("trashed")) {
+                    f.trashed = meta.getBoolean("trashed")
+                    if (f.trashed) trashHook?.invoke(f.id)
+                }
+                meta.optJSONObject("appProperties")?.optString("pettiboxMergedInto")?.takeIf { it.isNotBlank() }?.let { f.mergedInto = it }
                 200 to JSONObject().put("id", f.id).toString()
             }
             path.startsWith("/files/") && method == "GET" -> {
@@ -201,6 +209,17 @@ class DriveFoldersTest {
         val id = folders.files("t", sync)
         assertEquals(first, id)
         assertTrue(tree().contains("PettiBox/Sync/files/${"ab".repeat(32)}.jpg"))
+    }
+
+    @Test fun `a photo put in a duplicate files folder as it is trashed is moved back`() = runBlocking {
+        val sync = folders.sync("t")
+        val first = make("files", sync)
+        val second = make("files", sync)
+        val sha = "cd".repeat(32)
+        trashHook = { id -> if (id == second) { trashHook = null; make("$sha.jpg", second, folder = false) } }
+        val id = folders.files("t", sync)
+        assertEquals(first, id)
+        assertTrue(tree().contains("PettiBox/Sync/files/$sha.jpg"))
     }
 
     @Test fun `a folder that gets something new while being merged is kept`() = runBlocking {
