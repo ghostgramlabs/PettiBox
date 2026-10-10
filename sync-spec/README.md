@@ -187,32 +187,56 @@ it got and sends only the rest (a session Drive no longer knows starts a fresh u
 Downloads keep what arrived as `<sha256>.part` and ask for the rest with a `Range` request;
 the whole file must still hash to its name before it is used, or the partial copy is dropped.
 
-## Removing unused shared files
+## Removing unused shared files, and stripping settled deletions
 
-Sync never removes a file from `files/` as part of a merge. Separately, a phone moves a
-file to Drive's trash (never deletes it), at most once a day, only when all of these hold:
+One rule governs both: **only what every device has said it no longer needs.** Every
+device publishes its whole copy of the library, so the phone doing the daily clean-up
+reads each device's own copy (cached by checksum), not just its merged view. A device
+that is offline, behind, or hasn't heard of a deletion still lists the file or save in its
+copy, and that holds the removal back for as long as the device is listed in Settings.
+Removing a device there (which deletes its files from Drive) is the only way its copy stops
+counting. The clean-up runs at most once a day, only when every device file of this
+library can be read (none damaged or in a newer format) and nothing waits in this phone's
+inbox or outbox. The extension never removes anything.
 
-- the last sync round, within 6 hours, read every device file without skipping one
-  (damaged, or in a newer format) and left nothing waiting for review; any later round that
-  fails clears this;
-- just before, no other device's file has changed since that round (else the next round
-  reads it first), and nothing waits in this phone's inbox or outbox;
-- no record that isn't gone uses it: not in `files`, nor as any value (concurrent ones
-  included) of `main` or `thumb`; saves in Recently deleted count as using it;
-- no file on the phone itself has that content;
-- it has been unused for 30 days in a row (counted by that phone).
+**Files** (photos, PDFs, card pictures) go in two reversible steps:
 
-Drive keeps trashed files for 30 days. A phone that needs a file that isn't listed looks in
-the trash and takes it back out, so a save restored or edited elsewhere just before the
-clean-up still gets its file; any device that still has the file also uploads it again.
-This narrows the race between "unused" and "used again" but isn't a full distributed
-deletion protocol: a device offline for more than 30 + 30 days can find a file gone. The
-extension never removes shared files.
+1. Used by no device's copy (no record that isn't gone lists it in `files`, or as any
+   value of `main` or `thumb`; Recently deleted counts as using it), and by nothing on
+   the phone itself, for 30 days in a row: moved to `Sync/files-removed/` (not Drive's
+   trash, which a person might empty).
+2. In `files-removed/` for 30 more days and still used by no copy: deleted.
 
-Folders: two devices can each make a PettiBox, Sync or files folder at the same moment. The
-oldest wins; the others' contents move into it (same-named sub-folders are merged, not put
-side by side), and an emptied duplicate goes to Drive's trash only if a fresh look still
-finds it empty. Devices check that their remembered folder isn't trashed before each round.
+Any app that needs a file that isn't in `files/` looks in `files-removed/` (and in Drive's
+trash, for files an older version trashed) and moves it straight back; the clean-up also
+moves back any file a copy uses again. A device that still has a file uploads it again
+if Drive lacks it.
+
+**Guarantee:** a file is deleted only after every listed device's copy has shown it unused
+for 60 days running. A listed device can therefore never come back to a save whose file is
+gone, however long it was offline. The only ways to lose a file are removing every device
+that used it, or a person deleting it from Drive by hand.
+
+**Deletion markers.** A record removed for good keeps, at first, its full content in its
+marker. Once it has been gone 30 days (by the marker's own clock) and no other device's
+copy still holds it as not removed, the phone strips it to a bare marker: kind, id,
+created, `vv` and `gone` — no fields, tags or files — and publishes that. Merging a bare
+marker with any older copy keeps it removed (every old write is covered by its `vv`).
+
+If a device that hadn't heard of the deletion edits the save (so the edit beats the
+delete), that device writes again, with new stamps, everything the bare marker no longer
+carries (fields with no value left, and tags and files if none are left) from its own
+copy. The save therefore comes back whole, never half-empty. The extension has no local
+database, so when a save is removed for good it keeps its own copy of the record for its
+30-day Recently deleted window; showing and restoring it use that copy.
+
+Folders: two devices can each make a PettiBox, Sync, files or files-removed folder at the
+same moment. The oldest wins; the others' contents move into it (same-named sub-folders
+are merged, not put side by side). An emptied duplicate goes to Drive's trash only if a
+fresh look still finds it empty, and is labelled (`appProperties.pettiboxMergedInto`).
+Anything a device puts in a labelled folder afterwards is moved back into the live one the
+next time the folder is looked up. Devices check that their remembered folder isn't
+trashed before each round.
 
 Transfers: one transfer per file at a time across a phone's jobs, so two never share a
 partial download or an upload session.
@@ -250,8 +274,9 @@ partial download or an upload session.
   sends them again, unless the library was reset.
 
 - **Privacy:** everything synced is readable in the user's own Drive (gzip JSON, not
-  encrypted). Locked collections are hidden in the extension, not encrypted. Records removed
-  for good keep their last field values in their tombstone.
+  encrypted). Locked collections are hidden in the extension, not encrypted. A save removed
+  for good keeps its content in its marker until the deletion is settled on every device
+  and 30 days old; then only the bare marker is left (see above).
 
 ## Scale (measured, not a hard limit)
 
@@ -265,12 +290,10 @@ Measured with realistic saves (title, link, note, tags, card picture), October 2
 
 Supported: up to 20,000 saves comfortably, 50,000 working; beyond that a new device's
 first sync and the extension get slow. Every device keeps a full copy, so Drive holds one
-copy per device. There is no compaction of tombstones or of removed devices' contexts yet.
+copy per device.
 
-**File recovery window:** a shared file nothing uses for 30 days goes to Drive's trash,
-where Drive keeps it 30 more days; any app that needs it in that time takes it back out. A
-device offline for longer than both (about 60 days) can come back to a save whose file is
-gone, unless some device still has the file and uploads it again.
+Deletion markers are stripped once settled (see "Removing unused shared files"), so
+deleted saves stop costing more than a few dozen bytes each.
 
 ## Device identity
 

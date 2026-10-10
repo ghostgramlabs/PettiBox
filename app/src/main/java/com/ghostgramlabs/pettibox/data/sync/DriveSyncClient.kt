@@ -104,6 +104,18 @@ class DriveSyncClient(
     /** My Drive/PettiBox/Sync, made if missing (see DriveFolders for the layout and moving old folders). */
     suspend fun syncFolder(token: String): String = folders.sync(token)
 
+    suspend fun removedFolder(token: String, syncFolder: String): String = folders.removedFiles(token, syncFolder)
+
+    /** Moves a stored file from folder [from] into [to] (files/ and files-removed/). */
+    suspend fun moveFile(token: String, fileId: String, to: String, from: String) = withContext(Dispatchers.IO) {
+        val conn = open("$api/files/$fileId?addParents=${enc(to)}&removeParents=${enc(from)}&fields=id", "PATCH", token)
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+        conn.doOutput = true
+        conn.outputStream.use { it.write("{}".toByteArray(Charsets.UTF_8)) }
+        readResponse(conn)
+        Unit
+    }
+
     /** PettiBox/Sync/files: one folder even if two devices made one (see DriveFolders.files). */
     suspend fun filesFolder(token: String, syncFolder: String): String = folders.files(token, syncFolder)
 

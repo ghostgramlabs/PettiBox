@@ -319,9 +319,14 @@ export const driveTransport = {
        * needs it: taken back out into the files folder. Null if there's none.
        */
       async restoreFile(sha) {
-        const query = `name contains '${sha}' and trashed = true`;
-        const body = await (await call(token, `${API}/files?q=${q(query)}&fields=${q('files(id,name,parents,size,mimeType)')}`)).json();
-        const f = (body.files ?? []).find((x) => x.name.split('.')[0] === sha);
+        const lookup = async (query) => {
+          const body = await (await call(token, `${API}/files?q=${q(query)}&fields=${q('files(id,name,parents,size,mimeType)')}`)).json();
+          return (body.files ?? []).find((x) => x.name.split('.')[0] === sha) ?? null;
+        };
+        // In files-removed, waiting out its last 30 days; or in Drive's trash (older phones).
+        const removed = await findFolder(token, 'files-removed', await folder());
+        const f = (removed && await lookup(`name contains '${sha}' and trashed = false and '${removed}' in parents`))
+          ?? await lookup(`name contains '${sha}' and trashed = true`);
         if (!f) return null;
         const files = await settle(token, await folders(token, named('files', await folder())), 'files', await folder())
           ?? (await createFolder(token, 'files', await folder()), await findFolder(token, 'files', await folder()));

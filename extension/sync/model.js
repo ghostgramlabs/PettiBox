@@ -110,6 +110,11 @@ function all(iter, pred) {
   return true;
 }
 
+/** The writes a person made on device [dev] (not a phone's own bookkeeping). */
+export function userDotsOf(r, dev) {
+  return [...userDots(r, false)].filter((d) => d.dev === dev);
+}
+
 export function isGone(r) {
   return r.gone != null && all(userDots(r, false), (d) => covers(r.gone, d));
 }

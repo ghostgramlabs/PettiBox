@@ -5,6 +5,13 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 
 ## Unreleased
 
+- Unused photos and files are only removed from Google Drive once every device listed in
+  Settings shows it no longer uses them: first moved to a PettiBox "files-removed" folder for
+  30 days (moved straight back if anything needs them), then deleted. A phone that was offline
+  for months can't come back to a missing photo.
+- Saves deleted for good no longer leave their title, note and link in Google Drive once every
+  device has the deletion and 30 days have passed. If a device that missed the deletion edits
+  the save, it comes back whole.
 - Sync hardening from the design audit (audit/SYNC_SYSTEM_DESIGN_AUDIT.md): a library only syncs
   with its own Google account; "Delete synced data" can't be undone by a device that was mid-sync;
   unused photos go to Drive's trash (recoverable) instead of being deleted, and come back if a save

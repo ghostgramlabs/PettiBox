@@ -421,6 +421,13 @@ class SyncEngine @Inject constructor(
                     if (mine != null) merged = merge(mine, merged)
                     syncDao.clearOutbox(row.kind, row.syncId, row.ts)
                 }
+                // Revived by this phone's own edit over a stripped deletion: refill what it lacks.
+                val gone = merged.gone
+                if (gone != null && !merged.isGone && before != null && !before.isGone &&
+                    merged.userDotsOf(me).any { !gone.covers(it) }
+                ) {
+                    library.snapshot(merged.kind, merged.id, before)?.let { merged = refill(merged, it, Dot(me, clock.next())) }
+                }
                 if (choice == REVIEW_KEEP && merged.kind == KIND_ITEM && wouldRemove(merged.id, merged)) {
                     // "Keep mine": undo the removal for every device by writing
                     // this phone's state back as a new edit.
@@ -533,6 +540,54 @@ class SyncEngine @Inject constructor(
             val parent = r.value(SyncRecord.F_PARENT) as? String ?: continue
             if (parent in arrived && !r.isGone) syncDao.linkParent(r.id, parent)
         }
+    }
+
+    /**
+     * Strips records removed for good long ago to their bare markers, so a
+     * deleted save's title, note and link no longer sit in anyone's Drive.
+     * Only those no other device's copy still holds as not removed (see
+     * [DriveFileCleanup.compactable]); [published] is every device file now
+     * in Drive. The marker (its clock and what the deletion saw) stays, so
+     * the save can never come back from an old copy.
+     */
+    suspend fun compact(published: Map<String, DriveFileCleanup.Published>, now: Long = System.currentTimeMillis()): Int = lock.withLock {
+        if (!prefs.isEnabled()) return@withLock 0
+        val me = prefs.deviceId()
+        val holding = HashMap<Int, MutableSet<String>>()
+        for ((name, p) in published) {
+            val dev = DriveSyncClient.deviceOf(name) ?: continue
+            if (dev == me) continue
+            val n = DriveSyncClient.shardOfName(name) ?: continue
+            holding.getOrPut(n) { HashSet() } += p.live
+        }
+        val rows = (syncDao.metaOfKind(KIND_ITEM) + syncDao.metaOfKind(KIND_COLLECTION)).mapNotNull { row ->
+            val r = decodeOrNull(row.recordJson) ?: return@mapNotNull null
+            if (!DriveFileCleanup.compactable(r, holding[row.shard].orEmpty(), now)) return@mapNotNull null
+            SyncMetaEntity(r.kind, r.id, row.shard, SyncCodec.encodeString(r.copy(fields = emptyMap(), tags = emptyMap(), files = emptyMap())))
+        }
+        if (rows.isEmpty()) return@withLock 0
+        db.withTransaction {
+            syncDao.putMeta(rows)
+            syncDao.markDirty(rows.map { SyncDirtyEntity(it.shard) }.distinct())
+        }
+        rows.size
+    }
+
+    /**
+     * A save this phone held, brought back by an edit made here without
+     * knowing it was deleted for good elsewhere, after that deletion was
+     * stripped to its marker: what the marker no longer carries (title, link,
+     * tags, files) is written again from this phone's own copy, so the save
+     * comes back whole. Nothing that is there is overwritten.
+     */
+    private fun refill(merged: SyncRecord, local: LocalRecord, dot: Dot): SyncRecord {
+        var r = merged
+        for ((name, v) in local.fields) {
+            if (v != null && r.fields[name].isNullOrEmpty()) r = SyncWrite.field(r, name, v, dot)
+        }
+        if (r.presentTags().isEmpty()) for ((key, name) in local.tags) r = SyncWrite.addTag(r, key, name, dot)
+        if (r.presentFiles().isEmpty()) for ((sha, f) in local.files) r = SyncWrite.addFile(r, sha, f.first, f.second, dot)
+        return r
     }
 
     /** Keeps the "needs a choice" list (the pulsing saves) in step with records just written. */

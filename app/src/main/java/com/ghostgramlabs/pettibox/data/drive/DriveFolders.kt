@@ -46,12 +46,17 @@ class DriveFolders(private val api: String) {
      * the same moment: they're merged into the oldest, so every device looks
      * in the same place for every photo and file.
      */
-    suspend fun files(token: String, syncFolder: String): String = withContext(Dispatchers.IO) {
+    suspend fun files(token: String, syncFolder: String): String = child(token, syncFolder, FILES)
+
+    /** PettiBox/Sync/files-removed: files waiting out their last 30 days before being deleted. */
+    suspend fun removedFiles(token: String, syncFolder: String): String = child(token, syncFolder, REMOVED_FILES)
+
+    private suspend fun child(token: String, syncFolder: String, name: String): String = withContext(Dispatchers.IO) {
         lock.withLock {
-            val key = "$token|$syncFolder/$FILES"
+            val key = "$token|$syncFolder/$name"
             cache[key]?.takeIf { inUse(token, it) }?.let { return@withLock it }
-            val id = settle(token, FILES, syncFolder)
-                ?: createFolder(token, FILES, syncFolder).let { settle(token, FILES, syncFolder) ?: it }
+            val id = settle(token, name, syncFolder)
+                ?: createFolder(token, name, syncFolder).let { settle(token, name, syncFolder) ?: it }
             id.also { cache[key] = it }
         }
     }
@@ -270,6 +275,7 @@ class DriveFolders(private val api: String) {
         const val BACKUPS = "Backups"
         const val SYNC = "Sync"
         const val FILES = "files"
+        const val REMOVED_FILES = "files-removed"
         /** Set on a folder PettiBox trashed after merging it: the folder it went into. */
         private const val MERGED_INTO = "pettiboxMergedInto"
         const val LEGACY_BACKUPS = "PettiBox Backups"

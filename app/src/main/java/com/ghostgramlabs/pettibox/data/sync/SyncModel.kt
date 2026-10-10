@@ -96,6 +96,9 @@ data class SyncRecord(
         for (dots in files.values) for (f in dots) yield(f.dot)
     }
 
+    /** The writes a person made on device [dev] (not a phone's own bookkeeping). */
+    fun userDotsOf(dev: String): Sequence<Dot> = userDots(excludeTrash = false).filter { it.dev == dev }
+
     /** Permanently removed, and nothing has been done to it since that the remover hadn't seen. */
     val isGone: Boolean
         get() = gone != null && userDots(excludeTrash = false).all { gone.covers(it) }

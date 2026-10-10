@@ -13,6 +13,7 @@ import {
   F, KIND_COLLECTION, KIND_ITEM, HybridClock, merge, diff, value, trashedAt, isGone, isTrashed,
   presentTags, presentFiles, maxTs, shardOf, alternatives, Write, fold, foldPlan,
 } from './model.js';
+import { userDotsOf, covers as coversDot } from './model.js';
 import { encodeRecord, decodeRecord, encodeShard, decodeShard, SyncFormatError } from './codec.js';
 
 export const INTERVALS = [
@@ -86,6 +87,8 @@ function randomHex(bytes) {
 export function cleanTags(names) {
   return names.map((x) => String(x).trim().replace(/^#+/, '').trim()).filter((t) => t && t.length <= 24);
 }
+
+const GONE_COPIES = 'gonecopies';
 
 export class SyncEngine {
   constructor(store, transport, now = () => Date.now()) {
@@ -229,13 +232,17 @@ export class SyncEngine {
     // Saves removed for good on another device show in Recently deleted for
     // this browser's own 30 days, as on a phone, so they can be restored.
     const goneAt = trash ? ((await this.meta()).goneAt ?? {}) : {};
+    const copies = trash ? await this.goneCopies() : {};
     const cutoff = this.now() - GONE_KEEP_MS;
     for (const r of recs.values()) {
       if (r.kind !== KIND_ITEM) continue;
       const cat = value(r, F.CAT);
       if (cat && locked.has(cat)) continue;
       if (isGone(r)) {
-        if (trash && (goneAt[r.id] ?? 0) > cutoff) items.push({ ...SyncEngine.itemView(r, known), trashed: true, trashedAt: goneAt[r.id] });
+        if (trash && (goneAt[r.id] ?? 0) > cutoff) {
+          const copy = copies[r.id] ? decodeRecord(copies[r.id]) : r;
+          items.push({ ...SyncEngine.itemView(copy, known), trashed: true, trashedAt: goneAt[r.id] });
+        }
         continue;
       }
       if (isTrashed(r) !== trash) continue;
@@ -244,6 +251,22 @@ export class SyncEngine {
     // As on the phones: pinned first, then newest; equal times by id, so every device agrees.
     items.sort((a, b) => (b.pin - a.pin) || (b.created - a.created) || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
     return { items, collections };
+  }
+
+  /** Saves removed for good elsewhere, as they were here: id -> encoded record. */
+  async goneCopies() {
+    return (await this.store.get([GONE_COPIES]))[GONE_COPIES] ?? {};
+  }
+
+  /** What a stripped deletion marker no longer carries, written again from [local] (see the phones' refill). */
+  static refill(merged, local, dot) {
+    let r = merged;
+    for (const [name, v] of Object.entries(local.fields)) {
+      if (v != null && !(r.fields[name]?.length)) r = Write.field(r, name, v, dot);
+    }
+    if (!Object.keys(presentTags(r)).length) for (const [key, name] of Object.entries(local.tags)) r = Write.addTag(r, key, name, dot);
+    if (!Object.keys(presentFiles(r)).length) for (const [sha, f] of Object.entries(local.files)) r = Write.addFile(r, sha, f.kind, f.order, dot);
+    return r;
   }
 
   /** One save as the popup shows it. [known]: collection ids that may be shown. */
@@ -316,7 +339,9 @@ export class SyncEngine {
     const clock = new HybridClock(m.clock, this.now);
     const recs = await this.records();
     const current = recs.get(recKey(kind, id)) ?? null;
-    let local = current ? SyncEngine.localOf(current) : create;
+    // Restoring a save removed for good elsewhere: from this browser's own copy.
+    const copy = current && isGone(current) ? (await this.goneCopies())[id] : null;
+    let local = copy ? SyncEngine.localOf(decodeRecord(copy)) : current ? SyncEngine.localOf(current) : create;
     if (!local) throw new Error('no such save');
     local = change(structuredClone(local));
     const next = diff(current, local, { dev: m.deviceId, ts: clock.next() });
@@ -523,7 +548,13 @@ export class SyncEngine {
       for (const [k, r] of received) {
         clock.observe(maxTs(r));
         const cur = mine.get(k);
-        const merged = cur ? merge(cur, r) : r;
+        let merged = cur ? merge(cur, r) : r;
+        // Brought back by this browser's own edit over a deletion that was
+        // stripped to its marker: refill what the marker no longer carries.
+        if (cur && !isGone(cur) && merged.gone && !isGone(merged) &&
+            userDotsOf(merged, m.deviceId).some((d) => !coversDot(merged.gone, d))) {
+          merged = SyncEngine.refill(merged, SyncEngine.localOf(cur), { dev: m.deviceId, ts: clock.next() });
+        }
         if (cur && JSON.stringify(encodeRecord(merged)) === JSON.stringify(encodeRecord(cur))) continue;
         if (cur && onShelf(cur) && !onShelf(merged)) removals.push([cur, merged]);
         changed.push(merged);
@@ -571,10 +602,21 @@ export class SyncEngine {
       // Removed for good elsewhere: keep it restorable here for 30 days, like
       // a phone's Recently deleted.
       m.goneAt ??= {};
+      const copies = await this.goneCopies();
       for (const r of changed) {
         const cur = mine.get(recKey(r.kind, r.id));
-        if (r.kind === KIND_ITEM && cur && !isGone(cur) && isGone(r)) m.goneAt[r.id] = this.now();
+        if (r.kind === KIND_ITEM && cur && !isGone(cur) && isGone(r)) {
+          m.goneAt[r.id] = this.now();
+          // Kept here for the 30 days, as a phone keeps its own copy: the
+          // synced marker may be stripped of the save's content meanwhile.
+          copies[r.id] = encodeRecord(cur);
+        }
       }
+      const cutoff = this.now() - GONE_KEEP_MS;
+      for (const [id, at] of Object.entries(m.goneAt)) {
+        if (at <= cutoff) { delete m.goneAt[id]; delete copies[id]; }
+      }
+      await this.store.set({ [GONE_COPIES]: copies });
       if (changed.length) {
         const shards = await this.putRecords(changed, m);
         m.dirty = [...new Set([...m.dirty, ...shards])];

@@ -53,7 +53,8 @@ class FileSyncWorker @AssistedInject constructor(
     private val library: LocalLibrary,
     private val client: DriveSyncClient,
     private val auth: DriveAuth,
-    private val prefs: SyncPreferences
+    private val prefs: SyncPreferences,
+    private val engine: SyncEngine
 ) : CoroutineWorker(ctx, params) {
 
     override suspend fun doWork(): Result {
@@ -78,8 +79,8 @@ class FileSyncWorker @AssistedInject constructor(
             val stored = listed.associateBy { it.name.substringBefore('.') }
             val thumbsOnly = inputData.getBoolean(KEY_THUMBS_ONLY, false)
             upload(token, folder, stored.keys, thumbsOnly)
-            download(token, folder, stored, thumbsOnly)
-            if (!thumbsOnly) cleanUp(token, syncFolder, listed)
+            download(token, syncFolder, folder, stored, thumbsOnly)
+            if (!thumbsOnly) cleanUp(token, syncFolder, folder, listed)
             prefs.setFilesProblem("")
             Result.success()
         } catch (e: DriveSyncException) {
@@ -132,7 +133,7 @@ class FileSyncWorker @AssistedInject constructor(
     }
 
     /** Fills placeholders for files other devices added, three at a time. */
-    private suspend fun download(token: String, folder: String, inDrive: Map<String, DriveSyncFile>, thumbsOnly: Boolean) = coroutineScope {
+    private suspend fun download(token: String, syncFolder: String, folder: String, inDrive: Map<String, DriveSyncFile>, thumbsOnly: Boolean) = coroutineScope {
         val pending = (syncDao.pendingThumbnails() + if (thumbsOnly) emptyList() else syncDao.pendingFiles()).distinct()
         if (pending.isEmpty()) return@coroutineScope
         val dir = File(applicationContext.filesDir, "attachments").apply { mkdirs() }
@@ -147,8 +148,10 @@ class FileSyncWorker @AssistedInject constructor(
                     client.exclusiveFile(sha) {
                         // The other job may have brought it down while this one waited.
                         if (!syncDao.placeholderInUse(placeholder)) return@exclusiveFile
-                        // Put in Drive's trash by a clean-up although a save needs it: take it back out.
-                        val remote = inDrive[sha] ?: client.restoreTrashed(token, folder, sha)
+                        // In files-removed (or Drive's trash, from an older version) although
+                        // a save needs it: take it straight back out.
+                        val remote = inDrive[sha] ?: restoreRemoved(token, syncFolder, folder, sha)
+                            ?: client.restoreTrashed(token, folder, sha)
                             ?: return@exclusiveFile // not uploaded yet; next time
                         val ext = remote.name.substringAfter('.', "bin")
                         val target = File(dir, "${UUID.randomUUID()}.$ext")
@@ -173,47 +176,97 @@ class FileSyncWorker @AssistedInject constructor(
      * (rules in [DriveFileCleanup]). Skipped unless the last sync round read
      * every device's copy cleanly, recently, with nothing left waiting.
      */
-    private suspend fun cleanUp(token: String, syncFolder: String, listed: List<DriveSyncFile>) {
+    /** A file in files-removed that a save here needs: moved back into files/. */
+    private suspend fun restoreRemoved(token: String, syncFolder: String, folder: String, sha: String): DriveSyncFile? {
+        val removedFolder = client.removedFolder(token, syncFolder)
+        val f = client.listStoredFiles(token, removedFolder).firstOrNull { it.name.substringBefore('.') == sha } ?: return null
+        client.moveFile(token, f.id, to = folder, from = removedFolder)
+        return f
+    }
+
+    /**
+     * About once a day: files no device's copy uses move to files-removed, and
+     * after 30 more days there are deleted; long-settled deletions are
+     * stripped to their markers (rules in [DriveFileCleanup]). Every device's
+     * own copy in Drive is read for this, so a device that is behind or
+     * offline keeps what it still uses. Nothing happens unless every copy
+     * could be read, and nothing waits to be sent or applied here.
+     */
+    private suspend fun cleanUp(token: String, syncFolder: String, filesFolder: String, listed: List<DriveSyncFile>) {
         val now = System.currentTimeMillis()
-        val clean = prefs.cleanRoundAt()
-        if (clean == 0L || now - clean > CLEAN_ROUND_MAX_AGE_MS) return
         if (now - prefs.fileCleanupAt() < CLEANUP_EVERY_MS) return
         if (syncDao.inboxCount() > 0 || syncDao.outboxCount() > 0) return
-        // The library this phone knows must still be everyone's latest: if any
-        // other device's file changed since that round (a restore, a new
-        // photo), wait for the next round to read it first.
-        val me = prefs.deviceId()
-        val seen = prefs.seenMd5()
-        val now2 = client.listDeviceFiles(token, syncFolder)
-        if (now2.any { DriveSyncClient.deviceOf(it.name)?.let { d -> d != me } == true && seen[it.name] != it.md5 }) return
+        val epoch = prefs.knownReset() ?: return
+        val copies = publishedCopies(token, syncFolder, epoch) ?: return
         val records = syncDao.metaOfKind(SyncRecord.KIND_ITEM).map {
-            // A copy that can't be read could use any file: then remove nothing.
+            // A copy here that can't be read could use any file: then remove nothing.
             runCatching { SyncCodec.decodeString(it.recordJson) }.getOrNull() ?: return
         }
-        val used = HashSet(DriveFileCleanup.referenced(records.asSequence()))
+        val used = HashSet<String>()
+        for (p in copies.values) used += p.refs
+        used += DriveFileCleanup.referenced(records.asSequence())
         // Whatever this phone holds is kept too, even if not synced yet.
         val local = saveDao.allForExport().flatMap { listOfNotNull(it.localUri, it.thumbnailUri) } +
             attachmentDao.allForExport().map { it.uri }
         for (uri in local.distinct()) {
             if (uri.startsWith("http")) continue
-            library.shaOf(uri)?.let { used += it } // a file missing here is covered by the records above
+            library.shaOf(uri)?.let { used += it }
         }
-        val plan = DriveFileCleanup.plan(listed.associate { it.id to it.name }, used, prefs.unusedFiles(), now)
-        // To Drive's trash, not deleted: recoverable for Drive's 30 days, and a
-        // phone that finds a save needing one takes it back out (see download).
-        for (id in plan.remove) {
+        val removedFolder = client.removedFolder(token, syncFolder)
+        val removed = client.listStoredFiles(token, removedFolder)
+        val plan = DriveFileCleanup.plan(
+            stored = listed.associate { it.id to it.name },
+            removed = removed.associate { it.id to it.name },
+            used = used,
+            unusedSince = prefs.unusedFiles(),
+            quarantinedAt = prefs.quarantinedFiles(),
+            now = now
+        )
+        for (id in plan.restore) client.moveFile(token, id, to = filesFolder, from = removedFolder)
+        for (id in plan.quarantine) client.moveFile(token, id, to = removedFolder, from = filesFolder)
+        for (id in plan.purge) {
             try {
-                client.trash(token, id)
+                client.delete(token, id)
             } catch (e: DriveSyncException) {
                 if (e.status != 404) throw e // already gone (another phone) is fine
             }
         }
         prefs.setUnusedFiles(plan.unusedSince)
+        prefs.setQuarantinedFiles(plan.quarantinedAt)
         prefs.setFileCleanupAt(now)
+        engine.compact(copies, now)
+    }
+
+    /**
+     * What every device file in Drive says (this phone's too), by file name.
+     * Remembered between runs by checksum, so only files that changed are
+     * read again. Null if any of this library's files can't be read (damaged,
+     * or a newer format): then nobody can tell what it still uses.
+     */
+    private suspend fun publishedCopies(token: String, syncFolder: String, epoch: String): Map<String, DriveFileCleanup.Published>? {
+        val cache = PublishedCopies(applicationContext)
+        val known = cache.load()
+        val out = HashMap<String, DriveFileCleanup.Published>()
+        for (f in client.listDeviceFiles(token, syncFolder)) {
+            if (DriveSyncClient.deviceOf(f.name) == null) continue
+            val hit = known[f.name]?.takeIf { f.md5.isNotBlank() && it.md5 == f.md5 }
+            if (hit != null) {
+                out[f.name] = hit
+                continue
+            }
+            val shard = try {
+                SyncCodec.decodeShard(client.downloadShard(token, f))
+            } catch (e: SyncFormatException) {
+                return null
+            } ?: return null
+            if (shard.epoch != epoch) continue // from before a reset: not part of this library
+            out[f.name] = DriveFileCleanup.publishedOf(f.md5, shard.records)
+        }
+        cache.save(out)
+        return out
     }
 
     companion object {
-        private const val CLEAN_ROUND_MAX_AGE_MS = 6L * 60 * 60 * 1000
         private const val RESET_RECHECK_MS = 30_000L
         private const val CLEANUP_EVERY_MS = 20L * 60 * 60 * 1000
         private const val NAME = "sync_files"

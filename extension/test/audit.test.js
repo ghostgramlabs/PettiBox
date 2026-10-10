@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { SyncEngine, memoryStore, shardName } from '../sync/engine.js';
 import { encodeShard, decodeShard } from '../sync/codec.js';
-import { shardOf } from '../sync/model.js';
+import { shardOf, diff } from '../sync/model.js';
 import { installFakeDrive } from './fakeDrive.js';
 
 function drive() {
@@ -316,4 +316,73 @@ test('recheck D10: a record in the wrong file, or a number Chrome can\'t hold ex
   const big = JSON.stringify({ format: 1, device, shard: shardOf(id), records: [{ k: 'item', id, c: 1, vv: { [device]: 1 },
     f: { remind: [{ v: Number.MAX_SAFE_INTEGER + 1, t: 1, d: device }] } }] });
   assert.throws(() => decodeShard(big), /safe whole number/);
+});
+
+// ── O03 / D08: stripping settled deletions, and saves that come back whole ──
+
+/** A phone that removes a save for good and strips the marker (as its daily clean-up does once safe). */
+async function removeForGoodAndStrip(engine, id) {
+  const m = await engine.meta();
+  const r = (await engine.records()).get('item:' + id);
+  const gone = diff(r, null, { dev: m.deviceId, ts: Math.max(m.clock, Date.now()) + 1 });
+  const bare = { ...gone, fields: {}, tags: {}, files: {} };
+  const shards = await engine.putRecords([bare], m);
+  m.dirty = [...new Set([...m.dirty, ...shards])];
+  m.clock = Math.max(m.clock, Date.now()) + 1;
+  await engine.saveMeta(m);
+}
+
+test('O03: a save brought back by an offline edit after its deletion was stripped comes back whole', async () => {
+  const d = drive();
+  const a = new SyncEngine(memoryStore(), d);
+  const b = new SyncEngine(memoryStore(), d);
+  const { id } = await a.saveLink({ url: 'https://audit.example/whole', title: 'Whole save', tags: ['bread'] });
+  await a.round(); await b.round();
+  await b.updateItem(id, { notes: 'written offline' }); // b hasn't heard of the deletion
+  await removeForGoodAndStrip(a, id);
+  await a.round();
+  await b.round();
+  await a.round();
+  for (const e of [a, b]) {
+    const s = (await e.library()).items.find((i) => i.id === id);
+    assert.ok(s, 'brought back');
+    assert.equal(s.title, 'Whole save');
+    assert.equal(s.url, 'https://audit.example/whole');
+    assert.equal(s.notes, 'written offline');
+    assert.deepEqual(s.tags, ['bread']);
+  }
+});
+
+test('O03: a save removed for good elsewhere can still be restored here for 30 days after it was stripped', async () => {
+  const d = drive();
+  const phone = new SyncEngine(memoryStore(), d);
+  const chrome = new SyncEngine(memoryStore(), d);
+  const { id } = await phone.saveLink({ url: 'https://audit.example/restore', title: 'Restore me' });
+  await phone.round(); await chrome.round();
+  await removeForGoodAndStrip(phone, id);
+  await phone.round();
+  await chrome.round();
+  const trash = (await chrome.library({ trash: true })).items;
+  assert.equal(trash.find((i) => i.id === id)?.title, 'Restore me');
+  await chrome.restore(id);
+  const back = (await chrome.library()).items.find((i) => i.id === id);
+  assert.equal(back?.title, 'Restore me');
+  assert.equal(back?.url, 'https://audit.example/restore');
+  await chrome.round(); await phone.round();
+  assert.equal((await phone.library()).items.find((i) => i.id === id)?.title, 'Restore me');
+});
+
+test('D08: a file in files-removed is taken back out when a save needs it', async () => {
+  const fake = installFakeDrive();
+  const root = fake.folder('PettiBox');
+  const folder = fake.folder('Sync', root);
+  fake.folder('files', folder);
+  const removed = fake.folder('files-removed', folder);
+  const sha = 'ef'.repeat(32);
+  fake.make({ name: sha + '.jpg', parents: [removed] });
+  const { driveTransport } = await import('../drive.js?d08-removed');
+  const session = await driveTransport.open();
+  assert.equal((await session.storedFiles())[sha], undefined);
+  assert.ok(await session.restoreFile(sha));
+  assert.ok((await session.storedFiles())[sha]);
 });

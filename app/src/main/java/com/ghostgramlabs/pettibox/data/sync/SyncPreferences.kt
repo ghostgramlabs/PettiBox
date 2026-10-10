@@ -212,6 +212,15 @@ class SyncPreferences(context: Context, fileName: String) {
     private val cleanRoundKey = longPreferencesKey("clean_round_at")
     private val unusedFilesKey = stringPreferencesKey("unused_files")
     private val fileCleanupKey = longPreferencesKey("file_cleanup_at")
+    private val quarantinedKey = stringPreferencesKey("quarantined_files")
+
+    /** Files in files-removed: sha256 -> when they went in. */
+    suspend fun quarantinedFiles(): Map<String, Long> = runCatching {
+        val o = JSONObject(store.data.first()[quarantinedKey] ?: return emptyMap())
+        o.keys().asSequence().associateWith { o.getLong(it) }
+    }.getOrDefault(emptyMap())
+
+    suspend fun setQuarantinedFiles(files: Map<String, Long>) = store.edit { it[quarantinedKey] = JSONObject(files).toString() }
 
     /** When a round last read every device's copy without skipping any (0: the last one didn't). */
     suspend fun cleanRoundAt(): Long = store.data.first()[cleanRoundKey] ?: 0L

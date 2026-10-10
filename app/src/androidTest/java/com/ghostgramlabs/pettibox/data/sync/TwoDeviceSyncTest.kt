@@ -447,6 +447,59 @@ class TwoDeviceSyncTest {
         assertTrue(a.prefs.status.first().lastError.contains("safety copy"))
     }
 
+    /** What every device file in the fake Drive says, as the daily clean-up reads it. */
+    private fun publishedNow() = drive.files.mapNotNull { (name, f) ->
+        if (DriveSyncClient.deviceOf(name) == null) return@mapNotNull null
+        val shard = SyncCodec.decodeShard(f.second) ?: return@mapNotNull null
+        name to DriveFileCleanup.publishedOf(f.third, shard.records)
+    }.toMap()
+
+    @Test fun o03_a_deletion_is_stripped_only_when_settled_and_a_save_brought_back_comes_back_whole() = runBlocking {
+        val url = "https://x.example"
+        val day = 24L * 60 * 60 * 1000
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        repoOf(a).addTag(a.byUrl(url)!!.id, "bread")
+        syncBoth()
+        val syncId = a.byUrl(url)!!.syncId
+        b.db.saveDao().update(b.byUrl(url)!!.copy(notes = "written offline")) // b hasn't synced since
+        a.db.saveDao().delete(a.byUrl(url)!!.id) // removed for good on a
+        assertTrue(a.sync() is SyncOutcome.Ok)
+
+        val later = System.currentTimeMillis() + 31 * day
+        assertEquals(0, a.engine.compact(publishedNow(), later)) // b's copy still holds it: kept whole
+        assertEquals(1, a.engine.compact(emptyMap(), later)) // (as if b were removed) stripped
+        val bare = SyncCodec.decodeString(a.db.syncDao().meta("item", syncId)!!.recordJson)
+        assertTrue(bare.isGone && bare.fields.isEmpty() && bare.tags.isEmpty())
+        assertTrue(a.sync() is SyncOutcome.Ok)
+
+        // b's offline edit brings it back: whole, on both phones.
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        syncBoth()
+        for (p in listOf(a, b)) {
+            val s = p.db.syncDao().itemBySyncId(syncId)
+            assertNotNull("brought back on ${if (p === a) "a" else "b"}", s)
+            assertEquals("x", s!!.title)
+            assertEquals(url, s.url)
+            assertEquals("written offline", s.notes)
+            assertEquals(listOf("bread"), p.db.tagDao().tagsForItem(s.id).map { it.name })
+        }
+    }
+
+    @Test fun o03_an_old_copy_merged_with_a_stripped_deletion_stays_deleted() = runBlocking {
+        val url = "https://x.example"
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        val syncId = a.byUrl(url)!!.syncId
+        a.db.saveDao().delete(a.byUrl(url)!!.id)
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertEquals(1, a.engine.compact(emptyMap(), System.currentTimeMillis() + 31L * 24 * 60 * 60 * 1000))
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertTrue(b.sync() is SyncOutcome.Ok) // b made no edit: it just goes
+        assertTrue(b.db.syncDao().itemBySyncId(syncId)!!.isPendingDelete) // to Recently deleted, as always
+        assertNull(a.db.syncDao().itemBySyncId(syncId))
+    }
+
     @Test fun the_same_field_edited_on_both_keeps_both_versions() = runBlocking {
         a.db.saveDao().insert(link("x"))
         a.turnOn(); b.turnOn(); syncBoth()
