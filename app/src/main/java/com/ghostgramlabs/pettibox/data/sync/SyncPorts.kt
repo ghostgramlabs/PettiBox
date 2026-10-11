@@ -75,7 +75,8 @@ class AppSyncHooks @Inject constructor(
     private val repository: SaveRepository,
     private val articles: ArticleRepository,
     private val backupStore: LocalBackupStore,
-    private val setup: SyncSetup
+    private val setup: SyncSetup,
+    private val prefs: SyncPreferences
 ) : SyncHooks {
 
     override suspend fun safetyBackup(): Boolean = runCatching {
@@ -101,7 +102,13 @@ class AppSyncHooks @Inject constructor(
         }
     }
 
-    override suspend fun syncFiles(wifiOnly: Boolean) = FileSyncWorker.enqueue(context, wifiOnly)
+    override suspend fun syncFiles(wifiOnly: Boolean) {
+        FileSyncWorker.enqueue(context, wifiOnly)
+        // Said plainly while it waits; cleared once the file job has run.
+        if (wifiOnly && FileSyncWorker.onMeteredNetwork(context) && repository.hasFilesToSend()) {
+            prefs.setFilesProblem("Photos and files will be sent when this phone is on Wi-Fi (Settings › Sync between devices).")
+        }
+    }
 
     override suspend fun stopSync() {
         setup.disable()

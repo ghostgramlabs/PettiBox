@@ -87,7 +87,12 @@ class SyncEngine @Inject constructor(
                 reconnect()
                 SyncOutcome.NeedsReconnect
             } else {
-                val msg = if (e.status == 0) "Couldn't reach Google Drive" else "Google Drive had a problem (${e.status})"
+                // Which step, and Drive's own code, so a problem can be told apart from the next.
+                val step = prefs.status.first().progress.removeSuffix("…").lowercase().ifBlank { "connecting" }
+                Log.w(TAG, "sync round failed while $step", e)
+                val what = if (e.status == 0) "Couldn't reach Google Drive" else "Google Drive answered with an error (${e.status})"
+                val msg = "$what while ${step.replace("checking google drive", "checking for changes")}." +
+                    if (e.transient) " Trying again by itself shortly." else ""
                 prefs.recordError(msg)
                 SyncOutcome.Failed(msg, retry = e.transient)
             }

@@ -80,8 +80,10 @@ class FileSyncWorker @AssistedInject constructor(
             val thumbsOnly = inputData.getBoolean(KEY_THUMBS_ONLY, false)
             upload(token, folder, stored.keys, thumbsOnly)
             download(token, syncFolder, folder, stored, thumbsOnly)
-            if (!thumbsOnly) cleanUp(token, syncFolder, folder, listed)
-            prefs.setFilesProblem("")
+            if (!thumbsOnly) {
+                cleanUp(token, syncFolder, folder, listed)
+                prefs.setFilesProblem("") // everything this phone has is sent (and what it needs fetched)
+            }
             Result.success()
         } catch (e: DriveSyncException) {
             if (e.transient && runAttemptCount < 5) Result.retry() else {
@@ -273,19 +275,33 @@ class FileSyncWorker @AssistedInject constructor(
         private const val THUMBS = "sync_thumbs"
         private const val KEY_THUMBS_ONLY = "thumbs_only"
 
-        /** Card pictures now (any network); everything else on the network the user allowed. */
-        fun enqueue(context: Context, wifiOnly: Boolean) {
+        /**
+         * Card pictures now (any network); everything else on the network the
+         * user allowed. A job already running when this is asked for has its
+         * list of files from when it started, so one more run is queued after
+         * it (files saved since aren't left for the next time the app opens);
+         * one already waiting to start will see everything, so it's left alone.
+         */
+        suspend fun enqueue(context: Context, wifiOnly: Boolean) {
             fun request(thumbsOnly: Boolean, network: NetworkType) = OneTimeWorkRequestBuilder<FileSyncWorker>()
                 .setInputData(androidx.work.workDataOf(KEY_THUMBS_ONLY to thumbsOnly))
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(network).setRequiresBatteryNotLow(true).build())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
                 .build()
             val wm = WorkManager.getInstance(context)
-            wm.enqueueUniqueWork(THUMBS, ExistingWorkPolicy.KEEP, request(true, NetworkType.CONNECTED))
-            wm.enqueueUniqueWork(
-                NAME, ExistingWorkPolicy.KEEP,
-                request(false, if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED)
-            )
+            suspend fun queue(name: String, work: androidx.work.OneTimeWorkRequest) {
+                val states = wm.getWorkInfosForUniqueWorkFlow(name).first().map { it.state }
+                if (states.any { it == androidx.work.WorkInfo.State.ENQUEUED || it == androidx.work.WorkInfo.State.BLOCKED }) return
+                wm.enqueueUniqueWork(name, ExistingWorkPolicy.APPEND_OR_REPLACE, work)
+            }
+            queue(THUMBS, request(true, NetworkType.CONNECTED))
+            queue(NAME, request(false, if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED))
+        }
+
+        /** Whether the phone is on a metered connection (mobile data, a hotspot) right now. */
+        fun onMeteredNetwork(context: Context): Boolean {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            return cm.activeNetwork != null && cm.isActiveNetworkMetered
         }
 
         fun cancel(context: Context) {

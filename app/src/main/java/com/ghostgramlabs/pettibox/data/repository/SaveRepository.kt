@@ -886,6 +886,10 @@ class SaveRepository @Inject constructor(
         if (items.isEmpty()) emptyList() else attachmentDao.insertAll(items)
 
     fun observeAttachments(itemId: Long) = attachmentDao.observeForItem(itemId)
+
+    /** Whether any save here has a photo or file of its own (something sync may need to send). */
+    suspend fun hasFilesToSend(): Boolean =
+        attachmentDao.allForExport().isNotEmpty() || saveDao.allForExport().any { it.localUri?.startsWith("file:") == true }
     suspend fun attachmentsFor(itemId: Long) = attachmentDao.forItem(itemId)
     suspend fun imageAttachmentsNeedingOcr(): List<AttachmentEntity> =
         attachmentDao.imageAttachmentsNeedingOcr()

@@ -17,7 +17,7 @@ const ICON = { IMAGE: '🖼', PDF: '📄', VIDEO: '🎬' };
 const NAME = { IMAGE: 'Photo', PDF: 'PDF', VIDEO: 'Video' };
 
 const REASONS = {
-  missing: 'This file is still on your phone. Photos and files upload on Wi-Fi unless you change that in the app (Settings › Sync between devices).',
+  missing: 'This file hasn\'t reached Google Drive yet. Open PettiBox on the phone that saved it while it\'s on Wi-Fi (photos and files are sent on Wi-Fi unless you change that in Settings › Sync between devices), then reopen this.',
   signin: 'Sign in to PettiBox (click its toolbar icon) to see this.',
   damaged: 'This file arrived damaged. Try again after the phone syncs.',
 };
