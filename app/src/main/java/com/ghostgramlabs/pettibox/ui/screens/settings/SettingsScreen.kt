@@ -1528,6 +1528,12 @@ fun SettingsScreen(
                     viewModel.syncNow()
                     scope.launch { snackbarHostState.showSnackbar("Syncing…") }
                 },
+                onSendFiles = {
+                    scope.launch {
+                        viewModel.sendFilesNow()
+                        snackbarHostState.showSnackbar("Sending photos and files, on any connection")
+                    }
+                },
                 onReconnect = connectSync,
                 onInterval = { scope.launch { viewModel.setSyncInterval(it) } },
                 onWifiOnly = { scope.launch { viewModel.setSyncFilesOnWifiOnly(it) } },

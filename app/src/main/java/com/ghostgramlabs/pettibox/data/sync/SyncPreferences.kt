@@ -51,7 +51,9 @@ data class SyncStatus(
     /** Progress of a running round, "" when idle. */
     val progress: String,
     /** Why photos and files aren't all synced, "" when they are. */
-    val filesProblem: String = ""
+    val filesProblem: String = "",
+    /** Where photos and files stand when there's no problem ("" before the first run). */
+    val filesStatus: String = ""
 )
 
 @Singleton
@@ -113,7 +115,8 @@ class SyncPreferences(context: Context, fileName: String) {
             needsReconnect = p[reconnectKey] ?: false,
             pendingReview = p[reviewKey] ?: 0,
             progress = p[progressKey].orEmpty(),
-            filesProblem = p[filesProblemKey].orEmpty()
+            filesProblem = p[filesProblemKey].orEmpty(),
+            filesStatus = p[filesStatusKey].orEmpty()
         )
     }
 
@@ -239,6 +242,10 @@ class SyncPreferences(context: Context, fileName: String) {
 
     private val uploadSessionsKey = stringPreferencesKey("upload_sessions")
     private val filesProblemKey = stringPreferencesKey("files_problem")
+    private val filesStatusKey = stringPreferencesKey("files_status")
+
+    /** Where photos and files stand, in plain words ("Sending 3…", "All in Google Drive · 20:54"). */
+    suspend fun setFilesStatus(text: String) = store.edit { it[filesStatusKey] = text }
 
     /** Why photos and files aren't all synced right now, in plain words ("" when they are). */
     suspend fun setFilesProblem(text: String) = store.edit { if (text.isEmpty()) it.remove(filesProblemKey) else it[filesProblemKey] = text }

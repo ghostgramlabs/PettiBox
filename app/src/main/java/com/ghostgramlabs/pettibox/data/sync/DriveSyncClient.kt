@@ -198,7 +198,14 @@ class DriveSyncClient(
     ) = withContext(Dispatchers.IO) {
         val total = file.length()
         if (total < resumableFrom) {
-            file.inputStream().use { multipartCreate(token, filesFolder, name, mime, it, total) }
+            try {
+                file.inputStream().use { multipartCreate(token, filesFolder, name, mime, it, total) }
+            } catch (e: DriveSyncException) {
+                throw e
+            } catch (e: IOException) {
+                // Dropped while sending: try again later, as for any network failure.
+                throw DriveSyncException(0, e.message ?: "network error")
+            }
             return@withContext
         }
         var uri = session

@@ -105,8 +105,11 @@ class AppSyncHooks @Inject constructor(
     override suspend fun syncFiles(wifiOnly: Boolean) {
         FileSyncWorker.enqueue(context, wifiOnly)
         // Said plainly while it waits; cleared once the file job has run.
-        if (wifiOnly && FileSyncWorker.onMeteredNetwork(context) && repository.hasFilesToSend()) {
-            prefs.setFilesProblem("Photos and files will be sent when this phone is on Wi-Fi (Settings › Sync between devices).")
+        if (!repository.hasFilesToSend()) return
+        if (wifiOnly && FileSyncWorker.onMeteredNetwork(context)) {
+            prefs.setFilesProblem("Photos and files will be sent when this phone is on Wi-Fi. Tap Send photos now to send them on this connection.")
+        } else if (FileSyncWorker.batteryLow(context)) {
+            prefs.setFilesProblem("Photos and files will be sent once the battery isn't low. Tap Send photos now to send them anyway.")
         }
     }
 

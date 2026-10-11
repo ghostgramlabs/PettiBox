@@ -69,9 +69,19 @@ class FileSyncWorker @AssistedInject constructor(
             // just deleted from Drive (the next round turns sync off).
             val owner = prefs.status.first().accountEmail
             val account = client.accountEmail(token) // throws if it can't be told: tried again later
-            if (owner.isBlank() || !account.equals(owner, ignoreCase = true)) return Result.success()
+            if (owner.isBlank()) {
+                prefs.setFilesProblem("Photos and files are sent once the first sync has finished.")
+                return Result.success()
+            }
+            if (!account.equals(owner, ignoreCase = true)) {
+                prefs.setFilesProblem("Photos and files aren't sent: Google Drive is signed in as $account, not $owner.")
+                return Result.success()
+            }
             val syncFolder = client.syncFolder(token)
-            val known = prefs.knownReset() ?: return Result.success() // no round has run yet
+            val known = prefs.knownReset() ?: run {
+                prefs.setFilesProblem("Photos and files are sent once the first sync has finished.")
+                return Result.success()
+            }
             resetCheck = { (client.readResetMarker(token, syncFolder) ?: "") == known }
             if (!stillSameLibrary(force = true)) return Result.success()
             val folder = client.filesFolder(token, syncFolder)
@@ -83,17 +93,32 @@ class FileSyncWorker @AssistedInject constructor(
             if (!thumbsOnly) {
                 cleanUp(token, syncFolder, folder, listed)
                 prefs.setFilesProblem("") // everything this phone has is sent (and what it needs fetched)
+                prefs.setFilesStatus("All photos and files are in Google Drive · checked " + clockTime(System.currentTimeMillis()))
             }
             Result.success()
         } catch (e: DriveSyncException) {
-            if (e.transient && runAttemptCount < 5) Result.retry() else {
-                prefs.setFilesProblem("Some photos and files couldn't be sent or fetched. They'll be tried again on the next sync.")
+            android.util.Log.w("PettiBoxSync", "file sync failed", e)
+            if (e.transient && runAttemptCount < 5) {
+                prefs.setFilesProblem("Couldn't reach Google Drive while sending photos and files (${e.status.takeIf { it > 0 } ?: "no connection"}). Trying again by itself shortly.")
+                Result.retry()
+            } else {
+                prefs.setFilesProblem("Photos and files couldn't be sent: ${e.message}. Tap Send photos now to try again.")
                 Result.success()
             }
         } catch (e: LibraryReset) {
             Result.success() // the next sync round turns sync off and says why
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Never stop quietly: say what happened, and try again.
+            android.util.Log.w("PettiBoxSync", "file sync stopped", e)
+            prefs.setFilesProblem("Photos and files stopped sending: ${e.message ?: e.javaClass.simpleName}. Trying again shortly.")
+            if (runAttemptCount < 5) Result.retry() else Result.success()
         }
     }
+
+    private fun clockTime(at: Long): String =
+        java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(at))
 
     private class LibraryReset : Exception()
 
@@ -117,6 +142,10 @@ class FileSyncWorker @AssistedInject constructor(
             .filter { it.startsWith("file:") }
             .distinct()
         val sent = HashSet(inDrive)
+        // How many still need sending, said in Settings while it happens.
+        val toSend = uris.count { uri -> library.shaOf(uri)?.let { it !in inDrive } == true }
+        var done = 0
+        if (!thumbsOnly && toSend > 0) prefs.setFilesStatus("Sending $toSend photo${if (toSend == 1) "" else "s"} and files to Google Drive…")
         for (uri in uris) {
             val sha = library.shaOf(uri) ?: continue
             if (!sent.add(sha)) continue
@@ -131,6 +160,8 @@ class FileSyncWorker @AssistedInject constructor(
                     client.markSent(folder, sha)
                 }
             }
+            done++
+            if (!thumbsOnly && toSend > 1) prefs.setFilesStatus("Sending photos and files to Google Drive… $done of $toSend")
         }
     }
 
@@ -296,6 +327,22 @@ class FileSyncWorker @AssistedInject constructor(
             }
             queue(THUMBS, request(true, NetworkType.CONNECTED))
             queue(NAME, request(false, if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED))
+        }
+
+        /** "Send photos now": everything, at once, on any connection (the person asked). */
+        fun sendNow(context: Context) {
+            val work = OneTimeWorkRequestBuilder<FileSyncWorker>()
+                .setInputData(androidx.work.workDataOf(KEY_THUMBS_ONLY to false))
+                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, work)
+        }
+
+        /** Low battery and not charging: the background job waits (Android's rule for it). */
+        fun batteryLow(context: Context): Boolean {
+            val bm = context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
+            return bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY) in 0..15 && !bm.isCharging
         }
 
         /** Whether the phone is on a metered connection (mobile data, a hotspot) right now. */

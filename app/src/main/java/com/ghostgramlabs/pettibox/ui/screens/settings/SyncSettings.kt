@@ -62,6 +62,7 @@ fun SyncSettingsCard(
     onTurnOff: (removeMine: Boolean) -> Unit,
     onDeleteSynced: () -> Unit,
     onSyncNow: () -> Unit,
+    onSendFiles: () -> Unit,
     onReconnect: () -> Unit,
     onInterval: (SyncInterval) -> Unit,
     onWifiOnly: (Boolean) -> Unit,
@@ -141,10 +142,19 @@ fun SyncSettingsCard(
                 TextButton(onClick = onReconnect) { Text("Reconnect Google Drive", fontWeight = FontWeight.Bold) }
             }
         }
-        // Text synced, but photos and files not all there yet: said separately.
-        if (status.filesProblem.isNotBlank()) {
+        // Photos and files, said separately from the text sync: a problem if
+        // there is one, else where they stand, and a way to send them now.
+        val filesLine = status.filesProblem.ifBlank { status.filesStatus }
+        if (filesLine.isNotBlank()) {
             Spacer(Modifier.height(8.dp))
-            Text(status.filesProblem, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+            Text(
+                filesLine,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (status.filesProblem.isNotBlank()) scheme.error else scheme.onSurfaceVariant
+            )
+        }
+        TextButton(onClick = onSendFiles, contentPadding = PaddingValues(horizontal = 0.dp)) {
+            Text("Send photos now", fontWeight = FontWeight.Bold)
         }
 
         // Another device wants to take many saves off the shelf.

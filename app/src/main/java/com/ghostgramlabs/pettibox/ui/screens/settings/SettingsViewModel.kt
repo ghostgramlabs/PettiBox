@@ -164,6 +164,13 @@ class SettingsViewModel @Inject constructor(
 
     fun syncNow() = SyncScheduler.now(appContext)
 
+    /** Photos and files straight away, on any connection. */
+    suspend fun sendFilesNow() {
+        syncPreferences.setFilesProblem("")
+        syncPreferences.setFilesStatus("Sending photos and files to Google Drive…")
+        com.ghostgramlabs.pettibox.data.sync.FileSyncWorker.sendNow(appContext)
+    }
+
     /** The user's answer to "another device wants to remove N saves". */
     suspend fun answerSyncReview(keepMine: Boolean) {
         syncPreferences.setReviewDecision(if (keepMine) SyncEngine.REVIEW_KEEP else SyncEngine.REVIEW_APPLY)
