@@ -46,8 +46,12 @@ class DriveSyncClient(
     private val upload: String,
     /** Bytes per piece of a resumable upload (a multiple of 256 KiB, as Drive asks). */
     private val chunkSize: Int = 8 * 1024 * 1024,
-    /** Files at least this big go up resumably; smaller ones in one request. */
-    private val resumableFrom: Long = 5L * 1024 * 1024
+    /**
+     * Files at least this big go up resumably; smaller ones in one request,
+     * the way that has always worked for photos and PDFs. Only very large
+     * files (videos) need pieces to survive a dropped connection.
+     */
+    private val resumableFrom: Long = 50L * 1024 * 1024
 ) {
     @Inject constructor(folders: DriveFolders) : this(folders, API, UPLOAD)
 
@@ -208,12 +212,40 @@ class DriveSyncClient(
             }
             return@withContext
         }
+        try {
+            resumable(token, filesFolder, name, file, mime, total, session, onSession)
+        } catch (e: DriveSyncException) {
+            // Refused (not a network hiccup, not access): send it the way
+            // smaller files go, in one request, rather than not at all.
+            if (e.transient || e.needsReconnect) throw e
+            runCatching { android.util.Log.w("PettiBoxSync", "resumable upload of $name refused; sending it whole", e) }
+            onSession(null)
+            try {
+                file.inputStream().use { multipartCreate(token, filesFolder, name, mime, it, total) }
+            } catch (e2: DriveSyncException) {
+                throw e2
+            } catch (e2: IOException) {
+                throw DriveSyncException(0, e2.message ?: "network error")
+            }
+        }
+    }
+
+    private suspend fun resumable(
+        token: String,
+        filesFolder: String,
+        name: String,
+        file: File,
+        mime: String,
+        total: Long,
+        session: String?,
+        onSession: suspend (String?) -> Unit
+    ) {
         var uri = session
         var offset = 0L
         if (uri != null) {
             when (val at = uploadedSoFar(token, uri, total)) {
                 null -> uri = null // expired (sessions last about a week): start again
-                DONE -> { onSession(null); return@withContext }
+                DONE -> { onSession(null); return }
                 else -> offset = at
             }
         }
@@ -236,7 +268,7 @@ class DriveSyncClient(
                     }
                 }
                 when (val code = conn.responseCode) {
-                    200, 201 -> { onSession(null); return@withContext }
+                    200, 201 -> { onSession(null); return }
                     308 -> offset = nextByte(conn.getHeaderField("Range"))
                     404, 410 -> {
                         // The session ended on Drive's side: a fresh one next time.

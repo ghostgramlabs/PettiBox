@@ -50,6 +50,10 @@ class DriveResumableTest {
     // Reset markers: two left by two devices resetting at once.
     private val markers = linkedMapOf("m1" to "old-1", "m2" to "old-2")
 
+    // One-piece uploads, and a Drive that refuses resumable ones.
+    @Volatile private var refuseResumable = false
+    private var multipartBytes = 0
+
     @Before fun start() {
         server = ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))
         thread(isDaemon = true) {
@@ -91,6 +95,23 @@ class DriveResumableTest {
             out.flush()
         }
         when {
+            method == "POST" && target.startsWith("/upload/files?uploadType=resumable") && refuseResumable -> {
+                input.readNBytes(length)
+                reply(400, body = "{\"error\":\"no\"}".toByteArray())
+            }
+            method == "POST" && target.startsWith("/upload/files?uploadType=multipart") -> {
+                val body = if (headers["transfer-encoding"] == "chunked") {
+                    val out = ByteArrayOutputStream()
+                    while (true) {
+                        val size = line().trim().toInt(16)
+                        if (size == 0) { line(); break }
+                        out.write(input.readNBytes(size)); line()
+                    }
+                    out.toByteArray()
+                } else input.readNBytes(length)
+                multipartBytes = body.size
+                reply(200, body = "{\"id\":\"f9\"}".toByteArray())
+            }
             method == "POST" && target.startsWith("/upload/files?uploadType=resumable") -> {
                 input.readNBytes(length)
                 total = headers.getValue("x-upload-content-length").toLong()
@@ -207,6 +228,16 @@ class DriveResumableTest {
         assertArrayEquals(stored, target.readBytes())
         assertEquals(listOf(null, "bytes=300000-"), ranges)
         assertFalse(part.exists())
+    }
+
+    @Test fun a_refused_resumable_upload_is_sent_in_one_piece_instead() = runBlocking {
+        refuseResumable = true
+        val bytes = Random(11).nextBytes(700_000)
+        val file = tmp.newFile("scan.pdf").apply { writeBytes(bytes) }
+        var session: String? = "left-over"
+        client.uploadFile("t", "folder", "s.pdf", file, "application/pdf", null) { session = it }
+        assertNull(session) // forgotten
+        assertTrue(multipartBytes > bytes.size) // the whole file, in one request (plus its metadata part)
     }
 
     @Test fun a_reset_updates_every_marker_so_readers_always_see_it() = runBlocking {

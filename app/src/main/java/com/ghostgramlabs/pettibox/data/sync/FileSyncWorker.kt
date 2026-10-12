@@ -54,7 +54,8 @@ class FileSyncWorker @AssistedInject constructor(
     private val client: DriveSyncClient,
     private val auth: DriveAuth,
     private val prefs: SyncPreferences,
-    private val engine: SyncEngine
+    private val engine: SyncEngine,
+    private val attachmentStore: com.ghostgramlabs.pettibox.data.util.AttachmentStore
 ) : CoroutineWorker(ctx, params) {
 
     override suspend fun doWork(): Result {
@@ -88,11 +89,11 @@ class FileSyncWorker @AssistedInject constructor(
             val listed = client.listStoredFiles(token, folder)
             val stored = listed.associateBy { it.name.substringBefore('.') }
             val thumbsOnly = inputData.getBoolean(KEY_THUMBS_ONLY, false)
-            upload(token, folder, stored.keys, thumbsOnly)
+            val unreadable = upload(token, folder, stored.keys, thumbsOnly)
             download(token, syncFolder, folder, stored, thumbsOnly)
             if (!thumbsOnly) {
                 cleanUp(token, syncFolder, folder, listed)
-                prefs.setFilesProblem("") // everything this phone has is sent (and what it needs fetched)
+                if (unreadable == 0) prefs.setFilesProblem("") // everything this phone has is sent (and what it needs fetched)
                 prefs.setFilesStatus("All photos and files are in Google Drive · checked " + clockTime(System.currentTimeMillis()))
             }
             Result.success()
@@ -135,12 +136,25 @@ class FileSyncWorker @AssistedInject constructor(
     }
 
     /** Every file this phone's saves use that Drive doesn't have yet. */
-    private suspend fun upload(token: String, folder: String, inDrive: Set<String>, thumbsOnly: Boolean) {
+    /** Returns how many files couldn't be read (and so weren't sent). */
+    private suspend fun upload(token: String, folder: String, inDrive: Set<String>, thumbsOnly: Boolean): Int {
         val files = if (thumbsOnly) emptyList()
         else saveDao.allForExport().mapNotNull { it.localUri } + attachmentDao.allForExport().map { it.uri }
-        val uris = (syncDao.localThumbnails() + files)
-            .filter { it.startsWith("file:") }
-            .distinct()
+        // A file shared in from another app may still be that app's (content://)
+        // if copying it in failed when it was saved: take it in now, so it's
+        // kept on this phone and can be sent. One that can't be read any more
+        // is reported, not skipped quietly.
+        var unreadable = 0
+        val uris = (syncDao.localThumbnails() + files).distinct().mapNotNull { uri ->
+            when {
+                uri.startsWith("file:") -> uri
+                uri.startsWith("content:") -> adopt(uri) ?: run { unreadable++; null }
+                else -> null
+            }
+        }
+        if (!thumbsOnly && unreadable > 0) {
+            prefs.setFilesProblem("$unreadable file${if (unreadable == 1) "" else "s"} can't be read on this phone any more (the app it came from no longer allows it), so it can't be sent.")
+        }
         val sent = HashSet(inDrive)
         // How many still need sending, said in Settings while it happens.
         val toSend = uris.count { uri -> library.shaOf(uri)?.let { it !in inDrive } == true }
@@ -163,6 +177,7 @@ class FileSyncWorker @AssistedInject constructor(
             done++
             if (!thumbsOnly && toSend > 1) prefs.setFilesStatus("Sending photos and files to Google Drive… $done of $toSend")
         }
+        return unreadable
     }
 
     /** Fills placeholders for files other devices added, three at a time. */
@@ -209,6 +224,25 @@ class FileSyncWorker @AssistedInject constructor(
      * (rules in [DriveFileCleanup]). Skipped unless the last sync round read
      * every device's copy cleanly, recently, with nothing left waiting.
      */
+    /**
+     * Copies a file another app shared (content://) into this app's own
+     * storage and points the saves at the copy. Not an edit: it's the same
+     * file. Null if it can't be read.
+     */
+    private suspend fun adopt(uri: String): String? {
+        val copy = attachmentStore.ingest(Uri.parse(uri)) ?: return null
+        val sha = library.shaOf(copy) ?: return null
+        db.withTransaction {
+            syncDao.beginApplying()
+            syncDao.putFile(SyncFileEntity(copy, sha))
+            syncDao.fillAttachment(uri, copy)
+            syncDao.fillMainFile(uri, copy)
+            syncDao.fillThumbnail(uri, copy)
+            syncDao.endApplying()
+        }
+        return copy
+    }
+
     /** A file in files-removed that a save here needs: moved back into files/. */
     private suspend fun restoreRemoved(token: String, syncFolder: String, folder: String, sha: String): DriveSyncFile? {
         val removedFolder = client.removedFolder(token, syncFolder)
