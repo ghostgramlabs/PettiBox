@@ -11,6 +11,7 @@ import com.ghostgramlabs.pettibox.data.util.AttachmentStore
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.ItemTagCrossRef
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
+import com.ghostgramlabs.pettibox.data.local.SyncMetaEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -222,6 +223,78 @@ class TwoDeviceSyncTest {
         assertTrue(a.sync() is SyncOutcome.Ok)
         assertTrue(b.sync() is SyncOutcome.Ok)
         assertEquals("new title", b.byUrl("https://x.example")!!.title)
+    }
+
+    @Test fun favorite_pin_and_reminder_reach_the_other_phone() = runBlocking {
+        val url = "https://x.example"
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        val ra = repoOf(a); val rb = repoOf(b)
+        val at = System.currentTimeMillis() + 3_600_000L
+
+        // The way the app's cards do it: one column each.
+        ra.setFavorite(a.byUrl(url)!!.id, true)
+        ra.setPinned(a.byUrl(url)!!.id, true)
+        ra.setRemindAt(a.byUrl(url)!!.id, at)
+        syncBoth()
+        b.byUrl(url)!!.let {
+            assertTrue(it.isFavorite); assertTrue(it.isPinned); assertEquals(at, it.remindAt)
+        }
+
+        // And cleared from the other phone.
+        rb.setFavorite(b.byUrl(url)!!.id, false)
+        rb.setPinned(b.byUrl(url)!!.id, false)
+        rb.setRemindAt(b.byUrl(url)!!.id, null)
+        syncBoth()
+        a.byUrl(url)!!.let {
+            assertFalse(it.isFavorite); assertFalse(it.isPinned); assertNull(it.remindAt)
+        }
+    }
+
+    @Test fun favorite_pin_and_reminder_set_before_sync_was_on_reach_the_other_phone() = runBlocking {
+        val at = System.currentTimeMillis() + 3_600_000L
+        a.db.saveDao().insert(link("x").copy(isFavorite = true, isPinned = true, remindAt = at))
+        a.turnOn(); b.turnOn(); syncBoth()
+        b.byUrl("https://x.example")!!.let {
+            assertTrue(it.isFavorite); assertTrue(it.isPinned); assertEquals(at, it.remindAt)
+        }
+    }
+
+    @Test fun favorite_pin_and_reminder_survive_when_the_other_phone_holds_the_same_save() = runBlocking {
+        // B was set up from A's backup (same save, same id); then A's user
+        // marked the save, and B's copy was touched later by the phone itself.
+        val t = System.currentTimeMillis() - 86_400_000L
+        val at = System.currentTimeMillis() + 3_600_000L
+        val original = link("x", updated = t)
+        a.db.saveDao().insert(original.copy(isFavorite = true, isPinned = true, remindAt = at, updatedAt = t + 1_000))
+        b.db.saveDao().insert(original)
+        b.db.saveDao().setOcrText(b.byUrl("https://x.example")!!.id, "recognized later")
+        a.turnOn(); b.turnOn(); syncBoth()
+        for (p in listOf(a, b)) p.byUrl("https://x.example")!!.let {
+            assertTrue(it.isFavorite); assertTrue(it.isPinned); assertEquals(at, it.remindAt)
+        }
+    }
+
+    @Test fun marks_an_older_version_let_another_phones_copy_clear_come_back() = runBlocking {
+        val url = "https://x.example"
+        a.db.saveDao().insert(link("x"))
+        val s = a.byUrl(url)!!
+        // As an older version left the merged copy: the favorite another
+        // phone wrote is still in it, behind a later "not favorite".
+        var r = SyncDiff.apply(null, a.library.snapshot(SyncRecord.KIND_ITEM, s.syncId, null), Dot("aaaa", s.updatedAt))!!
+        val lost = Head(true, Dot("bbbb", s.updatedAt - 1))
+        r = r.copy(
+            fields = r.fields + (SyncRecord.F_FAV to listOf(lost) + r.fields.getValue(SyncRecord.F_FAV)),
+            vv = r.vv + (lost.dot.dev to lost.dot.ts)
+        )
+        a.db.syncDao().putMeta(listOf(SyncMetaEntity(SyncRecord.KIND_ITEM, r.id, shardOf(r.id), SyncCodec.encodeString(r))))
+        a.turnOn(); b.turnOn(); syncBoth()
+        assertTrue(a.byUrl(url)!!.isFavorite)
+        assertTrue(b.byUrl(url)!!.isFavorite)
+        // Once: taking the favorite off afterwards is an ordinary edit, and stays.
+        repoOf(b).setFavorite(b.byUrl(url)!!.id, false)
+        syncBoth()
+        assertFalse(a.byUrl(url)!!.isFavorite)
     }
 
     @Test fun a_phone_copied_to_a_new_phone_takes_its_own_identity() = runBlocking {

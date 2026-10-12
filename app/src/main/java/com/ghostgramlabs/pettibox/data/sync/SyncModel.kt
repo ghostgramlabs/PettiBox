@@ -527,6 +527,42 @@ object SyncDedupe {
             }
 }
 
+/**
+ * Favorite, pinned and reminder set on one device while another, not knowing,
+ * wrote "not set". Typically two phones that hold the same save when they
+ * first sync (one was set up from the other's backup): each writes its whole
+ * copy, and the copy touched last would clear the other's marks. Nobody chose
+ * "not set" over a mark they hadn't seen, so the mark stands, as when two
+ * saves of a link are folded ([SyncDedupe]).
+ */
+object SyncMarks {
+
+    private val FLAGS = listOf(SyncRecord.F_FAV, SyncRecord.F_PIN)
+
+    /** The reminder to bring back: the newest one written that's still ahead of [now]; a past one stays cleared. */
+    private fun reminder(r: SyncRecord, now: Long): Long? {
+        if (r.value(SyncRecord.F_REMIND) != null) return null
+        return r.alternatives(SyncRecord.F_REMIND).mapNotNull { it.value as? Long }.lastOrNull { it > now }
+    }
+
+    /** True when [settle] would write something. Never for a save in Recently deleted or removed: it must not come back. */
+    fun unsettled(r: SyncRecord, now: Long): Boolean {
+        if (r.kind != SyncRecord.KIND_ITEM || r.isGone || r.isTrashed) return false
+        return FLAGS.any { f -> r.value(f) != true && r.alternatives(f).any { it.value == true } } || reminder(r, now) != null
+    }
+
+    /** [r] with those marks written again by [dot] (which settles them everywhere), or [r] itself. */
+    fun settle(r: SyncRecord, dot: Dot, now: Long): SyncRecord {
+        if (!unsettled(r, now)) return r
+        var out = r
+        for (f in FLAGS) {
+            if (r.value(f) != true && r.alternatives(f).any { it.value == true }) out = SyncWrite.field(out, f, true, dot)
+        }
+        reminder(r, now)?.let { out = SyncWrite.field(out, SyncRecord.F_REMIND, it, dot) }
+        return out
+    }
+}
+
 /** Which of a device's 16 Drive files a record lives in (FNV-1a of the id). */
 fun shardOf(id: String): Int {
     var h = 0x811c9dc5.toInt()

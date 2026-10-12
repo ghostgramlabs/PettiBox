@@ -255,6 +255,7 @@ class SyncEngine @Inject constructor(
         }
         prefs.saveSeenMd5(newSeen)
         prefs.setPendingReview(0)
+        settleMarks(me, clock, now)
         foldDuplicates(me, clock, now)
 
         // Edits made while the round ran are back in the outbox; send them too.
@@ -403,7 +404,7 @@ class SyncEngine @Inject constructor(
             prefs.setPendingReview(removals)
             return -removals
         }
-        reserve(clock, changes.size * 2)
+        reserve(clock, changes.size * 3)
         // Remembered before applying, so reminders and link pictures for
         // these saves are still set up if the app stops right after.
         prefs.setPendingFollowUps(changes.map { it.second }.filter { it.kind == KIND_ITEM }.map { it.id })
@@ -439,6 +440,8 @@ class SyncEngine @Inject constructor(
                     val local = library.snapshot(KIND_ITEM, merged.id, merged)
                     merged = SyncDiff.apply(merged, local, Dot(me, clock.next())) ?: merged
                 }
+                // Marked on one device, unknowingly cleared by another's copy: the mark stands.
+                if (SyncMarks.unsettled(merged, now)) merged = SyncMarks.settle(merged, Dot(me, clock.next()), now)
                 val shard = shardOf(merged.id)
                 metas += SyncMetaEntity(merged.kind, merged.id, shard, SyncCodec.encodeString(merged))
                 if (merged != before) dirty += shard
@@ -458,6 +461,43 @@ class SyncEngine @Inject constructor(
         hooks.afterApply(followUps, now)
         prefs.setPendingFollowUps(emptyList())
         return changes.size
+    }
+
+    /**
+     * Once, for copies merged before marks were settled as they arrive (see
+     * [SyncMarks]): favorites, pins and reminders another phone's copy
+     * cleared come back. A save edited here this very moment waits for the
+     * next round, so that edit isn't written over.
+     */
+    private suspend fun settleMarks(me: String, clock: HybridClock, now: Long) {
+        if (prefs.marksSettled()) return
+        val unsettled = syncDao.metaOfKind(KIND_ITEM).mapNotNull { decodeOrNull(it.recordJson) }
+            .filter { SyncMarks.unsettled(it, now) }
+        var waiting = false
+        if (unsettled.isNotEmpty()) {
+            val followUps = ArrayList<LocalLibrary.Applied>()
+            reserve(clock, unsettled.size)
+            prefs.setPendingFollowUps(unsettled.map { it.id })
+            db.withTransaction {
+                syncDao.beginApplying()
+                val metas = ArrayList<SyncMetaEntity>()
+                for (r in unsettled) {
+                    if (syncDao.outboxRow(KIND_ITEM, r.id) != null) {
+                        waiting = true
+                        continue
+                    }
+                    val settled = SyncMarks.settle(r, Dot(me, clock.next()), now)
+                    metas += SyncMetaEntity(KIND_ITEM, settled.id, shardOf(settled.id), SyncCodec.encodeString(settled))
+                    followUps += library.apply(settled, now)
+                }
+                syncDao.putMeta(metas)
+                syncDao.markDirty(metas.map { SyncDirtyEntity(it.shard) }.distinct())
+                syncDao.endApplying()
+            }
+            hooks.afterApply(followUps, now)
+            prefs.setPendingFollowUps(emptyList())
+        }
+        if (!waiting) prefs.markMarksSettled()
     }
 
     /**

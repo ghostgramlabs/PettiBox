@@ -215,6 +215,13 @@ class SyncPreferences(context: Context, fileName: String) {
 
     suspend fun markNeedingChoiceIndexed() = store.edit { it[choiceIndexedKey] = true }
 
+    private val marksSettledKey = booleanPreferencesKey("marks_settled")
+
+    /** Whether copies merged by an older version were checked once for cleared favorites, pins and reminders. */
+    suspend fun marksSettled(): Boolean = store.data.first()[marksSettledKey] ?: false
+
+    suspend fun markMarksSettled() = store.edit { it[marksSettledKey] = true }
+
     private fun parseIds(raw: String?): Set<String> = runCatching {
         val a = org.json.JSONArray(raw ?: return emptySet())
         (0 until a.length()).map { a.getString(it) }.toSet()

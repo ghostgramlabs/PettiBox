@@ -179,6 +179,16 @@ The other save is then removed (`gone`), so on a phone that had it, it waits in 
 deleted. Every device computes the same result. `SyncDedupe` (Kotlin) and `fold`/`foldPlan`
 (extension) implement it; `vectors/cases.json` has golden `fold` cases.
 
+## Favorite, pinned and reminder cleared without being seen
+
+When `fav` or `pin` shows anything but true while an alternative is true, or `remind` shows
+null while an alternative is a time still ahead, the phone that merges it writes the mark
+again (true; the newest such reminder written), which settles it everywhere. This is what
+happens when two phones hold the same save at their first sync (one was set up from the
+other's backup): each writes its whole copy, and the one touched last would otherwise clear
+the other's marks. A save in Recently deleted or removed is left alone, so it can't come
+back this way. `SyncMarks` (Kotlin) implements it; the extension leaves it to the phones.
+
 ## Sending and fetching shared files
 
 Files under 5 MB go up in one request. Bigger ones use a Drive resumable upload in 8 MiB

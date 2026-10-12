@@ -42,6 +42,41 @@ class SyncModelTest {
         assertFalse(m.hasConflict)
     }
 
+    @Test fun `a favorite pin or reminder another device's copy cleared without seeing it stands`() {
+        // Two phones holding the same save sync for the first time; B's copy was touched last.
+        val onA = create("A", 5, item("Hello", mapOf(F_FAV to true, SyncRecord.F_PIN to true, SyncRecord.F_REMIND to 9_000L)))
+        val onB = create("B", 6, item("Hello", mapOf(SyncRecord.F_PIN to false, SyncRecord.F_REMIND to null)))
+        val m = merge(onA, onB)
+        assertEquals(false, m.value(F_FAV))
+        assertTrue(SyncMarks.unsettled(m, now = 1_000L))
+        val settled = SyncMarks.settle(m, Dot("B", 7), now = 1_000L)
+        assertEquals(true, settled.value(F_FAV))
+        assertEquals(true, settled.value(SyncRecord.F_PIN))
+        assertEquals(9_000L, settled.value(SyncRecord.F_REMIND))
+        // Settled for everyone, whichever phone did it, and only once.
+        for (other in listOf(onA, onB, m)) assertEquals(settled, merge(other, settled))
+        assertFalse(SyncMarks.unsettled(settled, now = 1_000L))
+        // A reminder whose time has passed stays cleared.
+        assertNull(SyncMarks.settle(m, Dot("B", 7), now = 10_000L).value(SyncRecord.F_REMIND))
+    }
+
+    @Test fun `clearing a mark that was seen is not undone`() {
+        val base = create("A", 1, item("Hello", mapOf(F_FAV to true)))
+        val cleared = SyncDiff.apply(base, item("Hello"), Dot("B", 5))!!
+        val m = merge(base, cleared)
+        assertEquals(false, m.value(F_FAV))
+        assertFalse(SyncMarks.unsettled(m, now = 0L))
+        assertTrue(SyncMarks.settle(m, Dot("A", 9), now = 0L) === m)
+    }
+
+    @Test fun `settling marks never brings a deleted save back`() {
+        val onA = create("A", 5, item("Hello", mapOf(F_FAV to true)))
+        val onB = create("B", 6, item("Hello"))
+        val trashed = SyncDiff.apply(merge(onA, onB), item("Hello", mapOf(F_TRASH to 50L)), Dot("B", 8))!!
+        assertTrue(trashed.isTrashed)
+        assertFalse(SyncMarks.unsettled(trashed, now = 0L))
+    }
+
     @Test fun `same field edited on two devices keeps both values until someone picks`() {
         val base = create("A", 1, item("Hello"))
         val onA = SyncDiff.apply(base, item("From A"), Dot("A", 5))!!

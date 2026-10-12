@@ -2,6 +2,8 @@ package com.ghostgramlabs.pettibox.data.sync
 
 import android.content.Context
 import android.util.Log
+import androidx.core.app.NotificationManagerCompat
+import com.ghostgramlabs.pettibox.data.preferences.ReminderPreferences
 import com.ghostgramlabs.pettibox.data.article.ArticleRepository
 import com.ghostgramlabs.pettibox.data.drive.DriveAuth
 import com.ghostgramlabs.pettibox.data.metadata.PageSnapshotWorker
@@ -76,7 +78,8 @@ class AppSyncHooks @Inject constructor(
     private val articles: ArticleRepository,
     private val backupStore: LocalBackupStore,
     private val setup: SyncSetup,
-    private val prefs: SyncPreferences
+    private val prefs: SyncPreferences,
+    private val reminderPreferences: ReminderPreferences
 ) : SyncHooks {
 
     override suspend fun safetyBackup(): Boolean = runCatching {
@@ -91,8 +94,17 @@ class AppSyncHooks @Inject constructor(
             if (a.remindChanged) {
                 val item = repository.getById(id)
                 val at = item?.remindAt
-                if (item != null && at != null && !item.isPendingDelete && at > now) ReminderScheduler.schedule(context, id, at)
-                else ReminderScheduler.cancel(context, id)
+                // Snoozed or set again on another device: that answers the
+                // reminder still showing here.
+                NotificationManagerCompat.from(context).cancel(id.toInt())
+                if (item != null && at != null && !item.isPendingDelete && at > now) {
+                    ReminderScheduler.schedule(context, id, at)
+                    // Set on another device, so nobody was asked here: say so
+                    // on Home now, rather than after the reminder passed unseen.
+                    if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+                        reminderPreferences.setNotificationsBlocked(true)
+                    }
+                } else ReminderScheduler.cancel(context, id)
             }
             if (a.isNewLink) {
                 val item = repository.getById(id) ?: continue
