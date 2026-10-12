@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ghostgramlabs.pettibox.data.sync.SyncInterval
+import com.ghostgramlabs.pettibox.data.sync.SyncPreferences
 import com.ghostgramlabs.pettibox.data.sync.SyncStatus
 import com.ghostgramlabs.pettibox.data.util.TimeFormat
 
@@ -144,7 +145,14 @@ fun SyncSettingsCard(
         }
         // Photos and files, said separately from the text sync: a problem if
         // there is one, else where they stand, and a way to send them now.
-        val filesLine = status.filesProblem.ifBlank { status.filesStatus }
+        // Sync now sends them too; only while they wait (on mobile data with
+        // Wi-Fi only on, or a low battery) is there a one-off way round it.
+        val waiting = when (status.filesWaiting) {
+            SyncPreferences.WAIT_WIFI -> "Photos and files are waiting for Wi-Fi." to "Send on mobile data"
+            SyncPreferences.WAIT_BATTERY -> "Photos and files are waiting for the battery to charge." to "Send anyway"
+            else -> null
+        }
+        val filesLine = status.filesProblem.ifBlank { waiting?.first ?: status.filesStatus }
         if (filesLine.isNotBlank()) {
             Spacer(Modifier.height(8.dp))
             Text(
@@ -153,8 +161,10 @@ fun SyncSettingsCard(
                 color = if (status.filesProblem.isNotBlank()) scheme.error else scheme.onSurfaceVariant
             )
         }
-        TextButton(onClick = onSendFiles, contentPadding = PaddingValues(horizontal = 0.dp)) {
-            Text("Send photos now", fontWeight = FontWeight.Bold)
+        if (waiting != null) {
+            TextButton(onClick = onSendFiles, contentPadding = PaddingValues(horizontal = 0.dp)) {
+                Text(waiting.second, fontWeight = FontWeight.Bold)
+            }
         }
 
         // Another device wants to take many saves off the shelf.

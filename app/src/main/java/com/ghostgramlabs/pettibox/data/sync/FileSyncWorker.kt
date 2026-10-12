@@ -94,6 +94,7 @@ class FileSyncWorker @AssistedInject constructor(
             if (!thumbsOnly) {
                 cleanUp(token, syncFolder, folder, listed)
                 if (unreadable == 0) prefs.setFilesProblem("") // everything this phone has is sent (and what it needs fetched)
+                prefs.setFilesWaiting("")
                 prefs.setFilesStatus("All photos and files are in Google Drive · checked " + clockTime(System.currentTimeMillis()))
             }
             Result.success()
@@ -103,7 +104,7 @@ class FileSyncWorker @AssistedInject constructor(
                 prefs.setFilesProblem("Couldn't reach Google Drive while sending photos and files (${e.status.takeIf { it > 0 } ?: "no connection"}). Trying again by itself shortly.")
                 Result.retry()
             } else {
-                prefs.setFilesProblem("Photos and files couldn't be sent: ${e.message}. Tap Send photos now to try again.")
+                prefs.setFilesProblem("Photos and files couldn't be sent: ${e.message}. Tap Sync now to try again.")
                 Result.success()
             }
         } catch (e: LibraryReset) {
@@ -363,7 +364,7 @@ class FileSyncWorker @AssistedInject constructor(
             queue(NAME, request(false, if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED))
         }
 
-        /** "Send photos now": everything, at once, on any connection (the person asked). */
+        /** "Send on mobile data" / "Send anyway": everything, at once, on any connection (the person asked). */
         fun sendNow(context: Context) {
             val work = OneTimeWorkRequestBuilder<FileSyncWorker>()
                 .setInputData(androidx.work.workDataOf(KEY_THUMBS_ONLY to false))

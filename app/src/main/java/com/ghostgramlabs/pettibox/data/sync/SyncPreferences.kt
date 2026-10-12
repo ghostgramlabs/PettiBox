@@ -53,11 +53,18 @@ data class SyncStatus(
     /** Why photos and files aren't all synced, "" when they are. */
     val filesProblem: String = "",
     /** Where photos and files stand when there's no problem ("" before the first run). */
-    val filesStatus: String = ""
+    val filesStatus: String = "",
+    /** Why photos and files are waiting: [SyncPreferences.WAIT_WIFI], [SyncPreferences.WAIT_BATTERY] or "". */
+    val filesWaiting: String = ""
 )
 
 @Singleton
 class SyncPreferences(context: Context, fileName: String) {
+
+    companion object {
+        const val WAIT_WIFI = "wifi"
+        const val WAIT_BATTERY = "battery"
+    }
 
     /**
      * Holds this install's device id where Android never backs up or moves
@@ -116,7 +123,8 @@ class SyncPreferences(context: Context, fileName: String) {
             pendingReview = p[reviewKey] ?: 0,
             progress = p[progressKey].orEmpty(),
             filesProblem = p[filesProblemKey].orEmpty(),
-            filesStatus = p[filesStatusKey].orEmpty()
+            filesStatus = p[filesStatusKey].orEmpty(),
+            filesWaiting = p[filesWaitingKey].orEmpty()
         )
     }
 
@@ -243,6 +251,10 @@ class SyncPreferences(context: Context, fileName: String) {
     private val uploadSessionsKey = stringPreferencesKey("upload_sessions")
     private val filesProblemKey = stringPreferencesKey("files_problem")
     private val filesStatusKey = stringPreferencesKey("files_status")
+    private val filesWaitingKey = stringPreferencesKey("files_waiting")
+
+    /** Why the photo job is holding back right now: [WAIT_WIFI], [WAIT_BATTERY] or "". */
+    suspend fun setFilesWaiting(reason: String) = store.edit { it[filesWaitingKey] = reason }
 
     /** Where photos and files stand, in plain words ("Sending 3…", "All in Google Drive · 20:54"). */
     suspend fun setFilesStatus(text: String) = store.edit { it[filesStatusKey] = text }

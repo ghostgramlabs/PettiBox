@@ -167,6 +167,7 @@ class SettingsViewModel @Inject constructor(
     /** Photos and files straight away, on any connection. */
     suspend fun sendFilesNow() {
         syncPreferences.setFilesProblem("")
+        syncPreferences.setFilesWaiting("")
         syncPreferences.setFilesStatus("Sending photos and files to Google Drive…")
         com.ghostgramlabs.pettibox.data.sync.FileSyncWorker.sendNow(appContext)
     }

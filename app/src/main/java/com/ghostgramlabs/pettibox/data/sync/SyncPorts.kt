@@ -106,10 +106,13 @@ class AppSyncHooks @Inject constructor(
         FileSyncWorker.enqueue(context, wifiOnly)
         // Said plainly while it waits; cleared once the file job has run.
         if (!repository.hasFilesToSend()) return
+        // Waiting, said plainly, with a one-off way round it (see Settings).
         if (wifiOnly && FileSyncWorker.onMeteredNetwork(context)) {
-            prefs.setFilesProblem("Photos and files will be sent when this phone is on Wi-Fi. Tap Send photos now to send them on this connection.")
+            prefs.setFilesWaiting(SyncPreferences.WAIT_WIFI)
         } else if (FileSyncWorker.batteryLow(context)) {
-            prefs.setFilesProblem("Photos and files will be sent once the battery isn't low. Tap Send photos now to send them anyway.")
+            prefs.setFilesWaiting(SyncPreferences.WAIT_BATTERY)
+        } else {
+            prefs.setFilesWaiting("")
         }
     }
 
