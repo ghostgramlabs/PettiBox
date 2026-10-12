@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Wifi
@@ -161,9 +163,18 @@ fun SyncSettingsCard(
                 color = if (status.filesProblem.isNotBlank()) scheme.error else scheme.onSurfaceVariant
             )
         }
-        if (waiting != null) {
-            TextButton(onClick = onSendFiles, contentPadding = PaddingValues(horizontal = 0.dp)) {
-                Text(waiting.second, fontWeight = FontWeight.Bold)
+        // A small way to send photos and files right now on any connection,
+        // whenever they'd otherwise wait for Wi-Fi (Sync now already sends
+        // them when that switch is off).
+        if (waiting != null || status.filesOnWifiOnly) {
+            TextButton(
+                onClick = onSendFiles,
+                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                modifier = Modifier.heightIn(min = 36.dp)
+            ) {
+                Icon(Icons.Rounded.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(waiting?.second ?: "Send photos now, on any connection", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             }
         }
 
