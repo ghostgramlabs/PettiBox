@@ -935,6 +935,9 @@ class SaveRepository @Inject constructor(
 
     suspend fun discardRemovedFiles(removed: RemovedAttachment) = attachmentStore.deleteByUris(removed.files)
 
+    /** Takes files no save uses any more off the disk (sync removed their save for good). */
+    suspend fun discardFiles(uris: List<String>) = attachmentStore.deleteByUris(uris)
+
     // ── Tags ──────────────────────────────────────────────────────────────
 
     suspend fun setTagsForItem(itemId: Long, tagNames: List<String>) {

@@ -198,20 +198,20 @@ test('D12: a pending removal review doesn\'t hold back this browser\'s own saves
   const a = new SyncEngine(memoryStore(), d);
   const b = new SyncEngine(memoryStore(), d);
   const ids = [];
-  for (let i = 0; i < 7; i++) ids.push((await a.saveLink({ url: 'https://audit.example/review/' + i, title: String(i) })).id);
+  for (let i = 0; i < 12; i++) ids.push((await a.saveLink({ url: 'https://audit.example/review/' + i, title: String(i) })).id);
   await a.round(); await b.round();
-  for (const id of ids.slice(0, 5)) await b.trash(id);
+  for (const id of ids.slice(0, 10)) await b.trash(id);
   await b.round();
   await a.saveLink({ url: 'https://audit.example/unrelated', title: 'Pending local save' });
   assert.equal((await a.round()).needs, 'review');
   await b.round();
   assert.ok((await b.library()).items.some((i) => i.title === 'Pending local save'));
 
-  // "Apply" was chosen for those 5; two more removals arrive before the next round.
+  // "Apply" was chosen for those 10; two more removals arrive before the next round.
   const m = await a.meta();
   m.reviewDecision = 'apply';
   await a.saveMeta(m);
-  for (const id of ids.slice(5)) await b.trash(id);
+  for (const id of ids.slice(10)) await b.trash(id);
   await b.round();
   assert.equal((await a.round()).needs, 'review'); // a different set: asked again
 });

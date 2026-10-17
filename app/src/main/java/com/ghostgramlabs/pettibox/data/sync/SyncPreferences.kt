@@ -113,7 +113,8 @@ class SyncPreferences(context: Context, fileName: String) {
         SyncStatus(
             enabled = p[enabledKey] ?: false,
             interval = p[intervalKey]?.let { runCatching { SyncInterval.valueOf(it) }.getOrNull() } ?: SyncInterval.HOURS_3,
-            filesOnWifiOnly = p[wifiOnlyKey] ?: true,
+            // Off unless chosen: a photo arriving with its save is what people expect.
+            filesOnWifiOnly = p[wifiOnlyKey] ?: false,
             deviceName = p[deviceNameKey] ?: defaultDeviceName(),
             accountEmail = p[accountKey].orEmpty(),
             lastSyncAt = p[lastSyncKey] ?: 0L,

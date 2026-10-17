@@ -277,6 +277,22 @@ test('many removals from another device wait for the user; Keep mine puts them b
   assert.equal((await a.library()).items.length, 30); // restored on the device that deleted too
 });
 
+test('a save already in Recently deleted here goes for good when another device deletes it for good', async () => {
+  const drive = fakeDrive();
+  const a = browser(drive);
+  const b = browser(drive);
+  const { id } = await a.saveLink({ url: 'https://example.com/bin', title: 'Bin' });
+  await a.round(); await b.round();
+  await a.trash(id);
+  await a.round(); await b.round();
+  assert.equal((await b.library({ trash: true })).items.length, 1);
+  // A empties its Recently deleted.
+  await a.edit('item', id, () => null);
+  await a.round(); await b.round();
+  assert.equal((await b.library({ trash: true })).items.length, 0);
+  assert.equal((await b.library()).items.length, 0);
+});
+
 test('a save removed for good elsewhere stays restorable in Recently deleted here', async () => {
   const drive = fakeDrive();
   const a = browser(drive);

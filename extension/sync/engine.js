@@ -30,6 +30,8 @@ export const INTERVALS = [
 const META = 'meta';
 /** More removals than this in one round wait for the user (as on the phones). */
 const MASS_LIMIT = 25;
+/** In a small library, at least this many removals, taking more than half of it, wait too. */
+const MASS_MIN = 10;
 /** How long a save removed for good elsewhere stays restorable here. */
 const GONE_KEEP_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -564,7 +566,7 @@ export class SyncEngine {
       // wait for the user. Nothing from this round is applied or marked as
       // read until then, so the same files come down again after the choice.
       const live = [...mine.values()].filter(onShelf).length;
-      const big = removals.length > MASS_LIMIT || (removals.length >= 5 && removals.length * 10 > live);
+      const big = removals.length > MASS_LIMIT || (removals.length >= MASS_MIN && removals.length * 2 > live);
       // A choice holds only for the saves it was shown for: if more removals
       // arrived since, ask again.
       const key = reviewKey(removals.map(([cur]) => cur.id));
@@ -600,12 +602,13 @@ export class SyncEngine {
         }
       }
       // Removed for good elsewhere: keep it restorable here for 30 days, like
-      // a phone's Recently deleted.
+      // a phone's Recently deleted. One already in Recently deleted here is
+      // removed for good here too, as on the phones.
       m.goneAt ??= {};
       const copies = await this.goneCopies();
       for (const r of changed) {
         const cur = mine.get(recKey(r.kind, r.id));
-        if (r.kind === KIND_ITEM && cur && !isGone(cur) && isGone(r)) {
+        if (r.kind === KIND_ITEM && cur && !isGone(cur) && !isTrashed(cur) && isGone(r)) {
           m.goneAt[r.id] = this.now();
           // Kept here for the 30 days, as a phone keeps its own copy: the
           // synced marker may be stripped of the save's content meanwhile.

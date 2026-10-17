@@ -166,6 +166,16 @@ interface SyncDao {
     )
     suspend fun placeholderInUse(placeholder: String): Boolean
 
+    @Query("SELECT EXISTS(SELECT 1 FROM save_items WHERE category_id = :id)")
+    suspend fun collectionHasSaves(id: String): Boolean
+
+    /** Whether any save or file row here still points at [uri]. */
+    @Query(
+        "SELECT EXISTS(SELECT 1 FROM attachments WHERE uri = :uri) OR " +
+            "EXISTS(SELECT 1 FROM save_items WHERE local_uri = :uri OR thumbnail_uri = :uri)"
+    )
+    suspend fun fileInUse(uri: String): Boolean
+
     @Query("SELECT DISTINCT thumbnail_uri FROM save_items WHERE thumbnail_uri LIKE 'pettibox-sync:%'")
     suspend fun pendingThumbnails(): List<String>
 

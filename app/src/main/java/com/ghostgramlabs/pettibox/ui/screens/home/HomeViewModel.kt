@@ -77,6 +77,15 @@ class HomeViewModel @Inject constructor(
 
     fun syncNow() = com.ghostgramlabs.pettibox.data.sync.SyncScheduler.now(appContext)
 
+    /** The answer to "another device removed N saves", given on Home (Settings › Sync asks the same). */
+    fun answerSyncReview(keepMine: Boolean) = viewModelScope.launch {
+        syncPreferences.setReviewDecision(
+            if (keepMine) com.ghostgramlabs.pettibox.data.sync.SyncEngine.REVIEW_KEEP
+            else com.ghostgramlabs.pettibox.data.sync.SyncEngine.REVIEW_APPLY
+        )
+        com.ghostgramlabs.pettibox.data.sync.SyncScheduler.now(appContext)
+    }
+
     /** Saves edited on two devices, waiting for someone (on any one device) to pick a version. */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val needingChoice: kotlinx.coroutines.flow.StateFlow<List<SaveItemEntity>> = syncPreferences.needingChoice

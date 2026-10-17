@@ -90,6 +90,7 @@ class AppSyncHooks @Inject constructor(
 
     override suspend fun afterApply(applied: List<LocalLibrary.Applied>, now: Long) {
         for (a in applied) {
+            if (a.discardFiles.isNotEmpty()) repository.discardFiles(a.discardFiles)
             val id = a.itemId ?: continue
             if (a.remindChanged) {
                 val item = repository.getById(id)

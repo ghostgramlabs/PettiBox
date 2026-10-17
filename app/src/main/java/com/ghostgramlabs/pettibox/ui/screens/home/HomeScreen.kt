@@ -541,6 +541,17 @@ fun HomeScreen(
                             modifier = Modifier.padding(horizontal = 8.dp)
                         )
                     }
+                    // Sync is paused until someone answers this, so it can't wait in Settings.
+                    val review = syncStatus?.takeIf { it.enabled }?.pendingReview ?: 0
+                    if (review > 0) {
+                        Spacer(Modifier.height(10.dp))
+                        SyncReviewBanner(
+                            count = review,
+                            onApply = { viewModel.answerSyncReview(keepMine = false) },
+                            onPutBack = { viewModel.answerSyncReview(keepMine = true) },
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
                     if (state.isIndexingText) {
                         Spacer(Modifier.height(10.dp))
                         IndexingStatusChip(modifier = Modifier.padding(horizontal = 20.dp))
@@ -734,6 +745,43 @@ private fun RateCard(
             TextButton(onClick = onNotNow) {
                 Text("Not now", color = scheme.onSurfaceVariant)
             }
+        }
+    }
+}
+
+/** Same choice as in Settings › Sync, worded the same way. */
+@Composable
+private fun SyncReviewBanner(
+    count: Int,
+    onApply: () -> Unit,
+    onPutBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scheme = MaterialTheme.colorScheme
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(scheme.error.copy(alpha = 0.10f))
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    ) {
+        Text(
+            "Another device removed or archived $count saves",
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+            color = scheme.onSurface
+        )
+        Text(
+            "Sync is paused until you choose. Apply here too does the same on this phone (a backup is made first). " +
+                "Put them back undoes it on every device.",
+            style = MaterialTheme.typography.bodySmall,
+            color = scheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = onApply, shape = RoundedCornerShape(12.dp)) {
+                Text("Apply here too", fontWeight = FontWeight.Bold)
+            }
+            TextButton(onClick = onPutBack) { Text("Put them back") }
         }
     }
 }

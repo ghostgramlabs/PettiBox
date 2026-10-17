@@ -242,7 +242,7 @@ class SyncEngine @Inject constructor(
         // A device's very first sync only: later duplicates are folded instead
         // (foldDuplicates), the same way on every device and the extension.
         if (prefs.status.first().lastSyncAt == 0L) adoptMatchingSaves(remote)
-        commitLocal(me, clock)
+        commitLocal(me, clock, remote.filter { it.kind == KIND_COLLECTION }.mapTo(HashSet()) { it.id })
 
         val decision = prefs.takeReviewDecision()
         beforeApply()
@@ -318,8 +318,11 @@ class SyncEngine @Inject constructor(
     private fun dedupeKey(url: String?, type: String?, created: Long, title: String?): String =
         url?.trim()?.takeIf { it.isNotEmpty() }?.let { "u:" + TextUtils.urlDedupeKey(it) } ?: "f:$type|$created|$title"
 
-    /** Folds queued local changes into this device's merged copy. */
-    private suspend fun commitLocal(me: String, clock: HybridClock) {
+    /**
+     * Folds queued local changes into this device's merged copy.
+     * [remoteCollections]: collections other devices sent this round.
+     */
+    private suspend fun commitLocal(me: String, clock: HybridClock, remoteCollections: Set<String> = emptySet()) {
         val rows = syncDao.outbox()
         if (rows.isEmpty()) return
         prefs.setProgress("Preparing your changes…")
@@ -336,7 +339,12 @@ class SyncEngine @Inject constructor(
                     // when it was last edited, not now, so an old copy doesn't
                     // win over newer edits made elsewhere (it merges as a
                     // concurrent version instead).
-                    if (local == null) null else {
+                    if (local == null) null
+                    // A starter this phone just seeded and nobody touched, that
+                    // other devices already have: take theirs (renamed, new
+                    // icon, or deleted) instead of sending the defaults back.
+                    else if (row.kind == KIND_COLLECTION && row.syncId in remoteCollections && library.isUntouchedStarter(row.syncId)) null
+                    else {
                         val ts = library.editedAt(row.kind, row.syncId)?.takeIf { it > 0 }
                             ?.coerceAtMost(System.currentTimeMillis()) ?: clock.next()
                         clock.observe(ts)
@@ -388,7 +396,10 @@ class SyncEngine @Inject constructor(
             return 0
         }
         val removals = removing.size
-        val big = removals > MASS_LIMIT || (removals >= 5 && removals * 10 > syncDao.liveCount())
+        // Only what looks like a wipe: deleting a handful of saves on another
+        // phone is everyday tidying (they wait in Recently deleted here anyway),
+        // and holding it back would pause every other change too.
+        val big = removals > MASS_LIMIT || (removals >= MASS_MIN && removals * 2 > syncDao.liveCount())
         // A choice holds only for the saves it was shown for: if more
         // removals arrived since, ask again.
         val key = removing.sorted().joinToString(",")
@@ -675,6 +686,8 @@ class SyncEngine @Inject constructor(
 
         /** More removals than this in one round wait for the user. */
         const val MASS_LIMIT = 25
+        /** In a small library, at least this many removals, taking more than half of it, wait too. */
+        const val MASS_MIN = 10
         /** Headroom in a saved clock ceiling, so stamps can follow the wall clock for a while (the ceiling is enforced). */
         const val CLOCK_MARGIN_MS = 60_000L
 

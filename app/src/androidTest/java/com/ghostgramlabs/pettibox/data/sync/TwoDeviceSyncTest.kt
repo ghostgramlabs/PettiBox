@@ -647,11 +647,49 @@ class TwoDeviceSyncTest {
         syncBoth()
         val onB = b.saves().single()
         assertTrue(onB.isPendingDelete)
-        // Deleting it for good on A never deletes it on B outright.
+        // Deleted for good on A ("Empty Recently deleted"): gone from B's bin too.
         a.db.saveDao().delete(a.saves().single().id)
         syncBoth()
-        assertEquals(1, b.saves().size)
+        assertTrue(b.saves().isEmpty())
+    }
+
+    @Test fun a_save_live_here_deleted_for_good_elsewhere_waits_in_recently_deleted() = runBlocking {
+        a.db.saveDao().insert(link("x"))
+        a.turnOn(); b.turnOn(); syncBoth()
+        a.db.saveDao().delete(a.saves().single().id)
+        syncBoth()
         assertTrue(b.saves().single().isPendingDelete)
+    }
+
+    @Test fun a_new_phones_untouched_starters_dont_undo_collection_changes_made_elsewhere() = runBlocking {
+        suspend fun seed(p: Phone) = p.db.categoryDao().insertAll(
+            com.ghostgramlabs.pettibox.domain.model.CategoryPalette.Defaults.mapIndexed { i, d ->
+                CategoryEntity(id = d.id, name = d.name, emoji = d.emoji, colorHex = d.colorHex, sortOrder = i)
+            }
+        )
+        seed(a)
+        val recipes = a.db.categoryDao().getById("recipes")!!
+        a.db.categoryDao().update(recipes.copy(name = "Cooking", emoji = "🥘"))
+        a.db.categoryDao().delete("travel")
+        a.turnOn(); assertTrue(a.sync() is SyncOutcome.Ok)
+        Thread.sleep(5)
+        seed(b) // set up later: its starters are newer than A's changes
+        b.turnOn(); syncBoth()
+        for (p in listOf(a, b)) {
+            val c = p.db.categoryDao().getById("recipes")!!
+            assertEquals("Cooking", c.name)
+            assertEquals("🥘", c.emoji)
+            assertNull(p.db.categoryDao().getById("travel"))
+        }
+    }
+
+    @Test fun a_few_deletes_in_a_small_library_reach_the_other_phone_without_review() = runBlocking {
+        repeat(20) { a.db.saveDao().insert(link("s$it")) }
+        a.turnOn(); b.turnOn(); syncBoth()
+        for (s in a.saves().take(5)) a.db.saveDao().setPendingDelete(s.id, true)
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        assertEquals(15, b.live().size)
     }
 
     @Test fun a_save_live_elsewhere_survives_a_permanent_removal() = runBlocking {

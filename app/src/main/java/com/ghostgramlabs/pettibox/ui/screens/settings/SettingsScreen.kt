@@ -458,7 +458,7 @@ fun SettingsScreen(
 
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle(
         initialValue = SyncStatus(
-            enabled = false, interval = SyncInterval.HOURS_3, filesOnWifiOnly = true, deviceName = "",
+            enabled = false, interval = SyncInterval.HOURS_3, filesOnWifiOnly = false, deviceName = "",
             accountEmail = "", lastSyncAt = 0L, lastError = "", lastErrorAt = 0L, needsReconnect = false,
             pendingReview = 0, progress = ""
         )

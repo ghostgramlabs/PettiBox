@@ -163,10 +163,8 @@ fun SyncSettingsCard(
                 color = if (status.filesProblem.isNotBlank()) scheme.error else scheme.onSurfaceVariant
             )
         }
-        // A small way to send photos and files right now on any connection,
-        // whenever they'd otherwise wait for Wi-Fi (Sync now already sends
-        // them when that switch is off).
-        if (waiting != null || status.filesOnWifiOnly) {
+        // Only while they're actually waiting: a one-off way to send them now.
+        if (waiting != null) {
             TextButton(
                 onClick = onSendFiles,
                 contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
@@ -174,7 +172,7 @@ fun SyncSettingsCard(
             ) {
                 Icon(Icons.Rounded.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
-                Text(waiting?.second ?: "Send photos now, on any connection", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                Text(waiting.second, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -194,18 +192,19 @@ fun SyncSettingsCard(
                     color = scheme.onSurface
                 )
                 Text(
-                    "Sync paused until you decide. Apply moves them to Recently deleted or Archive here too " +
-                        "(a backup is made first). Keep mine puts them back on every device.",
+                    "Sync is paused until you choose. Apply here too moves them to Recently deleted or Archive on this phone as well " +
+                        "(a backup is made first). Put them back undoes it on every device.",
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { onReview(true) }, shape = RoundedCornerShape(12.dp)) {
-                        Text("Keep mine", fontWeight = FontWeight.Bold)
+                    // Usually the person did this on their other device, so applying is the main choice.
+                    Button(onClick = { onReview(false) }, shape = RoundedCornerShape(12.dp)) {
+                        Text("Apply here too", fontWeight = FontWeight.Bold)
                     }
-                    OutlinedButton(onClick = { onReview(false) }, shape = RoundedCornerShape(12.dp)) {
-                        Text("Apply")
+                    OutlinedButton(onClick = { onReview(true) }, shape = RoundedCornerShape(12.dp)) {
+                        Text("Put them back")
                     }
                 }
             }
@@ -221,7 +220,7 @@ fun SyncSettingsCard(
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "PettiBox also syncs every minute while it's open, and about a minute after you change something.",
+            "While PettiBox is open, changes go both ways within seconds. This is for when it's closed.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant
         )
@@ -233,7 +232,7 @@ fun SyncSettingsCard(
             Column(Modifier.weight(1f)) {
                 Text("Photos and files on Wi-Fi only", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = scheme.onSurface)
                 Text(
-                    "Text always syncs. Photos, PDFs and files use your Drive storage; ones no save has used for 30 days are removed from Drive.",
+                    "Off: photos and files sync on any connection, right along with your saves. On: they wait for Wi-Fi, to save mobile data.",
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant
                 )
@@ -260,7 +259,7 @@ fun SyncSettingsCard(
                         Text(info.first.ifBlank { "Unnamed device" }, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface)
                         if (info.second > 0) {
                             Text(
-                                "Changed ${TimeFormat.relative(info.second)}",
+                                "Last synced ${TimeFormat.relative(info.second)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = scheme.onSurfaceVariant
                             )
@@ -274,8 +273,8 @@ fun SyncSettingsCard(
         Spacer(Modifier.height(12.dp))
         Text(
             "Where your library lives: on this phone, on your other devices, and in your own Google Drive. PettiBox has no servers. " +
-                "Changes reach your other devices the next time they sync. Edits made on two devices at once are both kept: " +
-                "open the save to pick one. A delete always passes through Recently deleted first.",
+                "Changes reach your other devices the next time they sync. If a save is edited on two devices at once, both versions are kept: " +
+                "open the save to pick one. Deleted saves go to Recently deleted on every device, and leave every device when it's emptied.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant
         )

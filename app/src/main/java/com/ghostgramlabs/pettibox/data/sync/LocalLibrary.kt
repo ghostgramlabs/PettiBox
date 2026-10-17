@@ -38,6 +38,7 @@ import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_URL
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_USER
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.KIND_COLLECTION
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.KIND_ITEM
+import com.ghostgramlabs.pettibox.domain.model.CategoryPalette
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.security.MessageDigest
@@ -51,8 +52,9 @@ const val PENDING_FILE_SCHEME = "pettibox-sync:"
  * Between Room and sync records: reads this device's current state of a
  * record ([snapshot]) and shows a merged record on this phone ([apply]).
  *
- * [apply] never deletes a save. A save removed for good on another device
- * goes to Recently deleted here, for this phone's own 30 days.
+ * [apply] never deletes a save that's live here. A save removed for good on
+ * another device goes to Recently deleted here, for this phone's own 30
+ * days; one already in Recently deleted here is removed for good here too.
  */
 @Singleton
 class LocalLibrary @Inject constructor(
@@ -65,7 +67,13 @@ class LocalLibrary @Inject constructor(
 ) {
 
     /** What happened when a record was shown here, for the caller's follow-up work. */
-    data class Applied(val itemId: Long? = null, val isNewLink: Boolean = false, val remindChanged: Boolean = false)
+    data class Applied(
+        val itemId: Long? = null,
+        val isNewLink: Boolean = false,
+        val remindChanged: Boolean = false,
+        /** Files of a save removed for good here, to take off the disk once the change is saved. */
+        val discardFiles: List<String> = emptyList()
+    )
 
     // ── Reading ──────────────────────────────────────────────────────────
 
@@ -145,6 +153,21 @@ class LocalLibrary @Inject constructor(
         return LocalRecord(KIND_ITEM, syncId, s.createdAt, fields, tags, files)
     }
 
+    /**
+     * A starter collection exactly as this phone seeded it: nobody has
+     * touched it here. Every phone seeds the same ids, so such a copy says
+     * nothing a person chose and must not undo what was done to it elsewhere.
+     */
+    suspend fun isUntouchedStarter(id: String): Boolean {
+        val c = categoryDao.getById(id) ?: return false
+        val i = CategoryPalette.Defaults.indexOfFirst { it.id == id }
+        if (i < 0 || c.userCreated || c.isLocked || c.parentId != null) return false
+        // Saves filed in it here are a use of it: it stays a collection of this phone's own.
+        if (syncDao.collectionHasSaves(id)) return false
+        val p = CategoryPalette.Defaults[i]
+        return c.name == p.name && c.emoji == p.emoji && c.colorHex == p.colorHex && c.sortOrder == i
+    }
+
     private suspend fun snapshotCollection(id: String, meta: SyncRecord?): LocalRecord? {
         val c = categoryDao.getById(id) ?: return null
         // A parent that isn't on this phone yet (or was removed elsewhere) is
@@ -208,13 +231,20 @@ class LocalLibrary @Inject constructor(
     private suspend fun applyItem(r: SyncRecord, now: Long): Applied {
         val existing = syncDao.itemBySyncId(r.id)
         if (r.isGone) {
-            // Removed for good elsewhere. Never delete here: if it's live,
-            // it waits in Recently deleted for this phone's 30 days.
-            if (existing != null && !existing.isPendingDelete) {
+            // Removed for good elsewhere. If it's live here, it waits in
+            // Recently deleted for this phone's 30 days.
+            if (existing == null) return Applied()
+            if (!existing.isPendingDelete) {
                 saveDao.update(existing.copy(isPendingDelete = true, deletedAt = now))
                 return Applied(existing.id, remindChanged = existing.remindAt != null)
             }
-            return Applied(existing?.id)
+            // Already in Recently deleted here too: deleted for good on one
+            // phone is deleted for good on all, as "Empty Recently deleted" says.
+            val uris = attachmentDao.urisForItem(existing.id) + listOfNotNull(existing.localUri, existing.thumbnailUri)
+            saveDao.delete(existing.id) // cascades files and tags
+            // A file another save here shares (same content) stays.
+            val unused = uris.distinct().filter { !syncDao.fileInUse(it) }
+            return Applied(existing.id, remindChanged = existing.remindAt != null, discardFiles = unused)
         }
         val cat = (r.value(F_CAT) as? String)?.takeIf { categoryDao.getById(it) != null }
         val mainSha = r.value(F_MAIN) as? String
