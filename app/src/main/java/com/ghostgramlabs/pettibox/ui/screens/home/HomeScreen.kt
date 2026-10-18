@@ -541,7 +541,7 @@ fun HomeScreen(
                             modifier = Modifier.padding(horizontal = 8.dp)
                         )
                     }
-                    // Sync is paused until someone answers this, so it can't wait in Settings.
+                    // Changes from other devices wait until someone answers this, so it can't wait in Settings.
                     val review = syncStatus?.takeIf { it.enabled }?.pendingReview ?: 0
                     if (review > 0) {
                         Spacer(Modifier.height(10.dp))
@@ -771,7 +771,7 @@ private fun SyncReviewBanner(
             color = scheme.onSurface
         )
         Text(
-            "Sync is paused until you choose. Apply here too does the same on this phone (a backup is made first). " +
+            "Changes from your other devices wait until you choose. Apply here too does the same on this phone (a backup is made first). " +
                 "Put them back undoes it on every device.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant
@@ -1094,6 +1094,7 @@ private fun Greeting(sync: com.ghostgramlabs.pettibox.data.sync.SyncStatus? = nu
                 s.progress.isNotBlank() -> "Syncing…"
                 s.needsReconnect -> "Sync paused: reconnect Google Drive in Settings"
                 s.lastError.isNotBlank() && s.lastErrorAt >= s.lastSyncAt -> "Sync problem: see Settings"
+                s.pendingReview > 0 -> "Sync is waiting for your choice"
                 s.lastSyncAt > 0 -> "Synced " + android.text.format.DateUtils.getRelativeTimeSpanString(
                     s.lastSyncAt, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS
                 )

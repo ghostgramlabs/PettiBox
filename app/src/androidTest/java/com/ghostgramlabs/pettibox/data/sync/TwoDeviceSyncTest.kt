@@ -80,9 +80,9 @@ class TwoDeviceSyncTest {
         val hooks = NoHooks()
         val engine = SyncEngine(db, db.syncDao(), prefs, library, drive, hooks)
 
-        suspend fun turnOn() {
+        suspend fun turnOn(startersSeeded: Boolean = false) {
             prefs.setEnabled(true)
-            setup.enable()
+            setup.enable(startersSeeded)
         }
 
         suspend fun sync(): SyncOutcome = engine.round()
@@ -339,14 +339,15 @@ class TwoDeviceSyncTest {
         val url = "https://x.example"
         a.db.saveDao().insert(link("x"))
         a.turnOn(); b.turnOn(); syncBoth()
-        a.db.categoryDao().upsert(CategoryEntity("user_late", "Late", "🕰", 0xFF123456))
-        a.db.saveDao().update(a.byUrl(url)!!.copy(categoryId = "user_late"))
+        // A collection id in another of the 16 files than the save, so one can arrive without the other.
+        val itemShard = shardOf(a.byUrl(url)!!.syncId)
+        val late = (0..99).map { "user_late_$it" }.first { shardOf(it) != itemShard }
+        a.db.categoryDao().upsert(CategoryEntity(late, "Late", "🕰", 0xFF123456))
+        a.db.saveDao().update(a.byUrl(url)!!.copy(categoryId = late))
         assertTrue(a.sync() is SyncOutcome.Ok)
         // B sees the save's file before the collection's.
         val me = a.prefs.deviceId()
-        val colFile = DriveSyncClient.shardName(me, shardOf("user_late"))
-        val itemFile = DriveSyncClient.shardName(me, shardOf(a.byUrl(url)!!.syncId))
-        org.junit.Assume.assumeTrue(colFile != itemFile)
+        val colFile = DriveSyncClient.shardName(me, shardOf(late))
         drive.hidden += colFile
         assertTrue(b.sync() is SyncOutcome.Ok)
         assertEquals(null, b.byUrl(url)!!.categoryId)
@@ -357,7 +358,7 @@ class TwoDeviceSyncTest {
         syncBoth()
         for (p in listOf(a, b)) {
             val s = p.byUrl(url)!!
-            assertEquals("user_late", s.categoryId)
+            assertEquals(late, s.categoryId)
             assertEquals("edited on B", s.title)
         }
     }
@@ -671,10 +672,10 @@ class TwoDeviceSyncTest {
         val recipes = a.db.categoryDao().getById("recipes")!!
         a.db.categoryDao().update(recipes.copy(name = "Cooking", emoji = "🥘"))
         a.db.categoryDao().delete("travel")
-        a.turnOn(); assertTrue(a.sync() is SyncOutcome.Ok)
+        a.turnOn(startersSeeded = true); assertTrue(a.sync() is SyncOutcome.Ok)
         Thread.sleep(5)
         seed(b) // set up later: its starters are newer than A's changes
-        b.turnOn(); syncBoth()
+        b.turnOn(startersSeeded = true); syncBoth()
         for (p in listOf(a, b)) {
             val c = p.db.categoryDao().getById("recipes")!!
             assertEquals("Cooking", c.name)
@@ -791,6 +792,29 @@ class TwoDeviceSyncTest {
         // The newer copy waits in Recently deleted on the phone that made it
         // (A never had it): nothing is lost.
         assertEquals(1, b.all().count { it.isPendingDelete })
+        assertEquals(a.live().single().syncId, b.live().single().syncId)
+    }
+
+    @Test fun an_edit_made_while_duplicates_are_folded_survives() = runBlocking {
+        a.turnOn(); b.turnOn(); syncBoth()
+        a.db.saveDao().insert(link("x", updated = 1_000L).copy(notes = "from A"))
+        b.db.saveDao().insert(link("x", url = "https://X.example", updated = 2_000L).copy(notes = "from B"))
+        assertTrue(a.sync() is SyncOutcome.Ok)
+        // B folds A's save (the older, which stays) and its own; just then, the person edits both on B.
+        b.engine.beforeFold = {
+            b.engine.beforeFold = {}
+            val keep = b.all().first { it.notes == "from A" }
+            b.db.saveDao().update(keep.copy(title = "renamed during the fold"))
+            val other = b.all().first { it.notes == "from B" }
+            b.db.saveDao().update(other.copy(notes = "from B, edited"))
+        }
+        assertTrue(b.sync() is SyncOutcome.Ok)
+        repeat(2) { syncBoth() }
+        for (p in listOf(a, b)) {
+            val s = p.live().single()
+            assertEquals("renamed during the fold", s.title)
+            assertTrue("notes were \"${s.notes}\"", s.notes.orEmpty().contains("from B, edited"))
+        }
         assertEquals(a.live().single().syncId, b.live().single().syncId)
     }
 

@@ -116,8 +116,11 @@ fun SyncSettingsCard(
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(
+                    // What needs doing comes before a reassuring "Last synced".
                     when {
                         status.progress.isNotBlank() -> status.progress
+                        status.needsReconnect -> "Reconnect Google Drive to keep syncing"
+                        status.pendingReview > 0 -> "Waiting for your choice below"
                         status.lastSyncAt > 0 -> "Last synced ${TimeFormat.relative(status.lastSyncAt)}"
                         else -> "Not synced yet"
                     },
@@ -192,7 +195,7 @@ fun SyncSettingsCard(
                     color = scheme.onSurface
                 )
                 Text(
-                    "Sync is paused until you choose. Apply here too moves them to Recently deleted or Archive on this phone as well " +
+                    "Changes from your other devices wait until you choose; your own changes still go out. Apply here too moves them to Recently deleted or Archive on this phone as well " +
                         "(a backup is made first). Put them back undoes it on every device.",
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant

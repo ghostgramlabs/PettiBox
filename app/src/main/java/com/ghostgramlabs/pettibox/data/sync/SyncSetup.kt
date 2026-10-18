@@ -3,6 +3,7 @@ package com.ghostgramlabs.pettibox.data.sync
 import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.ghostgramlabs.pettibox.data.local.AppDatabase
+import com.ghostgramlabs.pettibox.domain.model.CategoryPalette
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,8 +26,12 @@ import javax.inject.Singleton
 @Singleton
 class SyncSetup @Inject constructor(private val db: AppDatabase) {
 
-    /** Turns capture on and queues the whole library once; the first round compares it all. */
-    suspend fun enable() = db.withTransaction {
+    /**
+     * Turns capture on and queues the whole library once; the first round
+     * compares it all. [startersSeeded]: this phone created the starter
+     * collections, so one missing now was removed by its owner.
+     */
+    suspend fun enable(startersSeeded: Boolean = false) = db.withTransaction {
         val sql = db.openHelper.writableDatabase
         createTriggers(sql)
         // Everything goes in the outbox. A record this device has synced
@@ -43,6 +48,16 @@ class SyncSetup @Inject constructor(private val db: AppDatabase) {
                 "WHERE (kind = 'item' AND NOT EXISTS (SELECT 1 FROM save_items s WHERE s.sync_id = m.sync_id)) " +
                 "OR (kind = 'col' AND NOT EXISTS (SELECT 1 FROM categories c WHERE c.id = m.sync_id))"
         )
+        // Starters removed before this phone ever synced: every phone seeds
+        // them, so say they're gone, or a phone joining later brings them back.
+        if (startersSeeded) for (id in CategoryPalette.Defaults.map { it.id }) {
+            sql.execSQL(
+                "INSERT OR REPLACE INTO sync_outbox(kind, sync_id, ts) SELECT 'col', ?, $NOW " +
+                    "WHERE NOT EXISTS (SELECT 1 FROM categories WHERE id = ?) " +
+                    "AND NOT EXISTS (SELECT 1 FROM sync_meta WHERE kind = 'col' AND sync_id = ?)",
+                arrayOf<Any>(id, id, id)
+            )
+        }
     }
 
     /** Stops capture and clears what was waiting. The merged copy stays, so a later enable knows what was synced. */

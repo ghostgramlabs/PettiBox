@@ -139,6 +139,11 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val autoScanOcr by viewModel.autoScanOcr.collectAsStateWithLifecycle(initialValue = true)
+    val ocrLanguages by viewModel.ocrLanguages.collectAsStateWithLifecycle(initialValue = emptySet())
+    val ocrRereading by viewModel.ocrRereading.collectAsStateWithLifecycle(initialValue = false)
+    val ocrFailed by viewModel.ocrFailedLanguages.collectAsStateWithLifecycle(initialValue = emptySet())
+    var showOcrLanguages by remember { mutableStateOf(false) }
+    var showLicenses by remember { mutableStateOf(false) }
     val pdfPageLimit by viewModel.pdfPageLimit.collectAsStateWithLifecycle(
         initialValue = OcrPreferences.DEFAULT_PDF_PAGES
     )
@@ -823,6 +828,184 @@ fun SettingsScreen(
                 Spacer(Modifier.height(12.dp))
             }
             BackupConfidenceBanner(localBackupStatus)
+            // The two things people come here to check most: whether sync is fine, and which languages are read.
+            Spacer(Modifier.height(16.dp))
+            SyncSettingsCard(
+                status = syncStatus,
+                devices = syncDevices,
+                onTurnOn = connectSync,
+                onTurnOff = { removeMine ->
+                    scope.launch {
+                        val removed = viewModel.turnOffSync(removeMine)
+                        snackbarHostState.showSnackbar(
+                            when {
+                                !removed -> "Sync is off. Couldn't reach Google Drive to remove this phone's copy; remove it later from another device"
+                                removeMine -> "Sync is off, and this phone's copy was removed from Google Drive"
+                                else -> "Sync is off on this device"
+                            }
+                        )
+                    }
+                },
+                onDeleteSynced = {
+                    scope.launch {
+                        val ok = viewModel.deleteSyncedData()
+                        snackbarHostState.showSnackbar(
+                            if (ok) "Synced data deleted from Google Drive. Sync is off on all your devices."
+                            else "Couldn't finish deleting from Google Drive. Some synced data may already be gone; try again to finish. Your library on this phone is untouched."
+                        )
+                    }
+                },
+                onSyncNow = {
+                    viewModel.syncNow()
+                    scope.launch { snackbarHostState.showSnackbar("Syncing…") }
+                },
+                onSendFiles = {
+                    scope.launch {
+                        viewModel.sendFilesNow()
+                        snackbarHostState.showSnackbar("Sending photos and files, on any connection")
+                    }
+                },
+                onReconnect = connectSync,
+                onInterval = { scope.launch { viewModel.setSyncInterval(it) } },
+                onWifiOnly = { scope.launch { viewModel.setSyncFilesOnWifiOnly(it) } },
+                onRename = { scope.launch { viewModel.setSyncDeviceName(it) } },
+                onRemoveDevice = { id ->
+                    scope.launch {
+                        val ok = viewModel.removeSyncDevice(id)
+                        snackbarHostState.showSnackbar(if (ok) "Removed" else "Couldn't reach Google Drive")
+                    }
+                },
+                onReview = { keep ->
+                    scope.launch {
+                        viewModel.answerSyncReview(keep)
+                        snackbarHostState.showSnackbar(if (keep) "Keeping your saves" else "Applying the changes")
+                    }
+                }
+            )
+
+            Spacer(Modifier.height(16.dp))
+            SettingsSection(title = "Text recognition") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Rounded.TextSnippet,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Auto-scan images and PDFs for search",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Applies to new saves only.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = autoScanOcr,
+                        onCheckedChange = { enabled ->
+                            scope.launch {
+                                viewModel.setAutoScanOcr(enabled)
+                                snackbarHostState.showSnackbar(
+                                    if (enabled) "Auto-scan is on for new saves"
+                                    else "Auto-scan is off for new saves"
+                                )
+                            }
+                        }
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showOcrLanguages = true }
+                        .padding(vertical = 6.dp)
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Languages in images",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            ocrLanguagesSummary(ocrLanguages),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text("Change", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                }
+                if (showOcrLanguages) {
+                    OcrLanguagesSheet(
+                        on = ocrLanguages,
+                        rereading = ocrRereading,
+                        readyNow = viewModel::readyOcrLanguages,
+                        failed = ocrFailed,
+                        isOnline = viewModel::isOnline,
+                        onRetry = viewModel::retryOcrLanguages,
+                        onToggle = { code, on -> viewModel.setOcrLanguage(code, on) },
+                        onDismiss = { showOcrLanguages = false }
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            busyLabel = "Queueing text scan"
+                            runCatching { viewModel.scanExistingSaves() }
+                                .onSuccess { count ->
+                                    snackbarHostState.showSnackbar(
+                                        if (count == 0) "No older images or PDFs need scanning"
+                                        else "Scanning existing saves for search: queued $count item${if (count == 1) "" else "s"}"
+                                    )
+                                }
+                                .onFailure { snackbarHostState.showSnackbar("Couldn't queue text scan") }
+                            busyLabel = null
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Text("Scan existing saves", fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    "PDF scan limit",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    "Higher limits make more pages searchable, but large PDFs take longer. Raising it also reads the extra pages of PDFs you already saved.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OcrPreferences.PDF_PAGE_LIMIT_OPTIONS.forEach { limit ->
+                        PageLimitChoice(
+                            limit = limit,
+                            selected = pdfPageLimit == limit,
+                            onClick = {
+                                scope.launch {
+                                    val before = pdfPageLimit
+                                    viewModel.setPdfPageLimit(limit)
+                                    snackbarHostState.showSnackbar(if (limit > before) "Reading up to $limit pages, saved PDFs included" else "New PDFs: up to $limit pages. Text already found stays.")
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
             Spacer(Modifier.height(16.dp))
             SettingsSection(title = "Appearance") {
                 ThemeChoice(
@@ -863,93 +1046,6 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Remove starter collections", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Text recognition") {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Rounded.TextSnippet,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            "Auto-scan images and PDFs for search",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            "Applies to new saves only. English text works best; other languages may be partial.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = autoScanOcr,
-                        onCheckedChange = { enabled ->
-                            scope.launch {
-                                viewModel.setAutoScanOcr(enabled)
-                                snackbarHostState.showSnackbar(
-                                    if (enabled) "Auto-scan is on for new saves"
-                                    else "Auto-scan is off for new saves"
-                                )
-                            }
-                        }
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = {
-                        scope.launch {
-                            busyLabel = "Queueing text scan"
-                            runCatching { viewModel.scanExistingSaves() }
-                                .onSuccess { count ->
-                                    snackbarHostState.showSnackbar(
-                                        if (count == 0) "No older images or PDFs need scanning"
-                                        else "Scanning existing saves for search: queued $count item${if (count == 1) "" else "s"}"
-                                    )
-                                }
-                                .onFailure { snackbarHostState.showSnackbar("Couldn't queue text scan") }
-                            busyLabel = null
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp)
-                ) {
-                    Text("Scan existing saves", fontWeight = FontWeight.Bold)
-                }
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    "PDF scan limit",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    "Higher limits make more pages searchable, but large PDFs take longer.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OcrPreferences.PDF_PAGE_LIMIT_OPTIONS.forEach { limit ->
-                        PageLimitChoice(
-                            limit = limit,
-                            selected = pdfPageLimit == limit,
-                            onClick = {
-                                scope.launch {
-                                    viewModel.setPdfPageLimit(limit)
-                                    snackbarHostState.showSnackbar("PDF scan limit set to $limit pages")
-                                }
-                            }
-                        )
                     }
                 }
             }
@@ -1198,7 +1294,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Find it later",
-                    body = "Search by words, source app, file type, tag, collection, or upcoming reminders. It also checks English text found inside images and PDFs, and the text of articles saved for offline reading.",
+                    body = "Search by words, source app, file type, tag, collection, or upcoming reminders. It also checks text found inside images and PDFs (in the languages you turn on under Text recognition), and the text of articles saved for offline reading.",
                     icon = Icons.Rounded.Search
                 )
                 HelpItem(
@@ -1276,7 +1372,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Text recognition is optional",
-                    body = "Auto-scan makes English screenshots and PDFs searchable. Other languages may be partial. Large PDFs are indexed for the first 30 pages to keep the app fast.",
+                    body = "Auto-scan makes the text in screenshots, photos and PDFs searchable: English and other Latin-alphabet languages always, plus the languages you turn on under Text recognition › Languages in images. PDFs are read up to the page limit you choose there.",
                     icon = Icons.AutoMirrored.Rounded.TextSnippet
                 )
 
@@ -1497,60 +1593,6 @@ fun SettingsScreen(
                     )
                 }
             }
-
-            Spacer(Modifier.height(16.dp))
-            SyncSettingsCard(
-                status = syncStatus,
-                devices = syncDevices,
-                onTurnOn = connectSync,
-                onTurnOff = { removeMine ->
-                    scope.launch {
-                        val removed = viewModel.turnOffSync(removeMine)
-                        snackbarHostState.showSnackbar(
-                            when {
-                                !removed -> "Sync is off. Couldn't reach Google Drive to remove this phone's copy; remove it later from another device"
-                                removeMine -> "Sync is off, and this phone's copy was removed from Google Drive"
-                                else -> "Sync is off on this device"
-                            }
-                        )
-                    }
-                },
-                onDeleteSynced = {
-                    scope.launch {
-                        val ok = viewModel.deleteSyncedData()
-                        snackbarHostState.showSnackbar(
-                            if (ok) "Synced data deleted from Google Drive. Sync is off on all your devices."
-                            else "Couldn't finish deleting from Google Drive. Some synced data may already be gone; try again to finish. Your library on this phone is untouched."
-                        )
-                    }
-                },
-                onSyncNow = {
-                    viewModel.syncNow()
-                    scope.launch { snackbarHostState.showSnackbar("Syncing…") }
-                },
-                onSendFiles = {
-                    scope.launch {
-                        viewModel.sendFilesNow()
-                        snackbarHostState.showSnackbar("Sending photos and files, on any connection")
-                    }
-                },
-                onReconnect = connectSync,
-                onInterval = { scope.launch { viewModel.setSyncInterval(it) } },
-                onWifiOnly = { scope.launch { viewModel.setSyncFilesOnWifiOnly(it) } },
-                onRename = { scope.launch { viewModel.setSyncDeviceName(it) } },
-                onRemoveDevice = { id ->
-                    scope.launch {
-                        val ok = viewModel.removeSyncDevice(id)
-                        snackbarHostState.showSnackbar(if (ok) "Removed" else "Couldn't reach Google Drive")
-                    }
-                },
-                onReview = { keep ->
-                    scope.launch {
-                        viewModel.answerSyncReview(keep)
-                        snackbarHostState.showSnackbar(if (keep) "Keeping your saves" else "Applying the changes")
-                    }
-                }
-            )
 
             Spacer(Modifier.height(16.dp))
             SettingsSection(title = "Backup") {
@@ -1888,7 +1930,11 @@ fun SettingsScreen(
                     Spacer(Modifier.width(8.dp))
                     Text("Share PettiBox with a friend", fontWeight = FontWeight.Bold)
                 }
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(4.dp))
+                TextButton(onClick = { showLicenses = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Open-source licenses")
+                }
+                if (showLicenses) LicensesSheet(onDismiss = { showLicenses = false })
                 Text(
                     "PettiBox ${BuildConfig.VERSION_NAME} · ${HelpLinks.SUPPORT_EMAIL}",
                     style = MaterialTheme.typography.bodySmall,

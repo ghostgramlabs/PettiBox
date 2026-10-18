@@ -67,8 +67,41 @@ class SettingsViewModel @Inject constructor(
     private val syncPreferences: SyncPreferences,
     private val syncSetup: SyncSetup,
     private val syncClient: DriveSyncClient,
+    private val ocrModels: com.ghostgramlabs.pettibox.data.ocr.OcrModels,
+    private val onboardingPreferences: com.ghostgramlabs.pettibox.data.preferences.OnboardingPreferences,
+    private val textReader: com.ghostgramlabs.pettibox.data.ocr.TextReader,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
+    // ── Languages read in images and PDFs ────────────────────────────────
+
+    val ocrLanguages: Flow<Set<String>> = ocrPreferences.languages
+    val ocrRereading: Flow<Boolean> = ocrPreferences.rereading
+
+    /** Which of the turned-on languages can be read now (the rest are downloading). */
+    suspend fun readyOcrLanguages(): Set<String> = ocrModels.ready(ocrPreferences.languages.first())
+
+    val ocrFailedLanguages: Flow<Set<String>> = ocrPreferences.failedLanguages
+
+    /** Tries the languages that couldn't be fetched again. */
+    fun retryOcrLanguages() = viewModelScope.launch {
+        ocrPreferences.setFailedLanguages(emptySet())
+        com.ghostgramlabs.pettibox.data.ocr.OcrModelWorker.enqueue(appContext)
+    }
+
+    /** Whether the phone has a connection right now (so a waiting download says why). */
+    fun isOnline(): Boolean {
+        val cm = appContext.getSystemService(android.net.ConnectivityManager::class.java)
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+        return caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    fun setOcrLanguage(code: String, on: Boolean) = viewModelScope.launch {
+        val now = ocrPreferences.languages.first()
+        ocrPreferences.setLanguages(if (on) now + code else now - code)
+        textReader.refresh()
+        com.ghostgramlabs.pettibox.data.ocr.OcrModelWorker.enqueue(appContext)
+    }
+
     // ── Sync between devices ─────────────────────────────────────────────
 
     val syncStatus: Flow<SyncStatus> = syncPreferences.status
@@ -105,7 +138,7 @@ class SettingsViewModel @Inject constructor(
         syncPreferences.clearKnownReset() // the first round notes Drive's state as it is now
         syncPreferences.setNeedsReconnect(false)
         syncPreferences.setEnabled(true)
-        syncSetup.enable()
+        syncSetup.enable(startersSeeded = onboardingPreferences.categoriesSeeded.first())
         SyncScheduler.apply(appContext, true, syncPreferences.status.first().interval)
         SyncScheduler.now(appContext)
     }
@@ -503,8 +536,17 @@ class SettingsViewModel @Inject constructor(
         ocrPreferences.setAutoScan(enabled)
     }
 
+    /**
+     * A higher limit reads the extra pages of PDFs already saved too; a
+     * lower one keeps the text already found (it applies to new PDFs).
+     */
     suspend fun setPdfPageLimit(limit: Int) {
+        val before = ocrPreferences.pdfPageLimit.first()
         ocrPreferences.setPdfPageLimit(limit)
+        if (limit > before) {
+            ocrPreferences.requestReread(pdfOnly = true)
+            com.ghostgramlabs.pettibox.data.ocr.OcrRereadWorker.enqueue(appContext)
+        }
     }
 
     suspend fun scanExistingSaves(): Int {
@@ -524,7 +566,7 @@ class SettingsViewModel @Inject constructor(
             count++
         }
         repo.pdfAttachmentsNeedingOcr().forEach { attachment ->
-            PdfTextWorker.enqueue(appContext, attachment.itemId, attachment.uri)
+            PdfTextWorker.enqueue(appContext, attachment.itemId, attachment.uri, attachment.id)
             count++
         }
         return count

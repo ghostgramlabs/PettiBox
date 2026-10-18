@@ -28,6 +28,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import com.ghostgramlabs.pettibox.data.local.OcrStatusEntity
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -55,7 +56,8 @@ class FileSyncWorker @AssistedInject constructor(
     private val auth: DriveAuth,
     private val prefs: SyncPreferences,
     private val engine: SyncEngine,
-    private val attachmentStore: com.ghostgramlabs.pettibox.data.util.AttachmentStore
+    private val attachmentStore: com.ghostgramlabs.pettibox.data.util.AttachmentStore,
+    private val ocrPreferences: com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
 ) : CoroutineWorker(ctx, params) {
 
     override suspend fun doWork(): Result {
@@ -93,9 +95,22 @@ class FileSyncWorker @AssistedInject constructor(
             download(token, syncFolder, folder, stored, thumbsOnly)
             if (!thumbsOnly) {
                 cleanUp(token, syncFolder, folder, listed)
-                if (unreadable == 0) prefs.setFilesProblem("") // everything this phone has is sent (and what it needs fetched)
                 prefs.setFilesWaiting("")
-                prefs.setFilesStatus("All photos and files are in Google Drive · checked " + clockTime(System.currentTimeMillis()))
+                // Said as it is: done only when nothing is left either way.
+                val missing = missingHere
+                if (unreadable == 0 && missing == 0) prefs.setFilesProblem("")
+                if (missing > 0) {
+                    prefs.setFilesProblem(
+                        "$missing file${if (missing == 1) " is" else "s are"} missing on this phone, so " +
+                            "${if (missing == 1) "it" else "they"} can't be sent. Open the save and add the file again."
+                    )
+                }
+                val waiting = syncDao.pendingFiles().size
+                prefs.setFilesStatus(
+                    if (waiting > 0) "Library synced · $waiting file${if (waiting == 1) "" else "s"} waiting for another device to send ${if (waiting == 1) "it" else "them"} · checked " + clockTime(System.currentTimeMillis())
+                    else if (unreadable == 0 && missing == 0) "All photos and files are in Google Drive · checked " + clockTime(System.currentTimeMillis())
+                    else "Photos and files checked " + clockTime(System.currentTimeMillis())
+                )
             }
             Result.success()
         } catch (e: DriveSyncException) {
@@ -123,6 +138,9 @@ class FileSyncWorker @AssistedInject constructor(
         java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(at))
 
     private class LibraryReset : Exception()
+
+    /** Files saves here point at that aren't on this phone (counted by [upload]). */
+    private var missingHere = 0
 
     /** Whether the synced library is still the one this job started with (no "Delete synced data" since). */
     private var resetCheck: suspend () -> Boolean = { true }
@@ -161,10 +179,18 @@ class FileSyncWorker @AssistedInject constructor(
         val toSend = uris.count { uri -> library.shaOf(uri)?.let { it !in inDrive } == true }
         var done = 0
         if (!thumbsOnly && toSend > 0) prefs.setFilesStatus("Sending $toSend photo${if (toSend == 1) "" else "s"} and files to Google Drive…")
+        missingHere = 0
+        val fileSet = files.toSet()
         for (uri in uris) {
-            val sha = library.shaOf(uri) ?: continue
+            // A file a save points at that isn't on this phone (deleted by
+            // another app, say) can't be sent: counted, and said, not skipped quietly.
+            val file = Uri.parse(uri).path?.let(::File)?.takeIf { it.exists() }
+            val sha = file?.let { library.shaOf(uri) }
+            if (file == null || sha == null) {
+                if (uri in fileSet) missingHere++ // a card picture is just made again
+                continue
+            }
             if (!sent.add(sha)) continue
-            val file = Uri.parse(uri).path?.let(::File)?.takeIf { it.exists() } ?: continue
             val ext = file.extension.lowercase().ifBlank { "bin" }
             val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "application/octet-stream"
             if (!stillSameLibrary()) throw LibraryReset()
@@ -206,13 +232,20 @@ class FileSyncWorker @AssistedInject constructor(
                         val target = File(dir, "${UUID.randomUUID()}.$ext")
                         client.downloadFile(token, remote.id, sha, target)
                         val uri = target.toUri().toString()
-                        db.withTransaction {
+                        val readText = ocrPreferences.autoScan.first()
+                        val toRead = db.withTransaction {
                             syncDao.beginApplying() // swapping in the file is not an edit
                             syncDao.putFile(SyncFileEntity(uri, sha))
                             syncDao.fillAttachment(placeholder, uri)
                             syncDao.fillMainFile(placeholder, uri)
                             syncDao.fillThumbnail(placeholder, uri)
                             syncDao.endApplying()
+                            // Read its text here too, noted in this same transaction: if the
+                            // app stops before the job is queued, app start queues it.
+                            if (readText) textToRead(uri) else emptyList()
+                        }
+                        for (s in toRead) {
+                            com.ghostgramlabs.pettibox.data.ocr.OcrWorker.enqueue(applicationContext, s.itemId, s.uri, s.attachmentId, s.pdf)
                         }
                     }
                 }
@@ -242,6 +275,23 @@ class FileSyncWorker @AssistedInject constructor(
             syncDao.endApplying()
         }
         return copy
+    }
+
+    /**
+     * The images and PDFs that are the file just arrived at [uri], recorded
+     * as waiting to be read (call inside the transaction that swaps the file
+     * in). Read in this phone's languages; the other phone's text stays
+     * unless this reading is better
+     * ([com.ghostgramlabs.pettibox.data.ocr.TextReader.improves]).
+     */
+    private suspend fun textToRead(uri: String): List<OcrStatusEntity> {
+        val rows = syncDao.textSourceItems(uri).map {
+            OcrStatusEntity(OcrStatusEntity.sourceOf(it.id, null), it.id, null, uri, it.contentType == "PDF", OcrStatusEntity.PENDING)
+        } + syncDao.textSourceAttachments(uri).map {
+            OcrStatusEntity(OcrStatusEntity.sourceOf(it.itemId, it.id), it.itemId, it.id, uri, it.kind == "PDF", OcrStatusEntity.PENDING)
+        }
+        if (rows.isNotEmpty()) db.ocrStatusDao().put(rows)
+        return rows
     }
 
     /** A file in files-removed that a save here needs: moved back into files/. */

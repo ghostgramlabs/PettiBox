@@ -30,6 +30,8 @@ val hasReleaseSigning = listOf(
 ).all { !it.isNullOrBlank() }
 
 android {
+    // Room's exported schemas, for the migration tests (MigrationTestHelper).
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
     namespace = "com.ghostgramlabs.pettibox"
     compileSdk = 36
 
@@ -104,6 +106,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.room:room-testing:2.6.1")
+    androidTestImplementation("androidx.work:work-testing:2.9.1")
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.2")
@@ -146,6 +149,14 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     implementation("com.google.mlkit:text-recognition:16.0.1")
+    // Other scripts. ML Kit's are fetched by Play services when a language is
+    // turned on (no app size); Tesseract's models are downloaded the same way.
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition-devanagari:16.0.1")
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition-chinese:16.0.1")
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition-japanese:16.0.1")
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.1")
+    implementation("com.google.android.gms:play-services-base:18.5.0")
+    implementation("cz.adaptech.tesseract4android:tesseract4android:4.9.0")
     // EXIF rotation for downsampled OCR decodes (OcrImageLoader).
     implementation("androidx.exifinterface:exifinterface:1.3.7")
 

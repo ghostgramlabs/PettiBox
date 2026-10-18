@@ -419,6 +419,26 @@ interface SaveDao {
     @Query("UPDATE save_items SET opened_at = :ts WHERE id = :id")
     suspend fun touchOpened(id: Long, ts: Long = System.currentTimeMillis())
 
+    /**
+     * Saves with an image or PDF here to read (their own file, or files
+     * added to them), below [belowId], newest first: re-reading in batches.
+     */
+    @Query(
+        """
+        SELECT * FROM save_items s
+        WHERE s.id < :belowId AND s.is_pending_delete = 0
+            AND ((s.content_type IN ('IMAGE', 'PDF') AND s.local_uri IS NOT NULL AND s.local_uri NOT LIKE 'pettibox-sync:%')
+                OR EXISTS (SELECT 1 FROM attachments a WHERE a.item_id = s.id AND a.kind IN ('IMAGE', 'PDF')))
+        ORDER BY s.id DESC
+        LIMIT :limit
+        """
+    )
+    suspend fun withTextSourcesBelow(belowId: Long, limit: Int): List<SaveItemEntity>
+
+    /** A new reading of text that was already there: not an edit, so "Recently edited" doesn't move. */
+    @Query("UPDATE save_items SET ocr_text = :text WHERE id = :id")
+    suspend fun replaceOcrText(id: Long, text: String)
+
     @Query("UPDATE save_items SET ocr_text = :text, updated_at = :ts WHERE id = :id")
     suspend fun setOcrText(id: Long, text: String, ts: Long = System.currentTimeMillis())
 
@@ -452,7 +472,9 @@ interface SaveDao {
     @Query("SELECT s.* FROM save_items s " + SEARCH_WHERE + " ORDER BY " + SEARCH_ORDER)
     fun pagedSearch(
         hasQuery: Boolean,
+        hasFts: Boolean,
         query: String,
+        contains: String?,
         source: String?,
         category: String?,
         type: String?,
@@ -466,7 +488,9 @@ interface SaveDao {
     @Query("SELECT COUNT(*) FROM save_items s " + SEARCH_WHERE)
     fun observeSearchCount(
         hasQuery: Boolean,
+        hasFts: Boolean,
         query: String,
+        contains: String?,
         source: String?,
         category: String?,
         type: String?,
@@ -497,8 +521,10 @@ private const val SEARCH_WHERE = """
     WHERE s.is_pending_delete = 0
     AND (:showLocked OR $NOT_IN_LOCKED_COLLECTION)
     AND (:hasQuery = 0
-        OR s.id IN (SELECT rowid FROM save_items_fts WHERE save_items_fts MATCH :query)
-        OR s.id IN (SELECT rowid FROM article_copies_fts WHERE article_copies_fts MATCH :query))
+        OR (:hasFts = 1 AND (s.id IN (SELECT rowid FROM save_items_fts WHERE save_items_fts MATCH :query)
+            OR s.id IN (SELECT rowid FROM article_copies_fts WHERE article_copies_fts MATCH :query)))
+        OR (:contains IS NOT NULL AND (s.title LIKE :contains ESCAPE '\' OR s.notes LIKE :contains ESCAPE '\'
+            OR s.ocr_text LIKE :contains ESCAPE '\')))
     AND (:source IS NULL OR s.source_app = :source)
     AND (:category IS NULL OR s.category_id = :category)
     AND (:type IS NULL OR s.content_type = :type)

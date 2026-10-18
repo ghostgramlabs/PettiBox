@@ -169,6 +169,14 @@ interface SyncDao {
     @Query("SELECT EXISTS(SELECT 1 FROM save_items WHERE category_id = :id)")
     suspend fun collectionHasSaves(id: String): Boolean
 
+    /** Saves without added files whose own image or PDF is [uri]: to read for text once it's here. */
+    @Query("SELECT * FROM save_items WHERE local_uri = :uri AND content_type IN ('IMAGE', 'PDF') AND NOT EXISTS (SELECT 1 FROM attachments a WHERE a.item_id = save_items.id)")
+    suspend fun textSourceItems(uri: String): List<SaveItemEntity>
+
+    /** Images and PDFs added to saves that are [uri]. */
+    @Query("SELECT * FROM attachments WHERE uri = :uri AND kind IN ('IMAGE', 'PDF')")
+    suspend fun textSourceAttachments(uri: String): List<AttachmentEntity>
+
     /** Whether any save or file row here still points at [uri]. */
     @Query(
         "SELECT EXISTS(SELECT 1 FROM attachments WHERE uri = :uri) OR " +

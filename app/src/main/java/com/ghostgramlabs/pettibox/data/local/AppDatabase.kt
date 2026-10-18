@@ -4,7 +4,13 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 /**
- * Schema v8 — save_items.sync_id and the sync_* tables behind "Sync between
+ * Schema v10 — ocr_status: where reading each file's text stands (waiting,
+ * no text, failed). See [MIGRATION_9_10].
+ *
+ * v9 — both search indexes use the unicode61 tokenizer (words in
+ * every script, not just A–Z). See [MIGRATION_8_9].
+ *
+ * v8 — save_items.sync_id and the sync_* tables behind "Sync between
  * devices". See [MIGRATION_7_8]. (v7 added categories.is_locked.) (v6 swapped the Beauty starter's emoji; v5 added
  * save_items.deleted_at for the 30-day Recently deleted bin; v4 added
  * offline article copies.)
@@ -24,9 +30,10 @@ import androidx.room.RoomDatabase
         SyncMetaEntity::class,
         SyncApplyingEntity::class,
         SyncFileEntity::class,
-        SyncDirtyEntity::class
+        SyncDirtyEntity::class,
+        OcrStatusEntity::class
     ],
-    version = 8,
+    version = 10,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -36,4 +43,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tagDao(): TagDao
     abstract fun articleDao(): ArticleDao
     abstract fun syncDao(): SyncDao
+    abstract fun ocrStatusDao(): OcrStatusDao
 }

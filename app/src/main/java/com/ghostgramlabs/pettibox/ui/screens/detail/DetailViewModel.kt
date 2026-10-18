@@ -8,6 +8,7 @@ import com.ghostgramlabs.pettibox.data.article.ArticleRepository
 import com.ghostgramlabs.pettibox.data.local.ArticleCopyEntity
 import com.ghostgramlabs.pettibox.data.local.ArticleCopySummary
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
+import com.ghostgramlabs.pettibox.data.local.OcrStatusEntity
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.local.SyncDao
@@ -196,6 +197,23 @@ class DetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { if (itemId > 0) repo.touchOpened(itemId) }
+    }
+
+    /** Where reading each of this save's files stands, by source ([OcrStatusEntity.sourceOf]). */
+    val readingStates: StateFlow<Map<String, OcrStatusEntity>> = repo.observeReadingStates(itemId)
+        .map { rows -> rows.associateBy { it.source } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** "Try again": reads this save's images and PDFs once more, in the languages on now. */
+    fun readTextAgain() = viewModelScope.launch {
+        val item = repo.getById(itemId) ?: return@launch
+        val files = repo.attachmentsOf(itemId).filter { it.kind == "IMAGE" || it.kind == "PDF" }
+        val sources = if (files.isNotEmpty()) files.map { Triple(it.id as Long?, it.uri, it.kind == "PDF") }
+        else listOfNotNull(item.localUri?.takeIf { item.contentType == "IMAGE" || item.contentType == "PDF" }?.let { Triple(null, it, item.contentType == "PDF") })
+        for ((attachmentId, uri, pdf) in sources) {
+            repo.setReadingState(itemId, attachmentId, uri, pdf, OcrStatusEntity.PENDING)
+            com.ghostgramlabs.pettibox.data.ocr.OcrWorker.enqueue(appContext, itemId, uri, attachmentId, pdf)
+        }
     }
 
     fun toggleFavorite() = viewModelScope.launch {

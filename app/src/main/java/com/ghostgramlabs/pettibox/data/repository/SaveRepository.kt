@@ -8,6 +8,7 @@ import com.ghostgramlabs.pettibox.data.local.ArticleCopyStatus
 import com.ghostgramlabs.pettibox.data.local.ArticleDao
 import com.ghostgramlabs.pettibox.data.local.AttachmentDao
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
+import com.ghostgramlabs.pettibox.data.local.OcrStatusEntity
 import com.ghostgramlabs.pettibox.data.local.CategoryCount
 import com.ghostgramlabs.pettibox.data.local.CategoryDao
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
@@ -223,6 +224,8 @@ class SaveRepository @Inject constructor(
     /** The Search screen's query: sanitized FTS text (blank = filters only) plus filters. */
     data class SearchSpec(
         val ftsQuery: String,
+        /** LIKE pattern for scripts written without spaces ([SearchQuerySanitizer.containsPattern]), or null. */
+        val contains: String?,
         val source: String?,
         val category: String?,
         val type: String?,
@@ -243,6 +246,7 @@ class SaveRepository @Inject constructor(
         showLocked: Boolean
     ): SearchSpec = SearchSpec(
         ftsQuery = SearchQuerySanitizer.sanitizeFtsQuery(rawQuery),
+        contains = SearchQuerySanitizer.containsPattern(rawQuery),
         source = source,
         category = category,
         type = type,
@@ -255,13 +259,15 @@ class SaveRepository @Inject constructor(
     // With no text query the FTS branches are skipped in SQL; "x" just keeps
     // the unused MATCH argument well-formed.
     fun pagedSearch(spec: SearchSpec, sort: String): PagingSource<Int, SaveItemEntity> = saveDao.pagedSearch(
-        hasQuery = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" },
+        hasQuery = spec.ftsQuery.isNotBlank() || spec.contains != null,
+        hasFts = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" }, contains = spec.contains,
         source = spec.source, category = spec.category, type = spec.type, tag = spec.tag,
         remindersOnly = spec.remindersOnly, now = spec.now, showLocked = spec.showLocked, sort = sort
     )
 
     fun observeSearchCount(spec: SearchSpec): Flow<Int> = saveDao.observeSearchCount(
-        hasQuery = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" },
+        hasQuery = spec.ftsQuery.isNotBlank() || spec.contains != null,
+        hasFts = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" }, contains = spec.contains,
         source = spec.source, category = spec.category, type = spec.type, tag = spec.tag,
         remindersOnly = spec.remindersOnly, now = spec.now, showLocked = spec.showLocked
     ).catch { emit(0) }
@@ -896,6 +902,54 @@ class SaveRepository @Inject constructor(
     suspend fun pdfAttachmentsNeedingOcr(): List<AttachmentEntity> =
         attachmentDao.pdfAttachmentsNeedingOcr()
     suspend fun setAttachmentOcr(id: Long, text: String) = attachmentDao.setOcrText(id, text)
+
+    /**
+     * Stores the text read from one file, if it beats the file's text as it
+     * is *now* ([com.ghostgramlabs.pettibox.data.ocr.TextReader.improves],
+     * with the scripts [readable] at reading time). The check and the write
+     * are one transaction, so two jobs reading the same file can't have the
+     * worse result land last. For a file added to a save, the save's text is
+     * rebuilt from all its files in their order: a repeated reading can't
+     * add the text twice. Not an edit, so "Recently edited" doesn't move.
+     * Returns whether the text was stored.
+     */
+    suspend fun acceptSourceText(
+        itemId: Long, attachmentId: Long?, text: String, readable: Set<Character.UnicodeScript>
+    ): Boolean = database.withTransaction {
+        val current = if (attachmentId == null) saveDao.getById(itemId)?.ocrText else attachmentDao.getById(attachmentId)?.ocrText
+        if (!com.ghostgramlabs.pettibox.data.ocr.TextReader.improves(text, current, readable)) return@withTransaction false
+        if (attachmentId == null) {
+            saveDao.replaceOcrText(itemId, text)
+        } else {
+            attachmentDao.setOcrText(attachmentId, text)
+            val all = attachmentDao.forItem(itemId).mapNotNull { it.ocrText?.takeIf { t -> t.isNotBlank() } }.joinToString("\n\n")
+            if (all.isNotBlank()) saveDao.replaceOcrText(itemId, all)
+        }
+        true
+    }
+
+    /** Whether the file already has text (its own, or the save's when it's the save's own file). */
+    suspend fun sourceHasText(itemId: Long, attachmentId: Long?): Boolean =
+        !(if (attachmentId == null) saveDao.getById(itemId)?.ocrText else attachmentDao.getById(attachmentId)?.ocrText).isNullOrBlank()
+
+    // Where reading each file's text stands (ocr_status).
+    private val ocrStatus get() = database.ocrStatusDao()
+
+    /** Records [state] for one file ([OcrStatusEntity] constants), or clears it (null: its text is what the save holds). */
+    suspend fun setReadingState(itemId: Long, attachmentId: Long?, uri: String, pdf: Boolean, state: String?) {
+        val source = OcrStatusEntity.sourceOf(itemId, attachmentId)
+        if (state == null) ocrStatus.clear(source)
+        else ocrStatus.put(listOf(OcrStatusEntity(source, itemId, attachmentId, uri, pdf, state)))
+    }
+
+    fun observeReadingStates(itemId: Long): Flow<List<OcrStatusEntity>> = ocrStatus.observeForItem(itemId)
+
+    suspend fun pendingReadings(): List<OcrStatusEntity> = ocrStatus.pending()
+
+    // Re-reading saved images and PDFs (OcrRereadWorker).
+    suspend fun withTextSourcesBelow(belowId: Long, limit: Int): List<SaveItemEntity> = saveDao.withTextSourcesBelow(belowId, limit)
+    suspend fun attachmentsOf(itemId: Long): List<AttachmentEntity> = attachmentDao.forItem(itemId)
+    suspend fun replaceOcrText(id: Long, text: String) = saveDao.replaceOcrText(id, text)
     suspend fun deleteAttachment(id: Long) {
         removeAttachment(id)?.let { discardRemovedFiles(it) }
     }

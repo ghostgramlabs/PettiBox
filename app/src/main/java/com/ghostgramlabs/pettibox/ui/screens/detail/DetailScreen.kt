@@ -100,6 +100,7 @@ import androidx.compose.material3.TextButton
 import coil.compose.AsyncImage
 import com.ghostgramlabs.pettibox.data.local.ArticleCopyEntity
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
+import com.ghostgramlabs.pettibox.data.local.OcrStatusEntity
 import com.ghostgramlabs.pettibox.data.util.TimeFormat
 import com.ghostgramlabs.pettibox.domain.model.ContentType
 import com.ghostgramlabs.pettibox.domain.model.SourceApp
@@ -844,11 +845,15 @@ fun DetailScreen(
                     AboutLinkSection(item.ocrText)
                 } else if (!item.ocrText.isNullOrBlank() || hasIndexableAttachments(state.attachments) || isIndexableKind(item.contentType)) {
                     Spacer(Modifier.height(24.dp))
+                    val readingStates by viewModel.readingStates.collectAsStateWithLifecycle()
                     OcrTextSections(
+                        itemId = item.id,
                         itemText = item.ocrText,
                         itemKind = item.contentType,
                         attachments = state.attachments,
-                        autoScanEnabled = state.ocrAutoScanEnabled
+                        autoScanEnabled = state.ocrAutoScanEnabled,
+                        states = readingStates,
+                        onRetry = viewModel::readTextAgain
                     )
                 } else if (state.ocrAutoScanEnabled && isIndexingText(item.contentType, state.attachments)) {
                     Spacer(Modifier.height(24.dp))
@@ -1342,7 +1347,9 @@ private data class OcrDocText(
     val title: String,
     val subtitle: String,
     val text: String?,
-    val status: String?
+    val status: String?,
+    /** Offer "Try again" (nothing found, or reading failed). */
+    val retry: Boolean = false
 )
 
 /** Channel / site / description captured when a link was saved (and searchable). */
@@ -1370,11 +1377,15 @@ private fun AboutLinkSection(details: String) {
 
 @Composable
 private fun OcrTextSections(
+    itemId: Long,
     itemText: String?,
     itemKind: String,
     attachments: List<AttachmentEntity>,
-    autoScanEnabled: Boolean
+    autoScanEnabled: Boolean,
+    states: Map<String, OcrStatusEntity>,
+    onRetry: () -> Unit
 ) {
+    val itemState = states[OcrStatusEntity.sourceOf(itemId, null)]
     val attachmentDocs = attachments
         .filter { isIndexableKind(it.kind) }
         .mapIndexed { index, attachment ->
@@ -1383,18 +1394,21 @@ private fun OcrTextSections(
                 title = "${type.displayLabel()} ${index + 1}",
                 subtitle = if (type == ContentType.PDF) "Extracted from this PDF" else "Extracted from this image",
                 text = attachment.ocrText,
-                status = ocrStatusText(attachment.ocrText, autoScanEnabled, type)
+                status = ocrStatusText(attachment.ocrText, autoScanEnabled, type, states[OcrStatusEntity.sourceOf(itemId, attachment.id)]),
+                retry = canRetry(attachment.ocrText, states[OcrStatusEntity.sourceOf(itemId, attachment.id)])
             )
         }
 
     val docs = if (attachmentDocs.isNotEmpty()) {
         val hasAttachmentText = attachmentDocs.any { !it.text.isNullOrBlank() }
-        if (hasAttachmentText) attachmentDocs else {
+        // The combined card is for older saves that kept all their text together: only when there is some.
+        if (hasAttachmentText || itemText.isNullOrBlank()) attachmentDocs else {
             attachmentDocs + OcrDocText(
                 title = "Combined extracted text",
                 subtitle = "Older saves may store OCR as one combined result",
                 text = itemText,
-                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE))
+                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE), itemState),
+                retry = canRetry(itemText, itemState)
             )
         }
     } else {
@@ -1403,7 +1417,8 @@ private fun OcrTextSections(
                 title = "Extracted text",
                 subtitle = "From this ${runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE).displayLabel().lowercase()}",
                 text = itemText,
-                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE))
+                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE), itemState),
+                retry = canRetry(itemText, itemState)
             )
         )
     }
@@ -1415,13 +1430,21 @@ private fun OcrTextSections(
     Spacer(Modifier.height(8.dp))
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         docs.forEach { doc ->
-            OcrTextSection(doc)
+            OcrTextSection(doc, onRetry)
         }
     }
 }
 
-private fun ocrStatusText(text: String?, autoScanEnabled: Boolean, type: ContentType): String? {
+/** What a file's reading came to, said plainly ([OcrStatusEntity]); without a record, the general case. */
+private fun ocrStatusText(text: String?, autoScanEnabled: Boolean, type: ContentType, state: OcrStatusEntity?): String? {
     if (!text.isNullOrBlank()) return null
+    val what = if (type == ContentType.PDF) "this PDF" else "this image"
+    when (state?.state) {
+        OcrStatusEntity.PENDING -> return "Waiting to be read. It happens in the background, and the text appears here."
+        OcrStatusEntity.NO_TEXT -> return "No text found in $what. If it's in another language, turn that language on in Settings › Text recognition, then try again."
+        OcrStatusEntity.UNREADABLE -> return "This file couldn't be opened on this phone, so its text can't be read. Add the file to the save again."
+        OcrStatusEntity.FAILED -> return "Couldn't read the text in $what."
+    }
     if (!autoScanEnabled) return "Text recognition is off for this save."
     return if (type == ContentType.PDF) {
         "No extracted text yet. It may still be indexing, the PDF may be scanned/locked, or text may be outside the selected page limit."
@@ -1429,6 +1452,9 @@ private fun ocrStatusText(text: String?, autoScanEnabled: Boolean, type: Content
         "No extracted text yet. It may still be indexing or the image may not contain readable text."
     }
 }
+
+private fun canRetry(text: String?, state: OcrStatusEntity?): Boolean =
+    text.isNullOrBlank() && (state?.state == OcrStatusEntity.NO_TEXT || state?.state == OcrStatusEntity.FAILED)
 
 private fun ContentType.displayLabel(): String = when (this) {
     ContentType.IMAGE -> "Image"
@@ -1440,7 +1466,7 @@ private fun ContentType.displayLabel(): String = when (this) {
 }
 
 @Composable
-private fun OcrTextSection(doc: OcrDocText) {
+private fun OcrTextSection(doc: OcrDocText, onRetry: () -> Unit) {
     var expanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
     val ctx = LocalContext.current
@@ -1489,6 +1515,9 @@ private fun OcrTextSection(doc: OcrDocText) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f)
                 )
+            }
+            if (doc.retry) {
+                TextButton(onClick = onRetry) { Text("Try again", fontWeight = FontWeight.Bold) }
             }
         } else {
             Text(

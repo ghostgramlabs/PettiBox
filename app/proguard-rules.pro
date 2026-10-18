@@ -58,3 +58,8 @@
 # Logs through slf4j-api with no binding on Android; the optional binder
 # class is looked up by name and legitimately absent.
 -dontwarn org.slf4j.impl.**
+
+# Tesseract4Android: its native code reads fields and calls methods of these
+# classes by name, and the library ships no rules of its own.
+-keep class com.googlecode.tesseract.android.** { *; }
+-keep class com.googlecode.leptonica.android.** { *; }

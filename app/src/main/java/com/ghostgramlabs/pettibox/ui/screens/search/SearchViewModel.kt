@@ -104,7 +104,7 @@ class SearchViewModel @Inject constructor(
         when {
             q.isBlank() && !haveFilters -> SearchTarget.Idle
             // Don't let an unsearchable query fall through to "everything".
-            q.isNotBlank() && spec.ftsQuery.isBlank() -> SearchTarget.NoMatch
+            q.isNotBlank() && spec.ftsQuery.isBlank() && spec.contains == null -> SearchTarget.NoMatch
             else -> SearchTarget.Run(spec)
         }
     }

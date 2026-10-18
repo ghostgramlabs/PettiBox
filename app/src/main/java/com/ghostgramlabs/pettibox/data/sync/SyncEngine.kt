@@ -14,6 +14,7 @@ import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.F_URL
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.KIND_COLLECTION
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord.Companion.KIND_ITEM
 import com.ghostgramlabs.pettibox.data.util.TextUtils
+import com.ghostgramlabs.pettibox.domain.model.CategoryPalette
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -63,6 +64,10 @@ class SyncEngine @Inject constructor(
     /** Tests only: runs just before incoming changes are applied, to stand in for an edit at that moment. */
     @androidx.annotation.VisibleForTesting
     internal var beforeApply: suspend () -> Unit = {}
+
+    /** Tests only: runs just before duplicate saves are folded, to stand in for an edit at that moment. */
+    @androidx.annotation.VisibleForTesting
+    internal var beforeFold: suspend () -> Unit = {}
 
     suspend fun round(now: Long = System.currentTimeMillis()): SyncOutcome = lock.withLock {
         val started = System.currentTimeMillis()
@@ -339,7 +344,15 @@ class SyncEngine @Inject constructor(
                     // when it was last edited, not now, so an old copy doesn't
                     // win over newer edits made elsewhere (it merges as a
                     // concurrent version instead).
-                    if (local == null) null
+                    if (local == null) {
+                        // A starter removed here before sync was on (SyncSetup
+                        // queues those): record the removal. It only wins over
+                        // copies it has seen, so one used on another phone stays.
+                        if (row.kind == KIND_COLLECTION && CategoryPalette.Defaults.any { it.id == row.syncId }) {
+                            val dot = Dot(me, clock.next())
+                            SyncWrite.gone(SyncRecord(KIND_COLLECTION, row.syncId, dot.ts, emptyMap(), emptyMap()), dot)
+                        } else null
+                    }
                     // A starter this phone just seeded and nobody touched, that
                     // other devices already have: take theirs (renamed, new
                     // icon, or deleted) instead of sending the defaults back.
@@ -514,7 +527,8 @@ class SyncEngine @Inject constructor(
     /**
      * The same link saved on two devices before they synced: fold the newer
      * save into the older (see [SyncDedupe]). The other one goes to Recently
-     * deleted here; every device does the same, so they agree.
+     * deleted here; every device does the same, so they agree. A group with
+     * an edit waiting to be recorded waits for the next round.
      */
     private suspend fun foldDuplicates(me: String, clock: HybridClock, now: Long) {
         val groups = syncDao.linkIndex().groupBy { TextUtils.urlDedupeKey(it.url) }.values.filter { it.size > 1 }
@@ -527,10 +541,16 @@ class SyncEngine @Inject constructor(
         val followUps = ArrayList<LocalLibrary.Applied>()
         reserve(clock, plan.size)
         prefs.setPendingFollowUps(plan.flatMap { (keep, others) -> listOf(keep.id) + others.map { it.id } })
+        beforeFold()
         db.withTransaction {
             syncDao.beginApplying()
             val metas = ArrayList<SyncMetaEntity>()
             for ((keep0, others) in plan) {
+                // Edited here since this round gathered local changes: folding
+                // now would put the older copy over that edit. The next round
+                // records the edit first, then folds (checked in this
+                // transaction, so no edit can slip in between).
+                if ((listOf(keep0) + others).any { syncDao.outboxRow(KIND_ITEM, it.id) != null }) continue
                 val dot = Dot(me, clock.next())
                 var keep = keep0
                 for (other in others) {
