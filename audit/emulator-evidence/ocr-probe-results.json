@@ -1,0 +1,54 @@
+{
+  "diagnosticOnly": true,
+  "results": [
+    {
+      "case": "short-chinese",
+      "expectedWords": [
+        "天气"
+      ],
+      "rawMlKit": {
+        "MLKIT_CHINESE": "天气"
+      },
+      "actualText": "",
+      "allExpectedWordsPresent": false
+    },
+    {
+      "case": "short-russian",
+      "expectedWords": [
+        "Привет"
+      ],
+      "rawMlKit": {},
+      "actualText": "lpuBeT",
+      "allExpectedWordsPresent": false
+    },
+    {
+      "case": "mixed-hindi-chinese",
+      "expectedWords": [
+        "भारत",
+        "天气"
+      ],
+      "rawMlKit": {
+        "MLKIT_DEVANAGARI": "हिन्दी भारत की भाषा है।\nकल सुबह दस बजे मिलेंगे\nक]Aव",
+        "MLKIT_CHINESE": "今天天气很好\n我们去公园散步"
+      },
+      "actualText": "हिन्दी भारत की भाषा है।\nकल सुबह दस बजे मिलेंगे\nक]Aव",
+      "allExpectedWordsPresent": false
+    },
+    {
+      "case": "english-control",
+      "expectedWords": [
+        "Grocery",
+        "Thank"
+      ],
+      "rawMlKit": {},
+      "actualText": "Grocery receipt total 420\nThank you for shopping",
+      "allExpectedWordsPresent": true
+    },
+    {
+      "case": "exif-horizontal-reflection",
+      "expected": "blue left and red right",
+      "leftIsBlue": false,
+      "rightIsRed": false
+    }
+  ]
+}

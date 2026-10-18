@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.sync.DriveFileCleanupTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-18T00:09:30" hostname="SAS" time="0.018">
+  <properties/>
+  <testcase name="a_deletion_is_stripped_only_when_settled_on_every_device_and_30_days_old" classname="com.ghostgramlabs.pettibox.data.sync.DriveFileCleanupTest" time="0.012"/>
+  <testcase name="an_unused_file_waits_30_days_then_moves_to_files_removed" classname="com.ghostgramlabs.pettibox.data.sync.DriveFileCleanupTest" time="0.001"/>
+  <testcase name="files_main_files_pictures_and_both_versions_count_as_used" classname="com.ghostgramlabs.pettibox.data.sync.DriveFileCleanupTest" time="0.002"/>
+  <testcase name="a_file_in_files_removed_is_deleted_only_after_30_more_unused_days" classname="com.ghostgramlabs.pettibox.data.sync.DriveFileCleanupTest" time="0.0"/>
+  <testcase name="a_file_used_again_while_in_files_removed_goes_straight_back" classname="com.ghostgramlabs.pettibox.data.sync.DriveFileCleanupTest" time="0.001"/>
+  <testcase name="a_file_used_again_starts_over_and_other_names_are_left_alone" classname="com.ghostgramlabs.pettibox.data.sync.DriveFileCleanupTest" time="0.0"/>
+  <testcase name="a_device_copy_that_still_uses_a_file_keeps_it" classname="com.ghostgramlabs.pettibox.data.sync.DriveFileCleanupTest" time="0.001"/>
+  <testcase name="a_clock_set_back_never_brings_removal_forward" classname="com.ghostgramlabs.pettibox.data.sync.DriveFileCleanupTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

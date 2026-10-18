@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.sync.ClockCeilingTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-18T00:09:30" hostname="SAS" time="0.004">
+  <properties/>
+  <testcase name="running_out_of_reserved_stamps_stops_rather_than_outrun_the_saved_clock" classname="com.ghostgramlabs.pettibox.data.sync.ClockCeilingTest" time="0.001"/>
+  <testcase name="a_wall_clock_jump_past_the_ceiling_only_counts_up" classname="com.ghostgramlabs.pettibox.data.sync.ClockCeilingTest" time="0.002"/>
+  <testcase name="without_a_ceiling_it_follows_the_wall_clock" classname="com.ghostgramlabs.pettibox.data.sync.ClockCeilingTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" tests="74" failures="0" errors="0" skipped="2" time="56.781" timestamp="2026-10-18T00:11:04" hostname="localhost">
+  <properties>
+    <property name="device" value="Medium_Phone_API_35(AVD) - 15" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="every_exif_orientation_is_turned_upright" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.38" />
+  <testcase name="arabic" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="2.635" />
+  <testcase name="an_unknown_script_isnt_read_as_one_turned_on" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="3.285" />
+  <testcase name="korean" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="1.373" />
+  <testcase name="kannada" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.375" />
+  <testcase name="telugu" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.339" />
+  <testcase name="an_english_receipt_with_one_tamil_line_keeps_both" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.411" />
+  <testcase name="japanese" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="1.014" />
+  <testcase name="bengali" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.313" />
+  <testcase name="several_on_at_once_each_picture_reads_in_its_own_script" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="3.577" />
+  <testcase name="thai" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.62" />
+  <testcase name="a_short_chinese_label" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.643" />
+  <testcase name="hindi" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.795" />
+  <testcase name="tamil" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.208" />
+  <testcase name="a_short_russian_word" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.259" />
+  <testcase name="chinese" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.59" />
+  <testcase name="russian" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.342" />
+  <testcase name="hindi_and_chinese_on_one_page_keep_both" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="1.397" />
+  <testcase name="malayalam" classname="com.ghostgramlabs.pettibox.data.ocr.OcrLanguagesDeviceTest" time="0.336" />
+  <testcase name="setClipboard" classname="com.ghostgramlabs.pettibox.data.ocr.SamplePicturesTool" time="0.017">
+    <skipped />
+  </testcase>
+  <testcase name="writeSamplePictures" classname="com.ghostgramlabs.pettibox.data.ocr.SamplePicturesTool" time="0.012">
+    <skipped />
+  </testcase>
+  <testcase name="editingAnAlreadyQueuedSaveOrCollectionSucceeds" classname="com.ghostgramlabs.pettibox.data.sync.SyncTablesTest" time="0.055" />
+  <testcase name="nothingIsQueuedWhileSyncIsOff" classname="com.ghostgramlabs.pettibox.data.sync.SyncTablesTest" time="0.03" />
+  <testcase name="turningSyncOnQueuesTheWholeLibraryWithEachSavesOwnTime" classname="com.ghostgramlabs.pettibox.data.sync.SyncTablesTest" time="0.029" />
+  <testcase name="writesWhileApplyingAreNotQueued" classname="com.ghostgramlabs.pettibox.data.sync.SyncTablesTest" time="0.029" />
+  <testcase name="everyKindOfWriteQueuesItsRecordOnce" classname="com.ghostgramlabs.pettibox.data.sync.SyncTablesTest" time="0.028" />
+  <testcase name="clearingKeepsAChangeMadeAfterItWasRead" classname="com.ghostgramlabs.pettibox.data.sync.SyncTablesTest" time="0.029" />
+  <testcase name="turningSyncOffDropsTheTriggersAndTheQueue" classname="com.ghostgramlabs.pettibox.data.sync.SyncTablesTest" time="0.03" />
+  <testcase name="reconcileRepairsAHalfFinishedSwitch" classname="com.ghostgramlabs.pettibox.data.sync.SyncTablesTest" time="0.057" />
+  <testcase name="deletingASaveWithTagsAndFilesQueuesItAndDoesNotFail" classname="com.ghostgramlabs.pettibox.data.sync.SyncTablesTest" time="0.028" />
+  <testcase name="a_damaged_file_is_skipped_and_nothing_from_it_applied" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.617" />
+  <testcase name="d02_a_library_never_syncs_into_another_google_account" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.209" />
+  <testcase name="d05_a_reset_during_a_round_stops_its_uploads" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.185" />
+  <testcase name="favorite_pin_and_reminder_reach_the_other_phone" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.231" />
+  <testcase name="many_removals_wait_for_review_and_keep_mine_restores_them" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="2.189" />
+  <testcase name="o03_an_old_copy_merged_with_a_stripped_deletion_stays_deleted" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.908" />
+  <testcase name="the_same_field_edited_on_both_keeps_both_versions" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.876" />
+  <testcase name="a_few_deletes_in_a_small_library_reach_the_other_phone_without_review" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.076" />
+  <testcase name="tags_added_removed_and_replaced_the_way_the_app_does_reach_the_other_phone" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="2.154" />
+  <testcase name="a_choice_made_on_one_phone_is_not_asked_on_the_other" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.08" />
+  <testcase name="a_save_live_here_deleted_for_good_elsewhere_waits_in_recently_deleted" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.72" />
+  <testcase name="o03_a_deletion_is_stripped_only_when_settled_and_a_save_brought_back_comes_back_whole" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.275" />
+  <testcase name="favorite_pin_and_reminder_set_before_sync_was_on_reach_the_other_phone" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.437" />
+  <testcase name="one_sync_each_is_enough_for_a_change_to_arrive" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.747" />
+  <testcase name="a_tag_the_other_phone_already_uses_elsewhere_still_links" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.85" />
+  <testcase name="d11_this_phones_files_missing_from_drive_are_sent_again" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.338" />
+  <testcase name="savesOnOnePhoneReachTheOther" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.694" />
+  <testcase name="recheck_o01_a_newer_version_warning_stays_after_the_round_succeeds" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.128" />
+  <testcase name="favorite_pin_and_reminder_survive_when_the_other_phone_holds_the_same_save" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.466" />
+  <testcase name="deleting_synced_data_elsewhere_stops_sync_here_and_keeps_the_library" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.576" />
+  <testcase name="a_save_live_elsewhere_survives_a_permanent_removal" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.796" />
+  <testcase name="d03_the_saved_clock_is_never_behind_a_written_stamp_even_if_the_round_dies" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.132" />
+  <testcase name="o02_without_a_safety_copy_nothing_is_mass_removed_and_the_first_copy_is_retried" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="2.185" />
+  <testcase name="d12_a_review_choice_applies_only_to_the_saves_it_was_shown_for" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.361" />
+  <testcase name="an_old_copy_joining_late_does_not_overwrite_newer_edits" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.618" />
+  <testcase name="turning_sync_off_stops_sending" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.877" />
+  <testcase name="a_save_that_arrives_before_its_collection_is_filed_when_the_collection_comes" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.154" />
+  <testcase name="d05_files_written_before_a_reset_are_never_read_after_it" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.389" />
+  <testcase name="marks_an_older_version_let_another_phones_copy_clear_come_back" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.717" />
+  <testcase name="a_new_phones_untouched_starters_dont_undo_collection_changes_made_elsewhere" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.667" />
+  <testcase name="a_sub_collection_that_arrives_before_its_parent_is_put_under_it" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.799" />
+  <testcase name="d04_a_save_deleted_for_good_while_a_sync_applies_changes_stays_deleted" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.899" />
+  <testcase name="removing_the_first_of_two_pdfs_stays_removed_everywhere" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.062" />
+  <testcase name="the_same_link_saved_on_two_phones_before_syncing_becomes_one_save" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.002" />
+  <testcase name="recheck_d02_if_drive_cant_say_which_account_it_is_nothing_syncs" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.029" />
+  <testcase name="a_phone_copied_to_a_new_phone_takes_its_own_identity" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.693" />
+  <testcase name="two_saves_of_a_link_on_one_phone_are_left_alone" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.798" />
+  <testcase name="an_edit_made_while_a_sync_applies_changes_is_kept" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.844" />
+  <testcase name="moving_a_save_is_the_only_change_and_still_reaches_the_other_phone" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.286" />
+  <testcase name="a_delete_moves_to_recently_deleted_on_the_other_phone" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.974" />
+  <testcase name="edits_to_different_fields_on_each_phone_both_survive" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.72" />
+  <testcase name="recheck_o02_a_failed_safety_copy_warning_stays_after_the_round_succeeds" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.161" />
+  <testcase name="first_sync_with_overlapping_libraries_makes_no_duplicates" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="0.677" />
+  <testcase name="an_edit_made_while_duplicates_are_folded_survives" classname="com.ghostgramlabs.pettibox.data.sync.TwoDeviceSyncTest" time="1.265" />
+</testsuite>

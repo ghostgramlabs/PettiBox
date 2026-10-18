@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-18T00:09:30" hostname="SAS" time="0.009">
+  <properties/>
+  <testcase name="tags attribute is parsed - pinboard and raindrop style" classname="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" time="0.001"/>
+  <testcase name="parses links with titles and add dates" classname="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" time="0.002"/>
+  <testcase name="old pocket html uses time_added and a flat list" classname="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" time="0.001"/>
+  <testcase name="bookmarklets and firefox smart folders are skipped" classname="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" time="0.0"/>
+  <testcase name="epoch parser handles seconds millis and garbage" classname="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" time="0.0"/>
+  <testcase name="dd description becomes the note" classname="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" time="0.001"/>
+  <testcase name="deeply nested folders resolve to the nearest named folder" classname="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" time="0.001"/>
+  <testcase name="root container folders import unfiled, real folders keep their name" classname="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" time="0.002"/>
+  <testcase name="blank titles fall back to the url" classname="com.ghostgramlabs.pettibox.data.bookmarks.NetscapeBookmarkParserTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
