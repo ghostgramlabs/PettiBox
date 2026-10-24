@@ -60,8 +60,10 @@ import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
  * detail-screen top bar, but reachable without opening the item — for
  * the most common "I want to quickly archive this from the grid" case.
  *
- * "Move to collection" expands inline as a chip row instead of opening
- * yet another picker — keeps the interaction inside one sheet.
+ * "Move to collection" expands inline as a chip row when there are only a
+ * few collections; past [COLLECTION_FINDER_THRESHOLD] it opens the
+ * searchable [CollectionPickerSheet], since a long sideways strip is
+ * nearly impossible to find things in.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +83,21 @@ fun QuickActionSheet(
     val ctx = LocalContext.current
     var showMove by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showPicker by remember { mutableStateOf(false) }
+    val useFinder = categories.size > COLLECTION_FINDER_THRESHOLD
+
+    if (showPicker) {
+        CollectionPickerSheet(
+            categories = categories,
+            currentCategoryId = item.categoryId,
+            onPick = onMoveTo,
+            onDismiss = {
+                showPicker = false
+                onDismiss()
+            }
+        )
+        return
+    }
 
     if (showDeleteConfirm) {
         AlertDialog(
@@ -184,7 +201,7 @@ fun QuickActionSheet(
             ActionRow(
                 icon = Icons.Rounded.MoveDown,
                 title = "Move to collection",
-                onClick = { showMove = !showMove }
+                onClick = { if (useFinder) showPicker = true else showMove = !showMove }
             )
             if (showMove) {
                 Spacer(Modifier.height(4.dp))

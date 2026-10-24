@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.drive.DriveFoldersTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-18T00:09:30" hostname="SAS" time="0.303">
+  <properties/>
+  <testcase name="a photo put in a duplicate files folder as it is trashed is moved back" classname="com.ghostgramlabs.pettibox.data.drive.DriveFoldersTest" time="0.164"/>
+  <testcase name="two PettiBox folders made at once are merged into the oldest" classname="com.ghostgramlabs.pettibox.data.drive.DriveFoldersTest" time="0.029"/>
+  <testcase name="a folder that gets something new while being merged is kept" classname="com.ghostgramlabs.pettibox.data.drive.DriveFoldersTest" time="0.017"/>
+  <testcase name="an existing PettiBox Backups folder moves in with every backup" classname="com.ghostgramlabs.pettibox.data.drive.DriveFoldersTest" time="0.014"/>
+  <testcase name="a fresh Drive gets PettiBox with Backups and Sync inside" classname="com.ghostgramlabs.pettibox.data.drive.DriveFoldersTest" time="0.02"/>
+  <testcase name="listing backups on a fresh Drive makes nothing" classname="com.ghostgramlabs.pettibox.data.drive.DriveFoldersTest" time="0.006"/>
+  <testcase name="an old folder an older app version made again is folded in" classname="com.ghostgramlabs.pettibox.data.drive.DriveFoldersTest" time="0.026"/>
+  <testcase name="two files folders under Sync are merged so every photo is found" classname="com.ghostgramlabs.pettibox.data.drive.DriveFoldersTest" time="0.026"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

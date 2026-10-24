@@ -30,6 +30,13 @@ import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgePreferences
 import com.ghostgramlabs.pettibox.data.reminders.ShelfNudgeWorker
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.data.sync.DriveSyncClient
+import com.ghostgramlabs.pettibox.data.sync.SyncEngine
+import com.ghostgramlabs.pettibox.data.sync.SyncInterval
+import com.ghostgramlabs.pettibox.data.sync.SyncPreferences
+import com.ghostgramlabs.pettibox.data.sync.SyncScheduler
+import com.ghostgramlabs.pettibox.data.sync.SyncSetup
+import com.ghostgramlabs.pettibox.data.sync.SyncStatus
 import com.ghostgramlabs.pettibox.data.util.LocalBackupStore
 import com.ghostgramlabs.pettibox.ui.components.NewCollection
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -57,8 +64,168 @@ class SettingsViewModel @Inject constructor(
     private val shelfNudgePreferences: ShelfNudgePreferences,
     private val appLockPreferences: AppLockPreferences,
     private val ratingPreferences: RatingPreferences,
+    private val syncPreferences: SyncPreferences,
+    private val syncSetup: SyncSetup,
+    private val syncClient: DriveSyncClient,
+    private val ocrModels: com.ghostgramlabs.pettibox.data.ocr.OcrModels,
+    private val onboardingPreferences: com.ghostgramlabs.pettibox.data.preferences.OnboardingPreferences,
+    private val textReader: com.ghostgramlabs.pettibox.data.ocr.TextReader,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
+    // ── Languages read in images and PDFs ────────────────────────────────
+
+    val ocrLanguages: Flow<Set<String>> = ocrPreferences.languages
+    val ocrRereading: Flow<Boolean> = ocrPreferences.rereading
+
+    /** Which of the turned-on languages can be read now (the rest are downloading). */
+    suspend fun readyOcrLanguages(): Set<String> = ocrModels.ready(ocrPreferences.languages.first())
+
+    val ocrFailedLanguages: Flow<Set<String>> = ocrPreferences.failedLanguages
+
+    /** Tries the languages that couldn't be fetched again. */
+    fun retryOcrLanguages() = viewModelScope.launch {
+        ocrPreferences.setFailedLanguages(emptySet())
+        com.ghostgramlabs.pettibox.data.ocr.OcrModelWorker.enqueue(appContext)
+    }
+
+    /** Whether the phone has a connection right now (so a waiting download says why). */
+    fun isOnline(): Boolean {
+        val cm = appContext.getSystemService(android.net.ConnectivityManager::class.java)
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+        return caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    fun setOcrLanguage(code: String, on: Boolean) = viewModelScope.launch {
+        val now = ocrPreferences.languages.first()
+        ocrPreferences.setLanguages(if (on) now + code else now - code)
+        textReader.refresh()
+        com.ghostgramlabs.pettibox.data.ocr.OcrModelWorker.enqueue(appContext)
+    }
+
+    // ── Sync between devices ─────────────────────────────────────────────
+
+    val syncStatus: Flow<SyncStatus> = syncPreferences.status
+
+    /** Other devices seen in Drive: id -> (name, when their copy last changed). */
+    val syncDevices: Flow<Map<String, Pair<String, Long>>> = syncPreferences.devices
+
+    /**
+     * Turning sync on needs the same Drive access as backups. If it was
+     * granted already, sync starts now; otherwise the screen shows Google's
+     * consent sheet and calls [completeSyncConnect].
+     */
+    suspend fun beginSyncConnect(): DriveConnectStep {
+        val result = driveAuth.authorize()
+        val pendingIntent = result.pendingIntent
+        return if (result.hasResolution() && pendingIntent != null) {
+            DriveConnectStep.NeedsConsent(pendingIntent)
+        } else {
+            turnOnSync()
+            DriveConnectStep.Connected
+        }
+    }
+
+    suspend fun completeSyncConnect(data: Intent?): Boolean =
+        runCatching {
+            com.google.android.gms.auth.api.identity.Identity
+                .getAuthorizationClient(appContext)
+                .getAuthorizationResultFromIntent(data)
+            turnOnSync()
+            true
+        }.getOrDefault(false)
+
+    private suspend fun turnOnSync() {
+        syncPreferences.clearKnownReset() // the first round notes Drive's state as it is now
+        syncPreferences.setNeedsReconnect(false)
+        syncPreferences.setEnabled(true)
+        syncSetup.enable(startersSeeded = onboardingPreferences.categoriesSeeded.first())
+        SyncScheduler.apply(appContext, true, syncPreferences.status.first().interval)
+        SyncScheduler.now(appContext)
+    }
+
+    /**
+     * Stops syncing on this phone; nothing on the phone is deleted. With
+     * [removeMine], this phone's copy in Drive goes too (a phone being
+     * retired): other devices keep the whole library, as each holds it all.
+     * Returns false if Drive couldn't be reached for the removal.
+     */
+    suspend fun turnOffSync(removeMine: Boolean = false): Boolean {
+        val removed = !removeMine || removeSyncDevice(syncPreferences.deviceId())
+        syncPreferences.setEnabled(false)
+        syncSetup.disable()
+        syncPreferences.resetForDisable()
+        SyncScheduler.apply(appContext, false, SyncInterval.MANUAL)
+        return removed
+    }
+
+    /**
+     * Deletes everything sync put in Google Drive and stops sync on every
+     * device (each sees the marker and turns itself off rather than
+     * re-uploading). No device's library is touched. Returns false if Drive
+     * couldn't be reached or stopped answering part-way: some synced data may
+     * already be gone from Drive then, and trying again finishes the job.
+     */
+    suspend fun deleteSyncedData(): Boolean {
+        val ok = runCatching {
+            val token = driveAuth.silentAccessToken() ?: return false
+            val folder = syncClient.syncFolder(token)
+            val marker = org.json.JSONObject()
+                .put("format", 1)
+                .put("resetAt", System.currentTimeMillis())
+                .put("by", syncPreferences.deviceId())
+                .toString()
+            syncClient.resetEverything(token, folder, marker)
+            true
+        }.getOrDefault(false)
+        if (ok) turnOffSync()
+        return ok
+    }
+
+    suspend fun setSyncInterval(interval: SyncInterval) {
+        syncPreferences.setInterval(interval)
+        val on = syncPreferences.isEnabled()
+        SyncScheduler.apply(appContext, on, interval)
+    }
+
+    suspend fun setSyncFilesOnWifiOnly(on: Boolean) = syncPreferences.setFilesOnWifiOnly(on)
+
+    suspend fun setSyncDeviceName(name: String) {
+        if (name.isBlank()) return
+        syncPreferences.setDeviceName(name)
+        SyncScheduler.now(appContext) // others see the new name after the next upload
+    }
+
+    fun syncNow() = SyncScheduler.now(appContext)
+
+    /** Photos and files straight away, on any connection. */
+    suspend fun sendFilesNow() {
+        syncPreferences.setFilesProblem("")
+        syncPreferences.setFilesWaiting("")
+        syncPreferences.setFilesStatus("Sending photos and files to Google Drive…")
+        com.ghostgramlabs.pettibox.data.sync.FileSyncWorker.sendNow(appContext)
+    }
+
+    /** The user's answer to "another device wants to remove N saves". */
+    suspend fun answerSyncReview(keepMine: Boolean) {
+        syncPreferences.setReviewDecision(if (keepMine) SyncEngine.REVIEW_KEEP else SyncEngine.REVIEW_APPLY)
+        SyncScheduler.now(appContext)
+    }
+
+    /**
+     * Removes another device's copy from Drive (an old phone, say). The
+     * library itself stays: every device keeps and republishes the merged
+     * library. If that device syncs again it simply reappears.
+     */
+    suspend fun removeSyncDevice(deviceId: String): Boolean = runCatching {
+        val token = driveAuth.silentAccessToken() ?: return false
+        val folder = syncClient.syncFolder(token)
+        syncClient.listDeviceFiles(token, folder)
+            .filter { DriveSyncClient.deviceOf(it.name) == deviceId }
+            .forEach { syncClient.delete(token, it.id) }
+        syncPreferences.forgetDevice(deviceId)
+        true
+    }.getOrDefault(false)
+
     val autoScanOcr: Flow<Boolean> = ocrPreferences.autoScan
     val pdfPageLimit: Flow<Int> = ocrPreferences.pdfPageLimit
     val localBackupStatus: Flow<LocalBackupStatus> = backupPreferences.status
@@ -96,6 +263,13 @@ class SettingsViewModel @Inject constructor(
     val appLockAfterMs: Flow<Long> = appLockPreferences.lockAfterMs
 
     suspend fun setAppLockAfterMs(ms: Long) = appLockPreferences.setLockAfterMs(ms)
+
+    val showLockedTile: Flow<Boolean> = appLockPreferences.showLockedTile
+
+    suspend fun setShowLockedTile(show: Boolean) = appLockPreferences.setShowLockedTile(show)
+
+    /** Read only after an unlock, so Settings never hints whether any exist. */
+    suspend fun lockedCollectionCount(): Int = repo.observeLockedCollectionCount().first()
 
     /** True when this "it just worked" moment should show Play's review sheet. */
     suspend fun claimHappyMoment(moment: String): Boolean = ratingPreferences.claimHappyMoment(moment)
@@ -362,8 +536,17 @@ class SettingsViewModel @Inject constructor(
         ocrPreferences.setAutoScan(enabled)
     }
 
+    /**
+     * A higher limit reads the extra pages of PDFs already saved too; a
+     * lower one keeps the text already found (it applies to new PDFs).
+     */
     suspend fun setPdfPageLimit(limit: Int) {
+        val before = ocrPreferences.pdfPageLimit.first()
         ocrPreferences.setPdfPageLimit(limit)
+        if (limit > before) {
+            ocrPreferences.requestReread(pdfOnly = true)
+            com.ghostgramlabs.pettibox.data.ocr.OcrRereadWorker.enqueue(appContext)
+        }
     }
 
     suspend fun scanExistingSaves(): Int {
@@ -383,7 +566,7 @@ class SettingsViewModel @Inject constructor(
             count++
         }
         repo.pdfAttachmentsNeedingOcr().forEach { attachment ->
-            PdfTextWorker.enqueue(appContext, attachment.itemId, attachment.uri)
+            PdfTextWorker.enqueue(appContext, attachment.itemId, attachment.uri, attachment.id)
             count++
         }
         return count

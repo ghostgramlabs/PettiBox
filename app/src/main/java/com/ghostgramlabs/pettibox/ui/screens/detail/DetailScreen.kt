@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -46,8 +47,10 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Unarchive
+import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -97,10 +100,13 @@ import androidx.compose.material3.TextButton
 import coil.compose.AsyncImage
 import com.ghostgramlabs.pettibox.data.local.ArticleCopyEntity
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
+import com.ghostgramlabs.pettibox.data.local.OcrStatusEntity
 import com.ghostgramlabs.pettibox.data.util.TimeFormat
 import com.ghostgramlabs.pettibox.domain.model.ContentType
 import com.ghostgramlabs.pettibox.domain.model.SourceApp
+import com.ghostgramlabs.pettibox.ui.components.COLLECTION_FINDER_THRESHOLD
 import com.ghostgramlabs.pettibox.ui.components.CategoryChip
+import com.ghostgramlabs.pettibox.ui.components.CollectionPickerSheet
 import com.ghostgramlabs.pettibox.ui.components.KeeperMascot
 import com.ghostgramlabs.pettibox.ui.components.ReviewPrompt
 import com.ghostgramlabs.pettibox.ui.components.KeeperPose
@@ -109,6 +115,7 @@ import com.ghostgramlabs.pettibox.ui.components.ReminderPickerSheet
 import com.ghostgramlabs.pettibox.ui.components.ScreenHeading
 import com.ghostgramlabs.pettibox.ui.components.formatReminderAt
 import com.ghostgramlabs.pettibox.ui.components.rememberNotificationPermissionRequester
+import com.ghostgramlabs.pettibox.ui.lock.LockedCollectionPanel
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -121,6 +128,8 @@ fun DetailScreen(
     viewModel: DetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val lockedOut by viewModel.lockedOut.collectAsStateWithLifecycle()
+    val conflicts by viewModel.conflicts.collectAsStateWithLifecycle()
     val item = state.item
     val article by viewModel.article.collectAsStateWithLifecycle()
     val readerTextZoom by viewModel.readerTextZoom.collectAsStateWithLifecycle()
@@ -138,34 +147,30 @@ fun DetailScreen(
     val focusManager = LocalFocusManager.current
     val clipboard = LocalClipboardManager.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showCollectionPicker by remember { mutableStateOf(false) }
     var viewerIndex by remember { mutableStateOf<Int?>(null) }
     var showReminderSheet by remember { mutableStateOf(false) }
     var showCustomReminder by remember { mutableStateOf(false) }
     val requestNotificationPermission = rememberNotificationPermissionRequester()
-    // Per-attachment delete is two-stage: a confirm dialog, then an
-    // optimistic hide + Undo snackbar. We commit the actual repo delete
-    // only after the snackbar dismisses without Undo, so files survive
-    // long enough to restore.
+    // Per-attachment delete: a confirm dialog, then the file is taken out of
+    // the save at once, with Undo on a snackbar. Only the file's bytes wait
+    // for the snackbar, so leaving the screen never loses the removal.
     var attachmentDeleteCandidate by remember { mutableStateOf<Long?>(null) }
-    var hiddenAttachmentIds by remember { mutableStateOf(emptySet<Long>()) }
 
     val requestAttachmentDelete: (Long) -> Unit = { id ->
         attachmentDeleteCandidate = id
     }
     val confirmAttachmentDelete: (Long) -> Unit = { id ->
         attachmentDeleteCandidate = null
-        hiddenAttachmentIds = hiddenAttachmentIds + id
         scope.launch {
+            if (!viewModel.removeAttachment(id)) return@launch
             val result = snackbarHostState.showSnackbar(
                 message = "Item removed",
-                actionLabel = "Undo"
+                actionLabel = "Undo",
+                duration = SnackbarDuration.Long
             )
-            if (result == SnackbarResult.ActionPerformed) {
-                hiddenAttachmentIds = hiddenAttachmentIds - id
-            } else {
-                hiddenAttachmentIds = hiddenAttachmentIds - id
-                viewModel.deleteAttachment(id)
-            }
+            if (result == SnackbarResult.ActionPerformed) viewModel.undoRemoveAttachment(id)
+            else viewModel.finishRemoveAttachment(id)
         }
     }
 
@@ -280,6 +285,12 @@ fun DetailScreen(
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
+        if (lockedOut != false) {
+            if (lockedOut == true) {
+                LockedCollectionPanel(onBack = onBack, modifier = Modifier.padding(padding))
+            }
+            return@Scaffold
+        }
         if (item == null) {
             if (state.isLoaded) {
                 MissingSaveState(
@@ -367,7 +378,8 @@ fun DetailScreen(
                     scope.launch {
                         val result = snackbarHostState.showSnackbar(
                             message = if (!nowArchived) "Tucked away" else "Back on the shelf",
-                            actionLabel = "Undo"
+                            actionLabel = "Undo",
+                            duration = SnackbarDuration.Long
                         )
                         if (result == SnackbarResult.ActionPerformed) {
                             viewModel.setArchived(nowArchived)
@@ -390,9 +402,8 @@ fun DetailScreen(
             Spacer(Modifier.height(16.dp))
 
             // Big preview: horizontal scroll if there are multiple attachments,
-            // single hero otherwise. Attachments awaiting Undo are filtered
-            // out so the user perceives them as removed immediately.
-            val visibleAttachments = state.attachments.filter { it.id !in hiddenAttachmentIds }
+            // single hero otherwise.
+            val visibleAttachments = state.attachments
             val gallery: List<GalleryItem> = visibleAttachments.map { it.toGalleryItem() }
                 .ifEmpty {
                     listOfNotNull(item.thumbnailUri ?: item.localUri).map {
@@ -529,6 +540,20 @@ fun DetailScreen(
             // Search. Was 24.dp before — 4 px off looks fine alone but
             // visibly misaligns when the user navigates between screens.
             Column(Modifier.padding(horizontal = 20.dp)) {
+                // Edited on two devices at once: both versions were kept.
+                conflicts.forEach { conflict ->
+                    val settled: (Boolean) -> Unit = { changed ->
+                        if (!changed) scope.launch {
+                            snackbarHostState.showSnackbar("Already chosen on another device. Nothing to pick here.")
+                        }
+                    }
+                    ConflictCard(
+                        conflict = conflict,
+                        onUse = { value -> scope.launch { settled(viewModel.useVersion(conflict, value)) } },
+                        onKeep = { scope.launch { settled(viewModel.keepCurrent(conflict)) } }
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
                 // Editable title still lives in the body so the user can
                 // rename their save inline — but it's secondary now: the
                 // big page title above shows the canonical name; this
@@ -665,6 +690,27 @@ fun DetailScreen(
                             },
                             onRequest = viewModel::requestArticleCopy
                         )
+                        // For finding it again by eye: the page itself as the
+                        // card picture, when the site's own image is a logo
+                        // or missing.
+                        TextButton(
+                            onClick = {
+                                viewModel.requestPageScreenshot()
+                                Toast.makeText(ctx, "Taking a screenshot of the page…", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.padding(top = 2.dp)
+                        ) {
+                            Icon(
+                                Icons.Rounded.Wallpaper, null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(end = 8.dp).size(18.dp)
+                            )
+                            Text(
+                                "Use a page screenshot as the picture",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
                 readerCopy?.let { copy ->
@@ -696,7 +742,35 @@ fun DetailScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(Modifier.height(8.dp))
-                LazyRow(
+                if (state.categories.size > COLLECTION_FINDER_THRESHOLD) {
+                    // Too many collections to scroll through sideways: show the
+                    // current one and open the searchable picker to change it.
+                    if (showCollectionPicker) {
+                        CollectionPickerSheet(
+                            categories = state.categories,
+                            currentCategoryId = item.categoryId,
+                            onPick = viewModel::setCategory,
+                            onDismiss = { showCollectionPicker = false }
+                        )
+                    }
+                    val current = state.categories.firstOrNull { it.id == item.categoryId }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (current != null) {
+                            CategoryChip(
+                                label = current.name,
+                                emoji = current.emoji,
+                                color = Color(current.colorHex),
+                                selected = true,
+                                tilt = if (current.sortOrder % 2 == 0) -2f else 1.5f,
+                                onClick = { showCollectionPicker = true }
+                            )
+                        }
+                        CollectionFinderChip(
+                            label = if (current != null) "Change" else "Choose collection",
+                            onClick = { showCollectionPicker = true }
+                        )
+                    }
+                } else LazyRow(
                     contentPadding = PaddingValues(end = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -724,7 +798,7 @@ fun DetailScreen(
                     accent = accent,
                     onAdd = { tag ->
                         viewModel.addTag(tag)
-                        val clean = tag.trim().removePrefix("#")
+                        val clean = tag.trim().trimStart('#').trim()
                         if (clean.isNotBlank() && clean.length <= 24) {
                             scope.launch {
                                 val r = snackbarHostState.showSnackbar(
@@ -771,11 +845,15 @@ fun DetailScreen(
                     AboutLinkSection(item.ocrText)
                 } else if (!item.ocrText.isNullOrBlank() || hasIndexableAttachments(state.attachments) || isIndexableKind(item.contentType)) {
                     Spacer(Modifier.height(24.dp))
+                    val readingStates by viewModel.readingStates.collectAsStateWithLifecycle()
                     OcrTextSections(
+                        itemId = item.id,
                         itemText = item.ocrText,
                         itemKind = item.contentType,
                         attachments = state.attachments,
-                        autoScanEnabled = state.ocrAutoScanEnabled
+                        autoScanEnabled = state.ocrAutoScanEnabled,
+                        states = readingStates,
+                        onRetry = viewModel::readTextAgain
                     )
                 } else if (state.ocrAutoScanEnabled && isIndexingText(item.contentType, state.attachments)) {
                     Spacer(Modifier.height(24.dp))
@@ -1269,7 +1347,9 @@ private data class OcrDocText(
     val title: String,
     val subtitle: String,
     val text: String?,
-    val status: String?
+    val status: String?,
+    /** Offer "Try again" (nothing found, or reading failed). */
+    val retry: Boolean = false
 )
 
 /** Channel / site / description captured when a link was saved (and searchable). */
@@ -1297,11 +1377,15 @@ private fun AboutLinkSection(details: String) {
 
 @Composable
 private fun OcrTextSections(
+    itemId: Long,
     itemText: String?,
     itemKind: String,
     attachments: List<AttachmentEntity>,
-    autoScanEnabled: Boolean
+    autoScanEnabled: Boolean,
+    states: Map<String, OcrStatusEntity>,
+    onRetry: () -> Unit
 ) {
+    val itemState = states[OcrStatusEntity.sourceOf(itemId, null)]
     val attachmentDocs = attachments
         .filter { isIndexableKind(it.kind) }
         .mapIndexed { index, attachment ->
@@ -1310,18 +1394,21 @@ private fun OcrTextSections(
                 title = "${type.displayLabel()} ${index + 1}",
                 subtitle = if (type == ContentType.PDF) "Extracted from this PDF" else "Extracted from this image",
                 text = attachment.ocrText,
-                status = ocrStatusText(attachment.ocrText, autoScanEnabled, type)
+                status = ocrStatusText(attachment.ocrText, autoScanEnabled, type, states[OcrStatusEntity.sourceOf(itemId, attachment.id)]),
+                retry = canRetry(attachment.ocrText, states[OcrStatusEntity.sourceOf(itemId, attachment.id)])
             )
         }
 
     val docs = if (attachmentDocs.isNotEmpty()) {
         val hasAttachmentText = attachmentDocs.any { !it.text.isNullOrBlank() }
-        if (hasAttachmentText) attachmentDocs else {
+        // The combined card is for older saves that kept all their text together: only when there is some.
+        if (hasAttachmentText || itemText.isNullOrBlank()) attachmentDocs else {
             attachmentDocs + OcrDocText(
                 title = "Combined extracted text",
                 subtitle = "Older saves may store OCR as one combined result",
                 text = itemText,
-                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE))
+                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE), itemState),
+                retry = canRetry(itemText, itemState)
             )
         }
     } else {
@@ -1330,7 +1417,8 @@ private fun OcrTextSections(
                 title = "Extracted text",
                 subtitle = "From this ${runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE).displayLabel().lowercase()}",
                 text = itemText,
-                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE))
+                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE), itemState),
+                retry = canRetry(itemText, itemState)
             )
         )
     }
@@ -1342,13 +1430,30 @@ private fun OcrTextSections(
     Spacer(Modifier.height(8.dp))
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         docs.forEach { doc ->
-            OcrTextSection(doc)
+            OcrTextSection(doc, onRetry)
         }
     }
 }
 
-private fun ocrStatusText(text: String?, autoScanEnabled: Boolean, type: ContentType): String? {
-    if (!text.isNullOrBlank()) return null
+/** What a file's reading came to, said plainly ([OcrStatusEntity]); without a record, the general case. */
+private fun ocrStatusText(text: String?, autoScanEnabled: Boolean, type: ContentType, state: OcrStatusEntity?): String? {
+    val what = if (type == ContentType.PDF) "this PDF" else "this image"
+    if (!text.isNullOrBlank()) {
+        // There's text from before; say if the latest reading didn't go through.
+        return when (state?.state) {
+            OcrStatusEntity.READING -> "Reading again: ${state.pagesDone} page${if (state.pagesDone == 1) "" else "s"} so far. The text below is from before."
+            OcrStatusEntity.FAILED -> "The latest reading of $what failed. The text below is from before."
+            OcrStatusEntity.UNREADABLE -> "This file couldn't be opened just now. The text below is from before."
+            else -> null
+        }
+    }
+    when (state?.state) {
+        OcrStatusEntity.PENDING -> return "Waiting to be read. It happens in the background, and the text appears here."
+        OcrStatusEntity.READING -> return "Being read: ${state.pagesDone} page${if (state.pagesDone == 1) "" else "s"} so far."
+        OcrStatusEntity.NO_TEXT -> return "No text found in $what. If it's in another language, turn that language on in Settings › Text recognition, then try again."
+        OcrStatusEntity.UNREADABLE -> return "This file couldn't be opened on this phone, so its text can't be read. Add the file to the save again."
+        OcrStatusEntity.FAILED -> return "Couldn't read the text in $what."
+    }
     if (!autoScanEnabled) return "Text recognition is off for this save."
     return if (type == ContentType.PDF) {
         "No extracted text yet. It may still be indexing, the PDF may be scanned/locked, or text may be outside the selected page limit."
@@ -1356,6 +1461,9 @@ private fun ocrStatusText(text: String?, autoScanEnabled: Boolean, type: Content
         "No extracted text yet. It may still be indexing or the image may not contain readable text."
     }
 }
+
+private fun canRetry(text: String?, state: OcrStatusEntity?): Boolean =
+    state?.state == OcrStatusEntity.FAILED || (text.isNullOrBlank() && state?.state == OcrStatusEntity.NO_TEXT)
 
 private fun ContentType.displayLabel(): String = when (this) {
     ContentType.IMAGE -> "Image"
@@ -1367,7 +1475,7 @@ private fun ContentType.displayLabel(): String = when (this) {
 }
 
 @Composable
-private fun OcrTextSection(doc: OcrDocText) {
+private fun OcrTextSection(doc: OcrDocText, onRetry: () -> Unit) {
     var expanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
     val ctx = LocalContext.current
@@ -1417,7 +1525,21 @@ private fun OcrTextSection(doc: OcrDocText) {
                     modifier = Modifier.weight(1f)
                 )
             }
+            if (doc.retry) {
+                TextButton(onClick = onRetry) { Text("Try again", fontWeight = FontWeight.Bold) }
+            }
         } else {
+            // Text from before, with what became of the latest reading if it didn't go through.
+            if (!doc.status.isNullOrBlank()) {
+                // A failure (it offers Try again) reads as one; "Reading again…" is just progress.
+                Text(
+                    doc.status,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (doc.retry) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (doc.retry) TextButton(onClick = onRetry) { Text("Try again", fontWeight = FontWeight.Bold) }
+                Spacer(Modifier.height(6.dp))
+            }
             Text(
                 "Long-press to select a line or drag for multiple lines.",
                 style = MaterialTheme.typography.bodySmall,
@@ -1646,5 +1768,78 @@ private fun NotesEditor(initial: String, onCommit: (old: String, new: String) ->
                 .commitFieldOnExit(text, initial, onCommit),
             shape = RoundedCornerShape(20.dp)
         )
+    }
+}
+
+/** Outlined "search collections" chip that opens the collection picker. */
+@Composable
+private fun CollectionFinderChip(label: String, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(scheme.surface)
+            .border(1.5.dp, scheme.primary, CircleShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 9.dp)
+    ) {
+        Icon(Icons.Rounded.Search, null, tint = scheme.primary, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge, color = scheme.primary)
+    }
+}
+
+/** "Edited on 2 devices": the version shown, the other one(s), and a way to pick. */
+@Composable
+private fun ConflictCard(conflict: SyncConflict, onUse: (String) -> Unit, onKeep: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(scheme.tertiaryContainer.copy(alpha = 0.45f))
+            .padding(14.dp)
+    ) {
+        Text(
+            "${conflict.label} edited on 2 devices",
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            color = scheme.onSurface
+        )
+        Text(
+            "Both versions were kept. Pick the one to use everywhere.",
+            style = MaterialTheme.typography.bodySmall,
+            color = scheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+        ConflictVersion(label = "Shown now", value = conflict.shown.orEmpty(), action = "Keep", onClick = onKeep)
+        conflict.others.forEach { other ->
+            Spacer(Modifier.height(8.dp))
+            ConflictVersion(label = "Other version", value = other, action = "Use this", onClick = { onUse(other) })
+        }
+    }
+}
+
+@Composable
+private fun ConflictVersion(label: String, value: String, action: String, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp)
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                value.ifBlank { "(empty)" },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 4,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        }
+        TextButton(onClick = onClick) { Text(action, fontWeight = FontWeight.Bold) }
     }
 }

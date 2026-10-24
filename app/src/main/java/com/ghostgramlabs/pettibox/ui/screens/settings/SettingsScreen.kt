@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Email
@@ -45,15 +46,18 @@ import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.LocalOffer
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.RestoreFromTrash
+import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material3.AlertDialog
@@ -102,6 +106,8 @@ import com.ghostgramlabs.pettibox.data.preferences.ReminderTime
 import com.ghostgramlabs.pettibox.data.preferences.ThemeMode
 import com.ghostgramlabs.pettibox.data.local.ArticleStats
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.data.sync.SyncInterval
+import com.ghostgramlabs.pettibox.data.sync.SyncStatus
 import com.ghostgramlabs.pettibox.ui.components.CreateCollectionDialog
 import com.ghostgramlabs.pettibox.ui.components.EditCollectionDialog
 import com.ghostgramlabs.pettibox.ui.components.HelpLinks
@@ -126,12 +132,18 @@ import java.util.Locale
 fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    onOpenBrowse: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val autoScanOcr by viewModel.autoScanOcr.collectAsStateWithLifecycle(initialValue = true)
+    val ocrLanguages by viewModel.ocrLanguages.collectAsStateWithLifecycle(initialValue = emptySet())
+    val ocrRereading by viewModel.ocrRereading.collectAsStateWithLifecycle(initialValue = false)
+    val ocrFailed by viewModel.ocrFailedLanguages.collectAsStateWithLifecycle(initialValue = emptySet())
+    var showOcrLanguages by remember { mutableStateOf(false) }
+    var showLicenses by remember { mutableStateOf(false) }
     val pdfPageLimit by viewModel.pdfPageLimit.collectAsStateWithLifecycle(
         initialValue = OcrPreferences.DEFAULT_PDF_PAGES
     )
@@ -162,6 +174,8 @@ fun SettingsScreen(
     var showRemoveOfflineCopies by remember { mutableStateOf(false) }
     val weeklyNudge by viewModel.weeklyNudge.collectAsStateWithLifecycle(initialValue = true)
     val appLockOn by viewModel.appLock.collectAsStateWithLifecycle(initialValue = false)
+    val showLockedTile by viewModel.showLockedTile.collectAsStateWithLifecycle(initialValue = true)
+    val collectionsUnlocked by AppLockSession.collectionsUnlocked.collectAsStateWithLifecycle()
     val appLockAfterMs by viewModel.appLockAfterMs.collectAsStateWithLifecycle(
         initialValue = AppLockPreferences.DEFAULT_LOCK_AFTER_MS
     )
@@ -445,6 +459,42 @@ fun SettingsScreen(
                 snackbarHostState.showSnackbar("Saved on this phone, but the Drive upload failed — check your connection")
         }
         busyLabel = null
+    }
+
+    val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle(
+        initialValue = SyncStatus(
+            enabled = false, interval = SyncInterval.HOURS_3, filesOnWifiOnly = false, deviceName = "",
+            accountEmail = "", lastSyncAt = 0L, lastError = "", lastErrorAt = 0L, needsReconnect = false,
+            pendingReview = 0, progress = ""
+        )
+    )
+    val syncDevices by viewModel.syncDevices.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val syncConsent = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        scope.launch {
+            if (result.resultCode == Activity.RESULT_OK && viewModel.completeSyncConnect(result.data)) {
+                snackbarHostState.showSnackbar("Sync is on. Your library is syncing now.")
+            } else {
+                snackbarHostState.showSnackbar("Sync wasn't turned on")
+            }
+        }
+    }
+    val connectSync: () -> Unit = {
+        scope.launch {
+            runCatching { viewModel.beginSyncConnect() }
+                .onSuccess { step ->
+                    when (step) {
+                        SettingsViewModel.DriveConnectStep.Connected ->
+                            snackbarHostState.showSnackbar("Sync is on. Your library is syncing now.")
+                        is SettingsViewModel.DriveConnectStep.NeedsConsent ->
+                            syncConsent.launch(IntentSenderRequest.Builder(step.pendingIntent.intentSender).build())
+                    }
+                }
+                .onFailure {
+                    snackbarHostState.showSnackbar("Couldn't reach Google Play services. Is this device signed in to Google?")
+                }
+        }
     }
 
     val driveConsent = rememberLauncherForActivityResult(
@@ -778,6 +828,184 @@ fun SettingsScreen(
                 Spacer(Modifier.height(12.dp))
             }
             BackupConfidenceBanner(localBackupStatus)
+            // The two things people come here to check most: whether sync is fine, and which languages are read.
+            Spacer(Modifier.height(16.dp))
+            SyncSettingsCard(
+                status = syncStatus,
+                devices = syncDevices,
+                onTurnOn = connectSync,
+                onTurnOff = { removeMine ->
+                    scope.launch {
+                        val removed = viewModel.turnOffSync(removeMine)
+                        snackbarHostState.showSnackbar(
+                            when {
+                                !removed -> "Sync is off. Couldn't reach Google Drive to remove this phone's copy; remove it later from another device"
+                                removeMine -> "Sync is off, and this phone's copy was removed from Google Drive"
+                                else -> "Sync is off on this device"
+                            }
+                        )
+                    }
+                },
+                onDeleteSynced = {
+                    scope.launch {
+                        val ok = viewModel.deleteSyncedData()
+                        snackbarHostState.showSnackbar(
+                            if (ok) "Synced data deleted from Google Drive. Sync is off on all your devices."
+                            else "Couldn't finish deleting from Google Drive. Some synced data may already be gone; try again to finish. Your library on this phone is untouched."
+                        )
+                    }
+                },
+                onSyncNow = {
+                    viewModel.syncNow()
+                    scope.launch { snackbarHostState.showSnackbar("Syncing…") }
+                },
+                onSendFiles = {
+                    scope.launch {
+                        viewModel.sendFilesNow()
+                        snackbarHostState.showSnackbar("Sending photos and files, on any connection")
+                    }
+                },
+                onReconnect = connectSync,
+                onInterval = { scope.launch { viewModel.setSyncInterval(it) } },
+                onWifiOnly = { scope.launch { viewModel.setSyncFilesOnWifiOnly(it) } },
+                onRename = { scope.launch { viewModel.setSyncDeviceName(it) } },
+                onRemoveDevice = { id ->
+                    scope.launch {
+                        val ok = viewModel.removeSyncDevice(id)
+                        snackbarHostState.showSnackbar(if (ok) "Removed" else "Couldn't reach Google Drive")
+                    }
+                },
+                onReview = { keep ->
+                    scope.launch {
+                        viewModel.answerSyncReview(keep)
+                        snackbarHostState.showSnackbar(if (keep) "Keeping your saves" else "Applying the changes")
+                    }
+                }
+            )
+
+            Spacer(Modifier.height(16.dp))
+            SettingsSection(title = "Text recognition") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Rounded.TextSnippet,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Auto-scan images and PDFs for search",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Applies to new saves only.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = autoScanOcr,
+                        onCheckedChange = { enabled ->
+                            scope.launch {
+                                viewModel.setAutoScanOcr(enabled)
+                                snackbarHostState.showSnackbar(
+                                    if (enabled) "Auto-scan is on for new saves"
+                                    else "Auto-scan is off for new saves"
+                                )
+                            }
+                        }
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showOcrLanguages = true }
+                        .padding(vertical = 6.dp)
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Languages in images",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            ocrLanguagesSummary(ocrLanguages),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text("Change", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                }
+                if (showOcrLanguages) {
+                    OcrLanguagesSheet(
+                        on = ocrLanguages,
+                        rereading = ocrRereading,
+                        readyNow = viewModel::readyOcrLanguages,
+                        failed = ocrFailed,
+                        isOnline = viewModel::isOnline,
+                        onRetry = viewModel::retryOcrLanguages,
+                        onToggle = { code, on -> viewModel.setOcrLanguage(code, on) },
+                        onDismiss = { showOcrLanguages = false }
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            busyLabel = "Queueing text scan"
+                            runCatching { viewModel.scanExistingSaves() }
+                                .onSuccess { count ->
+                                    snackbarHostState.showSnackbar(
+                                        if (count == 0) "No older images or PDFs need scanning"
+                                        else "Scanning existing saves for search: queued $count item${if (count == 1) "" else "s"}"
+                                    )
+                                }
+                                .onFailure { snackbarHostState.showSnackbar("Couldn't queue text scan") }
+                            busyLabel = null
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Text("Scan existing saves", fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    "PDF scan limit",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    "Higher limits make more pages searchable, but large PDFs take longer. Raising it also reads the extra pages of PDFs you already saved.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OcrPreferences.PDF_PAGE_LIMIT_OPTIONS.forEach { limit ->
+                        PageLimitChoice(
+                            limit = limit,
+                            selected = pdfPageLimit == limit,
+                            onClick = {
+                                scope.launch {
+                                    val before = pdfPageLimit
+                                    viewModel.setPdfPageLimit(limit)
+                                    snackbarHostState.showSnackbar(if (limit > before) "Reading up to $limit pages, saved PDFs included" else "New PDFs: up to $limit pages. Text already found stays.")
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
             Spacer(Modifier.height(16.dp))
             SettingsSection(title = "Appearance") {
                 ThemeChoice(
@@ -818,93 +1046,6 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Remove starter collections", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Text recognition") {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Rounded.TextSnippet,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            "Auto-scan images and PDFs for search",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            "Applies to new saves only. English text works best; other languages may be partial.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = autoScanOcr,
-                        onCheckedChange = { enabled ->
-                            scope.launch {
-                                viewModel.setAutoScanOcr(enabled)
-                                snackbarHostState.showSnackbar(
-                                    if (enabled) "Auto-scan is on for new saves"
-                                    else "Auto-scan is off for new saves"
-                                )
-                            }
-                        }
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = {
-                        scope.launch {
-                            busyLabel = "Queueing text scan"
-                            runCatching { viewModel.scanExistingSaves() }
-                                .onSuccess { count ->
-                                    snackbarHostState.showSnackbar(
-                                        if (count == 0) "No older images or PDFs need scanning"
-                                        else "Scanning existing saves for search: queued $count item${if (count == 1) "" else "s"}"
-                                    )
-                                }
-                                .onFailure { snackbarHostState.showSnackbar("Couldn't queue text scan") }
-                            busyLabel = null
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp)
-                ) {
-                    Text("Scan existing saves", fontWeight = FontWeight.Bold)
-                }
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    "PDF scan limit",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    "Higher limits make more pages searchable, but large PDFs take longer.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OcrPreferences.PDF_PAGE_LIMIT_OPTIONS.forEach { limit ->
-                        PageLimitChoice(
-                            limit = limit,
-                            selected = pdfPageLimit == limit,
-                            onClick = {
-                                scope.launch {
-                                    viewModel.setPdfPageLimit(limit)
-                                    snackbarHostState.showSnackbar("PDF scan limit set to $limit pages")
-                                }
-                            }
-                        )
                     }
                 }
             }
@@ -1153,13 +1294,18 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Find it later",
-                    body = "Search by words, source app, file type, tag, collection, or upcoming reminders. It also checks English text found inside images and PDFs, and the text of articles saved for offline reading.",
+                    body = "Search by words, source app, file type, tag, collection, or upcoming reminders. It also checks text found inside images and PDFs (in the languages you turn on under Text recognition), and the text of articles saved for offline reading.",
                     icon = Icons.Rounded.Search
                 )
                 HelpItem(
                     title = "Make a new collection",
                     body = "Use Collections above to create or rename shelves. New collections show up in Browse and in the save sheet.",
                     icon = Icons.Rounded.GridView
+                )
+                HelpItem(
+                    title = "Lots of collections? Search them",
+                    body = "Once you have more than 8 collections, a \"Find collection\" box appears when you save something, in Browse, and when you move a save (open it and tap Choose collection or Change, or long-press → Move to collection). Type a few letters to jump straight to the one you want.",
+                    icon = Icons.Rounded.Search
                 )
 
                 Spacer(Modifier.height(14.dp))
@@ -1210,6 +1356,11 @@ fun SettingsScreen(
                     icon = Icons.AutoMirrored.Rounded.MenuBook
                 )
                 HelpItem(
+                    title = "Pictures for every link",
+                    body = "Links show the picture the website provides. If it has none, PettiBox takes a screenshot of the top of the page in the background, so you can spot the save by eye later. Not a helpful picture? Open the save and tap \"Use a page screenshot as the picture\".",
+                    icon = Icons.Rounded.Wallpaper
+                )
+                HelpItem(
                     title = "\"No offline copy\"?",
                     body = "Some pages can't be copied: paywalled or login-only articles, pages that no longer exist, and very long pages. Tap \"Try again\" on the save — or \"Open original\" to read it on the web.",
                     icon = Icons.AutoMirrored.Rounded.MenuBook
@@ -1221,7 +1372,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Text recognition is optional",
-                    body = "Auto-scan makes English screenshots and PDFs searchable. Other languages may be partial. Large PDFs are indexed for the first 30 pages to keep the app fast.",
+                    body = "Auto-scan makes the text in screenshots, photos and PDFs searchable: English and other Latin-alphabet languages always, plus the languages you turn on under Text recognition › Languages in images. PDFs are read up to the page limit you choose there.",
                     icon = Icons.AutoMirrored.Rounded.TextSnippet
                 )
 
@@ -1243,6 +1394,26 @@ fun SettingsScreen(
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
+                    title = "Lock a collection",
+                    body = "Open a collection, tap Edit, and turn on \"Lock this collection\". It disappears from Home, Browse, search, and the widget. To see it again, tap Locked at the bottom of Browse (or Open under Privacy here) and unlock with your fingerprint, face, or phone PIN. It hides again when your screen locks. Want no trace of it in Browse? Turn off \"Show Locked in Browse\" under Privacy.",
+                    icon = Icons.Rounded.Lock
+                )
+                HelpItem(
+                    title = "Sync between your devices",
+                    body = "Turn on Sync between devices on each phone or tablet, signed in to the same Google account. Your library travels through your own Google Drive (a \"PettiBox\" folder). PettiBox syncs when you open it, about a minute after you change something, and in the background on the schedule you pick (15 minutes to weekly, or \"Only while in use\" for none). Photos and files follow, on Wi-Fi by default. Reminders ring on every device that has the save.",
+                    icon = Icons.Rounded.Sync
+                )
+                HelpItem(
+                    title = "Where is my library kept?",
+                    body = "PettiBox has no servers. Your library lives on your phone and, with sync on, on your other devices and in your own Google Drive. Nobody else can see it. Turning sync off never deletes anything on the phone; you can also remove this phone's copy from Drive, or use \"Delete synced data\" to clear the synced data from Drive and stop sync on every device, while each device keeps its library.",
+                    icon = Icons.Rounded.Lock
+                )
+                HelpItem(
+                    title = "Edited on two devices?",
+                    body = "If the same title, note or link was changed on two devices before they synced, both versions are kept. Open the save and pick the one to use; every device follows. A delete never wipes an edit made elsewhere: the save stays, and anything removed by sync waits in Recently deleted for 30 days. If another device wants to remove many saves at once, sync pauses and asks you first, after making a backup.",
+                    icon = Icons.Rounded.Devices
+                )
+                HelpItem(
                     title = "Back up your shelf",
                     body = "Every backup always keeps a copy on this phone; connect Google Drive (and optionally an extra folder) to send the same copy there too. \"Back up now\" fills every destination in one tap. Offline article copies are included, so they come back on a new phone too.",
                     icon = Icons.Rounded.Download
@@ -1259,7 +1430,7 @@ fun SettingsScreen(
                 )
                 HelpItem(
                     title = "Back up to your Google Drive",
-                    body = "Connect Google Drive in the Backup section and every nightly safety copy also uploads to a \"PettiBox Backups\" folder in your own Drive. PettiBox can only see files it created — never the rest of your Drive. Wrong account connected? Tap \"Switch account\" under Google Drive to pick a different one.",
+                    body = "Connect Google Drive in the Backup section and every nightly safety copy also uploads to a \"PettiBox › Backups\" folder in your own Drive. PettiBox can only see files it created — never the rest of your Drive. Wrong account connected? Tap \"Switch account\" under Google Drive to pick a different one.",
                     icon = Icons.Rounded.Cloud
                 )
                 }
@@ -1345,6 +1516,80 @@ fun SettingsScreen(
                         "Locking your phone's screen always locks PettiBox right away, so it's safe to hand your phone to someone.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Locked collections. Looks the same whether or not any exist,
+                // so Settings gives nothing away until after an unlock.
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        if (collectionsUnlocked) Icons.Rounded.LockOpen else Icons.Rounded.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Locked collections",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Lock a collection from its Edit screen to hide it everywhere until you unlock it.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    TextButton(onClick = {
+                        val activity = ctx as? androidx.fragment.app.FragmentActivity
+                        when {
+                            collectionsUnlocked -> {
+                                AppLockSession.lockCollections()
+                                scope.launch { snackbarHostState.showSnackbar("Locked collections are hidden again") }
+                            }
+                            activity != null -> AppLockSession.unlockCollections(activity) {
+                                scope.launch {
+                                    if (viewModel.lockedCollectionCount() > 0) {
+                                        onOpenBrowse()
+                                    } else {
+                                        snackbarHostState.showSnackbar(
+                                            "Nothing locked yet. Lock a collection from its Edit screen."
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }) {
+                        Text(if (collectionsUnlocked) "Lock again" else "Open", fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(Modifier.width(36.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Show Locked in Browse",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            if (showLockedTile) "A Locked tile at the bottom of Browse opens them."
+                            else "No trace in Browse. Open them here, with the button above.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = showLockedTile,
+                        onCheckedChange = { show -> scope.launch { viewModel.setShowLockedTile(show) } }
                     )
                 }
             }
@@ -1685,7 +1930,11 @@ fun SettingsScreen(
                     Spacer(Modifier.width(8.dp))
                     Text("Share PettiBox with a friend", fontWeight = FontWeight.Bold)
                 }
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(4.dp))
+                TextButton(onClick = { showLicenses = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Open-source licenses")
+                }
+                if (showLicenses) LicensesSheet(onDismiss = { showLicenses = false })
                 Text(
                     "PettiBox ${BuildConfig.VERSION_NAME} · ${HelpLinks.SUPPORT_EMAIL}",
                     style = MaterialTheme.typography.bodySmall,

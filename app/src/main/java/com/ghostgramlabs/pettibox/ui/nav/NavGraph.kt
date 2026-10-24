@@ -147,7 +147,8 @@ fun PettiBoxNavGraph(
             composable(Routes.Settings) {
                 SettingsScreen(
                     themeMode = themeMode,
-                    onThemeModeChange = onThemeModeChange
+                    onThemeModeChange = onThemeModeChange,
+                    onOpenBrowse = { nav.navigateTopLevel(Routes.categories()) }
                 )
             }
             composable(

@@ -1,0 +1,55 @@
+{
+  "baseline": "2ebb9c9afe42f8297741f44362fc3384988d9c82",
+  "probes": [
+    {
+      "id": "D01",
+      "reproduced": true,
+      "detail": "Retry metadata write erased pending-upload status; local title changed, peer still sees Before after another round."
+    },
+    {
+      "id": "D05",
+      "reproduced": true,
+      "detail": "Reset during a round was followed by a successful upload; only the next round noticed reset."
+    },
+    {
+      "id": "D11",
+      "reproduced": true,
+      "detail": "Own shard disappeared but Sync reported success and sent zero files."
+    },
+    {
+      "id": "D10",
+      "reproduced": true,
+      "detail": "Decoder accepted numeric URL, out-of-range shard, and head timestamp beyond vv; round reported success but savedPage now throws."
+    },
+    {
+      "id": "O01",
+      "reproduced": true,
+      "detail": "Unsupported protocol file silently skipped; round reported clean success."
+    },
+    {
+      "id": "D06b",
+      "reproduced": true,
+      "detail": "A valid attachment in the second files/ folder is invisible to storedFiles()."
+    },
+    {
+      "id": "D06a",
+      "reproduced": true,
+      "detail": "Folder consolidation recursively deleted a file uploaded after the child-list snapshot."
+    },
+    {
+      "id": "D03-model",
+      "reproduced": true,
+      "detail": "A durable dot at 100 followed by a post-crash dot at 50 loses the title on merge. Android persistence ordering was established by source inspection."
+    },
+    {
+      "id": "D12",
+      "reproduced": true,
+      "detail": "Waiting for removal review prevented an unrelated new browser save from reaching another device."
+    },
+    {
+      "id": "D09",
+      "reproduced": true,
+      "detail": "With request deadlines shortened to 5ms, a stalled body was still not aborted after 25ms because call() cleared the timer at headers."
+    }
+  ]
+}

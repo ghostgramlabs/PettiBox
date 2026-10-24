@@ -16,11 +16,17 @@ import com.ghostgramlabs.pettibox.ui.widget.ShelfWidget
 import com.ghostgramlabs.pettibox.ui.widget.WidgetTitlesExpiryWorker
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.data.local.SyncDao
+import com.ghostgramlabs.pettibox.data.sync.SyncPreferences
+import com.ghostgramlabs.pettibox.data.sync.SyncScheduler
+import com.ghostgramlabs.pettibox.data.sync.SyncSetup
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -36,6 +42,11 @@ class PettiBoxApp : Application(), Configuration.Provider {
     @Inject lateinit var shelfNudgePreferences: ShelfNudgePreferences
     @Inject lateinit var reminderPreferences: ReminderPreferences
     @Inject lateinit var appLockPreferences: AppLockPreferences
+    @Inject lateinit var syncPreferences: SyncPreferences
+    @Inject lateinit var syncSetup: SyncSetup
+    @Inject lateinit var syncDao: SyncDao
+    @Inject lateinit var ocrPreferences: com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
+    @Inject lateinit var ocrModels: com.ghostgramlabs.pettibox.data.ocr.OcrModels
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -76,6 +87,25 @@ class PettiBoxApp : Application(), Configuration.Provider {
         // Saves deleted more than 30 days ago leave Recently deleted for
         // good (files included) — otherwise the bin would grow forever.
         appScope.launch { repository.purgeExpiredTrash() }
+        // Text in other languages: finish a model download or a re-read that
+        // was cut off (or start them, for a phone set to such a language).
+        appScope.launch {
+            val wanted = ocrPreferences.languages.first()
+            val ready = ocrModels.ready(wanted)
+            if (ready != wanted || ready != ocrPreferences.readWith()) {
+                com.ghostgramlabs.pettibox.data.ocr.OcrModelWorker.enqueue(this@PettiBoxApp)
+            }
+            if (ocrPreferences.rereadCursor() != null) {
+                com.ghostgramlabs.pettibox.data.ocr.OcrRereadWorker.enqueue(this@PettiBoxApp)
+            }
+            // Files noted as waiting to be read (one that arrived just as the app
+            // stopped, say). A job already queued for one is left alone.
+            for (s in repository.pendingReadings()) {
+                com.ghostgramlabs.pettibox.data.ocr.OcrWorker.enqueue(
+                    this@PettiBoxApp, s.itemId, s.uri, s.attachmentId, s.pdf, androidx.work.ExistingWorkPolicy.KEEP
+                )
+            }
+        }
         // Keep any placed "Unread" widget in step with the shelf.
         appScope.launch { ShelfWidget.keepUpdated(this@PettiBoxApp) }
         // Make sure the weekly shelf nudge is queued (or not), like backups.
@@ -109,5 +139,27 @@ class PettiBoxApp : Application(), Configuration.Provider {
         appScope.launch {
             ReminderScheduler.rescheduleAll(this@PettiBoxApp, repository)
         }
+        // Sync between devices: make the outbox triggers and background
+        // syncing match the setting (a kill mid-toggle, or a WorkManager
+        // wipe, can leave them out of step). Nothing runs while it's off.
+        appScope.launch {
+            val sync = syncPreferences.status.first()
+            syncSetup.reconcile(sync.enabled)
+            SyncScheduler.apply(this@PettiBoxApp, sync.enabled, sync.interval)
+        }
+        // A few seconds after the last edit, send it. Each edit restarts the
+        // wait, so a burst of edits (typing a note) is one round.
+        appScope.launch {
+            combine(syncPreferences.enabled, syncDao.observeOutboxCount()) { on, queued -> on && queued > 0 }
+                .collectLatest { pending ->
+                    if (pending) {
+                        kotlinx.coroutines.delay(EDIT_PAUSE_MS)
+                        SyncScheduler.nowUnlessWaiting(this@PettiBoxApp)
+                    }
+                }
+        }
     }
 }
+
+/** How long edits must pause before they're sent. */
+private const val EDIT_PAUSE_MS = 3_000L

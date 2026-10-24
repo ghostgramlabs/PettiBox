@@ -10,6 +10,7 @@ import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.article.ArticleRepository
 import com.ghostgramlabs.pettibox.data.metadata.MetadataFetcher
+import com.ghostgramlabs.pettibox.data.metadata.PageSnapshotWorker
 import com.ghostgramlabs.pettibox.data.metadata.ThumbnailWorker
 import com.ghostgramlabs.pettibox.data.ocr.OcrWorker
 import com.ghostgramlabs.pettibox.data.ocr.PdfTextWorker
@@ -420,8 +421,7 @@ class SaveSheetViewModel @Inject constructor(
         // Copy any foreign content URIs into our own filesDir so they survive
         // permission revocation and process death. http(s) URLs and existing
         // file:// URIs are passed through unchanged.
-        val ownLocalUri = s.localUri?.let { ingestIfForeign(it) }
-        val ownAttachments = s.attachments.map { ingestIfForeign(it) ?: it }
+        val (ownLocalUri, ownAttachments) = ingestAll(s)
 
         // A quick note left on the placeholder title is named after its
         // first line, so the shelf shows "Call the dentist", not "Quick save".
@@ -483,7 +483,12 @@ class SaveSheetViewModel @Inject constructor(
         // slows the save itself.
         if (s.contentType == ContentType.LINK) articleRepository.onLinkSaved(id, s.url)
         // Keep the preview image on the phone so the card isn't blank offline.
-        if (s.previewImage?.startsWith("http") == true) ThumbnailWorker.enqueue(appContext, id)
+        if (s.previewImage?.startsWith("http") == true) {
+            ThumbnailWorker.enqueue(appContext, id)
+        } else if (s.contentType == ContentType.LINK && s.previewImage == null) {
+            // No preview image (or the save beat it): a screenshot of the page.
+            PageSnapshotWorker.enqueue(appContext, id)
+        }
 
         _state.value = s.copy(isSaved = true)
     }
@@ -496,6 +501,17 @@ class SaveSheetViewModel @Inject constructor(
                 ContentType.PDF.name -> PdfTextWorker.enqueue(appContext, itemId, row.uri, attId)
             }
         }
+    }
+
+    /**
+     * The share's main file and its attachments, copied in. The main file is
+     * usually the first attachment too: it's copied once and both point at
+     * that copy, so an image isn't stored (and backed up) twice.
+     */
+    private suspend fun ingestAll(s: SaveSheetState): Pair<String?, List<String>> {
+        val copies = HashMap<String, String?>()
+        suspend fun own(uri: String) = copies.getOrPut(uri) { ingestIfForeign(uri) }
+        return s.localUri?.let { own(it) } to s.attachments.map { own(it) ?: it }
     }
 
     private suspend fun ingestIfForeign(uriString: String): String? {
@@ -517,8 +533,7 @@ class SaveSheetViewModel @Inject constructor(
         val s = _state.value
         val target = repo.getById(targetItemId) ?: return@launch
 
-        val ownLocalUri = s.localUri?.let { ingestIfForeign(it) }
-        val ownAttachments = s.attachments.map { ingestIfForeign(it) ?: it }
+        val (ownLocalUri, ownAttachments) = ingestAll(s)
 
         val urisToAttach = buildList {
             if (s.attachments.isEmpty() && !ownLocalUri.isNullOrBlank()) add(ownLocalUri)
@@ -564,7 +579,7 @@ class SaveSheetViewModel @Inject constructor(
     private fun parseTagInput(input: String): List<String> {
         if (input.isBlank()) return emptyList()
         return input.split(Regex("[,\\n]+"))
-            .map { it.trim().removePrefix("#") }
+            .map { it.trim().trimStart('#').trim() }
             .filter { it.isNotBlank() && it.length <= 24 }
             .distinct()
     }

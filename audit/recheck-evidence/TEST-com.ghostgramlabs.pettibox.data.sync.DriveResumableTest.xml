@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.sync.DriveResumableTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-18T00:09:30" hostname="SAS" time="0.167">
+  <properties/>
+  <testcase name="a_damaged_partial_download_is_thrown_away" classname="com.ghostgramlabs.pettibox.data.sync.DriveResumableTest" time="0.061"/>
+  <testcase name="a_small_file_goes_up_in_one_request" classname="com.ghostgramlabs.pettibox.data.sync.DriveResumableTest" time="0.009"/>
+  <testcase name="a_refused_resumable_upload_is_sent_in_one_piece_instead" classname="com.ghostgramlabs.pettibox.data.sync.DriveResumableTest" time="0.018"/>
+  <testcase name="a_big_upload_cut_off_part_way_carries_on_from_the_last_piece" classname="com.ghostgramlabs.pettibox.data.sync.DriveResumableTest" time="0.029"/>
+  <testcase name="an_expired_session_starts_a_fresh_upload" classname="com.ghostgramlabs.pettibox.data.sync.DriveResumableTest" time="0.015"/>
+  <testcase name="a_reset_updates_every_marker_so_readers_always_see_it" classname="com.ghostgramlabs.pettibox.data.sync.DriveResumableTest" time="0.012"/>
+  <testcase name="a_download_cut_off_part_way_asks_only_for_the_rest" classname="com.ghostgramlabs.pettibox.data.sync.DriveResumableTest" time="0.021"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

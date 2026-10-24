@@ -12,7 +12,9 @@ import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
 import com.ghostgramlabs.pettibox.data.local.TagWithCount
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
+import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.ui.lock.AppLockSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -104,6 +106,14 @@ data class CategoriesState(
     val unreadCount: Int = 0,
     val trashCount: Int = 0,
     val topTags: List<TagWithCount> = emptyList(),
+    /** Collections that are locked; the "Locked" pill shows only when > 0. */
+    val lockedCount: Int = 0,
+    /** Locked collections are open right now (shown in the grid, badged). */
+    val collectionsUnlocked: Boolean = false,
+    /** The user's "Show Locked in Browse" choice. */
+    val showLockedTile: Boolean = true,
+    /** False only for the placeholder before the first database emission. */
+    val categoriesLoaded: Boolean = false,
     /** Toggle inside a Category drill — show archived items of that one collection. */
     val showArchived: Boolean = false,
     val sort: BrowseSort = BrowseSort.NEWEST
@@ -113,6 +123,7 @@ data class CategoriesState(
 @HiltViewModel
 class CategoriesViewModel @Inject constructor(
     private val repo: SaveRepository,
+    appLockPreferences: AppLockPreferences,
     @ApplicationContext private val appContext: Context,
     handle: SavedStateHandle
 ) : ViewModel() {
@@ -134,7 +145,10 @@ class CategoriesViewModel @Inject constructor(
         _showArchived,
         _sort,
         repo.observeUnreadTotal(),
-        repo.observeTrashTotal()
+        repo.observeTrashTotal(),
+        repo.observeLockedCollectionCount(),
+        AppLockSession.collectionsUnlocked,
+        appLockPreferences.showLockedTile
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val cats = args[1] as List<CategoryEntity>
@@ -153,7 +167,11 @@ class CategoriesViewModel @Inject constructor(
             showArchived = args[7] as Boolean,
             sort = args[8] as BrowseSort,
             unreadCount = args[9] as Int,
-            trashCount = args[10] as Int
+            trashCount = args[10] as Int,
+            lockedCount = args[11] as Int,
+            collectionsUnlocked = args[12] as Boolean,
+            showLockedTile = args[13] as Boolean,
+            categoriesLoaded = true
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CategoriesState())
 
@@ -163,9 +181,11 @@ class CategoriesViewModel @Inject constructor(
      * of paging items — empty PagingData for that branch is fine.
      */
     val drillItems: Flow<PagingData<SaveItemEntity>> =
-        combine(_destination, _showArchived, _sort) { d, archived, sort ->
-            Triple(d, archived, sort)
-        }.flatMapLatest { (dest, archived, sort) ->
+        combine(
+            _destination, _showArchived, _sort, AppLockSession.collectionsUnlocked
+        ) { d, archived, sort, showLocked ->
+            DrillKey(d, archived, sort, showLocked)
+        }.flatMapLatest { (dest, archived, sort, showLocked) ->
                 val source: () -> androidx.paging.PagingSource<Int, SaveItemEntity> = when (dest) {
                     BrowseDestination.Grid -> return@flatMapLatest flowOf(PagingData.empty())
                     BrowseDestination.TagList -> return@flatMapLatest flowOf(PagingData.empty())
@@ -173,9 +193,9 @@ class CategoriesViewModel @Inject constructor(
                     BrowseDestination.Archive -> ({ repo.pagedArchived(sort.name) })
                     BrowseDestination.Reminders -> ({ repo.pagedUpcomingReminders(sort.name) })
                     BrowseDestination.Unread -> ({ repo.pagedUnread(sort.name) })
-                    BrowseDestination.Trash -> ({ repo.pagedTrash() })
+                    BrowseDestination.Trash -> ({ repo.pagedTrash(showLocked) })
                     is BrowseDestination.Category ->
-                        ({ repo.pagedByCategory(dest.id, includeArchived = archived, sort = sort.name) })
+                        ({ repo.pagedByCategory(dest.id, includeArchived = archived, sort = sort.name, showLocked = showLocked) })
                     is BrowseDestination.Tag -> ({ repo.pagedByTag(dest.name, sort.name) })
                 }
                 Pager(
@@ -188,6 +208,11 @@ class CategoriesViewModel @Inject constructor(
                     pagingSourceFactory = source
                 ).flow
             }.cachedIn(viewModelScope)
+
+    fun setSelectedCategoryLocked(locked: Boolean) = viewModelScope.launch {
+        val dest = _destination.value as? BrowseDestination.Category ?: return@launch
+        repo.setCategoryLocked(dest.id, locked)
+    }
 
     fun navigate(dest: BrowseDestination) {
         _destination.value = dest
@@ -319,3 +344,10 @@ class CategoriesViewModel @Inject constructor(
 
     suspend fun emptyTrash(): Int = repo.emptyTrash()
 }
+
+private data class DrillKey(
+    val destination: BrowseDestination,
+    val archived: Boolean,
+    val sort: BrowseSort,
+    val showLocked: Boolean
+)

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.ocr.TextReaderScriptTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-18T01:35:14" hostname="SAS" time="0.004">
+  <properties/>
+  <testcase name="junk_of_the_same_length_doesnt_replace_real_text" classname="com.ghostgramlabs.pettibox.data.ocr.TextReaderScriptTest" time="0.001"/>
+  <testcase name="text_in_a_language_turned_off_since_is_kept" classname="com.ghostgramlabs.pettibox.data.ocr.TextReaderScriptTest" time="0.0"/>
+  <testcase name="made_up_letters_in_a_latin_line_dont" classname="com.ghostgramlabs.pettibox.data.ocr.TextReaderScriptTest" time="0.001"/>
+  <testcase name="indic_readings_come_out_as_keyboards_type_them" classname="com.ghostgramlabs.pettibox.data.ocr.TextReaderScriptTest" time="0.0"/>
+  <testcase name="a_first_reading_is_always_taken" classname="com.ghostgramlabs.pettibox.data.ocr.TextReaderScriptTest" time="0.001"/>
+  <testcase name="a_shorter_reading_doesnt_make_words_disappear" classname="com.ghostgramlabs.pettibox.data.ocr.TextReaderScriptTest" time="0.0"/>
+  <testcase name="a_line_mostly_in_the_script_counts_however_short" classname="com.ghostgramlabs.pettibox.data.ocr.TextReaderScriptTest" time="0.001"/>
+  <testcase name="a_reading_in_a_language_just_turned_on_replaces_a_latin_guess" classname="com.ghostgramlabs.pettibox.data.ocr.TextReaderScriptTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -118,19 +118,24 @@ fun ReminderPreset.toEpochMillis(
             cal.set(Calendar.MINUTE, morningMinute)
             cal.set(Calendar.SECOND, 0)
             cal.set(Calendar.MILLISECOND, 0)
-            val daysUntilSaturday = ((Calendar.SATURDAY - cal.get(Calendar.DAY_OF_WEEK)) + 7) % 7
-            if (daysUntilSaturday == 0 && cal.timeInMillis <= now) {
-                cal.add(Calendar.DAY_OF_MONTH, 7)
-            } else {
-                cal.add(Calendar.DAY_OF_MONTH, daysUntilSaturday)
+            val dow = cal.get(Calendar.DAY_OF_WEEK)
+            val daysUntilSaturday = ((Calendar.SATURDAY - dow) + 7) % 7
+            when {
+                // Sunday morning, before the morning time: still this weekend.
+                dow == Calendar.SUNDAY && cal.timeInMillis > now -> Unit
+                daysUntilSaturday == 0 && cal.timeInMillis <= now -> cal.add(Calendar.DAY_OF_MONTH, 7)
+                else -> cal.add(Calendar.DAY_OF_MONTH, daysUntilSaturday)
             }
         }
         ReminderPreset.NEXT_WEEK -> {
-            cal.add(Calendar.DAY_OF_MONTH, 7)
+            // Monday morning of the coming week. Never the same as "Tomorrow"
+            // (on a Sunday it's the Monday after) or "Weekend" (a Saturday).
             cal.set(Calendar.HOUR_OF_DAY, morningHour)
             cal.set(Calendar.MINUTE, morningMinute)
             cal.set(Calendar.SECOND, 0)
             cal.set(Calendar.MILLISECOND, 0)
+            val daysUntilMonday = ((Calendar.MONDAY - cal.get(Calendar.DAY_OF_WEEK)) + 7) % 7
+            cal.add(Calendar.DAY_OF_MONTH, if (daysUntilMonday <= 1) daysUntilMonday + 7 else daysUntilMonday)
         }
         ReminderPreset.CUSTOM -> Unit
     }

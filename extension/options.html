@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PettiBox settings</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    body { width: auto; max-width: 560px; max-height: none; margin: 24px auto; padding: 0 16px; }
+    h1 { font-size: 26px; margin: 8px 0 16px; }
+    select { font: inherit; border: 1px solid var(--edge); background: var(--bright); color: var(--ink); border-radius: 10px; padding: 7px 9px; }
+    .line { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .line > :first-child { flex: 1; }
+    ul { padding-left: 18px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>PettiBox</h1>
+
+  <section class="card">
+    <h2>Google account</h2>
+    <div class="line">
+      <span id="account">Not signed in</span>
+      <button id="signin" class="primary" style="width:auto">Sign in</button>
+      <button id="signout" hidden>Sign out</button>
+    </div>
+    <div id="signout-choice" class="card" style="margin-top:8px" hidden>
+      <p><b>Sign out of PettiBox in this browser?</b></p>
+      <div class="line">
+        <button id="signout-keep">Keep my library here</button>
+        <button id="signout-wipe" class="danger">Remove it from this browser</button>
+      </div>
+      <p class="muted">Removing only clears this browser. Your phone and Google Drive keep everything.
+        Use it on a computer you share.</p>
+    </div>
+    <p class="muted">Use the account PettiBox uses on your phone (Settings › Sync between devices).
+      PettiBox only sees files it made in your Drive, never the rest of it.</p>
+  </section>
+
+  <section class="card">
+    <h2>Sync</h2>
+    <div class="line">
+      <span id="last" class="muted"></span>
+      <button id="sync">Sync now</button>
+    </div>
+    <p id="error" class="muted" style="color: var(--danger)" hidden></p>
+    <label class="field">
+      <span>Sync in the background</span>
+      <select id="interval"></select>
+    </label>
+    <p class="muted">The extension also syncs when you open it, and about half a minute after you save or edit something.</p>
+  </section>
+
+  <section class="card">
+    <h2>This browser</h2>
+    <div class="line">
+      <input id="name" type="text" maxlength="40" placeholder="Chrome">
+      <button id="rename">Rename</button>
+    </div>
+    <p class="muted">How your phone lists this browser.</p>
+    <div id="devices-box" hidden>
+      <span class="muted">Your other devices</span>
+      <ul id="devices"></ul>
+    </div>
+  </section>
+
+  <section class="card" id="where">
+    <h2>Where your library lives</h2>
+    <p><b>PettiBox has no servers.</b> Your library is kept in three places, all yours:</p>
+    <ul>
+      <li><b>On this computer</b>, inside Chrome, so it works offline and opens instantly.</li>
+      <li><b>On your phones and tablets</b> with PettiBox.</li>
+      <li><b>In your own Google Drive</b>, in a "PettiBox" folder, which is how your devices stay in step.</li>
+    </ul>
+    <p>Nothing passes through anyone else's computers, and we can't see your saves. PettiBox only sees
+      files it made in your Drive, never the rest of it. Saves in locked collections never show here:
+      the browser can't unlock them.</p>
+    <div class="line">
+      <span class="muted">Keep your own copy as a file on this computer. It opens in any browser and imports into
+        Chrome, Firefox or other bookmark apps.</span>
+      <button id="download">Download a copy</button>
+    </div>
+  </section>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import com.ghostgramlabs.pettibox.data.local.ArticleDao
 import com.ghostgramlabs.pettibox.data.local.AttachmentDao
 import com.ghostgramlabs.pettibox.data.local.CategoryDao
 import com.ghostgramlabs.pettibox.data.local.SaveDao
+import com.ghostgramlabs.pettibox.data.local.SyncDao
 import com.ghostgramlabs.pettibox.data.local.TagDao
 import dagger.Module
 import dagger.Provides
@@ -76,4 +77,5 @@ object AppModule {
     @Provides fun provideAttachmentDao(db: AppDatabase): AttachmentDao = db.attachmentDao()
     @Provides fun provideTagDao(db: AppDatabase): TagDao = db.tagDao()
     @Provides fun provideArticleDao(db: AppDatabase): ArticleDao = db.articleDao()
+    @Provides fun provideSyncDao(db: AppDatabase): SyncDao = db.syncDao()
 }

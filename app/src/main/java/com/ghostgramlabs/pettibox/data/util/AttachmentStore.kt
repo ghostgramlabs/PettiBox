@@ -96,6 +96,25 @@ class AttachmentStore @Inject constructor(
      * Best-effort cleanup of files we own. Anything not under [baseDir] is
      * ignored — we never touch URIs outside our sandbox.
      */
+    /** True when both point at the same file, or at two copies with the same bytes. */
+    suspend fun sameContent(a: String, b: String): Boolean = withContext(Dispatchers.IO) {
+        if (a == b) return@withContext true
+        fun digest(s: String): String? = runCatching {
+            ctx.contentResolver.openInputStream(Uri.parse(s))?.use { input ->
+                val md = java.security.MessageDigest.getInstance("SHA-256")
+                val buf = ByteArray(64 * 1024)
+                while (true) {
+                    val n = input.read(buf)
+                    if (n < 0) break
+                    md.update(buf, 0, n)
+                }
+                md.digest().joinToString("") { "%02x".format(it) }
+            }
+        }.getOrNull()
+        val da = digest(a) ?: return@withContext false
+        da == digest(b)
+    }
+
     suspend fun deleteByUris(uris: List<String>) = withContext(Dispatchers.IO) {
         for (s in uris) {
             runCatching {

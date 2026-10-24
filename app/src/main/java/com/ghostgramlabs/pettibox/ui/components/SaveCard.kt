@@ -86,6 +86,29 @@ fun SaveCard(
     val type = runCatching { ContentType.valueOf(item.contentType) }.getOrDefault(ContentType.NOTE)
     val source = runCatching { SourceApp.valueOf(item.sourceApp) }.getOrDefault(SourceApp.UNKNOWN)
 
+    // Edited on two devices: a pulsing dot until someone picks a version.
+    if (item.syncId in LocalNeedsChoice.current) {
+        Box(modifier) {
+            SaveCardBody(type, item, accent, source, categoryEmoji, categoryName, onClick, onLongClick, Modifier)
+            NeedsChoiceDot(Modifier.align(Alignment.TopStart).offset(x = 6.dp, y = 6.dp))
+        }
+    } else {
+        SaveCardBody(type, item, accent, source, categoryEmoji, categoryName, onClick, onLongClick, modifier)
+    }
+}
+
+@Composable
+private fun SaveCardBody(
+    type: ContentType,
+    item: SaveItemEntity,
+    accent: Color,
+    source: SourceApp,
+    categoryEmoji: String?,
+    categoryName: String?,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier
+) {
     when (type) {
         ContentType.IMAGE -> PolaroidCard(item, accent, source, categoryEmoji, categoryName, onClick, onLongClick, modifier)
         ContentType.LINK -> LinkBookmarkCard(item, accent, source, categoryEmoji, categoryName, onClick, onLongClick, modifier)

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.bookmarks.RealExportSamplesTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-18T01:35:13" hostname="SAS" time="0.04">
+  <properties/>
+  <testcase name="flat pocket sample keeps time_added and tags per link" classname="com.ghostgramlabs.pettibox.data.bookmarks.RealExportSamplesTest" time="0.016"/>
+  <testcase name="real pocket ril export parses its single unread link" classname="com.ghostgramlabs.pettibox.data.bookmarks.RealExportSamplesTest" time="0.014"/>
+  <testcase name="raindrop export csv maps notes excerpts folders and favorites" classname="com.ghostgramlabs.pettibox.data.bookmarks.RealExportSamplesTest" time="0.01"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

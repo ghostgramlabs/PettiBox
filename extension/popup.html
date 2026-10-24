@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PettiBox</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="bar">
+    <img src="icons/icon-48.png" alt="" class="logo">
+    <h1>PettiBox</h1>
+    <span id="status" class="status" aria-live="polite"></span>
+    <button id="sync" class="icon-btn" title="Sync now" aria-label="Sync now">⟳</button>
+  </header>
+  <p id="error" role="alert" hidden></p>
+
+  <!-- Another device wants to take many saves off the shelf -->
+  <section id="review" class="card review" hidden>
+    <h2>Sync is paused</h2>
+    <p id="review-text"></p>
+    <div class="row actions">
+      <button id="review-keep" class="primary">Keep mine</button>
+      <button id="review-apply">Apply</button>
+    </div>
+    <p class="muted">Keep mine puts them back on every device. Apply moves them to Recently deleted or Archive here too.</p>
+  </section>
+
+  <!-- Signed out -->
+  <section id="signin" class="card" hidden>
+    <h2>Sign in to sync</h2>
+    <p>Use the same Google account as PettiBox on your phone. Your library comes from your own
+      Google Drive (the "PettiBox" folder); turn on <b>Sync between devices</b> in the app's
+      Settings first.</p>
+    <button id="signin-btn" class="primary">Sign in with Google</button>
+  </section>
+
+  <main id="app" hidden>
+    <!-- The page you're on -->
+    <section class="card page" id="page" hidden>
+      <div class="page-head">
+        <div class="pic" id="page-pic"><img id="page-favicon" alt=""></div>
+        <div class="grow">
+          <input id="page-title" class="title-input" type="text" autocomplete="off" aria-label="Title">
+          <div class="url" id="page-url"></div>
+        </div>
+      </div>
+
+      <!-- Not saved yet -->
+      <div id="page-new">
+        <div class="hint">Save to</div>
+        <div class="chips" id="save-chips"></div>
+        <details id="more">
+          <summary>Tags, a note, or another collection</summary>
+          <label class="field"><span>Collection</span><input id="save-col" type="text" list="cols" placeholder="Type a name (new ones are made)" autocomplete="off"></label>
+          <label class="field"><span>Tags</span><input id="save-tags" type="text" placeholder="comma separated" autocomplete="off"></label>
+          <label class="field"><span>Note</span><textarea id="save-note" rows="2"></textarea></label>
+          <button id="save-btn" class="primary">Save</button>
+        </details>
+      </div>
+
+      <!-- Already saved -->
+      <div id="page-saved" hidden>
+        <div class="saved-line" id="saved-line"></div>
+        <div class="hint">Move to</div>
+        <div class="chips" id="move-chips"></div>
+        <div class="row actions">
+          <button id="saved-edit">Edit</button>
+          <span class="grow"></span>
+          <span class="muted">Ctrl+Shift+S saves without opening this</span>
+        </div>
+      </div>
+
+      <!-- In Recently deleted -->
+      <div id="page-trash" hidden>
+        <div class="saved-line">In Recently deleted</div>
+        <button id="restore-btn" class="primary">Restore</button>
+      </div>
+    </section>
+
+    <!-- Saves edited on two devices, waiting for a choice -->
+    <button id="attention" class="attention-bar" hidden>
+      <span class="pulse" aria-hidden="true"></span>
+      <span id="attention-text"></span>
+    </button>
+
+    <!-- Library -->
+    <section class="card">
+      <input id="search" type="search" placeholder="Search your library" autocomplete="off">
+      <div class="filters" role="tablist">
+        <button data-filter="all" class="chip on">All</button>
+        <button data-filter="fav" class="chip">Favorites</button>
+        <button data-filter="arch" class="chip">Archive</button>
+        <button data-filter="trash" class="chip">Recently deleted</button>
+      </div>
+      <ul id="results" class="results"></ul>
+      <p id="empty" class="muted" hidden></p>
+    </section>
+  </main>
+
+  <!-- Edit a save -->
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet-body card">
+      <h2>Edit save</h2>
+      <div id="conflicts"></div>
+      <div id="edit-files" class="files"></div>
+      <label class="field"><span>Title</span><input id="edit-title" type="text"></label>
+      <label class="field"><span>Link</span><input id="edit-url" type="url"></label>
+      <div class="row">
+        <label class="field grow"><span>Collection</span><input id="edit-col" type="text" list="cols" placeholder="None"></label>
+        <label class="field grow"><span>Tags</span><input id="edit-tags" type="text" placeholder="comma separated"></label>
+      </div>
+      <label class="field"><span>Note</span><textarea id="edit-note" rows="3"></textarea></label>
+      <label class="check"><input id="edit-fav" type="checkbox"> Favorite</label>
+      <div class="row actions">
+        <button id="edit-delete" class="danger">Delete</button>
+        <span class="grow"></span>
+        <button id="edit-cancel">Cancel</button>
+        <button id="edit-save" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <datalist id="cols"></datalist>
+  <footer class="foot">
+    <a href="#" id="options">Settings</a>
+    <span id="account" class="muted"></span>
+  </footer>
+  <p class="muted where"><a href="#" id="where">Kept on your devices and in your own Google Drive. No PettiBox servers.</a></p>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

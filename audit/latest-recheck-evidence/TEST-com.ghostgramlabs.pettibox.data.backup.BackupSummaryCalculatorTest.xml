@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.backup.BackupSummaryCalculatorTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-18T01:35:13" hostname="SAS" time="0.026">
+  <properties/>
+  <testcase name="summarizeCountsBackupConfidenceFields" classname="com.ghostgramlabs.pettibox.data.backup.BackupSummaryCalculatorTest" time="0.026"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

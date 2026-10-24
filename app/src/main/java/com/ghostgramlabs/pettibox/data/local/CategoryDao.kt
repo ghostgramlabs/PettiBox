@@ -36,4 +36,10 @@ interface CategoryDao {
 
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun count(): Int
+
+    @Query("SELECT COUNT(*) FROM categories WHERE is_locked = 1")
+    fun observeLockedCount(): Flow<Int>
+
+    @Query("SELECT COALESCE((SELECT is_locked FROM categories WHERE id = :id), 0)")
+    fun observeIsLocked(id: String): Flow<Boolean>
 }

@@ -29,5 +29,11 @@ data class CategoryEntity(
     @ColumnInfo(name = "sort_order") val sortOrder: Int = 0,
     @ColumnInfo(name = "parent_id") val parentId: String? = null,
     @ColumnInfo(name = "user_created") val userCreated: Boolean = false,
-    @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis()
+    @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis(),
+    /**
+     * A locked collection's saves show only inside it, after a fingerprint /
+     * face / phone-PIN unlock. Everywhere else (Home, search, Unread, the
+     * widget, nudges) leaves them out. See [NOT_IN_LOCKED_COLLECTION].
+     */
+    @ColumnInfo(name = "is_locked", defaultValue = "0") val isLocked: Boolean = false
 )

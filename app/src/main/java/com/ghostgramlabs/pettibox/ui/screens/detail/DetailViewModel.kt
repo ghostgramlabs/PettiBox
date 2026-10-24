@@ -8,19 +8,33 @@ import com.ghostgramlabs.pettibox.data.article.ArticleRepository
 import com.ghostgramlabs.pettibox.data.local.ArticleCopyEntity
 import com.ghostgramlabs.pettibox.data.local.ArticleCopySummary
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
+import com.ghostgramlabs.pettibox.data.local.OcrStatusEntity
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
 import com.ghostgramlabs.pettibox.data.local.SaveItemEntity
+import com.ghostgramlabs.pettibox.data.local.SyncDao
 import com.ghostgramlabs.pettibox.data.local.TagEntity
+import com.ghostgramlabs.pettibox.data.lock.LockedCollections
+import com.ghostgramlabs.pettibox.data.metadata.PageSnapshotWorker
 import com.ghostgramlabs.pettibox.data.preferences.ArticlePreferences
 import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
 import com.ghostgramlabs.pettibox.data.preferences.RatingPreferences
 import com.ghostgramlabs.pettibox.data.reminders.ReminderScheduler
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
+import com.ghostgramlabs.pettibox.data.sync.SyncCodec
+import com.ghostgramlabs.pettibox.data.sync.SyncEngine
+import com.ghostgramlabs.pettibox.data.sync.SyncRecord
+import com.ghostgramlabs.pettibox.data.sync.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,11 +56,79 @@ class DetailViewModel @Inject constructor(
     private val articleRepository: ArticleRepository,
     private val articlePreferences: ArticlePreferences,
     private val ratingPreferences: RatingPreferences,
+    private val syncDao: SyncDao,
+    private val syncEngine: SyncEngine,
     @ApplicationContext private val appContext: Context,
     handle: SavedStateHandle
 ) : ViewModel() {
 
     private val itemId: Long = handle.get<Long>("id") ?: -1L
+
+    /**
+     * Fields edited on two devices without either seeing the other: both
+     * values are kept until the user picks one here. Empty unless sync is on.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val conflicts: StateFlow<List<SyncConflict>> = repo.observeById(itemId)
+        .map { it?.syncId }
+        .distinctUntilChanged()
+        .flatMapLatest { syncId -> if (syncId == null) flowOf(null) else syncDao.observeMeta(SyncRecord.KIND_ITEM, syncId) }
+        .map { row ->
+            val r = row?.let { runCatching { SyncCodec.decodeString(it.recordJson) }.getOrNull() } ?: return@map emptyList()
+            CONFLICT_FIELDS.mapNotNull { (field, label) ->
+                val others = r.alternatives(field).mapNotNull { it.value as? String }
+                if (others.isEmpty()) null else SyncConflict(field, label, r.value(field) as? String, others)
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    init {
+        // A save waiting for a choice: sync now, so a choice already made on
+        // another device arrives (and the question goes) before anyone answers.
+        viewModelScope.launch {
+            if (conflicts.first { true }.isEmpty()) conflicts.first { it.isNotEmpty() }
+            SyncScheduler.now(appContext)
+        }
+    }
+
+    /**
+     * Still waiting for a choice on [field], after syncing first? A choice on
+     * any one device settles it everywhere, so this one never asks again.
+     */
+    private suspend fun stillUndecided(field: String): Boolean {
+        syncEngine.round()
+        val syncId = state.value.item?.syncId ?: return false
+        val row = syncDao.meta(SyncRecord.KIND_ITEM, syncId) ?: return false
+        val r = runCatching { SyncCodec.decodeString(row.recordJson) }.getOrNull() ?: return false
+        return r.alternatives(field).isNotEmpty()
+    }
+
+    /**
+     * Picks the other version: an ordinary edit, which every device then
+     * follows. Returns false (nothing changed) if another device chose first.
+     */
+    suspend fun useVersion(conflict: SyncConflict, value: String): Boolean {
+        if (!stillUndecided(conflict.field)) return false
+        val it = repo.getById(itemId) ?: return false
+        val now = System.currentTimeMillis()
+        repo.update(
+            when (conflict.field) {
+                SyncRecord.F_TITLE -> it.copy(title = value, updatedAt = now)
+                SyncRecord.F_URL -> it.copy(url = value, updatedAt = now)
+                else -> it.copy(notes = value, updatedAt = now)
+            }
+        )
+        return true
+    }
+
+    /** Keeps what's shown and drops the other version everywhere; false if another device chose first. */
+    suspend fun keepCurrent(conflict: SyncConflict): Boolean {
+        if (!stillUndecided(conflict.field)) return false
+        val syncId = state.value.item?.syncId ?: return false
+        syncEngine.keepShown(syncId, conflict.field)
+        SyncScheduler.soon(appContext)
+        return true
+    }
 
     /** Offline reading copy of this save's link, if one was made or attempted. */
     val article: StateFlow<ArticleCopySummary?> = articleRepository.observeSummary(itemId)
@@ -54,6 +136,12 @@ class DetailViewModel @Inject constructor(
 
     val readerTextZoom: StateFlow<Int> = articlePreferences.readerTextZoom
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ArticlePreferences.DEFAULT_TEXT_ZOOM)
+
+    /** Replaces the card picture with a fresh screenshot of the page. */
+    fun requestPageScreenshot() {
+        if (state.value.item?.url.isNullOrBlank()) return
+        PageSnapshotWorker.enqueue(appContext, itemId, force = true)
+    }
 
     /** Save, retry, or update this link's offline copy. */
     fun requestArticleCopy() = viewModelScope.launch {
@@ -76,6 +164,19 @@ class DetailViewModel @Inject constructor(
         articlePreferences.setReaderTextZoom(zoom)
     }
 
+    /**
+     * True while the save sits in a locked collection that hasn't been
+     * unlocked; null until known, so neither the save nor the lock flashes.
+     * Reminder taps and other deep links land here without passing Browse.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val lockedOut: StateFlow<Boolean?> = repo.observeById(itemId)
+        .map { it?.categoryId }
+        .distinctUntilChanged()
+        .flatMapLatest { repo.observeCategoryLocked(it) }
+        .combine(LockedCollections.unlocked) { locked, unlocked -> locked && !unlocked }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     val state: StateFlow<DetailState> = combine(
         repo.observeById(itemId),
         repo.observeCategories(),
@@ -96,6 +197,23 @@ class DetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { if (itemId > 0) repo.touchOpened(itemId) }
+    }
+
+    /** Where reading each of this save's files stands, by source ([OcrStatusEntity.sourceOf]). */
+    val readingStates: StateFlow<Map<String, OcrStatusEntity>> = repo.observeReadingStates(itemId)
+        .map { rows -> rows.associateBy { it.source } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** "Try again": reads this save's images and PDFs once more, in the languages on now. */
+    fun readTextAgain() = viewModelScope.launch {
+        val item = repo.getById(itemId) ?: return@launch
+        val files = repo.attachmentsOf(itemId).filter { it.kind == "IMAGE" || it.kind == "PDF" }
+        val sources = if (files.isNotEmpty()) files.map { Triple(it.id as Long?, it.uri, it.kind == "PDF") }
+        else listOfNotNull(item.localUri?.takeIf { item.contentType == "IMAGE" || item.contentType == "PDF" }?.let { Triple(null, it, item.contentType == "PDF") })
+        for ((attachmentId, uri, pdf) in sources) {
+            repo.setReadingState(itemId, attachmentId, uri, pdf, OcrStatusEntity.PENDING)
+            com.ghostgramlabs.pettibox.data.ocr.OcrWorker.enqueue(appContext, itemId, uri, attachmentId, pdf)
+        }
     }
 
     fun toggleFavorite() = viewModelScope.launch {
@@ -168,7 +286,7 @@ class DetailViewModel @Inject constructor(
 
     fun addTag(tag: String) = viewModelScope.launch {
         val it = state.value.item ?: return@launch
-        val clean = tag.trim().removePrefix("#")
+        val clean = tag.trim().trimStart('#').trim()
         if (clean.isBlank() || clean.length > 24) return@launch
         repo.addTag(it.id, clean)
     }
@@ -178,7 +296,45 @@ class DetailViewModel @Inject constructor(
         repo.removeTag(it.id, tag)
     }
 
-    fun deleteAttachment(id: Long) = viewModelScope.launch {
-        repo.deleteAttachment(id)
+    /** Removed files whose Undo is still on screen: their bytes are still on disk. */
+    private val undoable = java.util.concurrent.ConcurrentHashMap<Long, SaveRepository.RemovedAttachment>()
+
+    /**
+     * Takes the file out of the save now, so leaving the screen (or the app)
+     * can't lose the removal. False if it was already gone.
+     */
+    suspend fun removeAttachment(id: Long): Boolean {
+        val removed = repo.removeAttachment(id) ?: return false
+        undoable[id] = removed
+        return true
+    }
+
+    fun undoRemoveAttachment(id: Long) = viewModelScope.launch {
+        undoable.remove(id)?.let { repo.restoreAttachment(it) }
+    }
+
+    /** The Undo has gone: so can the file's bytes. */
+    fun finishRemoveAttachment(id: Long) = viewModelScope.launch {
+        undoable.remove(id)?.let { repo.discardRemovedFiles(it) }
+    }
+
+    override fun onCleared() {
+        // Left the screen with an Undo still showing: the removal stands.
+        val left = undoable.values.toList()
+        undoable.clear()
+        if (left.isNotEmpty()) {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                left.forEach { repo.discardRemovedFiles(it) }
+            }
+        }
     }
 }
+
+/** A field edited on two devices: what's shown now, and the other value(s) kept. */
+data class SyncConflict(val field: String, val label: String, val shown: String?, val others: List<String>)
+
+private val CONFLICT_FIELDS = listOf(
+    SyncRecord.F_TITLE to "Title",
+    SyncRecord.F_NOTES to "Note",
+    SyncRecord.F_URL to "Link"
+)

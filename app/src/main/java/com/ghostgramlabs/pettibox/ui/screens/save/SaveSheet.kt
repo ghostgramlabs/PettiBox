@@ -47,15 +47,19 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -83,7 +87,9 @@ import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
+import com.ghostgramlabs.pettibox.ui.components.COLLECTION_FINDER_THRESHOLD
 import com.ghostgramlabs.pettibox.ui.components.CategoryChip
+import com.ghostgramlabs.pettibox.ui.components.CollectionRow
 import com.ghostgramlabs.pettibox.ui.components.CreateCollectionDialog
 import com.ghostgramlabs.pettibox.ui.components.KeeperMascot
 import com.ghostgramlabs.pettibox.ui.components.KeeperPose
@@ -106,7 +112,19 @@ fun SaveSheet(
     // Always open fully expanded. A half-expanded sheet pushes the sticky
     // Save footer below the visible area, and that gets worse once the
     // keyboard opens for the collection search.
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // Something typed (a note, tags) isn't thrown away by a stray Back, swipe
+    // or tap outside: the sheet stays and asks first.
+    var confirmDiscard by remember { mutableStateOf(false) }
+    val hasTyped by rememberUpdatedState(!state.isSaved && (state.notes.isNotBlank() || state.tagsInput.isNotBlank()))
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { value ->
+            if (value == SheetValue.Hidden && hasTyped) {
+                confirmDiscard = true
+                false
+            } else true
+        }
+    )
     val scope = rememberCoroutineScope()
     var showCreate by remember { mutableStateOf(false) }
     var createInitialName by remember { mutableStateOf("") }
@@ -176,10 +194,34 @@ fun SaveSheet(
         )
     }
 
+    if (confirmDiscard) {
+        AlertDialog(
+            onDismissRequest = { confirmDiscard = false },
+            title = { Text("Discard what you typed?") },
+            text = { Text("Your note and tags haven't been saved yet.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDiscard = false
+                    viewModel.discardDraft()
+                    onDismiss()
+                }) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDiscard = false }) { Text("Keep editing") }
+            }
+        )
+    }
+
     ModalBottomSheet(
         onDismissRequest = {
-            viewModel.discardDraft()
-            onDismiss()
+            if (hasTyped) {
+                // Back hides the sheet without asking confirmValueChange: bring it back, then ask.
+                confirmDiscard = true
+                scope.launch { sheetState.show() }
+            } else {
+                viewModel.discardDraft()
+                onDismiss()
+            }
         },
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.background,
@@ -208,7 +250,7 @@ fun SaveSheet(
             )
             return@ModalBottomSheet
         }
-        val finderShown = state.categories.size > 8
+        val finderShown = state.categories.size > COLLECTION_FINDER_THRESHOLD
         val visibleCategories = remember(
             state.categories, state.suggestedCategory, state.recentCategoryIds, collectionQuery
         ) {
@@ -583,7 +625,7 @@ private fun FinderPickerBody(
                         if (index == 0 || group != previousGroup) {
                             CollectionGroupLabel(group)
                         }
-                        CollectionResultRow(
+                        CollectionRow(
                             name = c.name,
                             emoji = c.emoji,
                             color = Color(c.colorHex),
@@ -1244,12 +1286,6 @@ private fun CollectionFinder(
     )
 }
 
-/**
- * A full-width, tappable collection row shown in the Save sheet's search
- * results. Tapping selects (footer commits); the selected row fills with a
- * tint of the collection color and shows a check. Easier to hit than a chip
- * in a horizontal strip, and the check makes the current pick unambiguous.
- */
 @Composable
 private fun CollectionGroupLabel(label: String) {
     Text(
@@ -1269,72 +1305,6 @@ private fun collectionGroupLabel(
     category.id in recentCategoryIds -> "Recently used"
     category.userCreated -> "Your collections"
     else -> "Starter collections"
-}
-
-@Composable
-private fun CollectionResultRow(
-    name: String,
-    emoji: String?,
-    color: Color,
-    selected: Boolean,
-    suggested: Boolean = false,
-    onClick: () -> Unit
-) {
-    val scheme = MaterialTheme.colorScheme
-    val borderColor = when {
-        selected -> color
-        suggested -> scheme.primary
-        else -> scheme.outline.copy(alpha = 0.4f)
-    }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) color.copy(alpha = 0.16f) else scheme.surface)
-            .border(
-                width = if (selected || suggested) 1.5.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .size(34.dp)
-                .background(color.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (!emoji.isNullOrBlank()) {
-                Text(emoji, style = MaterialTheme.typography.titleMedium)
-            }
-        }
-        Spacer(Modifier.width(12.dp))
-        Text(
-            name,
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-            color = scheme.onSurface,
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
-        if (selected) {
-            Icon(
-                Icons.Rounded.Check,
-                contentDescription = "Selected",
-                tint = color,
-                modifier = Modifier.size(20.dp)
-            )
-        } else if (suggested) {
-            Text(
-                "Suggested",
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                color = scheme.primary
-            )
-        }
-    }
 }
 
 @Composable

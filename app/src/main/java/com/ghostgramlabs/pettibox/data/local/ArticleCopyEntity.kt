@@ -52,7 +52,7 @@ enum class ArticleCopyStatus {
 
 /** Full-text index over article bodies, so search finds words inside saved articles. */
 @Entity(tableName = "article_copies_fts")
-@Fts4(contentEntity = ArticleCopyEntity::class)
+@Fts4(contentEntity = ArticleCopyEntity::class, tokenizer = androidx.room.FtsOptions.TOKENIZER_UNICODE61)
 data class ArticleCopyFts(
     @ColumnInfo(name = "text_content") val textContent: String?
 )

@@ -8,6 +8,7 @@ import com.ghostgramlabs.pettibox.data.local.ArticleCopyStatus
 import com.ghostgramlabs.pettibox.data.local.ArticleDao
 import com.ghostgramlabs.pettibox.data.local.AttachmentDao
 import com.ghostgramlabs.pettibox.data.local.AttachmentEntity
+import com.ghostgramlabs.pettibox.data.local.OcrStatusEntity
 import com.ghostgramlabs.pettibox.data.local.CategoryCount
 import com.ghostgramlabs.pettibox.data.local.CategoryDao
 import com.ghostgramlabs.pettibox.data.local.CategoryEntity
@@ -18,9 +19,11 @@ import com.ghostgramlabs.pettibox.data.local.SourceCount
 import com.ghostgramlabs.pettibox.data.local.TagDao
 import com.ghostgramlabs.pettibox.data.local.TagEntity
 import com.ghostgramlabs.pettibox.data.local.TagWithCount
+import com.ghostgramlabs.pettibox.data.local.newSyncId
 import com.ghostgramlabs.pettibox.data.backup.BackupSummaryCalculator
 import com.ghostgramlabs.pettibox.data.bookmarks.BookmarkCsvWriter
 import com.ghostgramlabs.pettibox.data.bookmarks.ImportedBookmark
+import com.ghostgramlabs.pettibox.data.lock.LockedCollections
 import com.ghostgramlabs.pettibox.data.util.AttachmentStore
 import com.ghostgramlabs.pettibox.data.util.TextUtils
 import com.ghostgramlabs.pettibox.domain.model.CategoryPalette
@@ -28,6 +31,8 @@ import com.ghostgramlabs.pettibox.domain.model.ContentType
 import com.ghostgramlabs.pettibox.domain.model.SourceApp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -122,7 +127,7 @@ class SaveRepository @Inject constructor(
     suspend fun getById(id: Long) = saveDao.getById(id)
     fun observeById(id: Long) = saveDao.observeById(id)
     /** Existing live save with this exact URL, if any — for duplicate-on-save detection. */
-    suspend fun findByUrl(url: String): SaveItemEntity? = saveDao.findByUrl(url)
+    suspend fun findByUrl(url: String): SaveItemEntity? = saveDao.findVisibleByUrl(url)
 
     /**
      * Cleans up local files (attachments + the item's own localUri) before
@@ -153,7 +158,7 @@ class SaveRepository @Inject constructor(
         return ids.size
     }
 
-    fun pagedTrash(): PagingSource<Int, SaveItemEntity> = saveDao.pagedTrash()
+    fun pagedTrash(showLocked: Boolean): PagingSource<Int, SaveItemEntity> = saveDao.pagedTrash(showLocked)
     fun observeTrashTotal(): Flow<Int> = saveDao.observeTrashTotal()
 
     fun pagedUnread(sort: String = "NEWEST"): PagingSource<Int, SaveItemEntity> = saveDao.pagedUnread(sort)
@@ -168,9 +173,10 @@ class SaveRepository @Inject constructor(
     fun pagedByCategory(
         categoryId: String,
         includeArchived: Boolean = false,
-        sort: String = "NEWEST"
+        sort: String = "NEWEST",
+        showLocked: Boolean = false
     ): PagingSource<Int, SaveItemEntity> =
-        saveDao.pagedByCategory(categoryId, includeArchived, sort)
+        saveDao.pagedByCategory(categoryId, includeArchived, sort, showLocked)
     fun pagedBySource(sourceApp: String): PagingSource<Int, SaveItemEntity> =
         saveDao.pagedBySource(sourceApp)
 
@@ -218,12 +224,16 @@ class SaveRepository @Inject constructor(
     /** The Search screen's query: sanitized FTS text (blank = filters only) plus filters. */
     data class SearchSpec(
         val ftsQuery: String,
+        /** LIKE pattern for scripts written without spaces ([SearchQuerySanitizer.containsPattern]), or null. */
+        val contains: String?,
         val source: String?,
         val category: String?,
         val type: String?,
         val tag: String?,
         val remindersOnly: Boolean,
-        val now: Long
+        val now: Long,
+        /** Include saves in locked collections (they're unlocked right now). */
+        val showLocked: Boolean
     )
 
     fun searchSpec(
@@ -232,37 +242,66 @@ class SaveRepository @Inject constructor(
         category: String?,
         type: String?,
         tag: String?,
-        remindersOnly: Boolean
+        remindersOnly: Boolean,
+        showLocked: Boolean
     ): SearchSpec = SearchSpec(
         ftsQuery = SearchQuerySanitizer.sanitizeFtsQuery(rawQuery),
+        contains = SearchQuerySanitizer.containsPattern(rawQuery),
         source = source,
         category = category,
         type = type,
         tag = tag,
         remindersOnly = remindersOnly,
-        now = System.currentTimeMillis()
+        now = System.currentTimeMillis(),
+        showLocked = showLocked
     )
 
     // With no text query the FTS branches are skipped in SQL; "x" just keeps
     // the unused MATCH argument well-formed.
     fun pagedSearch(spec: SearchSpec, sort: String): PagingSource<Int, SaveItemEntity> = saveDao.pagedSearch(
-        hasQuery = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" },
+        hasQuery = spec.ftsQuery.isNotBlank() || spec.contains != null,
+        hasFts = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" }, contains = spec.contains,
         source = spec.source, category = spec.category, type = spec.type, tag = spec.tag,
-        remindersOnly = spec.remindersOnly, now = spec.now, sort = sort
+        remindersOnly = spec.remindersOnly, now = spec.now, showLocked = spec.showLocked, sort = sort
     )
 
     fun observeSearchCount(spec: SearchSpec): Flow<Int> = saveDao.observeSearchCount(
-        hasQuery = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" },
+        hasQuery = spec.ftsQuery.isNotBlank() || spec.contains != null,
+        hasFts = spec.ftsQuery.isNotBlank(), query = spec.ftsQuery.ifBlank { "x" }, contains = spec.contains,
         source = spec.source, category = spec.category, type = spec.type, tag = spec.tag,
-        remindersOnly = spec.remindersOnly, now = spec.now
+        remindersOnly = spec.remindersOnly, now = spec.now, showLocked = spec.showLocked
     ).catch { emit(0) }
 
     // ── Categories ────────────────────────────────────────────────────────
 
-    fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
+    /**
+     * Collections to show. Locked ones are left out entirely until
+     * [LockedCollections] is unlocked, so a locked collection doesn't even
+     * show its name in Browse, Home, pickers, or search filters.
+     */
+    fun observeCategories(): Flow<List<CategoryEntity>> =
+        combine(categoryDao.observeAll(), LockedCollections.unlocked) { all, unlocked ->
+            if (unlocked) all else all.filterNot { it.isLocked }
+        }
+
+    /** How many collections are locked — the Browse "Locked" pill shows only when > 0. */
+    fun observeLockedCollectionCount(): Flow<Int> = categoryDao.observeLockedCount()
+
+    /** Whether a collection is locked; false for none / a missing one. */
+    fun observeCategoryLocked(id: String?): Flow<Boolean> =
+        if (id == null) flowOf(false) else categoryDao.observeIsLocked(id)
     suspend fun upsertCategory(c: CategoryEntity) = categoryDao.upsert(c)
     suspend fun getCategory(id: String) = categoryDao.getById(id)
     suspend fun deleteCategory(id: String) = categoryDao.delete(id)
+
+    suspend fun setCategoryLocked(id: String, locked: Boolean) {
+        val c = categoryDao.getById(id) ?: return
+        if (c.isLocked != locked) categoryDao.update(c.copy(isLocked = locked))
+    }
+
+    /** True if the save is filed in a locked collection. */
+    suspend fun isInLockedCollection(item: SaveItemEntity): Boolean =
+        item.categoryId?.let { categoryDao.getById(it)?.isLocked } == true
 
     data class CsvExportResult(val csv: String, val links: Int)
 
@@ -322,9 +361,11 @@ class SaveRepository @Inject constructor(
     suspend fun exportBackupJson(): String {
         val categories = categoryDao.allForExport()
         val saves = saveDao.allForExport()
-        val attachments = attachmentDao.allForExport()
+        // Saves in Recently deleted aren't backed up, so neither are their files and tags.
+        val saveIds = saves.mapTo(HashSet()) { it.id }
+        val attachments = attachmentDao.allForExport().filter { it.itemId in saveIds }
         val tags = tagDao.allForExport()
-        val itemTags = tagDao.linksForExport()
+        val itemTags = tagDao.linksForExport().filter { it.itemId in saveIds }
         val root = JSONObject()
             .put("schema", 1)
             .put("exportedAt", System.currentTimeMillis())
@@ -339,7 +380,8 @@ class SaveRepository @Inject constructor(
                     .put("sortOrder", c.sortOrder)
                     .put("parentId", c.parentId)
                     .put("userCreated", c.userCreated)
-                    .put("createdAt", c.createdAt))
+                    .put("createdAt", c.createdAt)
+                    .put("isLocked", c.isLocked))
             }
         })
         root.put("saves", JSONArray().apply {
@@ -353,6 +395,7 @@ class SaveRepository @Inject constructor(
                     .put("contentType", s.contentType)
                     .put("sourceApp", s.sourceApp)
                     .put("categoryId", s.categoryId)
+                    .put("syncId", s.syncId)
                     .put("notes", s.notes)
                     .put("ocrText", s.ocrText)
                     .put("metadataJson", s.metadataJson)
@@ -396,9 +439,11 @@ class SaveRepository @Inject constructor(
     suspend fun exportBackupZip(targetFile: File): BackupExportResult {
         val categories = categoryDao.allForExport()
         val saves = saveDao.allForExport()
-        val attachments = attachmentDao.allForExport()
+        // Saves in Recently deleted aren't backed up, so neither are their files and tags.
+        val saveIds = saves.mapTo(HashSet()) { it.id }
+        val attachments = attachmentDao.allForExport().filter { it.itemId in saveIds }
         val tags = tagDao.allForExport()
-        val itemTags = tagDao.linksForExport()
+        val itemTags = tagDao.linksForExport().filter { it.itemId in saveIds }
         var embeddedFiles = 0
 
         val root = JSONObject()
@@ -418,7 +463,8 @@ class SaveRepository @Inject constructor(
                         .put("sortOrder", c.sortOrder)
                         .put("parentId", c.parentId)
                         .put("userCreated", c.userCreated)
-                        .put("createdAt", c.createdAt))
+                        .put("createdAt", c.createdAt)
+                        .put("isLocked", c.isLocked))
                 }
             })
 
@@ -448,6 +494,7 @@ class SaveRepository @Inject constructor(
                         .put("contentType", s.contentType)
                         .put("sourceApp", s.sourceApp)
                         .put("categoryId", s.categoryId)
+                    .put("syncId", s.syncId)
                         .put("notes", s.notes)
                         .put("ocrText", s.ocrText)
                         .put("metadataJson", s.metadataJson)
@@ -613,7 +660,11 @@ class SaveRepository @Inject constructor(
                 sortOrder = c.optInt("sortOrder", i),
                 parentId = c.optNullableString("parentId"),
                 userCreated = c.optBoolean("userCreated", true),
-                createdAt = c.optLong("createdAt", System.currentTimeMillis())
+                createdAt = c.optLong("createdAt", System.currentTimeMillis()),
+                // An older backup has no lock flag; never let restoring it
+                // unlock a collection that's locked on this phone.
+                isLocked = c.optBoolean("isLocked", false) ||
+                    categoryDao.getById(c.getString("id"))?.isLocked == true
             )
             categoryDao.upsert(category)
             categoryCount++
@@ -631,6 +682,11 @@ class SaveRepository @Inject constructor(
             if (!url.isNullOrEmpty()) existingUrls.add(TextUtils.urlDedupeKey(url))
             else existingFingerprints.add("${key.contentType}|${key.createdAt}|${key.title}")
         }
+
+        // Sync ids already here. A save carrying one of these is the same save
+        // (restored onto the phone it came from, or synced in already), so it
+        // counts as a duplicate rather than colliding on the unique index.
+        val existingSyncIds = saveDao.allSyncIds().toHashSet()
 
         val itemIdMap = mutableMapOf<Long, Long>()
         var saveCount = 0
@@ -658,13 +714,16 @@ class SaveRepository @Inject constructor(
                 remindAt = s.optNullableLong("remindAt"),
                 createdAt = s.optLong("createdAt", System.currentTimeMillis()),
                 updatedAt = s.optLong("updatedAt", System.currentTimeMillis()),
-                openedAt = s.optNullableLong("openedAt")
+                openedAt = s.optNullableLong("openedAt"),
+                // Kept so a restored save is still the same save to sync;
+                // backups from before sync existed get a fresh one.
+                syncId = s.optNullableString("syncId")?.takeIf { it.isNotBlank() } ?: newSyncId()
             )
             val urlKey = imported.url?.trim()?.takeIf { it.isNotEmpty() }?.let(TextUtils::urlDedupeKey)
             val fingerprint = if (urlKey == null) {
                 "${imported.contentType}|${imported.createdAt}|${imported.title}"
             } else null
-            val isDuplicate =
+            val isDuplicate = !existingSyncIds.add(imported.syncId) ||
                 if (urlKey != null) !existingUrls.add(urlKey)
                 else !existingFingerprints.add(fingerprint!!)
             if (isDuplicate) {
@@ -837,17 +896,125 @@ class SaveRepository @Inject constructor(
         if (items.isEmpty()) emptyList() else attachmentDao.insertAll(items)
 
     fun observeAttachments(itemId: Long) = attachmentDao.observeForItem(itemId)
+
+    /** Whether any save here has a photo or file of its own (something sync may need to send). */
+    suspend fun hasFilesToSend(): Boolean =
+        attachmentDao.allForExport().isNotEmpty() || saveDao.allForExport().any { it.localUri?.startsWith("file:") == true }
     suspend fun attachmentsFor(itemId: Long) = attachmentDao.forItem(itemId)
     suspend fun imageAttachmentsNeedingOcr(): List<AttachmentEntity> =
         attachmentDao.imageAttachmentsNeedingOcr()
     suspend fun pdfAttachmentsNeedingOcr(): List<AttachmentEntity> =
         attachmentDao.pdfAttachmentsNeedingOcr()
     suspend fun setAttachmentOcr(id: Long, text: String) = attachmentDao.setOcrText(id, text)
-    suspend fun deleteAttachment(id: Long) {
-        val attachment = attachmentDao.getById(id) ?: return
-        attachmentDao.delete(id)
-        attachmentStore.deleteByUris(listOf(attachment.uri))
+
+    /**
+     * Stores the text read from one file, if it beats the file's text as it
+     * is *now* ([com.ghostgramlabs.pettibox.data.ocr.TextReader.improves],
+     * with the scripts [readable] at reading time), or merged with it when it
+     * finds new words but would drop old ones ([com.ghostgramlabs.pettibox.data.ocr.TextReader.merged]).
+     * The check and the write
+     * are one transaction, so two jobs reading the same file can't have the
+     * worse result land last. For a file added to a save, the save's text is
+     * rebuilt from all its files in their order: a repeated reading can't
+     * add the text twice. Not an edit, so "Recently edited" doesn't move.
+     * Returns whether the text was stored.
+     */
+    suspend fun acceptSourceText(
+        itemId: Long, attachmentId: Long?, reading: com.ghostgramlabs.pettibox.data.ocr.Reading, readable: Set<Character.UnicodeScript>
+    ): Boolean = database.withTransaction {
+        val current = if (attachmentId == null) saveDao.getById(itemId)?.ocrText else attachmentDao.getById(attachmentId)?.ocrText
+        val text = if (com.ghostgramlabs.pettibox.data.ocr.TextReader.improves(reading, current, readable)) reading.text
+        // Not a clean replacement, but it found new words: keep both rather than stay stuck on the old.
+        else com.ghostgramlabs.pettibox.data.ocr.TextReader.merged(reading, current, readable) ?: return@withTransaction false
+        if (attachmentId == null) {
+            saveDao.replaceOcrText(itemId, text)
+        } else {
+            attachmentDao.setOcrText(attachmentId, text)
+            val all = attachmentDao.forItem(itemId).mapNotNull { it.ocrText?.takeIf { t -> t.isNotBlank() } }.joinToString("\n\n")
+            if (all.isNotBlank()) saveDao.replaceOcrText(itemId, all)
+        }
+        true
     }
+
+    /** Whether the file already has text (its own, or the save's when it's the save's own file). */
+    suspend fun sourceHasText(itemId: Long, attachmentId: Long?): Boolean =
+        !(if (attachmentId == null) saveDao.getById(itemId)?.ocrText else attachmentDao.getById(attachmentId)?.ocrText).isNullOrBlank()
+
+    // Where reading each file's text stands (ocr_status).
+    private val ocrStatus get() = database.ocrStatusDao()
+
+    /** Records [state] for one file ([OcrStatusEntity] constants), or clears it (null: its text is what the save holds). */
+    suspend fun setReadingState(itemId: Long, attachmentId: Long?, uri: String, pdf: Boolean, state: String?) {
+        val source = OcrStatusEntity.sourceOf(itemId, attachmentId)
+        if (state == null) ocrStatus.clear(source)
+        else ocrStatus.put(listOf(OcrStatusEntity(source, itemId, attachmentId, uri, pdf, state)))
+    }
+
+    fun observeReadingStates(itemId: Long): Flow<List<OcrStatusEntity>> = ocrStatus.observeForItem(itemId)
+
+    suspend fun readingStateOf(itemId: Long, attachmentId: Long?): OcrStatusEntity? =
+        ocrStatus.get(OcrStatusEntity.sourceOf(itemId, attachmentId))
+
+    /** A PDF's reading after a page: carried on from here if the job stops. */
+    suspend fun saveReadingProgress(
+        itemId: Long, attachmentId: Long?, uri: String, config: String, progress: com.ghostgramlabs.pettibox.data.ocr.PdfProgress
+    ) = ocrStatus.put(
+        listOf(
+            OcrStatusEntity(
+                OcrStatusEntity.sourceOf(itemId, attachmentId), itemId, attachmentId, uri, pdf = true,
+                state = OcrStatusEntity.READING, config = config, pagesDone = progress.nextPage,
+                partialText = progress.reading.text, partialReplaced = progress.reading.replaced
+            )
+        )
+    )
+
+    suspend fun pendingReadings(): List<OcrStatusEntity> = ocrStatus.pending()
+
+    // Re-reading saved images and PDFs (OcrRereadWorker).
+    suspend fun withTextSourcesBelow(belowId: Long, limit: Int): List<SaveItemEntity> = saveDao.withTextSourcesBelow(belowId, limit)
+    suspend fun attachmentsOf(itemId: Long): List<AttachmentEntity> = attachmentDao.forItem(itemId)
+    suspend fun replaceOcrText(id: Long, text: String) = saveDao.replaceOcrText(id, text)
+    suspend fun deleteAttachment(id: Long) {
+        removeAttachment(id)?.let { discardRemovedFiles(it) }
+    }
+
+    /** A file taken out of a save, kept on disk until [discardRemovedFiles] so Undo can put it back. */
+    data class RemovedAttachment(val row: AttachmentEntity, val itemBefore: SaveItemEntity?, val files: List<String>)
+
+    /**
+     * Takes one file out of a save right away (every screen and sync see it
+     * gone); its bytes stay on disk until [discardRemovedFiles] or [restoreAttachment].
+     */
+    suspend fun removeAttachment(id: Long): RemovedAttachment? {
+        val attachment = attachmentDao.getById(id) ?: return null
+        val item = saveDao.getById(attachment.itemId)
+        // The save's main file is often this same file (or a copy of it). Left
+        // as is, it would keep pointing at the removed file, and other devices
+        // would show it again; the next file in the gallery takes its place.
+        val mainGoes = item?.localUri != null && attachmentStore.sameContent(item.localUri, attachment.uri)
+        val next = if (mainGoes) attachmentDao.forItem(attachment.itemId).filter { it.id != id }.minByOrNull { it.sortOrder } else null
+        database.withTransaction {
+            attachmentDao.delete(id)
+            if (mainGoes && item != null) {
+                saveDao.update(item.copy(localUri = next?.uri, updatedAt = System.currentTimeMillis()))
+            }
+        }
+        val files = listOfNotNull(attachment.uri, item?.localUri?.takeIf { mainGoes && it != attachment.uri && it != next?.uri })
+        return RemovedAttachment(attachment, item.takeIf { mainGoes }, files)
+    }
+
+    /** Undo of [removeAttachment]: the file goes back where it was. */
+    suspend fun restoreAttachment(removed: RemovedAttachment) = database.withTransaction {
+        attachmentDao.insert(removed.row)
+        val before = removed.itemBefore ?: return@withTransaction
+        val now = saveDao.getById(before.id) ?: return@withTransaction
+        saveDao.update(now.copy(localUri = before.localUri, updatedAt = System.currentTimeMillis()))
+    }
+
+    suspend fun discardRemovedFiles(removed: RemovedAttachment) = attachmentStore.deleteByUris(removed.files)
+
+    /** Takes files no save uses any more off the disk (sync removed their save for good). */
+    suspend fun discardFiles(uris: List<String>) = attachmentStore.deleteByUris(uris)
 
     // ── Tags ──────────────────────────────────────────────────────────────
 

@@ -62,6 +62,59 @@ class ReminderPresetTest {
     }
 
     @Test
+    fun onSaturdayAfternoonWeekendAndNextWeekDiffer() {
+        // Sat Oct 24 2026, after the morning time.
+        val now = utcMillis(year = 2026, month = Calendar.OCTOBER, day = 24, hour = 13)
+
+        assertEquals(
+            utcMillis(year = 2026, month = Calendar.OCTOBER, day = 31, hour = 9),
+            ReminderPreset.WEEKEND.toEpochMillis(now)
+        )
+        assertEquals(
+            utcMillis(year = 2026, month = Calendar.OCTOBER, day = 26, hour = 9),
+            ReminderPreset.NEXT_WEEK.toEpochMillis(now)
+        )
+    }
+
+    @Test
+    fun nextWeekIsNeverTheSameAsTomorrow() {
+        // Sun Oct 25 2026: tomorrow is Monday, so "Next week" is the Monday after.
+        val now = utcMillis(year = 2026, month = Calendar.OCTOBER, day = 25, hour = 13)
+
+        assertEquals(
+            utcMillis(year = 2026, month = Calendar.NOVEMBER, day = 2, hour = 9),
+            ReminderPreset.NEXT_WEEK.toEpochMillis(now)
+        )
+    }
+
+    @Test
+    fun nextWeekFromMidweekIsTheComingMonday() {
+        // Wed Oct 21 2026.
+        val now = utcMillis(year = 2026, month = Calendar.OCTOBER, day = 21, hour = 13)
+
+        assertEquals(
+            utcMillis(year = 2026, month = Calendar.OCTOBER, day = 26, hour = 9),
+            ReminderPreset.NEXT_WEEK.toEpochMillis(now)
+        )
+    }
+
+    @Test
+    fun weekendOnSundayMorningIsToday() {
+        // Sun Oct 25 2026, before 9 AM: still this weekend.
+        val early = utcMillis(year = 2026, month = Calendar.OCTOBER, day = 25, hour = 7)
+        assertEquals(
+            utcMillis(year = 2026, month = Calendar.OCTOBER, day = 25, hour = 9),
+            ReminderPreset.WEEKEND.toEpochMillis(early)
+        )
+        // Sunday afternoon: next Saturday.
+        val late = utcMillis(year = 2026, month = Calendar.OCTOBER, day = 25, hour = 13)
+        assertEquals(
+            utcMillis(year = 2026, month = Calendar.OCTOBER, day = 31, hour = 9),
+            ReminderPreset.WEEKEND.toEpochMillis(late)
+        )
+    }
+
+    @Test
     fun customReturnsNullSoCallerCanOpenPicker() {
         assertEquals(null, ReminderPreset.CUSTOM.toEpochMillis())
     }

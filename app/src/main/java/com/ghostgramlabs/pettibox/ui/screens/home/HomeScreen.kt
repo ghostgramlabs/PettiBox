@@ -41,6 +41,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AttachFile
 import androidx.compose.material.icons.rounded.Close
@@ -124,6 +125,11 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val needingChoice by viewModel.needingChoice.collectAsStateWithLifecycle()
+    val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
+    val greeting: @Composable () -> Unit = {
+        Greeting(sync = syncStatus?.takeIf { it.enabled }, onSync = viewModel::syncNow)
+    }
     val rateCardAllowed by viewModel.rateCardAllowed.collectAsStateWithLifecycle(initialValue = false)
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -460,7 +466,7 @@ fun HomeScreen(
     ) { padding ->
         if (state.isLoading) {
             Column(Modifier.padding(padding).fillMaxSize()) {
-                Greeting()
+                greeting()
                 Text(
                     "Loading your shelf...",
                     style = MaterialTheme.typography.bodyMedium,
@@ -473,7 +479,7 @@ fun HomeScreen(
 
         if (state.recent.isEmpty() && state.pinned.isEmpty() && state.favorites.isEmpty()) {
             Column(Modifier.padding(padding).fillMaxSize()) {
-                Greeting()
+                greeting()
                 if (state.archivedCount > 0) {
                     // The shelf isn't empty, the user has archived all of
                     // it. Pointing them at the Share menu would imply
@@ -526,7 +532,26 @@ fun HomeScreen(
             // Header - full-width span
             item(span = StaggeredGridItemSpan.FullLine) {
                 Column {
-                    Greeting()
+                    greeting()
+                    if (needingChoice.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        NeedsChoiceBar(
+                            count = needingChoice.size,
+                            onClick = { onOpenItem(needingChoice.first().id) },
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                    }
+                    // Changes from other devices wait until someone answers this, so it can't wait in Settings.
+                    val review = syncStatus?.takeIf { it.enabled }?.pendingReview ?: 0
+                    if (review > 0) {
+                        Spacer(Modifier.height(10.dp))
+                        SyncReviewBanner(
+                            count = review,
+                            onApply = { viewModel.answerSyncReview(keepMine = false) },
+                            onPutBack = { viewModel.answerSyncReview(keepMine = true) },
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
                     if (state.isIndexingText) {
                         Spacer(Modifier.height(10.dp))
                         IndexingStatusChip(modifier = Modifier.padding(horizontal = 20.dp))
@@ -720,6 +745,43 @@ private fun RateCard(
             TextButton(onClick = onNotNow) {
                 Text("Not now", color = scheme.onSurfaceVariant)
             }
+        }
+    }
+}
+
+/** Same choice as in Settings › Sync, worded the same way. */
+@Composable
+private fun SyncReviewBanner(
+    count: Int,
+    onApply: () -> Unit,
+    onPutBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scheme = MaterialTheme.colorScheme
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(scheme.error.copy(alpha = 0.10f))
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    ) {
+        Text(
+            "Another device removed or archived $count saves",
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+            color = scheme.onSurface
+        )
+        Text(
+            "Changes from your other devices wait until you choose. Apply here too does the same on this phone (a backup is made first). " +
+                "Put them back undoes it on every device.",
+            style = MaterialTheme.typography.bodySmall,
+            color = scheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = onApply, shape = RoundedCornerShape(12.dp)) {
+                Text("Apply here too", fontWeight = FontWeight.Bold)
+            }
+            TextButton(onClick = onPutBack) { Text("Put them back") }
         }
     }
 }
@@ -1024,8 +1086,68 @@ private fun GuideStep(
 }
 
 @Composable
-private fun Greeting() {
-    ScreenHeading(title = "What's on the shelf?")
+private fun Greeting(sync: com.ghostgramlabs.pettibox.data.sync.SyncStatus? = null, onSync: () -> Unit = {}) {
+    ScreenHeading(
+        title = "What's on the shelf?",
+        subtitle = sync?.let { s ->
+            when {
+                s.progress.isNotBlank() -> "Syncing…"
+                s.needsReconnect -> "Sync paused: reconnect Google Drive in Settings"
+                s.lastError.isNotBlank() && s.lastErrorAt >= s.lastSyncAt -> "Sync problem: see Settings"
+                s.pendingReview > 0 -> "Sync is waiting for your choice"
+                s.lastSyncAt > 0 -> "Synced " + android.text.format.DateUtils.getRelativeTimeSpanString(
+                    s.lastSyncAt, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS
+                )
+                else -> null
+            }
+        },
+        trailing = sync?.let { { SyncButton(it, onSync) } }
+    )
+}
+
+/**
+ * Sync now, on Home (only while sync is on). Spins from the tap until that
+ * round is done, and turns red when the last one failed; "Synced 2 min
+ * ago" (or the problem) is in its description for screen readers.
+ */
+@Composable
+private fun SyncButton(sync: com.ghostgramlabs.pettibox.data.sync.SyncStatus, onSync: () -> Unit) {
+    var askedAt by remember { mutableStateOf(0L) }
+    val finished = maxOf(sync.lastSyncAt, sync.lastErrorAt)
+    val running = sync.progress.isNotBlank() || (askedAt > 0 && finished < askedAt)
+    LaunchedEffect(askedAt) {
+        // No answer within a minute (offline, say): stop spinning; the round still runs when it can.
+        if (askedAt > 0) {
+            kotlinx.coroutines.delay(60_000)
+            askedAt = 0
+        }
+    }
+    val failed = !running && (sync.needsReconnect || (sync.lastError.isNotBlank() && sync.lastErrorAt >= sync.lastSyncAt))
+    val spin = rememberInfiniteTransition(label = "sync-spin")
+    val angle by spin.animateFloat(
+        initialValue = 0f, targetValue = -360f,
+        animationSpec = infiniteRepeatable(tween(1100, easing = androidx.compose.animation.core.LinearEasing), RepeatMode.Restart),
+        label = "angle"
+    )
+    val label = when {
+        running -> "Syncing…"
+        failed -> "Sync problem: ${sync.lastError.ifBlank { "reconnect Google Drive in Settings" }}"
+        sync.lastSyncAt > 0 -> "Synced " + android.text.format.DateUtils.getRelativeTimeSpanString(
+            sync.lastSyncAt, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS
+        )
+        else -> "Not synced yet"
+    }
+    androidx.compose.material3.IconButton(
+        onClick = { askedAt = System.currentTimeMillis(); onSync() },
+        modifier = Modifier.padding(top = 6.dp)
+    ) {
+        Icon(
+            Icons.Rounded.Sync,
+            contentDescription = "Sync now. $label",
+            tint = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = if (running) Modifier.rotate(angle) else Modifier
+        )
+    }
 }
 
 @Composable
@@ -1496,4 +1618,38 @@ private fun readClipboardText(ctx: Context): String? {
     return runCatching {
         cm.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(ctx)?.toString()
     }.getOrNull()
+}
+
+/**
+ * "2 saves were edited on 2 devices": opens the first; picking a version on
+ * any one device settles it everywhere, and the bar goes once none are left.
+ */
+@Composable
+private fun NeedsChoiceBar(count: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(com.ghostgramlabs.pettibox.ui.components.NeedsChoiceAmber.copy(alpha = 0.14f))
+            .border(1.dp, com.ghostgramlabs.pettibox.ui.components.NeedsChoiceAmber, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    ) {
+        com.ghostgramlabs.pettibox.ui.components.NeedsChoiceDot()
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                if (count == 1) "1 save was edited on 2 devices" else "$count saves were edited on 2 devices",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                "Pick which version to keep. Choosing on any one device is enough.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Text("Choose", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.primary)
+    }
 }

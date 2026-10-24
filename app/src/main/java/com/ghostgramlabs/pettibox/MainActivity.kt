@@ -7,22 +7,30 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.ghostgramlabs.pettibox.data.preferences.AppLockPreferences
 import com.ghostgramlabs.pettibox.data.preferences.ThemeMode
 import com.ghostgramlabs.pettibox.data.preferences.ThemePreferences
+import com.ghostgramlabs.pettibox.data.sync.SyncPreferences
+import com.ghostgramlabs.pettibox.data.sync.SyncScheduler
+import com.ghostgramlabs.pettibox.ui.components.LocalNeedsChoice
 import com.ghostgramlabs.pettibox.ui.nav.AppLaunch
 import com.ghostgramlabs.pettibox.ui.lock.AppLockGate
 import com.ghostgramlabs.pettibox.ui.nav.PettiBoxNavGraph
 import com.ghostgramlabs.pettibox.ui.theme.PettiBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,6 +40,7 @@ import javax.inject.Inject
 class MainActivity : FragmentActivity() {
     @Inject lateinit var themePreferences: ThemePreferences
     @Inject lateinit var appLockPreferences: AppLockPreferences
+    @Inject lateinit var syncPreferences: SyncPreferences
 
     /**
      * Where a notification, widget, or app-icon shortcut asked to land,
@@ -46,6 +55,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         pendingLaunch = AppLaunch.from(intent)
+        syncWhileOpen()
         setContent {
             val themeMode by themePreferences.mode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
             // Null until loaded, so the gate can hold back saves until it knows.
@@ -69,7 +79,10 @@ class MainActivity : FragmentActivity() {
                     color = androidx.compose.ui.graphics.Color.Transparent,
                     contentColor = MaterialTheme.colorScheme.onBackground
                 ) {
+                    // Saves edited on two devices pulse wherever they're shown.
+                    val needsChoice by syncPreferences.needingChoice.collectAsStateWithLifecycle(initialValue = emptySet())
                     AppLockGate(activity = this@MainActivity, enabled = lockEnabled) {
+                    CompositionLocalProvider(LocalNeedsChoice provides needsChoice) {
                     PettiBoxNavGraph(
                         themeMode = themeMode,
                         onThemeModeChange = { mode ->
@@ -84,6 +97,26 @@ class MainActivity : FragmentActivity() {
                         }
                     )
                     }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * While PettiBox is on screen, sync every minute, so edits made in Chrome
+     * or on another phone show up while you look. A round with nothing new
+     * is one small Drive request. Stops as soon as the app is left.
+     */
+    private fun syncWhileOpen() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    val sync = syncPreferences.status.first()
+                    if (sync.enabled && System.currentTimeMillis() - sync.lastSyncAt >= 25_000L) {
+                        SyncScheduler.nowUnlessWaiting(this@MainActivity)
+                    }
+                    delay(30_000L)
                 }
             }
         }

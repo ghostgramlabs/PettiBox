@@ -22,7 +22,7 @@ abstract class TagDao {
      */
     @Transaction
     open suspend fun upsert(name: String): Long {
-        val clean = name.trim().removePrefix("#")
+        val clean = name.trim().trimStart('#').trim()
         if (clean.isBlank()) return -1L
         findIdByName(clean)?.let { return it }
         val id = insertTag(TagEntity(name = clean))

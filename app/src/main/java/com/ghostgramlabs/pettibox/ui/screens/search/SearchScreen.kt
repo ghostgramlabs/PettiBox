@@ -41,6 +41,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -342,7 +344,7 @@ private fun SearchDiscovery(
         EmptyState(
             emoji = "\uD83D\uDD0D",
             headline = "Find anything you stashed",
-            body = "Search titles, notes, links, sources, tags, English text inside images or PDFs, and articles saved for offline reading. Archive is included, so tucked-away saves still show up."
+            body = "Search titles, notes, links, sources, tags, text inside images or PDFs, and articles saved for offline reading. Archive is included, so tucked-away saves still show up."
         )
     }
 }
@@ -475,6 +477,13 @@ private fun NoResultsRecovery(
     onClearQuery: () -> Unit,
     onOpenFilters: () -> Unit
 ) {
+    // "No match" and "not read yet" are different answers: say which.
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val reading by remember {
+        androidx.work.WorkManager.getInstance(context)
+            .getWorkInfosByTagFlow(com.ghostgramlabs.pettibox.data.ocr.OcrWorkTags.TEXT_INDEXING)
+            .map { infos -> infos.any { !it.state.isFinished } }
+    }.collectAsState(initial = false)
     Column(
         Modifier
             .fillMaxWidth()
@@ -483,7 +492,8 @@ private fun NoResultsRecovery(
         EmptyState(
             emoji = "\uD83E\uDD14",
             headline = "Nothing matched",
-            body = "Try a shorter word, remove a filter, or search another source. OCR works best with English and may still be catching up."
+            body = if (reading) "Some saved images and PDFs are still being read, so they may match soon. Meanwhile, try a shorter word or remove a filter."
+            else "Try a shorter word, remove a filter, or search another source. For text in another language, turn it on in Settings › Text recognition."
         )
         Spacer(Modifier.height(8.dp))
         LazyRow(

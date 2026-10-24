@@ -24,7 +24,7 @@ data class DriveBackupFile(
  * Java client drags in megabytes of google-http/api-client just to do
  * four requests, so we speak the JSON API directly:
  *
- * - find-or-create the "PettiBox Backups" folder
+ * - find-or-create My Drive/PettiBox/Backups (via DriveFolders)
  * - multipart-upload a backup zip into it
  * - list / delete zips (rolling prune, same policy as local backups)
  * - stream a zip back down for restore
@@ -32,7 +32,7 @@ data class DriveBackupFile(
  * Everything takes a bearer token from [DriveAuth]; nothing here shows UI.
  */
 @Singleton
-class DriveBackupClient @Inject constructor() {
+class DriveBackupClient @Inject constructor(private val folders: DriveFolders) {
 
     suspend fun uploadBackup(token: String, file: File): String = withContext(Dispatchers.IO) {
         val folderId = ensureBackupFolder(token)
@@ -148,33 +148,11 @@ class DriveBackupClient @Inject constructor() {
 
     // ── Folder plumbing ───────────────────────────────────────────────────
 
-    private fun findBackupFolder(token: String): String? {
-        val q = encode(
-            "name = '$FOLDER_NAME' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-        )
-        val response = readResponse(
-            open("https://www.googleapis.com/drive/v3/files?q=$q&fields=files(id)", "GET", token)
-        )
-        val files = JSONObject(response).optJSONArray("files")
-        return if (files != null && files.length() > 0) files.getJSONObject(0).getString("id") else null
-    }
+    // Backups live in My Drive/PettiBox/Backups (an older top-level
+    // "PettiBox Backups" is moved there the first time; see DriveFolders).
+    private suspend fun findBackupFolder(token: String): String? = folders.backups(token, create = false)
 
-    private fun ensureBackupFolder(token: String): String {
-        findBackupFolder(token)?.let { return it }
-        val conn = open("https://www.googleapis.com/drive/v3/files?fields=id", "POST", token)
-        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-        conn.doOutput = true
-        conn.outputStream.use { out ->
-            out.write(
-                JSONObject()
-                    .put("name", FOLDER_NAME)
-                    .put("mimeType", "application/vnd.google-apps.folder")
-                    .toString()
-                    .toByteArray(Charsets.UTF_8)
-            )
-        }
-        return JSONObject(readResponse(conn)).getString("id")
-    }
+    private suspend fun ensureBackupFolder(token: String): String = folders.backups(token, create = true)!!
 
     // ── HTTP plumbing ─────────────────────────────────────────────────────
 
@@ -215,6 +193,5 @@ class DriveBackupClient @Inject constructor() {
     }
 
     companion object {
-        const val FOLDER_NAME = "PettiBox Backups"
     }
 }

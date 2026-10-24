@@ -19,12 +19,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -50,6 +54,9 @@ import com.ghostgramlabs.pettibox.data.local.CategoryEntity
  * Starter collections are just as editable as user-created ones: seeding
  * runs once per install, so renames/deletes stick instead of being
  * re-asserted on the next launch.
+ *
+ * [onLockedChange] adds the "Lock this collection" switch; only Browse
+ * passes it, since that's where a locked collection is reachable to unlock.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +64,9 @@ fun EditCollectionDialog(
     category: CategoryEntity,
     onDismiss: () -> Unit,
     onSave: (String, String, Long) -> Unit,
-    onDelete: (() -> Unit)? = null
+    onDelete: (() -> Unit)? = null,
+    lockAvailable: Boolean = false,
+    onLockedChange: ((Boolean) -> Unit)? = null
 ) {
     var name by remember(category.id) { mutableStateOf(category.name) }
     var emoji by remember(category.id) { mutableStateOf(category.emoji) }
@@ -131,6 +140,16 @@ fun EditCollectionDialog(
                     )
                 }
             }
+            if (onLockedChange != null) {
+                Spacer(Modifier.height(16.dp))
+                LockRow(
+                    locked = category.isLocked,
+                    // Turning a lock off always works; turning one on needs
+                    // a screen lock to unlock it with.
+                    enabled = lockAvailable || category.isLocked,
+                    onLockedChange = onLockedChange
+                )
+            }
             Spacer(Modifier.height(20.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -157,5 +176,45 @@ fun EditCollectionDialog(
                 ) { Text("Save", fontWeight = FontWeight.Bold) }
             }
         }
+    }
+}
+
+@Composable
+private fun LockRow(locked: Boolean, enabled: Boolean, onLockedChange: (Boolean) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+            .clickable(enabled = enabled) { onLockedChange(!locked) }
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    ) {
+        Icon(
+            Icons.Rounded.Lock,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                "Lock this collection",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                if (enabled) {
+                    "Hidden from Home, search, and everywhere else until you unlock it " +
+                        "with your fingerprint, face, or phone PIN."
+                } else {
+                    "Set a screen lock on your phone to use this."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Switch(checked = locked, onCheckedChange = onLockedChange, enabled = enabled)
     }
 }

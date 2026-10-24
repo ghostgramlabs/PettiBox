@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -66,8 +67,33 @@ class HomeViewModel @Inject constructor(
     private val reminderPreferences: ReminderPreferences,
     private val ratingPreferences: RatingPreferences,
     private val localBackupStore: LocalBackupStore,
+    private val syncPreferences: com.ghostgramlabs.pettibox.data.sync.SyncPreferences,
+    private val syncDao: com.ghostgramlabs.pettibox.data.local.SyncDao,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
+    /** Sync between devices, for the button on Home (null until read). */
+    val syncStatus: kotlinx.coroutines.flow.StateFlow<com.ghostgramlabs.pettibox.data.sync.SyncStatus?> = syncPreferences.status
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), null)
+
+    fun syncNow() = com.ghostgramlabs.pettibox.data.sync.SyncScheduler.now(appContext)
+
+    /** The answer to "another device removed N saves", given on Home (Settings › Sync asks the same). */
+    fun answerSyncReview(keepMine: Boolean) = viewModelScope.launch {
+        syncPreferences.setReviewDecision(
+            if (keepMine) com.ghostgramlabs.pettibox.data.sync.SyncEngine.REVIEW_KEEP
+            else com.ghostgramlabs.pettibox.data.sync.SyncEngine.REVIEW_APPLY
+        )
+        com.ghostgramlabs.pettibox.data.sync.SyncScheduler.now(appContext)
+    }
+
+    /** Saves edited on two devices, waiting for someone (on any one device) to pick a version. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val needingChoice: kotlinx.coroutines.flow.StateFlow<List<SaveItemEntity>> = syncPreferences.needingChoice
+        .flatMapLatest { ids ->
+            if (ids.isEmpty()) kotlinx.coroutines.flow.flowOf(emptyList()) else syncDao.observeBySyncIds(ids.toList())
+        }
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), emptyList())
+
     private val isTextIndexing = textIndexingFlow(appContext)
     private val backupRestoreCandidate = MutableStateFlow<BackupRestoreCandidate?>(null)
 
