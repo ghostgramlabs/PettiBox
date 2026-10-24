@@ -1,5 +1,7 @@
 # PettiBox sync and OCR fix verification
 
+**Superseded status:** see [the latest recheck](SYNC_OCR_LATEST_RECHECK.md) for verification of commit `4c64ddb`. This document preserves the earlier findings.
+
 October 17 2026
 
 **Not all issues are fixed.** The new implementation fixes the reproduced short-text, mixed-script and EXIF problems, protects edits during duplicate folding, and improves Settings. However, OCR text retention still fails a new regression test. Failure reporting, re-read scheduling and recovery also retain gaps.

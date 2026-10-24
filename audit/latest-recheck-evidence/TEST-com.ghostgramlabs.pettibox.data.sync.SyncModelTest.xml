@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" tests="24" skipped="0" failures="0" errors="0" timestamp="2026-10-18T01:35:14" hostname="SAS" time="0.264">
+  <properties/>
+  <testcase name="recognized text arriving later doesn't undo a delete" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.002"/>
+  <testcase name="restoring a removed save here brings it back everywhere" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="a favorite pin or reminder another device's copy cleared without seeing it stands" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.002"/>
+  <testcase name="edits to different fields on two devices both survive" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="settling marks never brings a deleted save back" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="merge is commutative, associative and idempotent" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.186"/>
+  <testcase name="an edit the deleting device hadn't seen brings the save back" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.001"/>
+  <testcase name="removed elsewhere while still in Recently deleted here stays quiet" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="two saves of a link made on one device are left alone" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.002"/>
+  <testcase name="the same link saved on two devices folds into the older save" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.003"/>
+  <testcase name="clearing a mark that was seen is not undone" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="a delete that saw everything stands" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="shards spread records over 16 files" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.015"/>
+  <testcase name="a broken file is rejected and a newer format is left alone" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.006"/>
+  <testcase name="an edit made after seeing another replaces it without a conflict" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.001"/>
+  <testcase name="same field edited on two devices keeps both values until someone picks" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="unchanged local state writes nothing" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="two devices folding at once agree" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.001"/>
+  <testcase name="records survive a JSON round trip" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.041"/>
+  <testcase name="a note already contained is not repeated, and a live copy brings a deleted one back" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="a lagging clock still wins once it has seen the newer write" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.001"/>
+  <testcase name="tags added on different devices are both kept" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="removing a tag elsewhere doesn't undo an add it hadn't seen" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.0"/>
+  <testcase name="permanent removal with an unseen edit comes back whole" classname="com.ghostgramlabs.pettibox.data.sync.SyncModelTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

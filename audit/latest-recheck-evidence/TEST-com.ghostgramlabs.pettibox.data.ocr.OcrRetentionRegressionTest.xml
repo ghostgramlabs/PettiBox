@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.ocr.OcrRetentionRegressionTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-18T01:35:14" hostname="SAS" time="0.006">
+  <properties/>
+  <testcase name="a_new_script_does_not_justify_discarding_existing_page_text" classname="com.ghostgramlabs.pettibox.data.ocr.OcrRetentionRegressionTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

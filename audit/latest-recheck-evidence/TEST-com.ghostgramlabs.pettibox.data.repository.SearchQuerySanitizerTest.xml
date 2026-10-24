@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ghostgramlabs.pettibox.data.repository.SearchQuerySanitizerTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-18T01:35:14" hostname="SAS" time="0.004">
+  <properties/>
+  <testcase name="sanitizeFtsQueryKeepsVowelSignsOfIndicScripts" classname="com.ghostgramlabs.pettibox.data.repository.SearchQuerySanitizerTest" time="0.001"/>
+  <testcase name="sanitizeFtsQueryKeepsUsefulTokensAndPrefixesThem" classname="com.ghostgramlabs.pettibox.data.repository.SearchQuerySanitizerTest" time="0.001"/>
+  <testcase name="sanitizeFtsQueryDropsOneLetterNoise" classname="com.ghostgramlabs.pettibox.data.repository.SearchQuerySanitizerTest" time="0.0"/>
+  <testcase name="containsPatternOnlyForScriptsWithoutSpaces" classname="com.ghostgramlabs.pettibox.data.repository.SearchQuerySanitizerTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

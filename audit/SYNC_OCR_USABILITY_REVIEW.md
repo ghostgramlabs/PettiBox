@@ -1,6 +1,6 @@
 # PettiBox sync and multilingual OCR review
 
-**Latest status:** see [fix verification](SYNC_OCR_FIX_VERIFICATION.md) for the subsequent code and emulator recheck. Findings below describe the original reviewed snapshot and are retained as historical evidence.
+**Latest status:** see [the latest recheck](SYNC_OCR_LATEST_RECHECK.md). Findings below describe the original reviewed snapshot and are retained as historical evidence.
 
 Reviewed October 17 2026. Audience: product owner and Android and extension developers.
 
