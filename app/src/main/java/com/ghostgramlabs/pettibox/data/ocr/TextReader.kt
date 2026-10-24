@@ -27,6 +27,21 @@ import javax.inject.Singleton
 /** The file can't be opened or decoded (missing, or not an image or PDF): retrying won't help. */
 class UnreadableSourceException(message: String) : Exception(message)
 
+/** A PDF reading stopped between pages on request ([TextReader.readPdf]'s `stop`); its progress is saved. */
+class ReadingPausedException : Exception("paused between pages")
+
+/**
+ * What reading a file came to: its [text], and [replaced]: what the engines
+ * also made of the same places but was dropped for a better line there (a
+ * Latin guess under a Russian line, a reading too unsure to keep). An old
+ * word found only in [replaced] was a misreading, so a new reading may drop
+ * it ([TextReader.improves]).
+ */
+data class Reading(val text: String, val replaced: String = "")
+
+/** Where a PDF reading got to: [nextPage] is the first not yet read; [reading] is the text so far. */
+data class PdfProgress(val nextPage: Int, val reading: Reading)
+
 /**
  * Reads the text in an image or PDF, in the Latin alphabet and every
  * language turned on in Settings (see [OcrLanguages]) whose model is here.
@@ -60,29 +75,21 @@ class TextReader @Inject constructor(
         readyLanguages().flatMapTo(HashSet()) { it.scripts } + Character.UnicodeScript.LATIN
 
     /**
-     * Whether a [new] reading of a file should replace the [old] text:
-     * - none before: yes (if it found any);
-     * - the old text has a script that can't be read now (its language was
-     *   turned off): no, it would be lost;
-     * - the new one adds a script the old lacks (a language just turned on):
-     *   yes, if it's a whole reading rather than a fragment (at least
-     *   [NEW_SCRIPT_SHARE] of the old amount of text: a lone label must not
-     *   wipe out a page);
-     * - otherwise only if it keeps nearly as many letters and most of the
-     *   same text ([retained]): fewer PDF pages, a shakier reading, or junk of
-     *   the same length mustn't make words disappear from search.
+     * What a reading depends on besides the file: the languages ready and
+     * the page limit. Saved PDF progress only carries on under the same.
      */
-    suspend fun improves(new: String, old: String?): Boolean = improves(new, old, readableScripts())
+    suspend fun configuration(pageLimit: Int): String =
+        readyLanguages().map { it.code }.sorted().joinToString(",") + "|" + pageLimit
 
     /** Forget the cached list (a model just arrived, or the choice changed). */
     fun refresh() { readyCache = null }
 
     /**
-     * The text in an image ("" when it has none). Throws
-     * [UnreadableSourceException] when the file can't be read, and the
-     * engine's error when no engine could read it (worth retrying).
+     * The text in an image. Throws [UnreadableSourceException] when the file
+     * can't be read, and the engine's error when no engine could read it
+     * (worth retrying).
      */
-    suspend fun readImage(uri: Uri): String {
+    suspend fun readImage(uri: Uri): Reading {
         val langs = readyLanguages()
         // The permit is taken before decoding: waiting jobs hold no pictures.
         return gate.withPermit {
@@ -101,10 +108,22 @@ class TextReader @Inject constructor(
      * Text of the first [pageLimit] pages, a blank line between pages. Pages
      * are drawn [PDF_WIDTH] wide in slices at most [PDF_SLICE] tall, so a
      * long receipt never needs one huge bitmap.
+     *
+     * Carries on from [from] (saved progress) if given. After each page,
+     * [saved] is told where it got to, then [stop] is asked whether to pause
+     * there ([ReadingPausedException]); a stopped job resumes from the next
+     * page instead of the first.
      */
-    suspend fun readPdf(uri: Uri, pageLimit: Int): String = withContext(Dispatchers.IO) {
+    suspend fun readPdf(
+        uri: Uri,
+        pageLimit: Int,
+        from: PdfProgress? = null,
+        saved: suspend (PdfProgress) -> Unit = {},
+        stop: () -> Boolean = { false }
+    ): Reading = withContext(Dispatchers.IO) {
         val langs = readyLanguages()
-        val out = StringBuilder()
+        val text = StringBuilder(from?.reading?.text.orEmpty())
+        val replaced = StringBuilder(from?.reading?.replaced.orEmpty())
         val pfd = try {
             context.contentResolver.openFileDescriptor(uri, "r")
         } catch (e: CancellationException) {
@@ -119,42 +138,51 @@ class TextReader @Inject constructor(
                 throw UnreadableSourceException("not a PDF: $uri")
             }
             pdf.use {
-                for (i in 0 until minOf(pdf.pageCount, pageLimit)) {
+                val last = minOf(pdf.pageCount, pageLimit)
+                for (i in (from?.nextPage ?: 0) until last) {
                     coroutineContext.ensureActive()
-                    pdf.openPage(i).use { page ->
-                        val scale = PDF_WIDTH.toFloat() / page.width.coerceAtLeast(1)
-                        val width = (page.width * scale).toInt().coerceAtLeast(1)
-                        val height = (page.height * scale).toInt().coerceAtLeast(1)
-                        var top = 0
-                        val pageText = ArrayList<String>()
-                        while (top < height) {
-                            val sliceHeight = minOf(PDF_SLICE, height - top)
-                            val sliceTop = top
-                            // The permit is taken before the slice is drawn: waiting jobs hold no bitmaps.
-                            val text = gate.withPermit {
-                                val bmp = Bitmap.createBitmap(width, sliceHeight, Bitmap.Config.ARGB_8888)
-                                try {
-                                    bmp.eraseColor(Color.WHITE)
-                                    val matrix = Matrix().apply { setScale(scale, scale); postTranslate(0f, -sliceTop.toFloat()) }
-                                    page.render(bmp, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                                    readNow(bmp, langs)
-                                } finally {
-                                    bmp.recycle()
-                                }
-                            }
-                            text.lines().filter { it.isNotBlank() }.forEach { line ->
-                                // Slices overlap a little, so a line on the edge isn't cut in two; don't keep it twice.
-                                if (pageText.lastOrNull() != line) pageText += line
-                            }
-                            if (top + sliceHeight >= height) break
-                            top += sliceHeight - PDF_SLICE_OVERLAP
-                        }
-                        if (pageText.isNotEmpty()) out.append(pageText.joinToString("\n")).append("\n\n")
-                    }
+                    val page = readPage(pdf, i, langs)
+                    if (page.text.isNotBlank()) text.append(page.text).append("\n\n")
+                    if (page.replaced.isNotBlank()) replaced.append(page.replaced).append("\n")
+                    saved(PdfProgress(i + 1, Reading(text.toString(), replaced.toString())))
+                    if (i + 1 < last && stop()) throw ReadingPausedException()
                 }
             }
         }
-        out.toString().trim()
+        Reading(text.toString().trim(), replaced.toString().trim())
+    }
+
+    private suspend fun readPage(pdf: PdfRenderer, index: Int, langs: List<OcrLanguage>): Reading = pdf.openPage(index).use { page ->
+        val scale = PDF_WIDTH.toFloat() / page.width.coerceAtLeast(1)
+        val width = (page.width * scale).toInt().coerceAtLeast(1)
+        val height = (page.height * scale).toInt().coerceAtLeast(1)
+        var top = 0
+        val lines = ArrayList<String>()
+        val replaced = StringBuilder()
+        while (top < height) {
+            val sliceHeight = minOf(PDF_SLICE, height - top)
+            val sliceTop = top
+            // The permit is taken before the slice is drawn: waiting jobs hold no bitmaps.
+            val slice = gate.withPermit {
+                val bmp = Bitmap.createBitmap(width, sliceHeight, Bitmap.Config.ARGB_8888)
+                try {
+                    bmp.eraseColor(Color.WHITE)
+                    val matrix = Matrix().apply { setScale(scale, scale); postTranslate(0f, -sliceTop.toFloat()) }
+                    page.render(bmp, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    readNow(bmp, langs)
+                } finally {
+                    bmp.recycle()
+                }
+            }
+            slice.text.lines().filter { it.isNotBlank() }.forEach { line ->
+                // Slices overlap a little, so a line on the edge isn't cut in two; don't keep it twice.
+                if (lines.lastOrNull() != line) lines += line
+            }
+            if (slice.replaced.isNotBlank()) replaced.append(slice.replaced).append("\n")
+            if (top + sliceHeight >= height) break
+            top += sliceHeight - PDF_SLICE_OVERLAP
+        }
+        Reading(lines.joinToString("\n"), replaced.toString().trim())
     }
 
     /** One line of a reading, where it is on the image, and how sure the engine is (0–1). */
@@ -166,7 +194,7 @@ class TextReader @Inject constructor(
      */
     private val gate = Semaphore(2)
 
-    private suspend fun readNow(bmp: Bitmap, langs: List<OcrLanguage>): String {
+    private suspend fun readNow(bmp: Bitmap, langs: List<OcrLanguage>): Reading {
         var failure: Exception? = null
         var anyRan = false
         suspend fun attempt(what: String, block: suspend () -> List<Line>): List<Line>? = try {
@@ -182,6 +210,7 @@ class TextReader @Inject constructor(
         // Each engine on its own: one failing doesn't stop the others.
         val latin = attempt("Latin") { mlKitLines(null, bmp) }.orEmpty()
         val kept = ArrayList<Pair<Line, Float>>() // a line and its weight
+        val unsure = ArrayList<Line>() // lines in an engine's script it was too unsure of
         val runs = langs.filter { it.engine != OcrEngine.TESSERACT }.groupBy { it.engine }
             .map { (engine, ls) -> Triple(engine, null as String?, ls.flatMap { it.scripts }.toSet()) } +
             langs.filter { it.engine == OcrEngine.TESSERACT }.map { Triple(it.engine, it.tessCode, it.scripts) }
@@ -193,19 +222,25 @@ class TextReader @Inject constructor(
             for (line in lines) {
                 val inScript = lineInScript(line.text, scripts)
                 if (inScript > 0 && line.confidence >= min) kept += line to inScript * line.confidence
+                else if (inScript > 0) unsure += line
             }
         }
         if (!anyRan) throw failure ?: IllegalStateException("no text engine available")
 
         // Where two language lines cover the same place, the surer and longer one stays.
         val chosen = ArrayList<Line>()
+        val dropped = ArrayList<Line>()
         for ((line, _) in kept.sortedByDescending { it.second }) {
-            if (chosen.none { overlap(it.box, line.box) > SAME_PLACE }) chosen += line
+            if (chosen.none { overlap(it.box, line.box) > SAME_PLACE }) chosen += line else dropped += line
         }
-        // Latin lines wherever no language line was kept.
-        for (line in latin) if (chosen.none { overlap(it.box, line.box) > SAME_PLACE }) chosen += line
-        return chosen.sortedWith(compareBy({ it.box.centerY() / LINE_BAND }, { it.box.left }))
+        // Latin lines wherever no language line was kept; under one, they were a guess at it.
+        val languageLines = chosen.toList()
+        for (line in latin) {
+            if (languageLines.none { overlap(it.box, line.box) > SAME_PLACE }) chosen += line else dropped += line
+        }
+        val text = chosen.sortedWith(compareBy({ it.box.centerY() / LINE_BAND }, { it.box.left }))
             .joinToString("\n") { it.text.trim() }.trim()
+        return Reading(text, (dropped + unsure).joinToString("\n") { it.text.trim() })
     }
 
     private suspend fun mlKitLines(engine: OcrEngine?, bmp: Bitmap): List<Line> =
@@ -246,12 +281,6 @@ class TextReader @Inject constructor(
         /** Tallest slice of a PDF page drawn at once: 1400 × 2000 pixels, about 11 MB. */
         private const val PDF_SLICE = 2000
         private const val PDF_SLICE_OVERLAP = 120
-        /** A new reading with no new script must keep this share of the old one's letters. */
-        private const val KEEP_SHARE = 0.9
-        /** …and this share of its text ([retained]). */
-        private const val KEEP_TEXT = 0.5
-        /** A reading adding a new script must have this share of the old one's letters: a whole reading, not a fragment. */
-        private const val NEW_SCRIPT_SHARE = 0.6
 
         /**
          * How sure Tesseract must be of a line (0–1). On test pictures, real
@@ -293,39 +322,91 @@ class TextReader @Inject constructor(
             Character.getType(cp) == Character.NON_SPACING_MARK.toInt() ||
             Character.getType(cp) == Character.COMBINING_SPACING_MARK.toInt()
 
-        /** [improves], with the scripts that can be read now given. */
-        internal fun improves(new: String, old: String?, readable: Set<Character.UnicodeScript>): Boolean {
-            if (new.isBlank()) return false
+        /**
+         * Whether a new reading of a file should replace its [old] text.
+         * Nothing someone could search for may be lost, so:
+         * - none before: yes, if the new one found any;
+         * - the old text has a script that can't be read now (its language
+         *   was turned off): no;
+         * - otherwise only if every word of the old text is accounted for
+         *   ([unaccountedWords]): still there, there with a small correction
+         *   ("Grocerv" → "Grocery"), or something the engines made of the
+         *   same place this time and dropped for a better line
+         *   ([Reading.replaced]: the old word was a misreading).
+         * A lone label can't wipe out a page, fewer PDF pages can't shrink
+         * one, and neither can junk of any length.
+         */
+        internal fun improves(new: Reading, old: String?, readable: Set<Character.UnicodeScript>): Boolean {
+            if (new.text.isBlank()) return false
             if (old.isNullOrBlank()) return true
-            val before = lettersByScript(old)
-            val after = lettersByScript(new)
-            if (before.any { (script, n) -> script !in readable && n >= 2 }) return false
-            val oldLetters = before.values.sum()
-            val newLetters = after.values.sum()
-            if (after.any { (script, n) -> script != Character.UnicodeScript.LATIN && n >= 2 && (before[script] ?: 0) == 0 }) {
-                return newLetters >= oldLetters * NEW_SCRIPT_SHARE
-            }
-            return newLetters >= oldLetters * KEEP_SHARE && retained(old, new) >= KEEP_TEXT
+            if (lettersByScript(old).any { (script, n) -> script !in readable && n >= 2 }) return false
+            return unaccountedWords(old, new).isEmpty()
         }
 
         /**
-         * The share of [old]'s three-letter pieces (within words, ignoring
-         * case) that [new] still has: high for the same text read again or
-         * corrected ("Grocerv" → "Grocery"), low for different text.
+         * When [improves] says no, but the new reading finds words the [old]
+         * text lacks (a photo read the right way up now, a better engine):
+         * the new reading plus the old lines it doesn't account for, so the
+         * new words become searchable and no old word is lost. Null when
+         * there's nothing new, or when the old text has a script that can't
+         * be read now (merging would mix guesses at it in). Merging again
+         * with the same reading gives the same text.
          */
-        internal fun retained(old: String, new: String): Double {
-            fun pieces(t: String): Set<String> {
-                val out = HashSet<String>()
-                for (word in t.lowercase().split(Regex("[^\\p{L}\\p{M}\\p{N}]+"))) {
-                    if (word.length < 3) { if (word.isNotEmpty()) out += word; continue }
-                    for (i in 0..word.length - 3) out += word.substring(i, i + 3)
-                }
-                return out
+        internal fun merged(new: Reading, old: String?, readable: Set<Character.UnicodeScript>): String? {
+            if (new.text.isBlank() || old.isNullOrBlank()) return null
+            if (lettersByScript(old).any { (script, n) -> script !in readable && n >= 2 }) return null
+            if ((tokens(new.text) - tokens(old)).isEmpty()) return null
+            val missing = unaccountedWords(old, new).toSet()
+            val kept = old.lines().filter { line -> words(line).any { it in missing } }
+            return if (kept.isEmpty()) new.text else new.text + "\n\n" + kept.joinToString("\n")
+        }
+
+        /** [improves] for a reading that dropped nothing (tests, and text with no reading behind it). */
+        internal fun improves(new: String, old: String?, readable: Set<Character.UnicodeScript>): Boolean =
+            improves(Reading(new), old, readable)
+
+        /** The words (3+ letters or digits, ignoring case) of [old] that [new] doesn't account for. */
+        internal fun unaccountedWords(old: String, new: Reading): List<String> {
+            val now = words(new.text)
+            val replaced = words(new.replaced)
+            val byLength = now.groupBy { it.length }
+            return words(old).filter { w ->
+                w !in now && w !in replaced &&
+                    (w.length - 2..w.length + 2).none { n -> byLength[n].orEmpty().any { closeTo(w, it) } }
             }
-            val before = pieces(old)
-            if (before.isEmpty()) return 1.0
-            val after = pieces(new)
-            return before.count { it in after } / before.size.toDouble()
+        }
+
+        private fun words(text: String): Set<String> =
+            text.lowercase().split(Regex("[^\\p{L}\\p{M}\\p{N}]+")).filterTo(HashSet()) { it.length >= 3 }
+
+        /** [words], plus two-letter ones in scripts written without spaces (天气 is a whole word). */
+        private fun tokens(text: String): Set<String> =
+            text.lowercase().split(Regex("[^\\p{L}\\p{M}\\p{N}]+")).filterTo(HashSet()) {
+                it.length >= 3 || (it.length == 2 && Character.UnicodeScript.of(it.codePointAt(0)) in UNSPACED)
+            }
+
+        private val UNSPACED = setOf(
+            Character.UnicodeScript.HAN, Character.UnicodeScript.HIRAGANA,
+            Character.UnicodeScript.KATAKANA, Character.UnicodeScript.HANGUL
+        )
+
+        /** The same word read slightly differently: at most one change per four letters. */
+        private fun closeTo(a: String, b: String): Boolean {
+            val allowed = maxOf(1, minOf(a.length, b.length) / 4)
+            if (kotlin.math.abs(a.length - b.length) > allowed) return false
+            var prev = IntArray(b.length + 1) { it }
+            for (i in 1..a.length) {
+                val cur = IntArray(b.length + 1)
+                cur[0] = i
+                var best = cur[0]
+                for (j in 1..b.length) {
+                    cur[j] = minOf(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + if (a[i - 1] == b[j - 1]) 0 else 1)
+                    best = minOf(best, cur[j])
+                }
+                if (best > allowed) return false
+                prev = cur
+            }
+            return prev[b.length] <= allowed
         }
 
         /** Letters (and vowel signs) of [text] in each script. */
@@ -349,7 +430,7 @@ class TextReader @Inject constructor(
             "ല്‍" to "ൽ", "ള്‍" to "ൾ", "ക്‍" to "ൿ"
         )
         /** A zero-width (non-)joiner after an Indic letter or sign: invisible, and it keeps a word from matching what people type. */
-        private val INDIC_JOINER = Regex("(?<=[ऀ-෿])[‌‍]")
+        private val INDIC_JOINER = Regex("(?<=[\\u0900-\\u0DFF])[\\u200C\\u200D]")
 
         /**
          * Tesseract's Indic output in the form keyboards produce, so a search

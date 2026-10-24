@@ -31,13 +31,21 @@ data class OcrStatusEntity(
     @ColumnInfo(name = "attachment_id") val attachmentId: Long?,
     @ColumnInfo(name = "uri") val uri: String,
     @ColumnInfo(name = "pdf") val pdf: Boolean,
-    /** One of [PENDING], [NO_TEXT], [UNREADABLE], [FAILED]. */
+    /** One of [PENDING], [READING], [NO_TEXT], [UNREADABLE], [FAILED]. */
     @ColumnInfo(name = "state") val state: String,
-    @ColumnInfo(name = "updated_at") val updatedAt: Long = System.currentTimeMillis()
+    @ColumnInfo(name = "updated_at") val updatedAt: Long = System.currentTimeMillis(),
+    /** A PDF being read: the languages and page limit it's read under ([com.ghostgramlabs.pettibox.data.ocr.TextReader.configuration]). */
+    @ColumnInfo(name = "config") val config: String? = null,
+    /** A PDF being read: pages done, and the text (and dropped readings) so far, to carry on from there. */
+    @ColumnInfo(name = "pages_done", defaultValue = "0") val pagesDone: Int = 0,
+    @ColumnInfo(name = "partial_text") val partialText: String? = null,
+    @ColumnInfo(name = "partial_replaced") val partialReplaced: String? = null
 ) {
     companion object {
         /** To be read (recorded with the file's arrival, so it survives the app being stopped). */
         const val PENDING = "pending"
+        /** A PDF part read: carries on from [pagesDone] (a stopped job doesn't start again from page one). */
+        const val READING = "reading"
         /** Read, and there's no text in it. */
         const val NO_TEXT = "no_text"
         /** The file couldn't be opened: missing, or not an image or PDF. Adding it again helps; retrying doesn't. */
@@ -57,8 +65,12 @@ interface OcrStatusDao {
     @Query("DELETE FROM ocr_status WHERE source = :source")
     suspend fun clear(source: String)
 
-    @Query("SELECT * FROM ocr_status WHERE state = 'pending'")
+    /** Files waiting to be read, or part read (a PDF whose job stopped): to queue at app start. */
+    @Query("SELECT * FROM ocr_status WHERE state IN ('pending', 'reading')")
     suspend fun pending(): List<OcrStatusEntity>
+
+    @Query("SELECT * FROM ocr_status WHERE source = :source")
+    suspend fun get(source: String): OcrStatusEntity?
 
     @Query("SELECT * FROM ocr_status WHERE item_id = :itemId")
     fun observeForItem(itemId: Long): Flow<List<OcrStatusEntity>>

@@ -421,8 +421,7 @@ class SaveSheetViewModel @Inject constructor(
         // Copy any foreign content URIs into our own filesDir so they survive
         // permission revocation and process death. http(s) URLs and existing
         // file:// URIs are passed through unchanged.
-        val ownLocalUri = s.localUri?.let { ingestIfForeign(it) }
-        val ownAttachments = s.attachments.map { ingestIfForeign(it) ?: it }
+        val (ownLocalUri, ownAttachments) = ingestAll(s)
 
         // A quick note left on the placeholder title is named after its
         // first line, so the shelf shows "Call the dentist", not "Quick save".
@@ -504,6 +503,17 @@ class SaveSheetViewModel @Inject constructor(
         }
     }
 
+    /**
+     * The share's main file and its attachments, copied in. The main file is
+     * usually the first attachment too: it's copied once and both point at
+     * that copy, so an image isn't stored (and backed up) twice.
+     */
+    private suspend fun ingestAll(s: SaveSheetState): Pair<String?, List<String>> {
+        val copies = HashMap<String, String?>()
+        suspend fun own(uri: String) = copies.getOrPut(uri) { ingestIfForeign(uri) }
+        return s.localUri?.let { own(it) } to s.attachments.map { own(it) ?: it }
+    }
+
     private suspend fun ingestIfForeign(uriString: String): String? {
         return runCatching {
             val uri = Uri.parse(uriString)
@@ -523,8 +533,7 @@ class SaveSheetViewModel @Inject constructor(
         val s = _state.value
         val target = repo.getById(targetItemId) ?: return@launch
 
-        val ownLocalUri = s.localUri?.let { ingestIfForeign(it) }
-        val ownAttachments = s.attachments.map { ingestIfForeign(it) ?: it }
+        val (ownLocalUri, ownAttachments) = ingestAll(s)
 
         val urisToAttach = buildList {
             if (s.attachments.isEmpty() && !ownLocalUri.isNullOrBlank()) add(ownLocalUri)

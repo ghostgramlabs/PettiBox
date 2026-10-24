@@ -1,8 +1,6 @@
 package com.ghostgramlabs.pettibox.data.ocr
 
 import android.content.Context
-import android.net.Uri
-import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -10,32 +8,25 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.ghostgramlabs.pettibox.data.local.OcrStatusEntity
-import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
-import com.ghostgramlabs.pettibox.data.repository.SaveRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.first
 
 /**
  * Reads the text in one image or PDF: a save's own file, or (with
  * [KEY_ATTACHMENT_ID]) one of the files added to it, whose text then makes
- * up the save's with the others ([SaveRepository.setSourceText]).
+ * up the save's with the others ([com.ghostgramlabs.pettibox.data.repository.SaveRepository.acceptSourceText]).
  *
- * One job per file at a time ([enqueue] replaces a waiting one), and its
- * result only replaces existing text when it's better
- * ([TextReader.improves]), so asking twice, retrying, or a file arriving
- * from another phone never doubles or worsens the text. A file that can't be
- * opened has nothing to read; an engine failure is tried again a few times.
+ * One job per file at a time ([enqueue] replaces a waiting one). The reading
+ * itself, what's stored and what's recorded is [SourceReader]: asking twice,
+ * retrying, or a file arriving from another phone never doubles or loses
+ * text. An engine failure is tried again a few times, then recorded; a long
+ * PDF stopped midway carries on from its next page.
  */
 @HiltWorker
 class OcrWorker @AssistedInject constructor(
     @Assisted private val ctx: Context,
     @Assisted params: WorkerParameters,
-    private val repository: SaveRepository,
-    private val reader: TextReader,
-    private val ocrPreferences: OcrPreferences
+    private val sources: SourceReader
 ) : CoroutineWorker(ctx, params) {
 
     override suspend fun doWork(): Result {
@@ -45,33 +36,13 @@ class OcrWorker @AssistedInject constructor(
         val pdf = inputData.getBoolean(KEY_PDF, false)
         if (itemId <= 0L) return Result.failure()
 
-        // How it went is kept per file (ocr_status), so the save can say "no text"
-        // or "couldn't read" and offer Try again, instead of looking finished.
-        suspend fun state(value: String?) = repository.setReadingState(itemId, attachmentId, uri, pdf, value)
-        return try {
-            val readable = reader.readableScripts()
-            val text = if (pdf) reader.readPdf(Uri.parse(uri), ocrPreferences.pdfPageLimit.first())
-            else reader.readImage(Uri.parse(uri))
-            repository.acceptSourceText(itemId, attachmentId, text, readable)
-            state(if (repository.sourceHasText(itemId, attachmentId)) null else OcrStatusEntity.NO_TEXT)
-            Result.success()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: UnreadableSourceException) {
-            Log.i(TAG, "nothing to read: ${e.message}")
-            state(OcrStatusEntity.UNREADABLE) // any text it had stays
-            Result.success()
-        } catch (e: Exception) {
-            Log.w(TAG, "reading text failed", e)
-            if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else {
-                state(OcrStatusEntity.FAILED) // any text it had stays
-                Result.success()
-            }
+        return when (sources.read(itemId, attachmentId, uri, pdf, lastTry = runAttemptCount >= MAX_ATTEMPTS)) {
+            SourceReader.Outcome.RETRY -> Result.retry()
+            else -> Result.success()
         }
     }
 
     companion object {
-        private const val TAG = "PettiBoxOcr"
         const val KEY_ITEM_ID = "item_id"
         const val KEY_ATTACHMENT_ID = "attachment_id"
         const val KEY_URI = "uri"

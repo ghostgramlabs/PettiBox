@@ -47,15 +47,19 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -108,7 +112,19 @@ fun SaveSheet(
     // Always open fully expanded. A half-expanded sheet pushes the sticky
     // Save footer below the visible area, and that gets worse once the
     // keyboard opens for the collection search.
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // Something typed (a note, tags) isn't thrown away by a stray Back, swipe
+    // or tap outside: the sheet stays and asks first.
+    var confirmDiscard by remember { mutableStateOf(false) }
+    val hasTyped by rememberUpdatedState(!state.isSaved && (state.notes.isNotBlank() || state.tagsInput.isNotBlank()))
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { value ->
+            if (value == SheetValue.Hidden && hasTyped) {
+                confirmDiscard = true
+                false
+            } else true
+        }
+    )
     val scope = rememberCoroutineScope()
     var showCreate by remember { mutableStateOf(false) }
     var createInitialName by remember { mutableStateOf("") }
@@ -178,10 +194,34 @@ fun SaveSheet(
         )
     }
 
+    if (confirmDiscard) {
+        AlertDialog(
+            onDismissRequest = { confirmDiscard = false },
+            title = { Text("Discard what you typed?") },
+            text = { Text("Your note and tags haven't been saved yet.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDiscard = false
+                    viewModel.discardDraft()
+                    onDismiss()
+                }) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDiscard = false }) { Text("Keep editing") }
+            }
+        )
+    }
+
     ModalBottomSheet(
         onDismissRequest = {
-            viewModel.discardDraft()
-            onDismiss()
+            if (hasTyped) {
+                // Back hides the sheet without asking confirmValueChange: bring it back, then ask.
+                confirmDiscard = true
+                scope.launch { sheetState.show() }
+            } else {
+                viewModel.discardDraft()
+                onDismiss()
+            }
         },
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.background,

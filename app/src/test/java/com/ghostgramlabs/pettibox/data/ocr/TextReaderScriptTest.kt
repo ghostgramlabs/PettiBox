@@ -34,8 +34,18 @@ class TextReaderScriptTest {
         assertFalse(TextReader.improves("IpuBeT, Mup! BcTpe4a 3aBTpa", "Привет, мир! Встреча завтра", latin))
     }
 
-    @Test fun a_reading_in_a_language_just_turned_on_replaces_a_latin_guess() {
-        assertTrue(TextReader.improves("Привет, мир! Встреча завтра", "IpuBeT, Mup! BcTpe4a 3aBTpa", latin + cyrillic))
+    @Test fun a_reading_in_a_language_just_turned_on_replaces_the_latin_guess_it_replaced() {
+        // The reader saw the same Latin guess this time and dropped it for the Russian line.
+        val reading = Reading("Привет, мир! Встреча завтра", replaced = "IpuBeT, Mup! BcTpe4a 3aBTpa")
+        assertTrue(TextReader.improves(reading, "IpuBeT, Mup! BcTpe4a 3aBTpa", latin + cyrillic))
+        // Without that evidence, the old words could be real: kept.
+        assertFalse(TextReader.improves("Привет, мир! Встреча завтра", "IpuBeT, Mup! BcTpe4a 3aBTpa", latin + cyrillic))
+    }
+
+    @Test fun every_old_word_must_be_accounted_for() {
+        val old = "Invoice reference ALPHA paid on Monday. Warranty code ZEBRA."
+        assertEquals(setOf("warranty", "code", "zebra"), TextReader.unaccountedWords(old, Reading("Invoice reference ALPHA paid on Monday. 天气")).toSet())
+        assertTrue(TextReader.unaccountedWords(old, Reading("Invoice reference ALPHA paid on Monday. 天气", replaced = "Warranty code ZEBRA")).isEmpty())
     }
 
     @Test fun a_shorter_reading_doesnt_make_words_disappear() {

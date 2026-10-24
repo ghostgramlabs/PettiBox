@@ -14,7 +14,7 @@ class MigrationTest {
     @get:Rule
     val helper = MigrationTestHelper(InstrumentationRegistry.getInstrumentation(), AppDatabase::class.java)
 
-    @Test fun from_v8_search_finds_any_script_and_reading_states_exist() {
+    @Test fun from_v8_search_finds_any_script_and_reading_states_and_progress_exist() {
         helper.createDatabase(DB, 8).apply {
             execSQL(
                 "INSERT INTO save_items (id, title, content_type, source_app, created_at, updated_at, is_favorite, is_archived, is_pinned, " +
@@ -22,7 +22,7 @@ class MigrationTest {
             )
             close()
         }
-        val db = helper.runMigrationsAndValidate(DB, 10, true, MIGRATION_8_9, MIGRATION_9_10)
+        val db = helper.runMigrationsAndValidate(DB, 11, true, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
         // The rebuilt index lowercases every script.
         db.query("SELECT rowid FROM save_items_fts WHERE save_items_fts MATCH 'москва*'").use {
             assertEquals(1, it.count)

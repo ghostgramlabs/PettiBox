@@ -53,7 +53,7 @@ class OcrLanguagesDeviceTest {
         prefs.setLanguages(on)
         for (code in on) assertTrue("model for $code didn't arrive", models.fetch(OcrLanguages.of(code)!!))
         reader.refresh()
-        val text = reader.readImage(picture(lines)).orEmpty()
+        val text = reader.readImage(picture(lines)).text
         Log.i("OcrDeviceTest", "$on → $text")
         text
     }

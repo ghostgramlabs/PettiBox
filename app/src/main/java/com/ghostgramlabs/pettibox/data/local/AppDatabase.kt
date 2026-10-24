@@ -4,7 +4,10 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 /**
- * Schema v10 — ocr_status: where reading each file's text stands (waiting,
+ * Schema v11 — ocr_status keeps a PDF's progress (pages read, text so far)
+ * so a stopped reading carries on. See [MIGRATION_10_11].
+ *
+ * v10 — ocr_status: where reading each file's text stands (waiting,
  * no text, failed). See [MIGRATION_9_10].
  *
  * v9 — both search indexes use the unicode61 tokenizer (words in
@@ -33,7 +36,7 @@ import androidx.room.RoomDatabase
         SyncDirtyEntity::class,
         OcrStatusEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

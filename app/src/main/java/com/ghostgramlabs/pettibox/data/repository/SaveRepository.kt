@@ -361,9 +361,11 @@ class SaveRepository @Inject constructor(
     suspend fun exportBackupJson(): String {
         val categories = categoryDao.allForExport()
         val saves = saveDao.allForExport()
-        val attachments = attachmentDao.allForExport()
+        // Saves in Recently deleted aren't backed up, so neither are their files and tags.
+        val saveIds = saves.mapTo(HashSet()) { it.id }
+        val attachments = attachmentDao.allForExport().filter { it.itemId in saveIds }
         val tags = tagDao.allForExport()
-        val itemTags = tagDao.linksForExport()
+        val itemTags = tagDao.linksForExport().filter { it.itemId in saveIds }
         val root = JSONObject()
             .put("schema", 1)
             .put("exportedAt", System.currentTimeMillis())
@@ -437,9 +439,11 @@ class SaveRepository @Inject constructor(
     suspend fun exportBackupZip(targetFile: File): BackupExportResult {
         val categories = categoryDao.allForExport()
         val saves = saveDao.allForExport()
-        val attachments = attachmentDao.allForExport()
+        // Saves in Recently deleted aren't backed up, so neither are their files and tags.
+        val saveIds = saves.mapTo(HashSet()) { it.id }
+        val attachments = attachmentDao.allForExport().filter { it.itemId in saveIds }
         val tags = tagDao.allForExport()
-        val itemTags = tagDao.linksForExport()
+        val itemTags = tagDao.linksForExport().filter { it.itemId in saveIds }
         var embeddedFiles = 0
 
         val root = JSONObject()
@@ -906,7 +910,9 @@ class SaveRepository @Inject constructor(
     /**
      * Stores the text read from one file, if it beats the file's text as it
      * is *now* ([com.ghostgramlabs.pettibox.data.ocr.TextReader.improves],
-     * with the scripts [readable] at reading time). The check and the write
+     * with the scripts [readable] at reading time), or merged with it when it
+     * finds new words but would drop old ones ([com.ghostgramlabs.pettibox.data.ocr.TextReader.merged]).
+     * The check and the write
      * are one transaction, so two jobs reading the same file can't have the
      * worse result land last. For a file added to a save, the save's text is
      * rebuilt from all its files in their order: a repeated reading can't
@@ -914,10 +920,12 @@ class SaveRepository @Inject constructor(
      * Returns whether the text was stored.
      */
     suspend fun acceptSourceText(
-        itemId: Long, attachmentId: Long?, text: String, readable: Set<Character.UnicodeScript>
+        itemId: Long, attachmentId: Long?, reading: com.ghostgramlabs.pettibox.data.ocr.Reading, readable: Set<Character.UnicodeScript>
     ): Boolean = database.withTransaction {
         val current = if (attachmentId == null) saveDao.getById(itemId)?.ocrText else attachmentDao.getById(attachmentId)?.ocrText
-        if (!com.ghostgramlabs.pettibox.data.ocr.TextReader.improves(text, current, readable)) return@withTransaction false
+        val text = if (com.ghostgramlabs.pettibox.data.ocr.TextReader.improves(reading, current, readable)) reading.text
+        // Not a clean replacement, but it found new words: keep both rather than stay stuck on the old.
+        else com.ghostgramlabs.pettibox.data.ocr.TextReader.merged(reading, current, readable) ?: return@withTransaction false
         if (attachmentId == null) {
             saveDao.replaceOcrText(itemId, text)
         } else {
@@ -943,6 +951,22 @@ class SaveRepository @Inject constructor(
     }
 
     fun observeReadingStates(itemId: Long): Flow<List<OcrStatusEntity>> = ocrStatus.observeForItem(itemId)
+
+    suspend fun readingStateOf(itemId: Long, attachmentId: Long?): OcrStatusEntity? =
+        ocrStatus.get(OcrStatusEntity.sourceOf(itemId, attachmentId))
+
+    /** A PDF's reading after a page: carried on from here if the job stops. */
+    suspend fun saveReadingProgress(
+        itemId: Long, attachmentId: Long?, uri: String, config: String, progress: com.ghostgramlabs.pettibox.data.ocr.PdfProgress
+    ) = ocrStatus.put(
+        listOf(
+            OcrStatusEntity(
+                OcrStatusEntity.sourceOf(itemId, attachmentId), itemId, attachmentId, uri, pdf = true,
+                state = OcrStatusEntity.READING, config = config, pagesDone = progress.nextPage,
+                partialText = progress.reading.text, partialReplaced = progress.reading.replaced
+            )
+        )
+    )
 
     suspend fun pendingReadings(): List<OcrStatusEntity> = ocrStatus.pending()
 

@@ -1437,10 +1437,19 @@ private fun OcrTextSections(
 
 /** What a file's reading came to, said plainly ([OcrStatusEntity]); without a record, the general case. */
 private fun ocrStatusText(text: String?, autoScanEnabled: Boolean, type: ContentType, state: OcrStatusEntity?): String? {
-    if (!text.isNullOrBlank()) return null
     val what = if (type == ContentType.PDF) "this PDF" else "this image"
+    if (!text.isNullOrBlank()) {
+        // There's text from before; say if the latest reading didn't go through.
+        return when (state?.state) {
+            OcrStatusEntity.READING -> "Reading again: ${state.pagesDone} page${if (state.pagesDone == 1) "" else "s"} so far. The text below is from before."
+            OcrStatusEntity.FAILED -> "The latest reading of $what failed. The text below is from before."
+            OcrStatusEntity.UNREADABLE -> "This file couldn't be opened just now. The text below is from before."
+            else -> null
+        }
+    }
     when (state?.state) {
         OcrStatusEntity.PENDING -> return "Waiting to be read. It happens in the background, and the text appears here."
+        OcrStatusEntity.READING -> return "Being read: ${state.pagesDone} page${if (state.pagesDone == 1) "" else "s"} so far."
         OcrStatusEntity.NO_TEXT -> return "No text found in $what. If it's in another language, turn that language on in Settings › Text recognition, then try again."
         OcrStatusEntity.UNREADABLE -> return "This file couldn't be opened on this phone, so its text can't be read. Add the file to the save again."
         OcrStatusEntity.FAILED -> return "Couldn't read the text in $what."
@@ -1454,7 +1463,7 @@ private fun ocrStatusText(text: String?, autoScanEnabled: Boolean, type: Content
 }
 
 private fun canRetry(text: String?, state: OcrStatusEntity?): Boolean =
-    text.isNullOrBlank() && (state?.state == OcrStatusEntity.NO_TEXT || state?.state == OcrStatusEntity.FAILED)
+    state?.state == OcrStatusEntity.FAILED || (text.isNullOrBlank() && state?.state == OcrStatusEntity.NO_TEXT)
 
 private fun ContentType.displayLabel(): String = when (this) {
     ContentType.IMAGE -> "Image"
@@ -1520,6 +1529,17 @@ private fun OcrTextSection(doc: OcrDocText, onRetry: () -> Unit) {
                 TextButton(onClick = onRetry) { Text("Try again", fontWeight = FontWeight.Bold) }
             }
         } else {
+            // Text from before, with what became of the latest reading if it didn't go through.
+            if (!doc.status.isNullOrBlank()) {
+                // A failure (it offers Try again) reads as one; "Reading again…" is just progress.
+                Text(
+                    doc.status,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (doc.retry) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (doc.retry) TextButton(onClick = onRetry) { Text("Try again", fontWeight = FontWeight.Bold) }
+                Spacer(Modifier.height(6.dp))
+            }
             Text(
                 "Long-press to select a line or drag for multiple lines.",
                 style = MaterialTheme.typography.bodySmall,

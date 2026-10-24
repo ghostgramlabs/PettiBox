@@ -81,8 +81,8 @@ class OcrStateTest {
     private val factory = object : WorkerFactory() {
         override fun createWorker(appContext: Context, workerClassName: String, workerParameters: WorkerParameters): ListenableWorker? =
             when (workerClassName) {
-                OcrWorker::class.java.name -> OcrWorker(appContext, workerParameters, repo, reader, prefs)
-                OcrRereadWorker::class.java.name -> OcrRereadWorker(appContext, workerParameters, prefs, repo, reader)
+                OcrWorker::class.java.name -> OcrWorker(appContext, workerParameters, SourceReader(repo, reader, prefs))
+                OcrRereadWorker::class.java.name -> OcrRereadWorker(appContext, workerParameters, prefs, repo, reader, SourceReader(repo, reader, prefs))
                 else -> null
             }
     }
@@ -145,8 +145,8 @@ class OcrStateTest {
         val id = image("file:///x.png")
         val latin = setOf(UnicodeScript.LATIN)
         // Two jobs both compared against "no text"; the full reading lands first.
-        assertTrue(repo.acceptSourceText(id, null, "Invoice reference ALPHA paid on Monday", latin))
-        assertFalse(repo.acceptSourceText(id, null, "Invoice", latin))
+        assertTrue(repo.acceptSourceText(id, null, Reading("Invoice reference ALPHA paid on Monday"), latin))
+        assertFalse(repo.acceptSourceText(id, null, Reading("Invoice"), latin))
         assertEquals("Invoice reference ALPHA paid on Monday", repo.getById(id)!!.ocrText)
     }
 
@@ -155,9 +155,9 @@ class OcrStateTest {
         val a1 = db.attachmentDao().insert(AttachmentEntity(itemId = id, uri = "file:///a.png", kind = "IMAGE", sortOrder = 0))
         val a2 = db.attachmentDao().insert(AttachmentEntity(itemId = id, uri = "file:///b.png", kind = "IMAGE", sortOrder = 1))
         val latin = setOf(UnicodeScript.LATIN)
-        repo.acceptSourceText(id, a2, "second picture words", latin)
-        repo.acceptSourceText(id, a1, "first picture words", latin)
-        repo.acceptSourceText(id, a1, "first picture words", latin) // again
+        repo.acceptSourceText(id, a2, Reading("second picture words"), latin)
+        repo.acceptSourceText(id, a1, Reading("first picture words"), latin)
+        repo.acceptSourceText(id, a1, Reading("first picture words"), latin) // again
         assertEquals("first picture words\n\nsecond picture words", repo.getById(id)!!.ocrText)
     }
 
@@ -184,6 +184,64 @@ class OcrStateTest {
         TestListenableWorkerBuilder<OcrRereadWorker>(context).setWorkerFactory(factory).build().doWork()
         assertTrue(repo.getById(id)!!.ocrText.orEmpty().contains("ZEBRA"))
         assertNull(prefs.reread()) // finished
+    }
+
+    private fun longPdf(pages: Int = 25): String {
+        val pdf = PdfDocument()
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 28f }
+        for (n in 1..pages) {
+            val page = pdf.startPage(PdfDocument.PageInfo.Builder(612, 792, n).create())
+            page.canvas.drawText(if (n == 20) "Page twenty says ZEBRA crossing" else "Page number $n of the report", 60f, 120f, paint)
+            pdf.finishPage(page)
+        }
+        val f = File(context.cacheDir, "long-${System.nanoTime()}.pdf")
+        f.outputStream().use { pdf.writeTo(it) }
+        pdf.close()
+        return Uri.fromFile(f).toString()
+    }
+
+    @Test fun a_long_pdf_stopped_midway_carries_on_from_its_next_page() = runBlocking {
+        prefs.setPdfPageLimit(30)
+        val uri = longPdf()
+        val id = repo.insert(SaveItemEntity(title = "pdf", contentType = "PDF", sourceApp = "TEST", localUri = uri))
+        val sources = SourceReader(repo, reader, prefs)
+        // First job: stopped after page 5 (as when its time is up).
+        var pagesRead = 0
+        val first = sources.read(id, null, uri, pdf = true, lastTry = false, stop = { ++pagesRead >= 5 })
+        assertEquals(SourceReader.Outcome.PAUSED, first)
+        val saved = repo.readingStateOf(id, null)!!
+        assertEquals(OcrStatusEntity.READING, saved.state)
+        assertEquals(5, saved.pagesDone)
+        assertNull(repo.getById(id)!!.ocrText) // nothing stored until it's whole
+        // Mark the saved text: if the next job started over, the mark would be gone.
+        repo.saveReadingProgress(id, null, uri, saved.config!!, PdfProgress(5, Reading("RESUMEDFROMHERE\n\n" + saved.partialText)))
+        assertEquals(SourceReader.Outcome.DONE, sources.read(id, null, uri, pdf = true, lastTry = false))
+        val text = repo.getById(id)!!.ocrText.orEmpty()
+        assertTrue("got $text", text.contains("RESUMEDFROMHERE") && text.contains("ZEBRA"))
+        assertTrue(states(id).isEmpty())
+    }
+
+    @Test fun a_latin_misreading_is_replaced_once_its_language_is_turned_on() = runBlocking {
+        val uri = picture("Привет, мир! Встреча завтра", "в десять часов утра")
+        val id = image(uri)
+        val sources = SourceReader(repo, reader, prefs)
+        // Read before Russian is on: the Latin model's guess is stored.
+        sources.read(id, null, uri, pdf = false, lastTry = true)
+        val guess = repo.getById(id)!!.ocrText.orEmpty()
+        assertFalse("got $guess", guess.contains("Привет"))
+        // Russian turned on: the reader drops that same guess for the Russian lines, so it may replace it.
+        prefs.setLanguages(setOf("ru"))
+        assertTrue(OcrModels(context).fetch(OcrLanguages.of("ru")!!))
+        reader.refresh()
+        sources.read(id, null, uri, pdf = false, lastTry = true)
+        assertTrue(repo.getById(id)!!.ocrText.orEmpty().contains("Привет"))
+    }
+
+    @Test fun a_reread_that_cant_open_a_file_records_it() = runBlocking {
+        val id = image("file:///nowhere/gone.png")
+        prefs.requestReread()
+        TestListenableWorkerBuilder<OcrRereadWorker>(context).setWorkerFactory(factory).build().doWork()
+        assertEquals(OcrStatusEntity.UNREADABLE, states(id)["item:$id"])
     }
 
     @Test fun a_reread_restarted_midway_still_serves_a_newer_request() = runBlocking {

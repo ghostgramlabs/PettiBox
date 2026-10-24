@@ -1,8 +1,6 @@
 package com.ghostgramlabs.pettibox.data.ocr
 
 import android.content.Context
-import android.net.Uri
-import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -15,8 +13,6 @@ import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
 import com.ghostgramlabs.pettibox.data.repository.SaveRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.first
 
 /**
  * Reads saved images and PDFs again, newest first: all of them after a
@@ -33,29 +29,30 @@ class OcrRereadWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val prefs: OcrPreferences,
     private val repository: SaveRepository,
-    private val reader: TextReader
+    private val reader: TextReader,
+    private val sources: SourceReader
 ) : CoroutineWorker(ctx, params) {
 
     override suspend fun doWork(): Result {
         var job = prefs.reread() ?: return Result.success()
         reader.refresh()
         val started = System.currentTimeMillis()
-        var pages = prefs.pdfPageLimit.first()
         var cursor = job.cursor
         while (System.currentTimeMillis() - started < RUN_MS) {
             val batch = repository.withTextSourcesBelow(cursor, BATCH)
             if (batch.isEmpty()) {
                 // Done, unless another request came in meanwhile: then once more, with it.
                 job = prefs.finishReread(job.request) ?: return Result.success()
-                // The newer request may be for a higher page limit, or a new language.
+                // The newer request may be for a higher page limit (read per file), or a new language.
                 reader.refresh()
-                pages = prefs.pdfPageLimit.first()
                 cursor = job.cursor
                 continue
             }
             for (item in batch) {
                 if (isStopped) return Result.success() // the cursor says where to go on
-                reread(item, pages, pdfOnly = job.pdfOnly)
+                // Out of time partway through a long PDF: its pages so far are saved,
+                // and the next job carries on from there (the cursor stays before it).
+                if (!reread(item, pdfOnly = job.pdfOnly, stop = { System.currentTimeMillis() - started > RUN_MS })) break
                 cursor = item.id
                 prefs.setRereadCursor(cursor)
             }
@@ -64,37 +61,27 @@ class OcrRereadWorker @AssistedInject constructor(
         return Result.success()
     }
 
-    private suspend fun reread(item: SaveItemEntity, pages: Int, pdfOnly: Boolean) {
+    /** Re-reads a save's images and PDFs; false if a PDF paused partway (to carry on next job). */
+    private suspend fun reread(item: SaveItemEntity, pdfOnly: Boolean, stop: () -> Boolean): Boolean {
         val attachments = repository.attachmentsOf(item.id)
-        if (attachments.isEmpty()) {
-            if (pdfOnly && item.contentType != "PDF") return
-            val uri = item.localUri ?: return
-            val text = read(uri, item.contentType, pages) ?: return
-            repository.acceptSourceText(item.id, null, text, reader.readableScripts())
-            return
+        val files = if (attachments.isEmpty()) {
+            listOfNotNull(item.localUri?.takeIf { item.contentType == "IMAGE" || item.contentType == "PDF" }
+                ?.let { Triple(null as Long?, it, item.contentType == "PDF") })
+        } else {
+            attachments.filter { it.kind == "IMAGE" || it.kind == "PDF" }.map { Triple(it.id as Long?, it.uri, it.kind == "PDF") }
         }
-        for (a in attachments) {
-            if (a.kind != "PDF" && (pdfOnly || a.kind != "IMAGE")) continue
-            val text = read(a.uri, a.kind, pages) ?: continue
-            repository.acceptSourceText(item.id, a.id, text, reader.readableScripts())
-        }
-    }
-
-    /** The text in one file, or null if it can't be read now. */
-    private suspend fun read(uri: String, kind: String, pages: Int): String? {
-        if (uri.startsWith("pettibox-sync:")) return null // not on this phone yet; read when it arrives
-        return try {
-            when (kind) {
-                "IMAGE" -> reader.readImage(Uri.parse(uri))
-                "PDF" -> reader.readPdf(Uri.parse(uri), pages)
-                else -> null
+        for ((attachmentId, uri, pdf) in files) {
+            if (pdfOnly && !pdf) continue
+            if (uri.startsWith("pettibox-sync:")) continue // not on this phone yet; read when it arrives
+            when (sources.read(item.id, attachmentId, uri, pdf, lastTry = false, stop = stop)) {
+                SourceReader.Outcome.PAUSED -> return false
+                // Not skipped quietly: an ordinary reading job tries it again with
+                // backoff, and records "couldn't read" if it keeps failing.
+                SourceReader.Outcome.RETRY -> OcrWorker.enqueue(applicationContext, item.id, uri, attachmentId, pdf)
+                SourceReader.Outcome.DONE -> {}
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.w("PettiBoxOcr", "re-reading $uri failed", e)
-            null
         }
+        return true
     }
 
     companion object {
