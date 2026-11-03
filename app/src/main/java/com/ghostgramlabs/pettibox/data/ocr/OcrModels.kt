@@ -152,7 +152,6 @@ class OcrModels @Inject constructor(@ApplicationContext private val context: Con
             "mal" to "bd05cbf1b197e7810d2903419aedb06f9ef77bfedf50b358673c1d18d707cdb4",
             "kan" to "bd31e6b6ae93271e3bcf5383d306d8eefbb91542937cd6d735a5930c970e61d8",
             "guj" to "fa69658614b4946a9afae8853d67e0689838803dfa3d12c2e35ec53ee6f8df34",
-            "pan" to "1ec0907fc3534065ea9ae190c6bb7ec9e5c74fd9d2fa996aaec7407f11ad8131",
             "ori" to "36f3135e61d501a3acfad41f5fe60b8e791274fff4c5375c969fdcca980cdbac",
             "sin" to "bc75c6df2375a30c9f7e759fa7d4b58ae3ecf9ce72668a702d01acb13e551422",
             "urd" to "62e8250ce2a994106e313a82e26a516a39e2cf159d0ce3c5b5008387fd0d555f",

@@ -69,6 +69,10 @@ interface SaveDao {
     @Query("SELECT sync_id FROM save_items")
     suspend fun allSyncIds(): List<String>
 
+    /** Saves in Recently deleted, with their sync ids: restoring a backup that has one brings it back. */
+    @Query("SELECT id, sync_id FROM save_items WHERE is_pending_delete = 1")
+    suspend fun binnedSyncIds(): List<BinnedSave>
+
     /**
      * Every row referencing the category — archived and Undo-staged rows
      * included. This is the "is it safe to delete this collection without

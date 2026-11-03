@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -107,6 +108,8 @@ import com.ghostgramlabs.pettibox.domain.model.SourceApp
 import com.ghostgramlabs.pettibox.ui.components.COLLECTION_FINDER_THRESHOLD
 import com.ghostgramlabs.pettibox.ui.components.CategoryChip
 import com.ghostgramlabs.pettibox.ui.components.CollectionPickerSheet
+import com.ghostgramlabs.pettibox.ui.components.CreateCollectionDialog
+import com.ghostgramlabs.pettibox.ui.components.NewCollectionChip
 import com.ghostgramlabs.pettibox.ui.components.KeeperMascot
 import com.ghostgramlabs.pettibox.ui.components.ReviewPrompt
 import com.ghostgramlabs.pettibox.ui.components.KeeperPose
@@ -148,6 +151,7 @@ fun DetailScreen(
     val clipboard = LocalClipboardManager.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showCollectionPicker by remember { mutableStateOf(false) }
+    var showCreateCollection by remember { mutableStateOf(false) }
     var viewerIndex by remember { mutableStateOf<Int?>(null) }
     var showReminderSheet by remember { mutableStateOf(false) }
     var showCustomReminder by remember { mutableStateOf(false) }
@@ -750,7 +754,8 @@ fun DetailScreen(
                             categories = state.categories,
                             currentCategoryId = item.categoryId,
                             onPick = viewModel::setCategory,
-                            onDismiss = { showCollectionPicker = false }
+                            onDismiss = { showCollectionPicker = false },
+                            onCreate = viewModel::createCollectionAndMove
                         )
                     }
                     val current = state.categories.firstOrNull { it.id == item.categoryId }
@@ -770,26 +775,45 @@ fun DetailScreen(
                             onClick = { showCollectionPicker = true }
                         )
                     }
-                } else LazyRow(
-                    contentPadding = PaddingValues(end = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(state.categories, key = { it.id }) { c ->
-                        // Same hand-arranged feel as the Home strip — alternating
-                        // tilt by sortOrder so a category leans the same way
-                        // every time you see it.
-                        val tilt = if (c.sortOrder % 2 == 0) -2f else 1.5f
-                        CategoryChip(
-                            label = c.name,
-                            emoji = c.emoji,
-                            color = Color(c.colorHex),
-                            selected = item.categoryId == c.id,
-                            tilt = tilt,
-                            onClick = {
-                                viewModel.setCategory(if (item.categoryId == c.id) null else c.id)
-                            }
-                        )
+                } else {
+                    // Keep the save's collection in sight, a new one included.
+                    val chipRow = rememberLazyListState()
+                    LaunchedEffect(item.categoryId, state.categories.size) {
+                        val i = state.categories.indexOfFirst { it.id == item.categoryId }
+                        if (i >= 0) chipRow.animateScrollToItem(i)
                     }
+                    LazyRow(
+                        state = chipRow,
+                        contentPadding = PaddingValues(end = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(state.categories, key = { it.id }) { c ->
+                            // Same hand-arranged feel as the Home strip — alternating
+                            // tilt by sortOrder so a category leans the same way
+                            // every time you see it.
+                            val tilt = if (c.sortOrder % 2 == 0) -2f else 1.5f
+                            CategoryChip(
+                                label = c.name,
+                                emoji = c.emoji,
+                                color = Color(c.colorHex),
+                                selected = item.categoryId == c.id,
+                                tilt = tilt,
+                                onClick = {
+                                    viewModel.setCategory(if (item.categoryId == c.id) null else c.id)
+                                }
+                            )
+                        }
+                        item { NewCollectionChip(onClick = { showCreateCollection = true }) }
+                    }
+                }
+                if (showCreateCollection) {
+                    CreateCollectionDialog(
+                        onCreate = { nc ->
+                            viewModel.createCollectionAndMove(nc)
+                            showCreateCollection = false
+                        },
+                        onDismiss = { showCreateCollection = false }
+                    )
                 }
 
                 Spacer(Modifier.height(24.dp))

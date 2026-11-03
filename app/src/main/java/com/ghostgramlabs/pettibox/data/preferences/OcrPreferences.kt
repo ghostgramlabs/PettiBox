@@ -42,10 +42,12 @@ class OcrPreferences @Inject constructor(
 
     /**
      * Languages read besides the Latin alphabet ([OcrLanguages] codes).
-     * Until the person chooses, the ones the phone is set to.
+     * Until the person chooses, the ones the phone is set to. A language
+     * since withdrawn (Punjabi, which read nothing) drops out, so it isn't
+     * fetched or re-read forever.
      */
     val languages: Flow<Set<String>> = context.ocrDataStore.data.map { prefs ->
-        prefs[languagesKey] ?: OcrLanguages.defaultsFor(phoneLanguages())
+        prefs[languagesKey]?.let(::offered) ?: OcrLanguages.defaultsFor(phoneLanguages())
     }
 
     suspend fun setLanguages(codes: Set<String>) {
@@ -53,7 +55,9 @@ class OcrPreferences @Inject constructor(
     }
 
     /** The languages saved images and PDFs were last all read with (ready models only). */
-    suspend fun readWith(): Set<String> = context.ocrDataStore.data.first()[readWithKey].orEmpty()
+    suspend fun readWith(): Set<String> = offered(context.ocrDataStore.data.first()[readWithKey].orEmpty())
+
+    private fun offered(codes: Set<String>): Set<String> = codes.filterTo(LinkedHashSet()) { OcrLanguages.of(it) != null }
 
     suspend fun setReadWith(codes: Set<String>) {
         context.ocrDataStore.edit { it[readWithKey] = codes }

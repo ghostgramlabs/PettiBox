@@ -50,7 +50,8 @@ object OcrLanguages {
         tess("ml", "Malayalam", "മലയാളം", "mal", UnicodeScript.MALAYALAM),
         tess("kn", "Kannada", "ಕನ್ನಡ", "kan", UnicodeScript.KANNADA),
         tess("gu", "Gujarati", "ગુજરાતી", "guj", UnicodeScript.GUJARATI),
-        tess("pa", "Punjabi", "ਪੰਜਾਬੀ", "pan", UnicodeScript.GURMUKHI),
+        // No Punjabi: Tesseract reads nothing from Gurmukhi (fast, best and
+        // standard models alike, checked on device), so it isn't offered.
         tess("or", "Odia", "ଓଡ଼ିଆ", "ori", UnicodeScript.ORIYA),
         tess("si", "Sinhala", "සිංහල", "sin", UnicodeScript.SINHALA),
         tess("ur", "Urdu", "اردو", "urd", UnicodeScript.ARABIC),

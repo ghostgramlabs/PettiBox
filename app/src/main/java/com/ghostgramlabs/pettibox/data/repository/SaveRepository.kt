@@ -291,6 +291,16 @@ class SaveRepository @Inject constructor(
     fun observeCategoryLocked(id: String?): Flow<Boolean> =
         if (id == null) flowOf(false) else categoryDao.observeIsLocked(id)
     suspend fun upsertCategory(c: CategoryEntity) = categoryDao.upsert(c)
+
+    /** A collection the person just named, placed after the others. Returns its id. */
+    suspend fun createCollection(name: String, emoji: String, colorHex: Long): String {
+        val id = "user_" + UUID.randomUUID().toString().take(8)
+        val maxOrder = categoryDao.allForExport().maxOfOrNull { it.sortOrder } ?: 0
+        categoryDao.upsert(
+            CategoryEntity(id = id, name = name, emoji = emoji, colorHex = colorHex, sortOrder = maxOrder + 1, userCreated = true)
+        )
+        return id
+    }
     suspend fun getCategory(id: String) = categoryDao.getById(id)
     suspend fun deleteCategory(id: String) = categoryDao.delete(id)
 
@@ -687,6 +697,7 @@ class SaveRepository @Inject constructor(
         // (restored onto the phone it came from, or synced in already), so it
         // counts as a duplicate rather than colliding on the unique index.
         val existingSyncIds = saveDao.allSyncIds().toHashSet()
+        val binned = saveDao.binnedSyncIds().associate { it.syncId to it.id }
 
         val itemIdMap = mutableMapOf<Long, Long>()
         var saveCount = 0
@@ -719,6 +730,14 @@ class SaveRepository @Inject constructor(
                 // backups from before sync existed get a fresh one.
                 syncId = s.optNullableString("syncId")?.takeIf { it.isNotBlank() } ?: newSyncId()
             )
+            // The same save, sitting in Recently deleted: restoring a backup
+            // that has it is asking for it back, so it leaves the bin as it is.
+            val binnedId = binned[imported.syncId]
+            if (binnedId != null) {
+                saveDao.setPendingDelete(binnedId, false)
+                saveCount++
+                continue
+            }
             val urlKey = imported.url?.trim()?.takeIf { it.isNotEmpty() }?.let(TextUtils::urlDedupeKey)
             val fingerprint = if (urlKey == null) {
                 "${imported.contentType}|${imported.createdAt}|${imported.title}"

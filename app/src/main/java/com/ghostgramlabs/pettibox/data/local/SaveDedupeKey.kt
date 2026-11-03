@@ -14,3 +14,9 @@ data class SaveDedupeKey(
     @ColumnInfo(name = "created_at") val createdAt: Long,
     val title: String
 )
+
+/** A save in Recently deleted and its sync id, for bringing it back on restore. */
+data class BinnedSave(
+    val id: Long,
+    @ColumnInfo(name = "sync_id") val syncId: String
+)

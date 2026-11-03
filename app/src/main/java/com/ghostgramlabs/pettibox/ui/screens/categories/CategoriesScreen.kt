@@ -264,6 +264,7 @@ fun CategoriesScreen(
             onToggleArchive = { viewModel.toggleArchived(item) },
             onRemind = { reminderItem = item },
             onMoveTo = { id -> viewModel.moveTo(item, id) },
+            onMoveToNew = { nc -> viewModel.moveToNew(item, nc.name, nc.emoji, nc.colorHex) },
             onDelete = { requestDelete(item) },
             onDismiss = { quickActionItem = null }
         )

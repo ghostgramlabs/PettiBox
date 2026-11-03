@@ -91,6 +91,7 @@ import com.ghostgramlabs.pettibox.ui.components.COLLECTION_FINDER_THRESHOLD
 import com.ghostgramlabs.pettibox.ui.components.CategoryChip
 import com.ghostgramlabs.pettibox.ui.components.CollectionRow
 import com.ghostgramlabs.pettibox.ui.components.CreateCollectionDialog
+import com.ghostgramlabs.pettibox.ui.components.NewCollectionChip
 import com.ghostgramlabs.pettibox.ui.components.KeeperMascot
 import com.ghostgramlabs.pettibox.ui.components.KeeperPose
 import com.ghostgramlabs.pettibox.ui.components.ReminderCustomSheet
@@ -1307,29 +1308,3 @@ private fun collectionGroupLabel(
     else -> "Starter collections"
 }
 
-@Composable
-private fun NewCollectionChip(label: String = "New", onClick: () -> Unit) {
-    val scheme = MaterialTheme.colorScheme
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clip(CircleShape)
-            .background(scheme.surface)
-            .border(1.5.dp, scheme.primary, CircleShape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp)
-    ) {
-        Icon(
-            Icons.Rounded.Add, null,
-            tint = scheme.primary,
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(
-            label,
-            style = MaterialTheme.typography.labelLarge,
-            color = scheme.primary,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}

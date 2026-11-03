@@ -21,9 +21,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -200,4 +203,32 @@ fun Color.toLongHex(): Long {
     val g = (green * 255).toInt() and 0xFF
     val b = (blue * 255).toInt() and 0xFF
     return ((a.toLong() shl 24) or (r.toLong() shl 16) or (g.toLong() shl 8) or b.toLong())
+}
+
+/** The "+ New" chip that opens [CreateCollectionDialog], wherever collections are picked. */
+@Composable
+fun NewCollectionChip(label: String = "New", onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(scheme.surface)
+            .border(1.5.dp, scheme.primary, CircleShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 9.dp)
+    ) {
+        Icon(
+            Icons.Rounded.Add, null,
+            tint = scheme.primary,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            color = scheme.primary,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
 }

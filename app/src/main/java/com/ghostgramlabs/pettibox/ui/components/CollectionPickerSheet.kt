@@ -63,6 +63,8 @@ fun CategoryEntity.matchesCollectionQuery(query: String): Boolean {
  * collections for a chip strip. The current collection sits on top, then
  * your own collections, then starters, each alphabetical. Tapping the
  * current one takes the save out of it, matching the chip strips.
+ * With [onCreate], a "New collection" row makes one (named from the search,
+ * when nothing matches it) for the save to go into.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,10 +73,12 @@ fun CollectionPickerSheet(
     currentCategoryId: String?,
     onPick: (String?) -> Unit,
     onDismiss: () -> Unit,
-    title: String = "Move to collection"
+    title: String = "Move to collection",
+    onCreate: ((NewCollection) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var query by rememberSaveable { mutableStateOf("") }
+    var creating by rememberSaveable { mutableStateOf(false) }
     val visible = remember(categories, currentCategoryId, query) {
         categories
             .filter { it.matchesCollectionQuery(query) }
@@ -85,6 +89,23 @@ fun CollectionPickerSheet(
                     { it.name.lowercase() }
                 )
             )
+    }
+
+    if (creating && onCreate != null) {
+        CreateCollectionDialog(
+            initialName = query.trim(),
+            onCreate = { nc ->
+                onCreate(nc)
+                onDismiss()
+            },
+            onDismiss = { creating = false }
+        )
+        return
+    }
+    // Named from the search when no collection is called that yet.
+    val createLabel = query.trim().let { q ->
+        if (q.isEmpty() || categories.any { it.name.equals(q, ignoreCase = true) }) "New collection"
+        else "Create \"$q\""
     }
 
     ModalBottomSheet(
@@ -142,6 +163,11 @@ fun CollectionPickerSheet(
                 contentPadding = PaddingValues(bottom = 24.dp),
                 modifier = Modifier.weight(1f)
             ) {
+                if (onCreate != null && visible.isEmpty()) {
+                    item(key = "new") {
+                        CollectionRow(name = createLabel, emoji = "+", color = MaterialTheme.colorScheme.primary, selected = false, suggested = true) { creating = true }
+                    }
+                }
                 items(visible, key = { it.id }) { c ->
                     val selected = c.id == currentCategoryId
                     CollectionRow(
@@ -154,6 +180,11 @@ fun CollectionPickerSheet(
                             onDismiss()
                         }
                     )
+                }
+                if (onCreate != null && visible.isNotEmpty()) {
+                    item(key = "new") {
+                        CollectionRow(name = createLabel, emoji = "+", color = MaterialTheme.colorScheme.primary, selected = false) { creating = true }
+                    }
                 }
             }
         }

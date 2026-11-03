@@ -10,9 +10,11 @@ import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.ghostgramlabs.pettibox.data.preferences.OcrPreferences
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -51,10 +53,25 @@ class OcrLanguagesDeviceTest {
 
     private fun read(on: Set<String>, lines: List<String>): String = runBlocking {
         prefs.setLanguages(on)
-        for (code in on) assertTrue("model for $code didn't arrive", models.fetch(OcrLanguages.of(code)!!))
+        // Optional bounded QA run when Play services cannot deliver models.
+        // A timeout is a failure, never a recognition pass or a skipped test.
+        val timeout = InstrumentationRegistry.getArguments().getString("modelTimeoutMs")?.toLong()
+        for (code in on) {
+            val language = OcrLanguages.of(code)!!
+            val fetched = if (timeout == null) models.fetch(language)
+                else withTimeoutOrNull(timeout) { models.fetch(language) } == true
+            assertTrue("model for $code didn't arrive${timeout?.let { " within ${it}ms" }.orEmpty()}", fetched)
+        }
         reader.refresh()
-        val text = reader.readImage(picture(lines)).text
+        val reading = reader.readImage(picture(lines))
+        val text = reading.text
         Log.i("OcrDeviceTest", "$on → $text")
+        Log.i("OcrSample", org.json.JSONObject().apply {
+            put("languages", org.json.JSONArray(on.toList()))
+            put("expected", lines.joinToString("\n"))
+            put("actual", text)
+            put("replaced", reading.replaced)
+        }.toString())
         text
     }
 
@@ -75,6 +92,35 @@ class OcrLanguagesDeviceTest {
     @Test fun japanese() = check("ja", "東京", "東京はとても大きい都市です")
     @Test fun korean() = check("ko", "한국어", "한국어 공부는 재미있어요")
     @Test fun thai() = check("th", "ภาษา", "ภาษาไทยสวยงามมาก")
+
+    @Test fun marathi() = check("mr", "मराठी", "मराठी भाषा सुंदर आहे")
+    @Test fun nepali() = check("ne", "नेपाल", "नेपाल एक सुन्दर देश हो")
+    @Test fun gujarati() = check("gu", "ગુજરાતી", "ગુજરાતી ભાષા ખૂબ સુંદર છે")
+    @Test fun odia() = check("or", "ଭାଷା", "ଓଡ଼ିଆ ଭାଷା ବହୁତ ସୁନ୍ଦର")
+    @Test fun sinhala() = check("si", "සිංහල", "සිංහල භාෂාව ඉතා ලස්සනයි")
+    @Test fun urdu() = check("ur", "اردو", "اردو زبان بہت خوبصورت ہے")
+    @Test fun persian() = check("fa", "فارسی", "زبان فارسی بسیار زیبا است")
+    @Test fun ukrainian() = check("uk", "Українська", "Українська мова дуже красива")
+    @Test fun burmese() = check("my", "မြန်မာ", "မြန်မာ ဘာသာစကား")
+    @Test fun khmer() = check("km", "ភាសា", "ភាសាខ្មែរ ស្រស់ស្អាត")
+    @Test fun greek() = check("el", "Ελληνική", "Ελληνική γλώσσα και πολιτισμός")
+    @Test fun hebrew() = check("he", "שלום", "שלום עולם השפה העברית")
+
+    @Test fun latin_alphabet_languages_without_optional_models() {
+        for ((word, sentence) in listOf(
+            "English" to "English receipt total 420",
+            "Español" to "Español información mañana",
+            "Français" to "Français bonjour et merci",
+            "Deutsch" to "Deutsch Guten Morgen",
+            "Português" to "Português bom dia obrigado",
+            "Indonesia" to "Bahasa Indonesia selamat pagi",
+            "Việt" to "Tiếng Việt xin chào",
+            "Türkçe" to "Türkçe günaydın merhaba"
+        )) {
+            val text = read(emptySet(), listOf(sentence))
+            assertTrue("$sentence: expected $word in $text", text.contains(word))
+        }
+    }
 
     /** Short labels are kept, not thrown out for being few letters. */
     @Test fun a_short_chinese_label() = check("zh", "天气", "天气")

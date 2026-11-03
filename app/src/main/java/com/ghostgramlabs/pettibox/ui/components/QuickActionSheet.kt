@@ -75,6 +75,8 @@ fun QuickActionSheet(
     onToggleArchive: () -> Unit,
     onRemind: () -> Unit,
     onMoveTo: (String?) -> Unit,
+    /** Into a collection made from the move chips or picker. */
+    onMoveToNew: (NewCollection) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -84,6 +86,7 @@ fun QuickActionSheet(
     var showMove by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showPicker by remember { mutableStateOf(false) }
+    var showCreate by remember { mutableStateOf(false) }
     val useFinder = categories.size > COLLECTION_FINDER_THRESHOLD
 
     if (showPicker) {
@@ -94,7 +97,20 @@ fun QuickActionSheet(
             onDismiss = {
                 showPicker = false
                 onDismiss()
-            }
+            },
+            onCreate = onMoveToNew
+        )
+        return
+    }
+
+    if (showCreate) {
+        CreateCollectionDialog(
+            onCreate = { nc ->
+                onMoveToNew(nc)
+                showCreate = false
+                onDismiss()
+            },
+            onDismiss = { showCreate = false }
         )
         return
     }
@@ -224,6 +240,7 @@ fun QuickActionSheet(
                             }
                         )
                     }
+                    item { NewCollectionChip(onClick = { showCreate = true }) }
                 }
                 Spacer(Modifier.height(6.dp))
             }

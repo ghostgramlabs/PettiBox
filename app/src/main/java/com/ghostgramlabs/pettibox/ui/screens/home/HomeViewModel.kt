@@ -197,6 +197,11 @@ class HomeViewModel @Inject constructor(
         repo.update(item.copy(categoryId = categoryId, updatedAt = System.currentTimeMillis()))
     }
 
+    /** Into a collection made just now from the move picker. */
+    fun moveToNew(item: SaveItemEntity, name: String, emoji: String, colorHex: Long) = viewModelScope.launch {
+        moveTo(item, repo.createCollection(name, emoji, colorHex))
+    }
+
     fun delete(item: SaveItemEntity) = viewModelScope.launch {
         ReminderScheduler.cancel(appContext, item.id)
         repo.delete(item.id)

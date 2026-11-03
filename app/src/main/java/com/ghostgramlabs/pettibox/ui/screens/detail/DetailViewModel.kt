@@ -24,6 +24,7 @@ import com.ghostgramlabs.pettibox.data.sync.SyncCodec
 import com.ghostgramlabs.pettibox.data.sync.SyncEngine
 import com.ghostgramlabs.pettibox.data.sync.SyncRecord
 import com.ghostgramlabs.pettibox.data.sync.SyncScheduler
+import com.ghostgramlabs.pettibox.ui.components.NewCollection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -272,6 +273,10 @@ class DetailViewModel @Inject constructor(
     fun setCategory(id: String?) = viewModelScope.launch {
         val it = state.value.item ?: return@launch
         repo.update(it.copy(categoryId = id, updatedAt = System.currentTimeMillis()))
+    }
+    /** A new collection made from the picker, with this save moved into it. */
+    fun createCollectionAndMove(nc: NewCollection) = viewModelScope.launch {
+        setCategory(repo.createCollection(nc.name, nc.emoji, nc.colorHex))
     }
     fun updateNotes(notes: String) = viewModelScope.launch {
         val it = state.value.item ?: return@launch
