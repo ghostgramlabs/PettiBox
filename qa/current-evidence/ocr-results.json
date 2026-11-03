@@ -1,0 +1,97 @@
+{
+  "tests": [
+    {
+      "test": "every_exif_orientation_is_turned_upright",
+      "status": 0,
+      "failure": ""
+    },
+    {
+      "test": "arabic",
+      "status": 0,
+      "failure": ""
+    },
+    {
+      "test": "an_unknown_script_isnt_read_as_one_turned_on",
+      "status": 0,
+      "failure": ""
+    },
+    {
+      "test": "gujarati",
+      "status": 0,
+      "failure": ""
+    },
+    {
+      "test": "hebrew",
+      "status": 0,
+      "failure": ""
+    }
+  ],
+  "samples": [
+    {
+      "languages": [
+        "ar"
+      ],
+      "expected": "مرحبا بكم في المدينة",
+      "actual": "مرحبا بكم 5",
+      "character_error_rate_without_whitespace": 0.5294
+    },
+    {
+      "languages": [
+        "ml",
+        "ru",
+        "ta"
+      ],
+      "expected": "हिन्दी भारत की भाषा है\nकल सुबह दस बजे मिलेंगे",
+      "actual": "",
+      "character_error_rate_without_whitespace": 1.0
+    },
+    {
+      "languages": [
+        "ml",
+        "ru",
+        "ta"
+      ],
+      "expected": "今天天气很好\n我们去公园散步",
+      "actual": "",
+      "character_error_rate_without_whitespace": 1.0
+    },
+    {
+      "languages": [
+        "ml",
+        "ru",
+        "ta"
+      ],
+      "expected": "ภาษาไทยสวยงามมาก",
+      "actual": "",
+      "character_error_rate_without_whitespace": 1.0
+    },
+    {
+      "languages": [
+        "ml",
+        "ru",
+        "ta"
+      ],
+      "expected": "Grocery receipt total 420\nThank you for shopping",
+      "actual": "Grocery receipt total 420\nThank you for shopping",
+      "character_error_rate_without_whitespace": 0.0
+    },
+    {
+      "languages": [
+        "gu"
+      ],
+      "expected": "ગુજરાતી ભાષા ખૂબ સુંદર છે",
+      "actual": "ગુજરાતી ભાષા ખૂબ સુંદર છે",
+      "character_error_rate_without_whitespace": 0.0
+    },
+    {
+      "languages": [
+        "he"
+      ],
+      "expected": "שלום עולם השפה העברית",
+      "actual": "שלום עולם השפה העברית",
+      "character_error_rate_without_whitespace": 0.0
+    }
+  ],
+  "passed": 5,
+  "failed": 0
+}
