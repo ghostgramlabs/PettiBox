@@ -23,7 +23,7 @@ Everything you save waits in Unread until you open it. The home-screen widget sh
 
 FIND SAVED CONTENT FAST
 
-Search titles, notes, links, sources, collections, tags and article text. On-device OCR makes text inside screenshots, images and PDFs searchable. Pinch to zoom into pictures, and read PDFs right inside the app.
+Search titles, notes, links, sources, collections, tags and article text. On-device OCR makes text inside screenshots, images and PDFs searchable, in English and other Latin-alphabet languages plus 24 more, including Hindi, Chinese, Japanese, Korean, Arabic, Bengali and Tamil. Pinch to zoom into pictures, and read PDFs right inside the app.
 
 IMPORT FROM YOUR BROWSER OR OLD BOOKMARK APP
 
@@ -43,11 +43,15 @@ Add a reminder when you save something or later: read an article, watch a video,
 
 PRIVATE AND OFFLINE-FIRST
 
-Your library stays on your device. No account needed. Lock PettiBox with your fingerprint, face or phone PIN. PettiBox only goes online for link previews, offline article copies and the optional Google Drive backup.
+Your library stays on your device. No account needed. Lock PettiBox with your fingerprint, face or phone PIN, and lock private collections so they stay hidden until you unlock them. PettiBox only goes online for link previews, offline article copies, text-recognition language downloads, and the optional Google Drive backup and sync.
 
 BACKUP AND RESTORE, INCLUDING GOOGLE DRIVE
 
 Turn on the automatic nightly backup and connect your own Google Drive. Saves, collections, tags, notes, attachments and offline articles are all included. New phone? Restore everything in a couple of taps. PettiBox can only see the backup files it created, never the rest of your Drive.
+
+SYNC BETWEEN YOUR PHONES AND TABLETS
+
+Turn on sync to keep the same library on your Android phones and tablets. Saves, collections, tags, notes, photos and files stay in step through a PettiBox folder in your own Google Drive. There are no PettiBox servers, and we can't see your saves.
 
 Great for saving:
 
@@ -62,13 +66,12 @@ Great for saving:
 
 PettiBox helps you save now and find later.
 
-RELEASE NOTES (WHAT'S NEW) — 2.0.12
-NEW: Share several PDFs or files at once, or pick several in the app.
-NEW: App lock now locks the moment your screen turns off.
-NEW: The widget shows your saves while PettiBox is unlocked.
-NEW: Restore straight from backups saved on this phone.
-IMPROVED: Search finds every match and updates as you save.
-FIXED: Next/Previous in the photo viewer, images saved as PDFs, links that differ only by capital letters, and drafts lost when rotating.
+RELEASE NOTES (WHAT'S NEW) — 2.0.13
+NEW: Sync between devices. Keep the same library on your phones and tablets through your own Google Drive. No PettiBox servers.
+NEW: Read text in images and PDFs in 24 more languages, including Hindi, Chinese, Japanese, Korean, Arabic, Bengali and Tamil.
+NEW: Lock a collection to hide it until you unlock it.
+NEW: Make a new collection right where you move a save.
+IMPROVED: Restoring a backup brings back saves from Recently deleted.
 
 PROMO TEXT OPTION 1
 Save anything from any app and find it later with offline OCR search.
@@ -86,3 +89,5 @@ Pin favorites and revisit important saves faster.
 Add reminders for things you want to come back to.
 Nightly backups on your phone and in your own Google Drive.
 Keep your saves on your device, with no account required.
+Keep the same library on your phones and tablets with sync.
+Lock private collections until you unlock them.

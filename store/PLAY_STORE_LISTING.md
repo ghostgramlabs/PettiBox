@@ -63,7 +63,7 @@ Everything you save waits in Unread until you open it. The home-screen widget sh
 
 FIND SAVED CONTENT FAST
 
-Search titles, notes, links, sources, collections, tags and article text. On-device OCR makes text inside screenshots, images and PDFs searchable. Pinch to zoom into pictures, and read PDFs right inside the app.
+Search titles, notes, links, sources, collections, tags and article text. On-device OCR makes text inside screenshots, images and PDFs searchable, in English and other Latin-alphabet languages plus 24 more, including Hindi, Chinese, Japanese, Korean, Arabic, Bengali and Tamil. Pinch to zoom into pictures, and read PDFs right inside the app.
 
 IMPORT FROM YOUR BROWSER OR OLD BOOKMARK APP
 
@@ -83,11 +83,15 @@ Add a reminder when you save something or later: read an article, watch a video,
 
 PRIVATE AND OFFLINE-FIRST
 
-Your library stays on your device. No account needed. Lock PettiBox with your fingerprint, face or phone PIN. PettiBox only goes online for link previews, offline article copies and the optional Google Drive backup.
+Your library stays on your device. No account needed. Lock PettiBox with your fingerprint, face or phone PIN, and lock private collections so they stay hidden until you unlock them. PettiBox only goes online for link previews, offline article copies, text-recognition language downloads, and the optional Google Drive backup and sync.
 
 BACKUP AND RESTORE, INCLUDING GOOGLE DRIVE
 
 Turn on the automatic nightly backup and connect your own Google Drive. Saves, collections, tags, notes, attachments and offline articles are all included. New phone? Restore everything in a couple of taps. PettiBox can only see the backup files it created, never the rest of your Drive.
+
+SYNC BETWEEN YOUR PHONES AND TABLETS
+
+Turn on sync to keep the same library on your Android phones and tablets. Saves, collections, tags, notes, photos and files stay in step through a PettiBox folder in your own Google Drive. There are no PettiBox servers, and we can't see your saves.
 
 Great for saving:
 
@@ -102,7 +106,7 @@ Great for saving:
 
 PettiBox helps you save now and find later.
 
-Character count: 3325 / 4000
+Character count: 3863 / 4000
 
 ## ASO Diagnosis And Launch Plan
 
@@ -134,12 +138,14 @@ After publishing the revised metadata:
 - Import bookmarks from browser and bookmark-app export files (HTML, CSV).
 - Export your links as a portable CSV file.
 - Search titles, notes, links, sources, tags and OCR text.
-- On-device OCR for images and PDFs, with adjustable PDF scan limits.
-- Organize saves with collections, colors, tags, favorites and pins — starters are fully editable and removable.
+- On-device OCR for images and PDFs, with adjustable PDF scan limits, in Latin-alphabet languages plus 24 more you can turn on.
+- Organize saves with collections, colors, tags, favorites and pins — starters are fully editable and removable, and a new collection can be made wherever you file a save.
+- Lock private collections so they stay hidden until you unlock them with your fingerprint, face or phone PIN.
 - Add reminders to saved items.
 - Archive items before permanent deletion.
 - Automatic nightly backup with optional upload to your own Google Drive.
 - Restore your whole shelf from Drive or a backup file on a new phone.
+- Optional sync between your Android phones and tablets through your own Google Drive.
 - Link previews and YouTube thumbnail previews.
 - Offline-first design with no login required.
 
@@ -154,6 +160,8 @@ After publishing the revised metadata:
 7. Add reminders for things you want to come back to.
 8. Nightly backups on your phone and in your own Google Drive.
 9. Keep your saves on your device, with no account required.
+10. Keep the same library on your phones and tablets with sync.
+11. Lock private collections until you unlock them.
 
 ## Promo Text Options
 
@@ -175,17 +183,19 @@ One private shelf for links, screenshots, notes, PDFs and files.
 Implementation-supported claims:
 - Android share target for text, images, PDFs, generic files, multiple images and selected text.
 - Local Room database with FTS search.
-- On-device ML Kit OCR for images and rasterized PDF pages.
+- On-device OCR for images and rasterized PDF pages: ML Kit for Latin, Chinese, Japanese, Korean and Devanagari; Tesseract for 18 more languages (models downloaded once when a language is turned on, pinned and SHA-256 checked). Punjabi is not offered: Tesseract reads nothing from Gurmukhi on device.
 - Collections, colors, tags, favorites, pins, archive state and reminders; starter collections are renameable and deletable, with a one-tap sweep for empty starters.
 - Bookmark import from Netscape HTML (all major browsers, Raindrop, Instapaper, Pinboard, Linkwarden, Karakeep), Raindrop CSV, Pocket CSV and plain URL lists; duplicate URLs skipped; folders map to collections.
 - CSV export of every save with a URL (title, url, folder, tags, note, created, favorite, status).
 - Link metadata fetching with YouTube thumbnail fallback.
-- Manual backup export and restore, including attachments; restores onto a non-empty library ask for confirmation and skip items already present (URL match for links, content fingerprint for the rest).
+- Manual backup export and restore, including attachments; restores onto a non-empty library ask for confirmation and skip items already present (URL match for links, content fingerprint for the rest); a save that is in Recently deleted comes back out of it.
+- Locked collections, hidden from Home, Browse, search and the widget until unlocked with biometrics or the phone PIN.
+- Optional sync between Android devices through the user's own Google Drive (drive.file scope, a "PettiBox" folder), with no developer server.
 - Automatic nightly local safety-copy flow in Settings, with optional SAF folder copy.
 - Optional Google Drive backup and restore via AuthorizationClient with the drive.file scope (app-created files only); 3 rolling copies in a "PettiBox Backups" folder.
 
 Permissions to explain if needed:
-- Internet: optional link previews and remote thumbnails.
+- Internet: optional link previews and remote thumbnails, text-recognition language downloads, and the optional Google Drive backup and sync.
 - Notifications: reminder notifications.
 - Exact alarms: scheduled reminders, with runtime fallback.
 - Boot completed: re-arms pending reminders after reboot.
@@ -196,6 +206,22 @@ Data safety positioning:
 - Link preview fetching may contact the linked website when saving URLs.
 - Backup files are user-controlled exports.
 - Google Drive backup is optional and opt-in: backups upload to the user's own Drive under the drive.file scope (the app can only access files it created). No data is sent to the developer; disconnecting stops uploads and leaves existing copies in the user's Drive.
+- Sync is optional and opt-in: the library and its files go to a "PettiBox" folder in the user's own Drive (drive.file scope), and devices exchange changes only through it. No data is sent to the developer.
+
+## Release Notes (What's New) — 2.0.13
+
+What's new since 2.0.12. Keep under Play's 500-character limit; Spanish and Hindi
+versions are in PLAY_STORE_LISTING_TRANSLATIONS.md.
+
+```
+NEW: Sync between devices. Keep the same library on your phones and tablets through your own Google Drive. No PettiBox servers.
+NEW: Read text in images and PDFs in 24 more languages, including Hindi, Chinese, Japanese, Korean, Arabic, Bengali and Tamil.
+NEW: Lock a collection to hide it until you unlock it.
+NEW: Make a new collection right where you move a save.
+IMPROVED: Restoring a backup brings back saves from Recently deleted.
+```
+
+Character count: 435 / 500
 
 ## Release Notes (What's New) — 2.0.12
 

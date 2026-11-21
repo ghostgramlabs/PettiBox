@@ -1,8 +1,8 @@
 # PettiBox Play Store Listing — Translations
 
 Localized store listings for the markets we're adding first. They mirror the English
-listing in PLAY_STORE_LISTING.md (updated for offline reading, Unread, the widget,
-App lock and Recently deleted), so keep the two in step when features change.
+listing in PLAY_STORE_LISTING.md (updated for 2.0.13: sync between devices, more
+text-recognition languages and locked collections), so keep the two in step when features change.
 
 How to publish: Play Console → Grow users → Store presence → Main store listing →
 Manage translations → Add your own translations → pick the language → paste the
@@ -31,7 +31,7 @@ Character count: 78 / 80
 
 Guarda enlaces, capturas de pantalla, PDF y notas en un solo gestor de marcadores privado. Con PettiBox es fácil organizar, leer y encontrar todo lo que guardas, incluso sin conexión.
 
-Usa el menú Compartir de Android para enviar contenido a PettiBox desde las apps que ya usas. Saca tus artículos, videos, recetas, material de estudio, ideas de compras y documentos de los chats, los marcadores del navegador, las descargas y las capturas perdidas en la galería.
+Usa el menú Compartir de Android para enviar a PettiBox artículos, videos, recetas y documentos desde las apps que ya usas, en vez de perderlos en chats, descargas y la galería.
 
 GUARDA PARA DESPUÉS DESDE CUALQUIER APP
 
@@ -39,19 +39,19 @@ Comparte un enlace, imagen, captura, PDF o archivo desde cualquier app de Androi
 
 LEE ARTÍCULOS SIN CONEXIÓN
 
-Cuando guardas un enlace, PettiBox guarda en tu teléfono una copia limpia y fácil de leer del artículo. Léelo en el avión o en el metro, aunque la página cambie o desaparezca después. Ajusta el tamaño del texto; la búsqueda también encuentra palabras dentro de los artículos guardados.
+Cuando guardas un enlace, PettiBox guarda en tu teléfono una copia limpia y fácil de leer del artículo. Léelo sin internet, aunque la página cambie o desaparezca. Ajusta el tamaño del texto; la búsqueda también encuentra palabras dentro de los artículos guardados.
 
 UNA LISTA DE PENDIENTES QUE NO SE OLVIDA
 
-Todo lo que guardas espera en No leídos hasta que lo abres. El widget de la pantalla de inicio te muestra lo pendiente, y un recordatorio semanal opcional te trae de vuelta algo que guardaste y nunca abriste.
+Todo lo que guardas espera en No leídos hasta que lo abres. El widget te muestra lo pendiente, y un aviso semanal opcional te recuerda algo que nunca abriste.
 
 ENCUENTRA LO QUE GUARDASTE AL INSTANTE
 
-Busca en títulos, notas, enlaces, fuentes, colecciones, etiquetas y texto de artículos. El OCR del dispositivo hace que el texto dentro de capturas, imágenes y PDF se pueda buscar. Pellizca para hacer zoom en las imágenes y lee los PDF dentro de la app.
+Busca en títulos, notas, enlaces, fuentes, colecciones, etiquetas y texto de artículos. El OCR del dispositivo hace que el texto dentro de capturas, imágenes y PDF se pueda buscar, en español y 24 idiomas más, como hindi, chino, japonés y árabe. Pellizca para hacer zoom en las imágenes y lee los PDF dentro de la app.
 
 IMPORTA DESDE TU NAVEGADOR O TU ANTIGUA APP DE MARCADORES
 
-Importa marcadores exportados de Chrome, Firefox, Edge o Safari, y archivos HTML y CSV de otras apps de marcadores y de lectura para después, incluidas las exportaciones de Pocket y Raindrop.io. Las carpetas se vuelven colecciones, las etiquetas se conservan y los duplicados se omiten. Exporta tus enlaces en CSV cuando quieras.
+Importa marcadores de Chrome, Firefox, Edge o Safari, y archivos HTML y CSV de otras apps, incluidas las exportaciones de Pocket y Raindrop.io. Las carpetas se vuelven colecciones, las etiquetas se conservan y los duplicados se omiten. Exporta tus enlaces en CSV cuando quieras.
 
 ORGANIZA TUS MARCADORES A TU MANERA
 
@@ -59,19 +59,23 @@ Agrupa lo que guardas en colecciones de recetas, estudio, trabajo, compras, viaj
 
 UNA APP PARA LEER DESPUÉS QUE NO PUEDE PERDER TU BIBLIOTECA
 
-¿Buscas una alternativa a Pocket? PettiBox guarda tu biblioteca en tu propio dispositivo, y en tu propio Google Drive si quieres, así que ningún cierre de servicio puede quitártela. Importa tu antiguo archivo de Pocket y sigue donde te quedaste.
+¿Buscas una alternativa a Pocket? PettiBox guarda tu biblioteca en tu propio dispositivo, y en tu propio Google Drive si quieres, y ningún cierre de servicio te la quita. Importa tu antiguo archivo de Pocket y sigue donde te quedaste.
 
 RECORDATORIOS PARA LO QUE GUARDAS
 
-Agrega un recordatorio al guardar algo o más tarde: leer un artículo, ver un video, revisar un documento o volver a una idea de compra.
+Agrega un recordatorio al guardar algo o más tarde: leer un artículo, ver un video o revisar un documento.
 
 PRIVADA Y PENSADA PARA FUNCIONAR SIN CONEXIÓN
 
-Tu biblioteca se queda en tu dispositivo. No necesitas cuenta. Bloquea PettiBox con tu huella, tu rostro o el PIN del teléfono. PettiBox solo se conecta a internet para las vistas previas de enlaces, las copias de artículos sin conexión y la copia de seguridad opcional en Google Drive.
+Tu biblioteca se queda en tu dispositivo. No necesitas cuenta. Bloquea PettiBox con tu huella, tu rostro o el PIN del teléfono, y bloquea colecciones privadas para ocultarlas hasta que las desbloquees. PettiBox solo usa internet para vistas previas de enlaces, copias de artículos, descargas de idiomas de texto y la copia de seguridad y sincronización opcionales en Google Drive.
 
 COPIA DE SEGURIDAD Y RESTAURACIÓN, TAMBIÉN EN GOOGLE DRIVE
 
-Activa la copia de seguridad automática cada noche y conecta tu propio Google Drive. Incluye lo que guardaste, colecciones, etiquetas, notas, archivos adjuntos y artículos sin conexión. ¿Teléfono nuevo? Restaura todo en un par de toques. PettiBox solo puede ver los archivos de copia que creó, nunca el resto de tu Drive.
+Activa la copia de seguridad automática cada noche y conecta tu propio Google Drive. Incluye todo: colecciones, etiquetas, notas, adjuntos y artículos sin conexión. ¿Teléfono nuevo? Restaura todo en un par de toques. PettiBox solo puede ver los archivos de copia que creó, nunca el resto de tu Drive.
+
+SINCRONIZA TUS TELÉFONOS Y TABLETS
+
+Activa la sincronización para tener la misma biblioteca en tus teléfonos y tablets Android, a través de una carpeta PettiBox en tu propio Google Drive. PettiBox no tiene servidores y no puede ver lo que guardas.
 
 Ideal para guardar:
 
@@ -86,7 +90,19 @@ Ideal para guardar:
 
 PettiBox te ayuda a guardar ahora y encontrar después.
 
-Character count: 3841 / 4000
+Character count: 3965 / 4000
+
+### Release notes — 2.0.13
+
+```
+NUEVO: Sincroniza tus dispositivos. La misma biblioteca en tus teléfonos y tablets, a través de tu propio Google Drive. Sin servidores de PettiBox.
+NUEVO: Lee texto en imágenes y PDF en 24 idiomas más, como hindi, chino, japonés, coreano, árabe, bengalí y tamil.
+NUEVO: Bloquea una colección para ocultarla hasta que la desbloquees.
+NUEVO: Crea una colección nueva justo donde mueves un elemento.
+MEJORA: Restaurar una copia recupera lo que estaba en Eliminados recientemente.
+```
+
+Character count: 476 / 500
 
 ### Release notes — 2.0.12
 
@@ -137,7 +153,7 @@ Android के शेयर मेनू से अपने रोज़ के
 
 सेव की हुई चीज़ें तुरंत ढूँढें
 
-टाइटल, नोट्स, लिंक, सोर्स, कलेक्शन, टैग और आर्टिकल के टेक्स्ट में सर्च करें। फ़ोन पर ही चलने वाला OCR स्क्रीनशॉट, फ़ोटो और PDF के अंदर का टेक्स्ट भी सर्च करने लायक बनाता है। फ़ोटो को पिंच करके ज़ूम करें और PDF ऐप के अंदर ही पढ़ें।
+टाइटल, नोट्स, लिंक, सोर्स, कलेक्शन, टैग और आर्टिकल के टेक्स्ट में सर्च करें। फ़ोन पर ही चलने वाला OCR स्क्रीनशॉट, फ़ोटो और PDF के अंदर का टेक्स्ट भी सर्च करने लायक बनाता है — अंग्रेज़ी के साथ हिंदी, मराठी, बांग्ला, तमिल, तेलुगु, कन्नड़, मलयालम, गुजराती समेत 24 और भाषाओं में। फ़ोटो को पिंच करके ज़ूम करें और PDF ऐप के अंदर ही पढ़ें।
 
 ब्राउज़र या पुराने बुकमार्क ऐप से इम्पोर्ट करें
 
@@ -157,11 +173,15 @@ Pocket का विकल्प ढूँढ रहे हैं? PettiBox आ�
 
 प्राइवेट और ऑफ़लाइन-फ़र्स्ट
 
-आपकी लाइब्रेरी आपके फ़ोन में ही रहती है। कोई अकाउंट नहीं चाहिए। PettiBox को अपने फ़िंगरप्रिंट, चेहरे या फ़ोन के PIN से लॉक करें। PettiBox सिर्फ़ लिंक प्रीव्यू, ऑफ़लाइन आर्टिकल कॉपी और वैकल्पिक Google Drive बैकअप के लिए इंटरनेट इस्तेमाल करता है।
+आपकी लाइब्रेरी आपके फ़ोन में ही रहती है। कोई अकाउंट नहीं चाहिए। PettiBox को अपने फ़िंगरप्रिंट, चेहरे या फ़ोन के PIN से लॉक करें, और प्राइवेट कलेक्शन को अनलॉक करने तक छिपाकर रखें। PettiBox सिर्फ़ लिंक प्रीव्यू, ऑफ़लाइन आर्टिकल कॉपी, टेक्स्ट पहचानने की भाषाएँ डाउनलोड करने, और वैकल्पिक Google Drive बैकअप और सिंक के लिए इंटरनेट इस्तेमाल करता है।
 
 बैकअप और रीस्टोर, Google Drive के साथ
 
 हर रात का ऑटोमैटिक बैकअप चालू करें और अपना Google Drive जोड़ें। सेव की गई चीज़ें, कलेक्शन, टैग, नोट्स, अटैचमेंट और ऑफ़लाइन आर्टिकल — सब शामिल हैं। नया फ़ोन? कुछ ही टैप में सब कुछ वापस पाएँ। PettiBox सिर्फ़ अपनी बनाई बैकअप फ़ाइलें देख सकता है, आपके Drive की बाकी चीज़ें कभी नहीं।
+
+अपने फ़ोन और टैबलेट में सिंक करें
+
+सिंक चालू करें और अपने Android फ़ोन और टैबलेट पर एक जैसी लाइब्रेरी रखें। सेव, कलेक्शन, टैग, नोट्स, फ़ोटो और फ़ाइलें आपके अपने Google Drive के PettiBox फ़ोल्डर के ज़रिए अपडेट रहती हैं। PettiBox का कोई सर्वर नहीं है, और हम आपकी सेव की गई चीज़ें नहीं देख सकते।
 
 इन्हें सेव करने के लिए बढ़िया:
 
@@ -176,7 +196,19 @@ Pocket का विकल्प ढूँढ रहे हैं? PettiBox आ�
 
 PettiBox के साथ अभी सेव करें, बाद में ढूँढें।
 
-Character count: 3471 / 4000
+Character count: 3966 / 4000
+
+### Release notes — 2.0.13
+
+```
+नया: डिवाइस के बीच सिंक। अपने फ़ोन और टैबलेट पर एक जैसी लाइब्रेरी, आपके अपने Google Drive के ज़रिए। PettiBox का कोई सर्वर नहीं।
+नया: 24 और भाषाओं में फ़ोटो और PDF का टेक्स्ट पढ़ें, जैसे हिंदी, मराठी, बांग्ला, तमिल, तेलुगु, चीनी और जापानी।
+नया: किसी कलेक्शन को लॉक करें, वह अनलॉक करने तक छिपा रहेगा।
+नया: सेव को मूव करते समय वहीं नया कलेक्शन बनाएँ।
+बेहतर: बैकअप रिस्टोर करने पर "हाल ही में डिलीट किए गए" की चीज़ें भी वापस आती हैं।
+```
+
+Character count: 429 / 500
 
 ### Release notes — 2.0.12
 
