@@ -161,7 +161,9 @@ class OcrPreferences @Inject constructor(
     companion object {
         const val MIN_PDF_PAGES = 10
         const val DEFAULT_PDF_PAGES = 30
-        const val MAX_PDF_PAGES = 50
-        val PDF_PAGE_LIMIT_OPTIONS = listOf(10, 30, 50)
+        /** Every page: a PDF is then read until its text is as long as a save can hold (TextReader.MAX_PDF_TEXT_CHARS). */
+        const val ALL_PDF_PAGES = Int.MAX_VALUE
+        const val MAX_PDF_PAGES = ALL_PDF_PAGES
+        val PDF_PAGE_LIMIT_OPTIONS = listOf(10, 30, 50, 100, ALL_PDF_PAGES)
     }
 }

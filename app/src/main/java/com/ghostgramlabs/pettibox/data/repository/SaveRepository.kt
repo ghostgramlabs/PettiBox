@@ -942,15 +942,18 @@ class SaveRepository @Inject constructor(
         itemId: Long, attachmentId: Long?, reading: com.ghostgramlabs.pettibox.data.ocr.Reading, readable: Set<Character.UnicodeScript>
     ): Boolean = database.withTransaction {
         val current = if (attachmentId == null) saveDao.getById(itemId)?.ocrText else attachmentDao.getById(attachmentId)?.ocrText
-        val text = if (com.ghostgramlabs.pettibox.data.ocr.TextReader.improves(reading, current, readable)) reading.text
-        // Not a clean replacement, but it found new words: keep both rather than stay stuck on the old.
-        else com.ghostgramlabs.pettibox.data.ocr.TextReader.merged(reading, current, readable) ?: return@withTransaction false
+        val text = com.ghostgramlabs.pettibox.data.ocr.TextReader.capped(
+            if (com.ghostgramlabs.pettibox.data.ocr.TextReader.improves(reading, current, readable)) reading.text
+            // Not a clean replacement, but it found new words: keep both rather than stay stuck on the old.
+            else com.ghostgramlabs.pettibox.data.ocr.TextReader.merged(reading, current, readable) ?: return@withTransaction false
+        )
         if (attachmentId == null) {
             saveDao.replaceOcrText(itemId, text)
         } else {
             attachmentDao.setOcrText(attachmentId, text)
             val all = attachmentDao.forItem(itemId).mapNotNull { it.ocrText?.takeIf { t -> t.isNotBlank() } }.joinToString("\n\n")
-            if (all.isNotBlank()) saveDao.replaceOcrText(itemId, all)
+            // Several long PDFs in one save: as much of their text as its row can hold.
+            if (all.isNotBlank()) saveDao.replaceOcrText(itemId, com.ghostgramlabs.pettibox.data.ocr.TextReader.capped(all))
         }
         true
     }

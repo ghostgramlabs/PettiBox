@@ -14,6 +14,8 @@ import com.google.mlkit.vision.common.InputImage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -100,13 +102,26 @@ class TextReader @Inject constructor(
             } catch (e: Exception) {
                 null
             } ?: throw UnreadableSourceException("can't open $uri")
-            try { readNow(bmp, langs) } finally { bmp.recycle() }
+            try {
+                // In slices, as a PDF page is: on a photo of a whole newspaper page
+                // both engines read several times as many words that way.
+                readSlices(bmp.height) { top, height ->
+                    if (top == 0 && height == bmp.height) readNow(bmp, langs)
+                    else {
+                        val slice = Bitmap.createBitmap(bmp, 0, top, bmp.width, height)
+                        try { readNow(slice, langs) } finally { if (slice !== bmp) slice.recycle() }
+                    }
+                }
+            } finally {
+                bmp.recycle()
+            }
         }
     }
 
     /**
-     * Text of the first [pageLimit] pages, a blank line between pages. Pages
-     * are drawn [PDF_WIDTH] wide in slices at most [PDF_SLICE] tall, so a
+     * Text of the first [pageLimit] pages (fewer once the text reaches
+     * [MAX_PDF_TEXT_CHARS]), a blank line between pages. Pages
+     * are drawn at about [PDF_DPI] in slices at most [PDF_SLICE] tall, so a
      * long receipt never needs one huge bitmap.
      *
      * Carries on from [from] (saved progress) if given. After each page,
@@ -141,11 +156,13 @@ class TextReader @Inject constructor(
                 val last = minOf(pdf.pageCount, pageLimit)
                 for (i in (from?.nextPage ?: 0) until last) {
                     coroutineContext.ensureActive()
+                    // As much text as a save can hold: a longer PDF ("All pages") stops here.
+                    if (text.length >= MAX_PDF_TEXT_CHARS) break
                     val page = readPage(pdf, i, langs)
                     if (page.text.isNotBlank()) text.append(page.text).append("\n\n")
-                    if (page.replaced.isNotBlank()) replaced.append(page.replaced).append("\n")
+                    if (page.replaced.isNotBlank() && replaced.length < MAX_PDF_TEXT_CHARS) replaced.append(page.replaced).append("\n")
                     saved(PdfProgress(i + 1, Reading(text.toString(), replaced.toString())))
-                    if (i + 1 < last && stop()) throw ReadingPausedException()
+                    if (i + 1 < last && text.length < MAX_PDF_TEXT_CHARS && stop()) throw ReadingPausedException()
                 }
             }
         }
@@ -153,17 +170,14 @@ class TextReader @Inject constructor(
     }
 
     private suspend fun readPage(pdf: PdfRenderer, index: Int, langs: List<OcrLanguage>): Reading = pdf.openPage(index).use { page ->
-        val scale = PDF_WIDTH.toFloat() / page.width.coerceAtLeast(1)
+        // Drawn at about [PDF_DPI] (page sizes are in points, 72 to the inch), within [PDF_MIN_WIDTH, PDF_MAX_WIDTH].
+        val pdfWidth = (page.width * PDF_DPI / 72).coerceIn(PDF_MIN_WIDTH, PDF_MAX_WIDTH)
+        val scale = pdfWidth.toFloat() / page.width.coerceAtLeast(1)
         val width = (page.width * scale).toInt().coerceAtLeast(1)
         val height = (page.height * scale).toInt().coerceAtLeast(1)
-        var top = 0
-        val lines = ArrayList<String>()
-        val replaced = StringBuilder()
-        while (top < height) {
-            val sliceHeight = minOf(PDF_SLICE, height - top)
-            val sliceTop = top
+        readSlices(height) { sliceTop, sliceHeight ->
             // The permit is taken before the slice is drawn: waiting jobs hold no bitmaps.
-            val slice = gate.withPermit {
+            gate.withPermit {
                 val bmp = Bitmap.createBitmap(width, sliceHeight, Bitmap.Config.ARGB_8888)
                 try {
                     bmp.eraseColor(Color.WHITE)
@@ -174,6 +188,22 @@ class TextReader @Inject constructor(
                     bmp.recycle()
                 }
             }
+        }
+    }
+
+    /**
+     * Reads a page [height] pixels tall as slices at most [PDF_SLICE] tall,
+     * [PDF_SLICE_OVERLAP] apart so a line on an edge is whole in one of them:
+     * no huge bitmap for a long receipt, and the engines read small print in
+     * a dense page far better a slice at a time.
+     */
+    private suspend fun readSlices(height: Int, read: suspend (top: Int, height: Int) -> Reading): Reading {
+        var top = 0
+        val lines = ArrayList<String>()
+        val replaced = StringBuilder()
+        while (top < height) {
+            val sliceHeight = minOf(PDF_SLICE, height - top)
+            val slice = read(top, sliceHeight)
             slice.text.lines().filter { it.isNotBlank() }.forEach { line ->
                 // Slices overlap a little, so a line on the edge isn't cut in two; don't keep it twice.
                 if (lines.lastOrNull() != line) lines += line
@@ -182,11 +212,18 @@ class TextReader @Inject constructor(
             if (top + sliceHeight >= height) break
             top += sliceHeight - PDF_SLICE_OVERLAP
         }
-        Reading(lines.joinToString("\n"), replaced.toString().trim())
+        return Reading(lines.joinToString("\n"), replaced.toString().trim())
+    }
+
+    /** Where something is on the image, in pixels. */
+    internal data class Box(val left: Int, val top: Int, val right: Int, val bottom: Int) {
+        val width get() = right - left
+        val height get() = bottom - top
+        val centerY get() = (top + bottom) / 2
     }
 
     /** One line of a reading, where it is on the image, and how sure the engine is (0–1). */
-    private data class Line(val text: String, val box: Rect, val confidence: Float)
+    internal data class Line(val text: String, val box: Box, val confidence: Float)
 
     /**
      * At most two pictures in memory for reading at once, however many jobs
@@ -194,7 +231,7 @@ class TextReader @Inject constructor(
      */
     private val gate = Semaphore(2)
 
-    private suspend fun readNow(bmp: Bitmap, langs: List<OcrLanguage>): Reading {
+    private suspend fun readNow(bmp: Bitmap, langs: List<OcrLanguage>): Reading = coroutineScope {
         var failure: Exception? = null
         var anyRan = false
         suspend fun attempt(what: String, block: suspend () -> List<Line>): List<Line>? = try {
@@ -207,24 +244,46 @@ class TextReader @Inject constructor(
             null
         }
 
-        // Each engine on its own: one failing doesn't stop the others.
-        val latin = attempt("Latin") { mlKitLines(null, bmp) }.orEmpty()
+        // Each engine on its own: one failing doesn't stop the others. The Latin
+        // model reads beside Tesseract (it runs on its own thread), whose first
+        // pass doesn't need its lines.
+        val latinRun = async {
+            try { Result.success(mlKitLines(null, bmp)) } catch (e: CancellationException) { throw e } catch (e: Exception) { Result.failure(e) }
+        }
+        var latinLines: List<Line>? = null
+        suspend fun latin(): List<Line> = latinLines ?: attempt("Latin") { latinRun.await().getOrThrow() }.orEmpty().also { latinLines = it }
         val kept = ArrayList<Pair<Line, Float>>() // a line and its weight
         val unsure = ArrayList<Line>() // lines in an engine's script it was too unsure of
+        val overGuess = ArrayList<Line>() // of those, ones still better than the Latin model's guess at the same place
         val runs = langs.filter { it.engine != OcrEngine.TESSERACT }.groupBy { it.engine }
             .map { (engine, ls) -> Triple(engine, null as String?, ls.flatMap { it.scripts }.toSet()) } +
             langs.filter { it.engine == OcrEngine.TESSERACT }.map { Triple(it.engine, it.tessCode, it.scripts) }
         for ((engine, tess, scripts) in runs) {
             val lines = attempt(tess ?: engine.name) {
-                if (tess != null) tesseractLines(tess, bmp) else mlKitLines(engine, bmp)
+                if (tess != null) tesseractLines(tess, bmp, { latin() }, scripts) else mlKitLines(engine, bmp)
             } ?: continue
-            val min = if (tess != null) MIN_TESS_LINE_CONFIDENCE else MIN_MLKIT_LINE_CONFIDENCE
-            for (line in lines) {
+            val cyrillic = Character.UnicodeScript.CYRILLIC in scripts
+            val fixed = if (cyrillic) lines.map { it.copy(text = cyrillicLookalikes(it.text)) } else lines
+            // On a page plainly in the language (several sure lines), Tesseract's
+            // less sure lines there are worn print, not a script it doesn't
+            // know, and far better than the Latin model's guess at them.
+            val min = when {
+                tess == null -> MIN_MLKIT_LINE_CONFIDENCE
+                fixed.count { lineInScript(it.text, scripts) > 0 && it.confidence >= MIN_TESS_LINE_CONFIDENCE } >= PAGE_IN_SCRIPT ->
+                    MIN_TESS_LINE_CONFIDENCE_ON_ITS_PAGE
+                else -> MIN_TESS_LINE_CONFIDENCE
+            }
+            val itsPage = tess != null && min == MIN_TESS_LINE_CONFIDENCE_ON_ITS_PAGE
+            for (line in fixed) {
                 val inScript = lineInScript(line.text, scripts)
                 if (inScript > 0 && line.confidence >= min) kept += line to inScript * line.confidence
-                else if (inScript > 0) unsure += line
+                else if (inScript > 0) {
+                    unsure += line
+                    if (itsPage && line.confidence >= MIN_TESS_LINE_CONFIDENCE_OVER_A_GUESS) overGuess += line
+                }
             }
         }
+        val latin = latin()
         if (!anyRan) throw failure ?: IllegalStateException("no text engine available")
 
         // Where two language lines cover the same place, the surer and longer one stays.
@@ -235,50 +294,136 @@ class TextReader @Inject constructor(
         }
         // Latin lines wherever no language line was kept; under one, they were a guess at it.
         val languageLines = chosen.toList()
+        val usedOverGuess = HashSet<Line>()
         for (line in latin) {
-            if (languageLines.none { overlap(it.box, line.box) > SAME_PLACE }) chosen += line else dropped += line
+            if ((languageLines + usedOverGuess).any { overlap(it.box, line.box) > SAME_PLACE }) { dropped += line; continue }
+            // On a page plainly in Tesseract's script, the Latin model's guess at that
+            // script ("6aHOBa MBana") loses to Tesseract's less sure reading of the place.
+            var replacedIt = false
+            if (looksLikeLatinGuess(line.text)) {
+                for (t in overGuess.filter { overlap(it.box, line.box) > SAME_PLACE }.sortedByDescending { it.confidence }) {
+                    if (chosen.any { overlap(it.box, t.box) > SAME_PLACE }) continue
+                    chosen += t; usedOverGuess += t; replacedIt = true
+                }
+            }
+            if (replacedIt) dropped += line else chosen += line
         }
-        val text = chosen.sortedWith(compareBy({ it.box.centerY() / LINE_BAND }, { it.box.left }))
-            .joinToString("\n") { it.text.trim() }.trim()
-        return Reading(text, (dropped + unsure).joinToString("\n") { it.text.trim() })
+        unsure.removeAll(usedOverGuess)
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            chosen.forEach { Log.d(TAG, "chosen ${it.box} ${"%.2f".format(it.confidence)} ${it.text}") }
+            unsure.forEach { Log.d(TAG, "unsure ${it.box} ${"%.2f".format(it.confidence)} ${it.text}") }
+        }
+        val text = readingOrder(chosen).joinToString("\n") { it.text.trim() }.trim()
+        Reading(text, (dropped + unsure).joinToString("\n") { it.text.trim() })
     }
 
     private suspend fun mlKitLines(engine: OcrEngine?, bmp: Bitmap): List<Line> =
         models.recognizer(engine).process(InputImage.fromBitmap(bmp, 0)).await().textBlocks
             .flatMap { it.lines }
-            .mapNotNull { l -> l.boundingBox?.let { Line(l.text, it, l.confidence) } }
+            .mapNotNull { l -> l.boundingBox?.let { Line(l.text, it.toBox(), l.confidence) } }
 
-    /** Tesseract isn't thread-safe per instance, and its start-up is cheap next to reading; one per image. */
-    private suspend fun tesseractLines(model: String, bmp: Bitmap): List<Line> = withContext(Dispatchers.Default) {
+    /**
+     * Tesseract isn't thread-safe per instance, and its start-up is cheap next to reading; one per image.
+     *
+     * Read word by word, then put back into Tesseract's lines, each cut where
+     * a wide gap parts its words ([splitAtGaps]): Tesseract runs a line
+     * straight across two columns (a letterhead and the addressee beside it),
+     * and one sure line shouldn't be dropped for the unsure one beside it.
+     *
+     * Running across columns, Tesseract also misreads the half that isn't
+     * level with where it thinks the line is. So on a page where it did read
+     * its script, each line the Latin model found ([latin], asked for only then) that no sure
+     * line of Tesseract's covers is read again by itself, its own area only.
+     */
+    private suspend fun tesseractLines(
+        model: String,
+        bmp: Bitmap,
+        latin: suspend () -> List<Line>,
+        scripts: Set<Character.UnicodeScript>
+    ): List<Line> = withContext(Dispatchers.Default) {
         val api = TessBaseAPI()
         try {
             if (!api.init(models.tessRoot.absolutePath, "$model+${OcrLanguages.TESS_ENGLISH}", TessBaseAPI.OEM_LSTM_ONLY)) {
                 throw IllegalStateException("Tesseract couldn't load $model")
             }
             api.setImage(bmp)
-            api.getUTF8Text() // runs recognition
-            val iterator = api.resultIterator ?: return@withContext emptyList()
-            val level = TessBaseAPI.PageIteratorLevel.RIL_TEXTLINE
-            val out = ArrayList<Line>()
-            try {
-                iterator.begin()
-                do {
-                    val text = iterator.getUTF8Text(level)?.trim()?.let(::normalizeIndic)
-                    if (!text.isNullOrBlank()) out += Line(text, iterator.getBoundingRect(level), iterator.confidence(level) / 100f)
-                } while (iterator.next(level))
-            } finally {
-                iterator.delete()
+            val page = tesseractWords(api)
+            // Only lines read surely count as covering a place: a less sure one is worth a second look.
+            val sure = page.filter { lineInScript(it.text, scripts) > 0 && it.confidence >= MIN_TESS_LINE_CONFIDENCE }
+            if (sure.isEmpty()) return@withContext page
+            // Not covered, or only partly ("еждения" for "учреждения"): under 80% of its width.
+            val again = latin().filter { l ->
+                val over = sure.filter { overlap(it.box, l.box) > SAME_PLACE }
+                over.isEmpty() || over.sumOf { minOf(it.box.right, l.box.right) - maxOf(it.box.left, l.box.left) } < l.box.width * 0.8
+            }.sortedByDescending { looksLikeLatinGuess(it.text) }.take(MAX_REREADS) // guesses at the script first
+            if (again.isEmpty()) return@withContext page
+            api.pageSegMode = TessBaseAPI.PageSegMode.PSM_SINGLE_LINE
+            page + again.flatMap { l ->
+                coroutineContext.ensureActive()
+                // Within the image: ML Kit's boxes can run past its edges, and Tesseract reads outside it (a crash).
+                val pad = l.box.height / 4
+                val left = (l.box.left - pad).coerceIn(0, bmp.width)
+                val top = (l.box.top - pad).coerceIn(0, bmp.height)
+                val right = (l.box.right + pad).coerceIn(0, bmp.width)
+                val bottom = (l.box.bottom + pad).coerceIn(0, bmp.height)
+                if (right - left < 8 || bottom - top < 8) return@flatMap emptyList<Line>()
+                api.setRectangle(left, top, right - left, bottom - top)
+                tesseractWords(api).also { got ->
+                    if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "reread ${l.text} -> ${got.joinToString(" / ") { "${it.text} ${"%.2f".format(it.confidence)} ${it.box}" }}")
+                }
             }
-            out
         } finally {
             api.recycle()
         }
     }
 
+    /** Runs recognition on [api]'s image (or rectangle of it) and gives its lines, cut at wide gaps. */
+    private fun tesseractWords(api: TessBaseAPI): List<Line> {
+        api.getUTF8Text() // runs recognition
+        val iterator = api.resultIterator ?: return emptyList()
+        val word = TessBaseAPI.PageIteratorLevel.RIL_WORD
+        val lines = ArrayList<MutableList<Line>>()
+        try {
+            iterator.begin()
+            do {
+                if (lines.isEmpty() || iterator.isAtBeginningOf(TessBaseAPI.PageIteratorLevel.RIL_TEXTLINE)) lines += ArrayList<Line>()
+                val text = iterator.getUTF8Text(word)?.trim()?.let(::normalizeIndic)
+                if (!text.isNullOrBlank()) lines.last() += Line(text, iterator.getBoundingRect(word).toBox(), iterator.confidence(word) / 100f)
+            } while (iterator.next(word))
+        } finally {
+            iterator.delete()
+        }
+        return lines.flatMap(::splitAtGaps)
+    }
+
     companion object {
         private const val TAG = "PettiBoxOcr"
-        private const val PDF_WIDTH = 1400
-        /** Tallest slice of a PDF page drawn at once: 1400 × 2000 pixels, about 11 MB. */
+        /**
+         * Android can't load a database row past about 2 MB (CursorWindow), and
+         * a save's text is in its row: at up to 3 bytes a character (Chinese,
+         * Japanese), a save holds at most [MAX_SAVE_TEXT_CHARS], and one PDF
+         * is read until its text reaches [MAX_PDF_TEXT_CHARS] (some hundreds of
+         * pages of a letter, 50–100 of a newspaper).
+         */
+        const val MAX_PDF_TEXT_CHARS = 200_000
+        const val MAX_SAVE_TEXT_CHARS = 400_000
+
+        /** [text] cut, at a line end where there is one, to at most [max] characters. */
+        fun capped(text: String, max: Int = MAX_SAVE_TEXT_CHARS): String {
+            if (text.length <= max) return text
+            val cut = text.lastIndexOf('\n', max).takeIf { it >= max / 2 }
+                ?: if (Character.isHighSurrogate(text[max - 1])) max - 1 else max
+            return text.substring(0, cut).trimEnd()
+        }
+        /**
+         * Scans are read at about this resolution: an A4 page about 2070
+         * pixels wide. At the old fixed 1400 (170 dpi for A4) small print in
+         * scanned letters and newspapers blurred into the Latin model's guesses.
+         */
+        private const val PDF_DPI = 250
+        private const val PDF_MIN_WIDTH = 1400
+        private const val PDF_MAX_WIDTH = 2400
+        /** Tallest slice of a PDF page drawn at once: at most 2400 × 2000 pixels, about 19 MB. */
         private const val PDF_SLICE = 2000
         private const val PDF_SLICE_OVERLAP = 120
 
@@ -288,19 +433,213 @@ class TextReader @Inject constructor(
          * doesn't know 0.31–0.62.
          */
         private const val MIN_TESS_LINE_CONFIDENCE = 0.65f
+        /**
+         * The same, on a page with [PAGE_IN_SCRIPT] lines at the above. On real
+         * scans (worn newsprint, old typefaces, show-through) good lines
+         * scored 0.35–0.65 and junk 0.00–0.26.
+         */
+        private const val MIN_TESS_LINE_CONFIDENCE_ON_ITS_PAGE = 0.35f
+        private const val PAGE_IN_SCRIPT = 3
+        /** On such a page, the least sure Tesseract line that still beats the Latin model's guess at it ([looksLikeLatinGuess]). */
+        private const val MIN_TESS_LINE_CONFIDENCE_OVER_A_GUESS = 0.1f
         private const val MIN_MLKIT_LINE_CONFIDENCE = 0.5f
         /** A line's letters that must be in the language's script: at least 2, and this share. */
         private const val MIN_LINE_SHARE = 0.6
         /** Two lines whose boxes share this much of the smaller one are the same text read twice. */
         private const val SAME_PLACE = 0.4f
-        /** Lines whose centres are this close vertically are on the same row (read left to right). */
-        private const val LINE_BAND = 24
+        /** Scripts written without spaces between words: Tesseract's words in them join with none. */
+        private val NO_SPACES = setOf(
+            Character.UnicodeScript.THAI, Character.UnicodeScript.LAO, Character.UnicodeScript.KHMER,
+            Character.UnicodeScript.MYANMAR, Character.UnicodeScript.HAN, Character.UnicodeScript.HIRAGANA,
+            Character.UnicodeScript.KATAKANA
+        )
 
-        private fun overlap(a: Rect, b: Rect): Float {
-            val r = Rect()
-            if (!r.setIntersect(a, b)) return 0f
-            val smaller = minOf(a.width() * a.height(), b.width() * b.height()).coerceAtLeast(1)
-            return r.width() * r.height() / smaller.toFloat()
+        /** At most this many lines of one image read again by themselves ([tesseractLines]). */
+        private const val MAX_REREADS = 40
+
+        private val COLUMN_RULE = Regex("[|¦│]+")
+
+        /** A gap between words this many times the line's height parts it in two (columns, not spaces). */
+        private const val COLUMN_GAP = 2.5
+
+        private fun Rect.toBox() = Box(left, top, right, bottom)
+
+        private fun overlap(a: Box, b: Box): Float {
+            val w = minOf(a.right, b.right) - maxOf(a.left, b.left)
+            val h = minOf(a.bottom, b.bottom) - maxOf(a.top, b.top)
+            if (w <= 0 || h <= 0) return 0f
+            val smaller = minOf(a.width * a.height, b.width * b.height).coerceAtLeast(1)
+            return w.toFloat() * h / smaller
+        }
+
+        /** How much two spans share, as a part of the shorter (0–1). */
+        private fun shared(a1: Int, a2: Int, b1: Int, b2: Int): Float =
+            (minOf(a2, b2) - maxOf(a1, b1)).coerceAtLeast(0) / (minOf(a2 - a1, b2 - b1).coerceAtLeast(1)).toFloat()
+
+        /**
+         * One Tesseract line from its [words], cut wherever the gap between
+         * neighbours is over [COLUMN_GAP] line heights. Each part keeps its
+         * words in Tesseract's order (right to left stays right to left) and
+         * is as sure as its words are, longer words counting for more.
+         */
+        internal fun splitAtGaps(all: List<Line>): List<Line> {
+            // A rule between newspaper columns comes out as a lone "|": a cut, not a word.
+            val rules = all.filter { it.text.matches(COLUMN_RULE) }
+            val words = all - rules.toSet()
+            if (words.isEmpty()) return emptyList()
+            val height = words.map { it.box.height }.sorted()[words.size / 2].coerceAtLeast(1)
+            val byX = words.sortedBy { it.box.left }
+            val cuts = byX.zipWithNext().filter { (a, b) -> b.box.left - a.box.right > height * COLUMN_GAP }.map { it.second.box.left } +
+                rules.map { it.box.left }
+            return words.groupBy { w -> cuts.count { w.box.left >= it } }.toSortedMap().values.map { part ->
+                val weight = part.sumOf { it.text.length }.coerceAtLeast(1)
+                Line(
+                    part.drop(1).fold(StringBuilder(part[0].text)) { s, w ->
+                        // Thai, Khmer, Chinese… put no space between words.
+                        val unspaced = Character.UnicodeScript.of(s.codePointBefore(s.length)) in NO_SPACES &&
+                            Character.UnicodeScript.of(w.text.codePointAt(0)) in NO_SPACES
+                        (if (unspaced) s else s.append(' ')).append(w.text)
+                    }.toString(),
+                    Box(part.minOf { it.box.left }, part.minOf { it.box.top }, part.maxOf { it.box.right }, part.maxOf { it.box.bottom }),
+                    part.sumOf { it.confidence.toDouble() * it.text.length }.toFloat() / weight
+                )
+            }
+        }
+
+        /**
+         * [lines] in the order a person reads the page. Lines stacked close
+         * together that share a column form a block (a letterhead, the
+         * addressee beside it, a paragraph); blocks side by side are read one
+         * whole block after another, left to right (right to left for Arabic
+         * or Hebrew), unless their lines line up row for row, as a receipt's
+         * items and prices or a signature line do: those are read across.
+         */
+        internal fun readingOrder(lines: List<Line>): List<Line> {
+            if (lines.size < 2) return lines
+            val rtl = isMostlyRtl(lines)
+            fun rows(ls: List<Line>): List<Line> {
+                val out = ArrayList<Line>()
+                val sorted = ls.sortedBy { it.box.centerY }
+                var row = ArrayList<Line>()
+                for (l in sorted) {
+                    val anchor = row.firstOrNull()
+                    if (anchor != null && l.box.centerY - anchor.box.centerY > minOf(anchor.box.height, l.box.height) / 2) {
+                        out += if (rtl) row.sortedByDescending { it.box.right } else row.sortedBy { it.box.left }
+                        row = ArrayList()
+                    }
+                    row += l
+                }
+                out += if (rtl) row.sortedByDescending { it.box.right } else row.sortedBy { it.box.left }
+                return out
+            }
+
+            // Blocks: a line joins the block whose nearest line sits just above it, in the same column.
+            val blocks = ArrayList<MutableList<Line>>()
+            for (l in lines.sortedBy { it.box.top }) {
+                val h = l.box.height
+                val home = blocks.filter { b ->
+                    b.any { m ->
+                        val gap = l.box.top - m.box.bottom
+                        // Capitals' boxes are short for their spacing: up to 1.5 heights apart.
+                        gap < h * 3 / 2 && gap > -h / 2 && l.box.top > m.box.top &&
+                            shared(m.box.left, m.box.right, l.box.left, l.box.right) >= 0.5f
+                    }
+                }.minByOrNull { b -> b.minOf { m -> kotlin.math.abs(l.box.top - m.box.bottom) } }
+                if (home != null) home += l else blocks += arrayListOf(l)
+            }
+
+            // Bands: blocks that share any height, read together.
+            val bands = ArrayList<MutableList<MutableList<Line>>>()
+            for (b in blocks.sortedBy { bl -> bl.minOf { it.box.top } }) {
+                val top = b.minOf { it.box.top }
+                val band = bands.lastOrNull()
+                if (band != null && top < band.maxOf { bl -> bl.maxOf { it.box.bottom } }) band += b else bands += arrayListOf(b)
+            }
+
+            val out = ArrayList<Line>()
+            for (band in bands) {
+                if (band.size == 1) { out += rows(band[0]); continue }
+                val all = band.flatten()
+                // Row for row: most lines have one in another block at the same height.
+                val aligned = band.sumOf { b ->
+                    b.count { l ->
+                        band.any { o -> o !== b && o.any { m -> kotlin.math.abs(m.box.centerY - l.box.centerY) < minOf(m.box.height, l.box.height) * 0.4 } }
+                    }
+                }
+                // Cells, not columns of text: each narrower than the space between it and its neighbour.
+                val byLeft = band.sortedBy { b -> b.minOf { it.box.left } }
+                val cells = byLeft.zipWithNext().all { (a, b) ->
+                    val aw = a.maxOf { it.box.right } - a.minOf { it.box.left }
+                    val bw = b.maxOf { it.box.right } - b.minOf { it.box.left }
+                    minOf(aw, bw) <= b.minOf { it.box.left } - a.maxOf { it.box.right }
+                }
+                if (cells && aligned * 2 >= all.size) out += rows(all)
+                else (if (rtl) band.sortedByDescending { b -> b.maxOf { it.box.right } } else band.sortedBy { b -> b.minOf { it.box.left } })
+                    .forEach { out += rows(it) }
+            }
+            return out
+        }
+
+        private fun isMostlyRtl(lines: List<Line>): Boolean {
+            var rtl = 0; var all = 0
+            for (l in lines) for (ch in l.text) if (Character.isLetter(ch)) {
+                all++
+                val d = Character.getDirectionality(ch)
+                if (d == Character.DIRECTIONALITY_RIGHT_TO_LEFT || d == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC) rtl++
+            }
+            return rtl * 2 > all
+        }
+
+        /** Latin letters drawn the same as a Cyrillic one. */
+        private val LOOKALIKE = mapOf(
+            'A' to 'А', 'a' to 'а', 'B' to 'В', 'C' to 'С', 'c' to 'с', 'E' to 'Е', 'e' to 'е',
+            'H' to 'Н', 'K' to 'К', 'k' to 'к', 'M' to 'М', 'O' to 'О', 'o' to 'о', 'P' to 'Р',
+            'p' to 'р', 'T' to 'Т', 'X' to 'Х', 'x' to 'х', 'y' to 'у', 'Y' to 'У'
+        )
+        private val WORD = Regex("\\p{L}+")
+        private val WORD_OR_NUMBER = Regex("[\\p{L}\\p{N}]+")
+
+        /**
+         * A line read as Cyrillic with Latin look-alikes put back: Tesseract,
+         * reading Russian with English beside it, sometimes gives a capital
+         * word or a short one ("На", "ТРУДА") in Latin letters that look the
+         * same, which a search for the Russian word wouldn't find. In a line
+         * mostly in Cyrillic, a word that mixes the two, or is all look-alikes,
+         * becomes Cyrillic; real Latin words ("PDF", "Zoom") keep a letter
+         * Cyrillic doesn't share, and stay.
+         */
+        internal fun cyrillicLookalikes(text: String): String {
+            val counts = lettersByScript(text)
+            val cyr = counts[Character.UnicodeScript.CYRILLIC] ?: 0
+            if (cyr == 0) return text
+            val mostly = cyr * 2 > counts.values.sum()
+            return WORD.replace(text) { m ->
+                val w = m.value
+                val latin = w.filter { Character.UnicodeScript.of(it.code) == Character.UnicodeScript.LATIN }
+                when {
+                    latin.isEmpty() -> w
+                    latin.any { it !in LOOKALIKE } -> w
+                    latin.length < w.length || mostly -> w.map { LOOKALIKE[it] ?: it }.joinToString("")
+                    else -> w
+                }
+            }
+        }
+
+        /**
+         * Whether a line from the Latin model looks like its guess at another
+         * script rather than real Latin text: most of its words switch case
+         * inside them ("MuHHCTepcrBO") or carry digits among their letters
+         * ("6aHOBa", "4epraMs"), as no English, French or German words do.
+         */
+        internal fun looksLikeLatinGuess(text: String): Boolean {
+            val words = WORD_OR_NUMBER.findAll(text).map { it.value }.filter { w -> w.count { it.isLetter() } >= 2 && w.length >= 3 }.toList()
+            if (words.isEmpty()) return false
+            val odd = words.count { w ->
+                val rest = w.drop(1).filter { it.isLetter() }
+                (rest.any { it.isUpperCase() } && rest.any { it.isLowerCase() }) ||
+                    (w.any { it.isDigit() } && w.count { it.isLetter() } >= 3)
+            }
+            return odd * 2 >= words.size
         }
 
         /** How many of [text]'s letters are in [scripts], or 0 when too few or too small a share to count. */
@@ -369,7 +708,8 @@ class TextReader @Inject constructor(
         internal fun unaccountedWords(old: String, new: Reading): List<String> {
             val now = words(new.text)
             val replaced = words(new.replaced)
-            val byLength = now.groupBy { it.length }
+            // A dropped line read a little differently this time ("6aHOBa" then "6aH0Ba") still accounts for the old word.
+            val byLength = (now + replaced).groupBy { it.length }
             return words(old).filter { w ->
                 w !in now && w !in replaced &&
                     (w.length - 2..w.length + 2).none { n -> byLength[n].orEmpty().any { closeTo(w, it) } }

@@ -984,26 +984,22 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    "Higher limits make more pages searchable, but large PDFs take longer. Raising it also reads the extra pages of PDFs you already saved.",
+                    "Higher limits make more pages searchable, but large PDFs take longer. Raising it also reads the extra pages of PDFs you already saved. All reads every page, stopping only if a very long PDF's text gets too big to keep.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OcrPreferences.PDF_PAGE_LIMIT_OPTIONS.forEach { limit ->
-                        PageLimitChoice(
-                            limit = limit,
-                            selected = pdfPageLimit == limit,
-                            onClick = {
-                                scope.launch {
-                                    val before = pdfPageLimit
-                                    viewModel.setPdfPageLimit(limit)
-                                    snackbarHostState.showSnackbar(if (limit > before) "Reading up to $limit pages, saved PDFs included" else "New PDFs: up to $limit pages. Text already found stays.")
-                                }
-                            }
-                        )
+                PageLimitChoices(
+                    selected = pdfPageLimit,
+                    onSelect = { limit ->
+                        scope.launch {
+                            val before = pdfPageLimit
+                            viewModel.setPdfPageLimit(limit)
+                            val pages = if (limit == OcrPreferences.ALL_PDF_PAGES) "every page" else "up to $limit pages"
+                            snackbarHostState.showSnackbar(if (limit > before) "Reading $pages, saved PDFs included" else "New PDFs: $pages. Text already found stays.")
+                        }
                     }
-                }
+                )
             }
 
             Spacer(Modifier.height(16.dp))
@@ -2285,6 +2281,19 @@ private fun HelpItem(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PageLimitChoices(selected: Int, onSelect: (Int) -> Unit) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OcrPreferences.PDF_PAGE_LIMIT_OPTIONS.forEach { limit ->
+            PageLimitChoice(limit = limit, selected = selected == limit, onClick = { onSelect(limit) })
+        }
+    }
+}
+
 @Composable
 private fun PageLimitChoice(
     limit: Int,
@@ -2304,7 +2313,7 @@ private fun PageLimitChoice(
         shape = RoundedCornerShape(12.dp),
         colors = colors
     ) {
-        Text("$limit", fontWeight = FontWeight.Bold)
+        Text(if (limit == OcrPreferences.ALL_PDF_PAGES) "All" else "$limit", fontWeight = FontWeight.Bold)
     }
 }
 

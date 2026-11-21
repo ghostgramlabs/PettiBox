@@ -10,15 +10,16 @@ import androidx.exifinterface.media.ExifInterface
 /**
  * Loads an image for text recognition at a bounded resolution. Decoding at
  * full size makes a modern phone photo a 100–200 MB bitmap in our process,
- * which is an OOM on low-RAM devices. Text recognition gains nothing above
- * ~2K pixels, so oversized images are decoded with an `inSampleSize` that
- * caps the long edge, and turned upright by their EXIF rotation so sideways
+ * which is an OOM on low-RAM devices. Oversized images are decoded with an
+ * `inSampleSize` that caps the long edge at about 3K pixels (a photo of a
+ * full newspaper page still needs that much: at 2K its small print reads as
+ * a sixth as many words), at most ~28 MB, and turned upright by their EXIF rotation so sideways
  * photos still read correctly (Tesseract, unlike ML Kit, takes no rotation).
  */
 object OcrImageLoader {
 
-    /** Long-edge cap. Plenty for OCR; ML Kit's own minimum is far lower. */
-    private const val MAX_DIMENSION = 2048
+    /** Long-edge cap: a 4:3 photo at most 3072x2304, about what scanned PDFs are drawn at. */
+    private const val MAX_DIMENSION = 3072
 
     /** An upright ARGB_8888 bitmap the caller recycles, or null if it can't be decoded. */
     fun loadBitmap(ctx: Context, uri: Uri): Bitmap? {
