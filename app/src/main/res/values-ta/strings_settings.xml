@@ -398,4 +398,6 @@
     <string name="ocr_try_again">மீண்டும் முயற்சி</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox இந்தத் திறந்த மூலக் கூறுகளைக் கொண்டு உருவாக்கப்பட்டது. உரிமத்தைப் படிக்க ஏதாவது ஒன்றைத் தட்டுங்கள். உரை அங்கீகாரம் Google ML Kit-ஐயும் பயன்படுத்துகிறது, Google-இன் ML Kit விதிமுறைகளின்படி.</string>
     <string name="sync_sending_photos_files_google_drive">படங்கள், கோப்புகளை Google Drive-க்கு அனுப்புகிறது…</string>
+    <string name="settings_privacy_policy_link">தனியுரிமைக் கொள்கை</string>
+    <string name="settings_terms_of_use_link">பயன்பாட்டு விதிமுறைகள்</string>
 </resources>

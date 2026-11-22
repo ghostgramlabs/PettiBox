@@ -1950,6 +1950,20 @@ fun SettingsScreen(
                 TextButton(onClick = { showLicenses = true }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.settings_open_source_licenses))
                 }
+                for ((label, url) in listOf(
+                    R.string.settings_privacy_policy_link to HelpLinks.PRIVACY_POLICY_URL,
+                    R.string.settings_terms_of_use_link to HelpLinks.TERMS_OF_USE_URL,
+                )) {
+                    TextButton(
+                        onClick = {
+                            // No browser: show the address so it can still be opened elsewhere.
+                            if (!HelpLinks.openWebPage(ctx, url)) scope.launch { snackbarHostState.showSnackbar(url) }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(label))
+                    }
+                }
                 if (showLicenses) LicensesSheet(onDismiss = { showLicenses = false })
                 Text(
                     "PettiBox ${BuildConfig.VERSION_NAME} · ${HelpLinks.SUPPORT_EMAIL}",

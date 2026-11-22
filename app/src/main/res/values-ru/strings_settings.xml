@@ -424,4 +424,6 @@
     <string name="ocr_try_again">Повторить</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox построен на этих компонентах с открытым кодом. Нажмите на любой, чтобы прочитать лицензию. Распознавание текста также использует Google ML Kit на условиях Google для ML Kit.</string>
     <string name="sync_sending_photos_files_google_drive">Отправка фото и файлов в Google Диск…</string>
+    <string name="settings_privacy_policy_link">Политика конфиденциальности</string>
+    <string name="settings_terms_of_use_link">Условия использования</string>
 </resources>

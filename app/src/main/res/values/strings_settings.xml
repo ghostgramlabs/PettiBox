@@ -400,4 +400,6 @@
     <string name="ocr_try_again">Try again</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox is built with these open-source components. Tap one to read its license. Text recognition also uses Google ML Kit, under Google\'s ML Kit terms.</string>
     <string name="sync_sending_photos_files_google_drive">Sending photos and files to Google Drive…</string>
+    <string name="settings_privacy_policy_link">Privacy policy</string>
+    <string name="settings_terms_of_use_link">Terms of use</string>
 </resources>

@@ -411,4 +411,6 @@
     <string name="ocr_try_again">Réessayer</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox est construit avec ces composants open source. Touchez-en un pour lire sa licence. La reconnaissance de texte utilise aussi Google ML Kit, selon les conditions ML Kit de Google.</string>
     <string name="sync_sending_photos_files_google_drive">Envoi des photos et fichiers vers Google Drive…</string>
+    <string name="settings_privacy_policy_link">Politique de confidentialité</string>
+    <string name="settings_terms_of_use_link">Conditions d\'utilisation</string>
 </resources>

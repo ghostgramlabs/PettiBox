@@ -385,4 +385,6 @@
     <string name="ocr_try_again">Coba lagi</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox dibuat dengan komponen open source ini. Ketuk salah satu untuk membaca lisensinya. Pengenalan teks juga memakai Google ML Kit, sesuai ketentuan ML Kit dari Google.</string>
     <string name="sync_sending_photos_files_google_drive">Mengirim foto dan file ke Google Drive…</string>
+    <string name="settings_privacy_policy_link">Kebijakan privasi</string>
+    <string name="settings_terms_of_use_link">Ketentuan penggunaan</string>
 </resources>

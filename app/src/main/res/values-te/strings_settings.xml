@@ -398,4 +398,6 @@
     <string name="ocr_try_again">మళ్లీ ప్రయత్నించండి</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox ఈ ఓపెన్-సోర్స్ భాగాలతో తయారైంది. లైసెన్స్ చదవడానికి దేనినైనా ట్యాప్ చేయండి. టెక్స్ట్ గుర్తింపు Google ML Kit‌ను కూడా వాడుతుంది, Google ML Kit నిబంధనల ప్రకారం.</string>
     <string name="sync_sending_photos_files_google_drive">ఫోటోలు, ఫైల్‌లను Google Drive‌కు పంపుతోంది…</string>
+    <string name="settings_privacy_policy_link">గోప్యతా విధానం</string>
+    <string name="settings_terms_of_use_link">వినియోగ నిబంధనలు</string>
 </resources>

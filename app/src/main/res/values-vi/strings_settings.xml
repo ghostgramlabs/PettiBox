@@ -385,4 +385,6 @@
     <string name="ocr_try_again">Thử lại</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox được xây dựng từ các thành phần nguồn mở này. Nhấn vào một mục để đọc giấy phép. Nhận dạng văn bản còn dùng Google ML Kit, theo điều khoản ML Kit của Google.</string>
     <string name="sync_sending_photos_files_google_drive">Đang gửi ảnh và tệp lên Google Drive…</string>
+    <string name="settings_privacy_policy_link">Chính sách quyền riêng tư</string>
+    <string name="settings_terms_of_use_link">Điều khoản sử dụng</string>
 </resources>

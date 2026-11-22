@@ -398,4 +398,6 @@
     <string name="ocr_try_again">Yeniden dene</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox bu açık kaynak bileşenlerle yapıldı. Lisansını okumak için birine dokun. Metin tanıma ayrıca Google\'ın ML Kit koşulları kapsamında Google ML Kit\'i kullanır.</string>
     <string name="sync_sending_photos_files_google_drive">Fotoğraf ve dosyalar Google Drive\'a gönderiliyor…</string>
+    <string name="settings_privacy_policy_link">Gizlilik politikası</string>
+    <string name="settings_terms_of_use_link">Kullanım koşulları</string>
 </resources>

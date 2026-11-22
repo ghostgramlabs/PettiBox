@@ -38,6 +38,15 @@ object HelpLinks {
 
     const val SUPPORT_EMAIL = "ghostgramlabs@gmail.com"
 
+    /** Published legal pages. Google Play's User Data policy wants the policy reachable in the app. */
+    const val PRIVACY_POLICY_URL = "https://ghostgramlabs.com/PettiBox/privacy.html"
+    const val TERMS_OF_USE_URL = "https://ghostgramlabs.com/PettiBox/terms.html"
+
+    /** Opens a web page in the browser. False when no browser is installed. */
+    fun openWebPage(context: Context, url: String): Boolean = runCatching {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    }.isSuccess
+
     /**
      * Compose a support email with the app/device details prefilled —
      * the difference between an answerable report and a "which version

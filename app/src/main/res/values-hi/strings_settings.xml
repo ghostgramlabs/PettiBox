@@ -398,4 +398,6 @@
     <string name="ocr_try_again">फिर कोशिश करें</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox इन ओपन-सोर्स कॉम्पोनेंट से बना है। किसी का लाइसेंस पढ़ने के लिए उस पर टैप करें। टेक्स्ट पहचान Google ML Kit का भी इस्तेमाल करती है, Google की ML Kit शर्तों के तहत।</string>
     <string name="sync_sending_photos_files_google_drive">फ़ोटो और फ़ाइलें Google Drive पर भेजी जा रही हैं…</string>
+    <string name="settings_privacy_policy_link">गोपनीयता नीति</string>
+    <string name="settings_terms_of_use_link">उपयोग की शर्तें</string>
 </resources>

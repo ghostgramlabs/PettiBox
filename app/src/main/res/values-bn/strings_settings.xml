@@ -398,4 +398,6 @@
     <string name="ocr_try_again">আবার চেষ্টা করুন</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox এই ওপেন-সোর্স উপাদানগুলো দিয়ে তৈরি। লাইসেন্স পড়তে যেকোনোটিতে ট্যাপ করুন। লেখা শনাক্তকরণে Google ML Kit-ও ব্যবহার হয়, Google-এর ML Kit শর্ত অনুযায়ী।</string>
     <string name="sync_sending_photos_files_google_drive">ছবি ও ফাইল Google Drive-এ পাঠানো হচ্ছে…</string>
+    <string name="settings_privacy_policy_link">গোপনীয়তা নীতি</string>
+    <string name="settings_terms_of_use_link">ব্যবহারের শর্তাবলি</string>
 </resources>

@@ -398,4 +398,6 @@
     <string name="ocr_try_again">Δοκιμάστε ξανά</string>
     <string name="licenses_pettibox_built_these_open_source">Το PettiBox είναι φτιαγμένο με αυτά τα στοιχεία ανοιχτού κώδικα. Πατήστε ένα για να διαβάσετε την άδειά του. Η αναγνώριση κειμένου χρησιμοποιεί επίσης το Google ML Kit, σύμφωνα με τους όρους του ML Kit της Google.</string>
     <string name="sync_sending_photos_files_google_drive">Αποστολή φωτογραφιών και αρχείων στο Google Drive…</string>
+    <string name="settings_privacy_policy_link">Πολιτική απορρήτου</string>
+    <string name="settings_terms_of_use_link">Όροι χρήσης</string>
 </resources>

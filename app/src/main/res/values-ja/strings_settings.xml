@@ -385,4 +385,6 @@
     <string name="ocr_try_again">再試行</string>
     <string name="licenses_pettibox_built_these_open_source">PettiBox はこれらのオープンソースコンポーネントで作られています。タップするとライセンスを読めます。テキスト認識には、Google の ML Kit 規約に基づき Google ML Kit も使用しています。</string>
     <string name="sync_sending_photos_files_google_drive">写真とファイルを Google ドライブに送信中…</string>
+    <string name="settings_privacy_policy_link">プライバシーポリシー</string>
+    <string name="settings_terms_of_use_link">利用規約</string>
 </resources>

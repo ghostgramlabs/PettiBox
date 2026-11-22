@@ -450,4 +450,6 @@
     <string name="ocr_try_again">إعادة المحاولة</string>
     <string name="licenses_pettibox_built_these_open_source">بُني PettiBox بهذه المكونات مفتوحة المصدر. انقر على أحدها لقراءة ترخيصه. يستخدم التعرّف على النص أيضًا Google ML Kit، وفق شروط ML Kit من Google.</string>
     <string name="sync_sending_photos_files_google_drive">جارٍ إرسال الصور والملفات إلى Google Drive…</string>
+    <string name="settings_privacy_policy_link">سياسة الخصوصية</string>
+    <string name="settings_terms_of_use_link">شروط الاستخدام</string>
 </resources>
