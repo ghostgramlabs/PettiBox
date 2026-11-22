@@ -1,0 +1,60 @@
+Enregistrez liens, captures d'écran, PDF et notes dans un gestionnaire de favoris privé. Avec PettiBox, tout ce que vous gardez est facile à ranger, lire et retrouver, même hors ligne.
+
+Envoyez articles, vidéos, recettes et documents à PettiBox depuis le menu Partager, au lieu de les perdre dans vos discussions et votre galerie.
+
+ENREGISTREZ POUR PLUS TARD DEPUIS N'IMPORTE QUELLE APP
+
+Partagez un lien, une image, une capture, un PDF ou un fichier depuis toute app Android qui permet le partage. Vous pouvez aussi coller un lien, écrire une note ou choisir des fichiers dans PettiBox.
+
+LISEZ LES ARTICLES HORS LIGNE
+
+Quand vous enregistrez un lien, PettiBox garde sur votre téléphone une copie propre et lisible de l'article. Lisez-la hors ligne, même si la page change ou disparaît. La recherche trouve aussi les mots dans les articles enregistrés.
+
+UNE LISTE « NON LUS » QU'ON N'OUBLIE PAS
+
+Tout ce que vous enregistrez attend dans Non lus jusqu'à ce que vous l'ouvriez. Le widget montre ce qui attend, et un rappel hebdomadaire facultatif vous ramène une chose jamais ouverte.
+
+RETROUVEZ TOUT EN UN INSTANT
+
+Cherchez dans les titres, notes, liens, sources, collections, tags et le texte des articles. La reconnaissance de texte (OCR) sur l'appareil rend le texte des captures, images et PDF consultable, en français et autres langues latines, plus 24 autres, dont l'arabe, le russe et le japonais. Zoomez sur les images et lisez les PDF dans l'app.
+
+IMPORTEZ VOS ANCIENS FAVORIS
+
+Importez les favoris de Chrome, Firefox, Edge ou Safari, ainsi que les exports HTML et CSV d'autres apps comme Pocket et Raindrop.io. Les dossiers deviennent des collections, les tags suivent, les doublons sont ignorés. Exportez vos liens en CSV quand vous voulez.
+
+ORGANISEZ VOS FAVORIS À VOTRE FAÇON
+
+Rangez vos éléments en collections : recettes, études, travail, achats, voyages… Ajoutez des tags, épinglez l'important, marquez vos favoris et archivez ce qui est terminé. Supprimé par erreur ? L'élément attend 30 jours dans Supprimés récemment.
+
+UNE APP « À LIRE PLUS TARD » QUI GARDE VOTRE BIBLIOTHÈQUE
+
+Vous cherchez une alternative à Pocket ? PettiBox garde votre bibliothèque sur votre appareil, et dans votre propre Google Drive si vous le souhaitez : aucune fermeture de service ne peut vous l'enlever. Importez votre ancien fichier Pocket et reprenez où vous en étiez.
+
+DES RAPPELS POUR VOS ÉLÉMENTS
+
+Ajoutez un rappel en enregistrant ou plus tard : lire un article, regarder une vidéo, relire un document.
+
+PRIVÉ ET CONÇU POUR LE HORS-LIGNE
+
+Votre bibliothèque reste sur votre appareil. Aucun compte requis. Verrouillez PettiBox avec votre empreinte, votre visage ou le code PIN du téléphone, et verrouillez des collections privées pour les cacher jusqu'au déverrouillage. PettiBox va en ligne pour les aperçus de liens, les copies d'articles, le téléchargement des langues de reconnaissance de texte et la sauvegarde et synchronisation Google Drive facultatives. Google ML Kit, qui reconnaît le texte, envoie à Google des diagnostics anonymes, jamais votre contenu.
+
+SAUVEGARDE ET RESTAURATION, Y COMPRIS SUR GOOGLE DRIVE
+
+Activez la sauvegarde automatique chaque nuit et connectez votre propre Google Drive. Collections, tags, notes, pièces jointes et articles hors ligne sont inclus. Nouveau téléphone ? Tout revient en quelques touches. PettiBox ne voit que les sauvegardes qu'il a créées, jamais le reste de votre Drive.
+
+SYNCHRONISEZ VOS TÉLÉPHONES ET TABLETTES
+
+Activez la synchronisation pour garder la même bibliothèque sur vos téléphones et tablettes Android, via un dossier PettiBox dans votre propre Google Drive. PettiBox n'a pas de serveurs et ne voit pas ce que vous enregistrez.
+
+PETTIBOX PARLE VOTRE LANGUE
+
+L'app existe en français et dans 16 autres langues.
+
+Idéal pour garder :
+
+- Recettes et idées de repas
+- Articles et messages de forums
+- Cours et notes de classe
+- Idées d'achats et listes d'envies
+- Projets de voyage et lieux
+- Captures avec du texte important

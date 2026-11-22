@@ -1,0 +1,62 @@
+Simpan link, screenshot, PDF, dan catatan di satu pengelola bookmark yang privat. Dengan PettiBox, semua yang kamu simpan mudah diatur, dibaca, dan ditemukan lagi, bahkan saat offline.
+
+Pakai menu Bagikan di Android untuk mengirim artikel, video, resep, dan dokumen ke PettiBox dari aplikasi yang sudah kamu pakai, daripada tercecer di chat, unduhan, dan galeri.
+
+SIMPAN UNTUK NANTI DARI APLIKASI APA PUN
+
+Bagikan link, gambar, screenshot, PDF, atau file dari aplikasi Android mana pun yang bisa berbagi. Kamu juga bisa menempel link, menulis catatan singkat, atau memilih file langsung di PettiBox, atau memakai widget dan pintasan ikon aplikasi.
+
+BACA ARTIKEL SECARA OFFLINE
+
+Saat kamu menyimpan link, PettiBox menyimpan salinan artikel yang bersih dan nyaman dibaca di ponselmu. Baca di pesawat atau KRL, meski halamannya nanti berubah atau hilang. Pencarian juga menemukan kata di dalam artikel tersimpan.
+
+DAFTAR BELUM DIBACA YANG TIDAK TERLUPAKAN
+
+Semua yang kamu simpan menunggu di Belum dibaca sampai kamu membukanya. Widget menampilkan yang masih menunggu, dan pengingat mingguan opsional mengingatkan satu hal yang belum pernah kamu buka.
+
+TEMUKAN SIMPANAN DENGAN CEPAT
+
+Cari di judul, catatan, link, sumber, koleksi, tag, dan teks artikel. OCR di perangkat membuat teks di dalam screenshot, gambar, dan PDF bisa dicari, dalam bahasa Indonesia dan bahasa beraksara Latin lainnya, plus 24 bahasa lagi seperti Arab, Hindi, Mandarin, dan Jepang. Cubit untuk memperbesar gambar, dan baca PDF langsung di aplikasi.
+
+IMPOR DARI BROWSER ATAU APLIKASI BOOKMARK LAMA
+
+Impor bookmark yang diekspor dari Chrome, Firefox, Edge, atau Safari, serta file HTML dan CSV dari aplikasi lain, termasuk file ekspor lama Pocket dan Raindrop.io. Folder menjadi koleksi, tag ikut terbawa, dan duplikat dilewati. Ekspor link-mu sebagai CSV kapan saja.
+
+ATUR BOOKMARK SESUAI CARAMU
+
+Kelompokkan simpanan ke koleksi untuk resep, belajar, kerja, belanja, jalan-jalan, atau apa saja. Tambahkan tag, sematkan yang penting, tandai favorit, dan arsipkan yang sudah selesai. Tidak sengaja terhapus? Tersimpan 30 hari di Baru dihapus.
+
+APLIKASI BACA NANTI YANG TIDAK BISA KEHILANGAN PERPUSTAKAANMU
+
+Mencari alternatif Pocket? PettiBox menyimpan perpustakaanmu di perangkatmu sendiri, dan di Google Drive milikmu jika kamu mau, jadi tidak ada layanan tutup yang bisa mengambilnya. Impor file ekspor Pocket lamamu dan lanjutkan dari terakhir kali.
+
+PENGINGAT UNTUK SIMPANAN
+
+Tambahkan pengingat saat menyimpan atau nanti: membaca artikel, menonton video, atau meninjau dokumen.
+
+PRIVAT DAN UTAMAKAN OFFLINE
+
+Perpustakaanmu tetap di perangkatmu. Tanpa akun. Kunci PettiBox dengan sidik jari, wajah, atau PIN ponsel, dan kunci koleksi pribadi agar tersembunyi sampai kamu membukanya. PettiBox online untuk pratinjau link, salinan artikel offline, unduhan bahasa pengenalan teks, serta cadangan dan sinkronisasi Google Drive yang opsional. Google ML Kit, yang mengenali teks, mengirim diagnostik anonim ke Google, tidak pernah kontenmu.
+
+CADANGKAN DAN PULIHKAN, TERMASUK KE GOOGLE DRIVE
+
+Aktifkan cadangan otomatis setiap malam dan hubungkan Google Drive milikmu. Koleksi, tag, catatan, lampiran, dan artikel offline semuanya ikut. Ponsel baru? Pulihkan semuanya dengan beberapa ketukan. PettiBox hanya bisa melihat file cadangan yang dibuatnya, tidak pernah isi Drive-mu yang lain.
+
+SINKRONKAN PONSEL DAN TABLETMU
+
+Aktifkan sinkronisasi agar perpustakaan yang sama ada di ponsel dan tablet Android-mu, lewat folder PettiBox di Google Drive milikmu. PettiBox tidak punya server, dan kami tidak bisa melihat simpananmu.
+
+PETTIBOX BERBAHASA INDONESIA
+
+Aplikasi ini tersedia dalam bahasa Indonesia dan 16 bahasa lain, dan bisa diganti kapan saja di Setelan.
+
+Cocok untuk menyimpan:
+
+- Resep dan ide masakan
+- Artikel dan postingan forum
+- Materi belajar dan catatan kuliah
+- Ide belanja dan daftar keinginan
+- Rencana perjalanan dan tempat
+- Link dan dokumen kerja
+- Screenshot berisi teks penting
+- PDF dan bahan referensi

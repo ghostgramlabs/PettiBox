@@ -1,0 +1,62 @@
+Lưu link, ảnh chụp màn hình, PDF và ghi chú trong một trình quản lý dấu trang riêng tư. Với PettiBox, mọi thứ bạn lưu đều dễ sắp xếp, đọc và tìm lại sau, kể cả khi không có mạng.
+
+Dùng menu Chia sẻ của Android để gửi bài viết, video, công thức nấu ăn và tài liệu vào PettiBox từ các ứng dụng bạn vẫn dùng, thay vì để chúng thất lạc trong tin nhắn, thư mục tải xuống và thư viện ảnh.
+
+LƯU ĐỂ XEM SAU TỪ BẤT KỲ ỨNG DỤNG NÀO
+
+Chia sẻ link, hình ảnh, ảnh chụp màn hình, PDF hoặc tệp từ bất kỳ ứng dụng Android nào có nút chia sẻ. Bạn cũng có thể dán link, viết ghi chú nhanh hoặc chọn tệp ngay trong PettiBox, hay dùng widget và lối tắt trên biểu tượng ứng dụng.
+
+ĐỌC BÀI VIẾT KHÔNG CẦN MẠNG
+
+Khi bạn lưu một link, PettiBox giữ trên điện thoại một bản sao gọn gàng, dễ đọc của bài viết. Đọc trên máy bay hay xe buýt, kể cả khi trang sau này thay đổi hoặc biến mất. Tìm kiếm cũng tìm được chữ bên trong bài viết đã lưu.
+
+DANH SÁCH CHƯA ĐỌC KHÔNG BỊ LÃNG QUÊN
+
+Mọi thứ bạn lưu đều chờ trong mục Chưa đọc cho đến khi bạn mở. Widget cho thấy những gì đang chờ, và lời nhắc hằng tuần (tùy chọn) mang lại một thứ bạn đã lưu nhưng chưa từng mở.
+
+TÌM LẠI NHANH CHÓNG
+
+Tìm trong tiêu đề, ghi chú, link, nguồn, bộ sưu tập, thẻ và nội dung bài viết. Nhận dạng chữ (OCR) ngay trên máy giúp tìm được chữ trong ảnh chụp màn hình, hình ảnh và PDF, bằng tiếng Việt và các ngôn ngữ chữ Latinh khác, cùng 24 ngôn ngữ nữa như tiếng Trung, Nhật, Hàn, Thái và Ả Rập. Chụm để phóng to ảnh và đọc PDF ngay trong ứng dụng.
+
+NHẬP TỪ TRÌNH DUYỆT HOẶC ỨNG DỤNG DẤU TRANG CŨ
+
+Nhập dấu trang xuất từ Chrome, Firefox, Edge hoặc Safari, cùng tệp HTML và CSV từ các ứng dụng khác, gồm cả tệp xuất cũ của Pocket và Raindrop.io. Thư mục thành bộ sưu tập, thẻ được giữ nguyên và mục trùng bị bỏ qua. Xuất link của bạn ra CSV bất cứ lúc nào.
+
+SẮP XẾP THEO CÁCH CỦA BẠN
+
+Gom những gì bạn lưu vào bộ sưu tập cho công thức nấu ăn, học tập, công việc, mua sắm, du lịch hay bất cứ thứ gì. Thêm thẻ, ghim mục quan trọng, đánh dấu yêu thích và lưu trữ những gì đã xong. Lỡ xóa nhầm? Mục đó chờ 30 ngày trong Đã xóa gần đây.
+
+ỨNG DỤNG ĐỌC SAU KHÔNG THỂ LÀM MẤT THƯ VIỆN CỦA BẠN
+
+Đang tìm một lựa chọn thay thế Pocket? PettiBox giữ thư viện của bạn trên chính thiết bị của bạn, và trong Google Drive của riêng bạn nếu bạn muốn, nên không dịch vụ nào đóng cửa có thể lấy mất. Nhập tệp xuất Pocket cũ và tiếp tục từ chỗ bạn dừng.
+
+LỜI NHẮC CHO MỤC ĐÃ LƯU
+
+Thêm lời nhắc khi lưu hoặc sau đó: đọc một bài viết, xem một video, xem lại một tài liệu.
+
+RIÊNG TƯ VÀ ƯU TIÊN NGOẠI TUYẾN
+
+Thư viện của bạn ở lại trên thiết bị. Không cần tài khoản. Khóa PettiBox bằng vân tay, khuôn mặt hoặc mã PIN điện thoại, và khóa bộ sưu tập riêng tư để chúng ẩn đi cho đến khi bạn mở khóa. PettiBox kết nối mạng để xem trước link, tạo bản sao bài viết, tải ngôn ngữ nhận dạng chữ, và sao lưu cũng như đồng bộ Google Drive (tùy chọn). Google ML Kit, dùng để nhận dạng chữ, gửi cho Google dữ liệu chẩn đoán ẩn danh, không bao giờ gửi nội dung của bạn.
+
+SAO LƯU VÀ KHÔI PHỤC, KỂ CẢ LÊN GOOGLE DRIVE
+
+Bật sao lưu tự động mỗi đêm và kết nối Google Drive của riêng bạn. Bộ sưu tập, thẻ, ghi chú, tệp đính kèm và bài viết ngoại tuyến đều được bao gồm. Điện thoại mới? Khôi phục mọi thứ chỉ với vài lần chạm. PettiBox chỉ thấy các tệp sao lưu do chính nó tạo, không bao giờ thấy phần còn lại trong Drive của bạn.
+
+ĐỒNG BỘ ĐIỆN THOẠI VÀ MÁY TÍNH BẢNG
+
+Bật đồng bộ để có cùng một thư viện trên các điện thoại và máy tính bảng Android, qua thư mục PettiBox trong Google Drive của riêng bạn. PettiBox không có máy chủ, và chúng tôi không thể thấy những gì bạn lưu.
+
+PETTIBOX NÓI NGÔN NGỮ CỦA BẠN
+
+Ứng dụng có tiếng Việt và 16 ngôn ngữ khác, có thể đổi bất cứ lúc nào trong Cài đặt.
+
+Rất hợp để lưu:
+
+- Công thức và ý tưởng món ăn
+- Bài viết và bài đăng diễn đàn
+- Tài liệu học tập và ghi chép
+- Ý tưởng mua sắm và danh sách mong muốn
+- Kế hoạch du lịch và địa điểm
+- Link và tài liệu công việc
+- Ảnh chụp màn hình có chữ quan trọng
+- PDF và tài liệu tham khảo

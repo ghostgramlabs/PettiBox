@@ -1,0 +1,62 @@
+Speichere Links, Screenshots, PDFs und Notizen in einem privaten Lesezeichen-Manager. Mit PettiBox ist alles, was du speicherst, leicht zu ordnen, zu lesen und wiederzufinden – auch offline.
+
+Schick Artikel, Videos, Rezepte und Dokumente über das Teilen-Menü aus jeder App, statt sie in Chats und der Galerie zu verlieren.
+
+FÜR SPÄTER SPEICHERN – AUS JEDER APP
+
+Teile einen Link, ein Bild, einen Screenshot, ein PDF oder eine Datei aus jeder Android-App mit Teilen-Funktion. Oder füge in PettiBox einen Link ein, schreib eine kurze Notiz oder wähle Dateien aus.
+
+ARTIKEL OFFLINE LESEN
+
+Wenn du einen Link speicherst, legt PettiBox eine saubere, gut lesbare Kopie des Artikels auf deinem Handy ab. Lies ihn offline, auch wenn sich die Seite später ändert oder verschwindet. Die Suche findet auch Wörter in gespeicherten Artikeln.
+
+EINE UNGELESEN-LISTE, DIE NICHTS VERGISST
+
+Alles, was du speicherst, wartet unter „Ungelesen“, bis du es öffnest. Das Widget zeigt, was noch offen ist, und eine optionale wöchentliche Erinnerung holt etwas zurück, das du nie geöffnet hast.
+
+SCHNELL WIEDERFINDEN
+
+Durchsuche Titel, Notizen, Links, Quellen, Sammlungen, Tags und Artikeltext. Texterkennung (OCR) direkt auf dem Gerät macht Text in Screenshots, Bildern und PDFs durchsuchbar – auf Deutsch und in anderen lateinischen Sprachen sowie in 24 weiteren, darunter Russisch, Arabisch und Japanisch. Zoome in Bilder und lies PDFs direkt in der App.
+
+AUS DEM BROWSER ODER DER ALTEN LESEZEICHEN-APP IMPORTIEREN
+
+Importiere Lesezeichen aus Chrome, Firefox, Edge oder Safari sowie HTML- und CSV-Exporte anderer Apps wie Pocket und Raindrop.io. Ordner werden zu Sammlungen, Tags bleiben erhalten, Duplikate werden übersprungen. Exportiere deine Links jederzeit als CSV.
+
+ORDNE DEINE LESEZEICHEN, WIE DU WILLST
+
+Sortiere in Sammlungen für Rezepte, Studium, Arbeit, Einkäufe oder Reisen. Vergib Tags, hefte Wichtiges an, markiere Favoriten und archiviere Erledigtes. Etwas aus Versehen gelöscht? Es wartet 30 Tage unter „Zuletzt gelöscht“.
+
+EINE READ-IT-LATER-APP, DIE DEINE BIBLIOTHEK NICHT VERLIEREN KANN
+
+Suchst du eine Alternative zu Pocket? PettiBox bewahrt deine Bibliothek auf deinem Gerät auf – und auf Wunsch in deinem eigenen Google Drive –, sodass keine Dienst-Einstellung sie dir nehmen kann. Importiere deine alte Pocket-Exportdatei und mach weiter, wo du aufgehört hast.
+
+ERINNERUNGEN FÜR GESPEICHERTES
+
+Füge beim Speichern oder später eine Erinnerung hinzu: einen Artikel lesen, ein Video ansehen, ein Dokument prüfen.
+
+PRIVAT UND OFFLINE ZUERST
+
+Deine Bibliothek bleibt auf deinem Gerät. Kein Konto nötig. Sperre PettiBox mit Fingerabdruck, Gesicht oder Handy-PIN und sperre private Sammlungen, damit sie verborgen bleiben, bis du sie entsperrst. PettiBox geht online für Link-Vorschauen, Offline-Artikelkopien, den Download von Texterkennungs-Sprachen sowie die optionale Sicherung und Synchronisierung über Google Drive. Google ML Kit, das den Text erkennt, sendet Google anonyme Diagnosedaten, nie deine Inhalte.
+
+SICHERN UND WIEDERHERSTELLEN, AUCH MIT GOOGLE DRIVE
+
+Schalte die automatische nächtliche Sicherung ein und verbinde dein eigenes Google Drive. Sammlungen, Tags, Notizen, Anhänge und Offline-Artikel sind dabei. Neues Handy? Mit ein paar Tippern ist alles wieder da. PettiBox sieht nur die Sicherungsdateien, die es selbst erstellt hat, nie den Rest deines Drive.
+
+SYNCHRONISIERE DEINE HANDYS UND TABLETS
+
+Schalte die Synchronisierung ein und hab dieselbe Bibliothek auf deinen Android-Handys und -Tablets – über einen PettiBox-Ordner in deinem eigenen Google Drive. Es gibt keine PettiBox-Server, und wir sehen nicht, was du speicherst.
+
+PETTIBOX SPRICHT DEINE SPRACHE
+
+Die App gibt es auf Deutsch und in 16 weiteren Sprachen.
+
+Ideal zum Speichern von:
+
+- Rezepten und Essensideen
+- Artikeln und Forenbeiträgen
+- Lernmaterial und Mitschriften
+- Einkaufsideen und Wunschlisten
+- Reiseplänen und Orten
+- Screenshots mit wichtigem Text
+
+PettiBox: jetzt speichern, später finden.

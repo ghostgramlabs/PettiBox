@@ -1,0 +1,1 @@
+Bağlantıları, ekran görüntülerini ve PDF'leri sonra oku. Çevrimdışı OCR araması.

@@ -1,0 +1,22 @@
+{
+  "_comment": "Search terms per listing. The first is the primary term: it must be in the title or short description and appear 3-10 times in the full description. The rest only need to appear at least once. Checked by tools/store/play_listing.py check.",
+  "en-US": ["bookmark", "read later", "save links", "screenshot", "PDF", "offline", "Pocket"],
+  "es-419": ["enlace", "marcador", "guardar", "leer", "captura", "sin conexión"],
+  "hi-IN": ["लिंक", "बुकमार्क", "सेव", "बाद में", "स्क्रीनशॉट", "ऑफ़लाइन"],
+  "de-DE": ["Lesezeichen", "später", "Link", "Screenshot", "offline"],
+  "fr-FR": ["favoris", "plus tard", "lien", "capture", "hors ligne"],
+  "pt-BR": ["link", "favorito", "salv", "ler depois", "print", "offline"],
+  "id": ["link", "bookmark", "simpan", "nanti", "offline"],
+  "tr-TR": ["bağlantı", "sonra", "ekran görüntü", "çevrimdışı"],
+  "ru-RU": ["заклад", "ссылк", "потом", "скриншот", "офлайн"],
+  "el-GR": ["στιγμιότυπ", "σελιδοδείκτ", "αργότερα", "εκτός σύνδεσης"],
+  "vi": ["link", "lưu", "đọc sau", "dấu trang", "ảnh chụp màn hình"],
+  "ja-JP": ["リンク", "ブックマーク", "あとで読む", "PDF", "オフライン"],
+  "ar": ["روابط", "حفظ", "لاحق", "لقطات الشاشة", "دون اتصال"],
+  "bn-BD": ["লিংক", "সেভ", "স্ক্রিনশট", "অফলাইন"],
+  "te-IN": ["లింక్", "సేవ్", "స్క్రీన్‌షాట్", "ఆఫ్‌లైన్"],
+  "ta-IN": ["ஸ்கிரீன்ஷாட்", "சேமி", "ஆஃப்லைன்", "இணைப்பு"],
+  "ml-IN": ["ലിങ്ക്", "സേവ്", "PDF", "ഓഫ്‌ലൈൻ"],
+  "es-ES": ["enlace", "marcador", "guardar", "leer", "captura", "sin conexión"],
+  "es-US": ["enlace", "marcador", "guardar", "leer", "captura", "sin conexión"]
+}

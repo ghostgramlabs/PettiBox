@@ -1,0 +1,61 @@
+Bağlantıları, ekran görüntülerini, PDF'leri ve notları tek bir gizli yer imi yöneticisinde sakla. PettiBox ile kaydettiğin her şeyi düzenlemek, okumak ve sonra bulmak kolay; çevrimdışıyken bile.
+
+Makaleleri, videoları, tarifleri ve belgeleri sohbetlerde, indirilenlerde ve galeride kaybetmek yerine, Android paylaşım menüsünden kullandığın uygulamalardan PettiBox'a gönder.
+
+HER UYGULAMADAN SONRASI İÇİN KAYDET
+
+Paylaşımı destekleyen her Android uygulamasından bağlantı, görsel, ekran görüntüsü, PDF veya dosya paylaş. PettiBox içinde bağlantı yapıştırabilir, kısa not yazabilir, dosya seçebilir ya da widget'ı ve uygulama simgesi kısayollarını kullanabilirsin.
+
+MAKALELERİ ÇEVRİMDIŞI OKU
+
+Bir bağlantı kaydettiğinde PettiBox, makalenin temiz ve okunaklı bir kopyasını telefonunda tutar. Sayfa sonradan değişse ya da kaybolsa bile uçakta veya metroda oku. Arama, kaydedilmiş makalelerin içindeki kelimeleri de bulur.
+
+UNUTULMAYAN BİR OKUNMAMIŞLAR LİSTESİ
+
+Kaydettiğin her şey, sen açana kadar Okunmamışlar'da bekler. Widget bekleyenleri gösterir; isteğe bağlı haftalık hatırlatma da hiç açmadığın bir şeyi geri getirir.
+
+KAYDETTİKLERİNİ HEMEN BUL
+
+Başlıklarda, notlarda, bağlantılarda, kaynaklarda, koleksiyonlarda, etiketlerde ve makale metninde ara. Cihaz üzerindeki OCR, ekran görüntülerindeki, görsellerdeki ve PDF'lerdeki yazıları aranabilir yapar: Türkçe ve diğer Latin alfabeli diller, artı Arapça, Rusça, Çince ve Japonca dahil 24 dil daha. Görsellere yakınlaştır, PDF'leri uygulamada oku.
+
+TARAYICINDAN VEYA ESKİ YER İMİ UYGULAMANDAN AKTAR
+
+Chrome, Firefox, Edge veya Safari'den dışa aktarılan yer imlerini ve diğer uygulamaların HTML ve CSV dosyalarını içe aktar; eski Pocket ve Raindrop.io dışa aktarma dosyaları da dahil. Klasörler koleksiyon olur, etiketler korunur, kopyalar atlanır. Bağlantılarını istediğin zaman CSV olarak dışa aktar.
+
+YER İMLERİNİ İSTEDİĞİN GİBİ DÜZENLE
+
+Kayıtlarını tarifler, ders, iş, alışveriş, seyahat ya da istediğin her şey için koleksiyonlarda topla. Etiket ekle, önemlileri sabitle, favorilerini işaretle, bitenleri arşivle. Yanlışlıkla mı sildin? 30 gün boyunca Son silinenler'de bekler.
+
+KÜTÜPHANENİ KAYBEDEMEYEN BİR SONRA OKU UYGULAMASI
+
+Pocket'a alternatif mi arıyorsun? PettiBox kütüphaneni kendi cihazında, istersen de kendi Google Drive'ında tutar; hiçbir hizmetin kapanması onu elinden alamaz. Eski Pocket dışa aktarma dosyanı içe aktar ve kaldığın yerden devam et.
+
+KAYITLAR İÇİN HATIRLATICILAR
+
+Kaydederken veya sonra hatırlatıcı ekle: bir makaleyi okumak, bir video izlemek, bir belgeye bakmak için.
+
+GİZLİ VE ÖNCE ÇEVRİMDIŞI
+
+Kütüphanen cihazında kalır. Hesap gerekmez. PettiBox'ı parmak izi, yüz veya telefon PIN'i ile kilitle; özel koleksiyonları da sen açana kadar gizli kalacak şekilde kilitle. PettiBox bağlantı önizlemeleri, çevrimdışı makale kopyaları, metin tanıma dili indirmeleri ve isteğe bağlı Google Drive yedeklemesi ve senkronizasyonu için internete bağlanır. Metni tanıyan Google ML Kit, Google'a anonim tanılama verileri gönderir, içeriğini asla göndermez.
+
+GOOGLE DRIVE DAHİL YEDEKLEME VE GERİ YÜKLEME
+
+Her gece otomatik yedeklemeyi aç ve kendi Google Drive'ını bağla. Koleksiyonlar, etiketler, notlar, ekler ve çevrimdışı makaleler dahildir. Yeni telefon mu? Her şeyi birkaç dokunuşla geri yükle. PettiBox yalnızca kendi oluşturduğu yedek dosyalarını görür, Drive'ının geri kalanını asla.
+
+TELEFONLARINI VE TABLETLERİNİ SENKRONİZE ET
+
+Senkronizasyonu aç; Android telefonlarında ve tabletlerinde, kendi Google Drive'ındaki PettiBox klasörü üzerinden aynı kütüphaneye sahip ol. PettiBox'ın sunucusu yok ve kaydettiklerini göremeyiz.
+
+PETTIBOX SENİN DİLİNİ KONUŞUYOR
+
+Uygulama Türkçe ve 16 dilde daha var; dili Ayarlar'dan istediğin zaman değiştirebilirsin.
+
+Şunları kaydetmek için ideal:
+
+- Tarifler ve yemek fikirleri
+- Makaleler ve forum gönderileri
+- Ders materyalleri ve notlar
+- Alışveriş fikirleri ve istek listeleri
+- Seyahat planları ve mekânlar
+- İş bağlantıları ve belgeler
+- Önemli yazı içeren ekran görüntüleri
