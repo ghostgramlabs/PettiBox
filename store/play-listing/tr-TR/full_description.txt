@@ -50,12 +50,4 @@ PETTIBOX SENİN DİLİNİ KONUŞUYOR
 
 Uygulama Türkçe ve 16 dilde daha var; dili Ayarlar'dan istediğin zaman değiştirebilirsin.
 
-Şunları kaydetmek için ideal:
-
-- Tarifler ve yemek fikirleri
-- Makaleler ve forum gönderileri
-- Ders materyalleri ve notlar
-- Alışveriş fikirleri ve istek listeleri
-- Seyahat planları ve mekânlar
-- İş bağlantıları ve belgeler
-- Önemli yazı içeren ekran görüntüleri
+English · Español · Deutsch · Français · Bahasa Indonesia · Türkçe · 日本語 · हिन्दी · العربية · Português (Brasil) · Русский · Tiếng Việt · বাংলা · తెలుగు · தமிழ் · Ελληνικά · മലയാളം

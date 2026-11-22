@@ -50,13 +50,4 @@ O PETTIBOX FALA O SEU IDIOMA
 
 O app está em português e em mais 16 idiomas, e você pode trocar quando quiser nas Configurações.
 
-Ótimo para salvar:
-
-- Receitas e ideias de refeições
-- Artigos e posts de fóruns
-- Material de estudo e anotações
-- Ideias de compras e listas de desejos
-- Planos de viagem e lugares
-- Links e documentos de trabalho
-- Prints com textos importantes
-- PDFs e material de consulta
+English · Español · Deutsch · Français · Bahasa Indonesia · Türkçe · 日本語 · हिन्दी · العربية · Português (Brasil) · Русский · Tiếng Việt · বাংলা · తెలుగు · தமிழ் · Ελληνικά · മലയാളം

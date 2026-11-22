@@ -50,13 +50,4 @@ PETTIBOX BERBAHASA INDONESIA
 
 Aplikasi ini tersedia dalam bahasa Indonesia dan 16 bahasa lain, dan bisa diganti kapan saja di Setelan.
 
-Cocok untuk menyimpan:
-
-- Resep dan ide masakan
-- Artikel dan postingan forum
-- Materi belajar dan catatan kuliah
-- Ide belanja dan daftar keinginan
-- Rencana perjalanan dan tempat
-- Link dan dokumen kerja
-- Screenshot berisi teks penting
-- PDF dan bahan referensi
+English · Español · Deutsch · Français · Bahasa Indonesia · Türkçe · 日本語 · हिन्दी · العربية · Português (Brasil) · Русский · Tiếng Việt · বাংলা · తెలుగు · தமிழ் · Ελληνικά · മലയാളം
