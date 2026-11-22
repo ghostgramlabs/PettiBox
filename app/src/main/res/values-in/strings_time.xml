@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">baru saja</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="other">%d mnt lalu</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="other">%d jam lalu</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="other">%d hari lalu</item>
+    </plurals>
+    <string name="reminder_preset_tonight">Nanti malam</string>
+    <string name="reminder_preset_tomorrow">Besok</string>
+    <string name="reminder_preset_weekend">Akhir pekan</string>
+    <string name="reminder_preset_next_week">Minggu depan</string>
+    <string name="reminder_preset_custom">Pilih waktu…</string>
+    <string name="reminder_today">Hari ini</string>
+    <string name="reminder_tomorrow">Besok</string>
+    <string name="reminder_today_at">Hari ini %1$s</string>
+    <string name="reminder_tomorrow_at">Besok %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">Saat ini diatur untuk %1$s</string>
+    <string name="reminder_nudge_at">Kami akan mengingatkanmu %1$s</string>
+    <string name="reminder_remind_at">Kami akan mengingatkanmu %1$s</string>
+    <string name="reminder_remind_me">Ingatkan aku</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">PettiBox akan meminta izin notifikasi saat dibutuhkan. Kalau alarm tepat waktu mati, pengingat mungkin datang sedikit terlambat.</string>
+    <string name="reminder_choose_date_time">Pilih tanggal &amp; waktu</string>
+    <string name="reminder_clear_reminder">Hapus pengingat</string>
+    <string name="reminder_custom_reminder">Pengingat kustom</string>
+    <string name="reminder_pick_time_below_enable_set">Pilih waktu di bawah untuk mengaktifkan Atur</string>
+    <string name="reminder_pick_date_time">Pilih tanggal dan waktu</string>
+    <string name="reminder_moment_has_already_passed_pick">Waktu itu sudah lewat. Pilih waktu di masa depan</string>
+    <string name="reminder_date">Tanggal</string>
+    <string name="reminder_tap_pick">Ketuk untuk memilih</string>
+    <string name="reminder_time">Waktu</string>
+    <string name="reminder_tap_set">Ketuk untuk mengatur</string>
+    <string name="reminder_set_reminder">Atur pengingat</string>
+    <string name="reminder_done">Selesai</string>
+    <string name="reminder_pick_time">Pilih waktu</string>
+    <string name="reminder_set_time">Atur waktu</string>
+</resources>

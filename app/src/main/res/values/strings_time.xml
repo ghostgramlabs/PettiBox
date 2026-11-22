@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">just now</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%dm ago</item>
+        <item quantity="other">%dm ago</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%dh ago</item>
+        <item quantity="other">%dh ago</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%dd ago</item>
+        <item quantity="other">%dd ago</item>
+    </plurals>
+
+    <string name="reminder_preset_tonight">Tonight</string>
+    <string name="reminder_preset_tomorrow">Tomorrow</string>
+    <string name="reminder_preset_weekend">Weekend</string>
+    <string name="reminder_preset_next_week">Next week</string>
+    <string name="reminder_preset_custom">Pick a time…</string>
+    <string name="reminder_today">Today</string>
+    <string name="reminder_tomorrow">Tomorrow</string>
+    <!-- %1$s: a time, e.g. "9:00 AM" -->
+    <string name="reminder_today_at">Today %1$s</string>
+    <string name="reminder_tomorrow_at">Tomorrow %1$s</string>
+    <!-- %1$s: a weekday or date ("Sat", "Mar 4"), %2$s: a time -->
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <!-- %1$s: when, e.g. "Tomorrow 9:00 AM" -->
+    <string name="reminder_currently_set_for">Currently set for %1$s</string>
+    <string name="reminder_nudge_at">We\'ll nudge you %1$s</string>
+    <string name="reminder_remind_at">We\'ll remind you %1$s</string>
+    <string name="reminder_remind_me">Remind me</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">PettiBox will ask for notification permission when needed. If exact alarms are off, reminders may arrive a little later.</string>
+    <string name="reminder_choose_date_time">Choose a date &amp; time</string>
+    <string name="reminder_clear_reminder">Clear reminder</string>
+    <string name="reminder_custom_reminder">Custom reminder</string>
+    <string name="reminder_pick_time_below_enable_set">Pick a time below to enable Set</string>
+    <string name="reminder_pick_date_time">Pick a date and time</string>
+    <string name="reminder_moment_has_already_passed_pick">That moment has already passed — pick a future time</string>
+    <string name="reminder_date">Date</string>
+    <string name="reminder_tap_pick">Tap to pick</string>
+    <string name="reminder_time">Time</string>
+    <string name="reminder_tap_set">Tap to set</string>
+    <string name="reminder_set_reminder">Set reminder</string>
+    <string name="reminder_done">Done</string>
+    <string name="reminder_pick_time">Pick a time</string>
+    <string name="reminder_set_time">Set time</string>
+</resources>

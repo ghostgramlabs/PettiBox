@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">In PettiBox speichern</string>
+    <string name="widget_description">Deine ungelesenen Einträge, nur einen Tipp entfernt</string>
+    <string name="shortcut_note_short">Neue Notiz</string>
+    <string name="shortcut_note_long">Neue Notiz schreiben</string>
+    <string name="shortcut_link_short">Link hinzufügen</string>
+    <string name="shortcut_link_long">Link speichern</string>
+    <string name="shortcut_search_short">Suchen</string>
+    <string name="shortcut_search_long">Deine Einträge durchsuchen</string>
+    <string name="shortcut_unread_short">Ungelesen</string>
+    <string name="shortcut_unread_long">Noch nicht geöffnete Einträge</string>
+</resources>

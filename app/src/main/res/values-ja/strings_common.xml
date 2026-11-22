@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">、</string>
+    <plurals name="count_saves">
+        <item quantity="other">%d 件のアイテム</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="other">%d 件のファイル</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="other">お気に入り %d 件</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="other">アーカイブ %d 件</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="other">%d 個のタグ</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="other">%d 個のコレクション</item>
+    </plurals>
+    <string name="source_web">ウェブ</string>
+    <string name="source_maps">マップ</string>
+    <string name="source_files">ファイル</string>
+    <string name="source_clipboard">クリップボード</string>
+    <string name="source_other">その他</string>
+    <plurals name="count_items">
+        <item quantity="other">%d 件</item>
+    </plurals>
+    <string name="untitled">無題</string>
+    <string name="starter_recipes">レシピ</string>
+    <string name="starter_travel">旅行</string>
+    <string name="starter_fitness">フィットネス</string>
+    <string name="starter_style">スタイル</string>
+    <string name="starter_home">住まい</string>
+    <string name="starter_beauty">美容</string>
+    <string name="starter_read_later">あとで読む</string>
+    <string name="starter_finance">お金</string>
+    <string name="starter_music">音楽</string>
+    <string name="starter_books">本</string>
+    <string name="starter_food_spots">お店</string>
+    <string name="starter_shopping">買い物</string>
+    <string name="starter_work">仕事</string>
+    <string name="starter_ideas">アイデア</string>
+    <string name="starter_watch">観たいもの</string>
+    <string name="starter_learning">学び</string>
+    <string name="starter_health">健康</string>
+    <string name="starter_docs">書類</string>
+    <string name="starter_personal">個人</string>
+    <string name="starter_tech">テック</string>
+    <string name="starter_design">デザイン</string>
+    <string name="starter_gifts">ギフト</string>
+    <string name="starter_places">場所</string>
+    <string name="starter_kids">子ども</string>
+    <string name="theme_system">システム</string>
+    <string name="theme_light">ライト</string>
+    <string name="theme_dark">ダーク</string>
+    <string name="widget_all_caught_up">すべて確認済み</string>
+    <plurals name="widget_unread">
+        <item quantity="other">未読 %d 件</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · %2$s にコピーを保存</string>
+    <plurals name="article_min_read">
+        <item quantity="other">%d 分で読めます</item>
+    </plurals>
+    <string name="quick_change_reminder">リマインダーを変更</string>
+    <string name="quick_copy_link">リンクをコピー</string>
+    <string name="quick_copy_note">メモをコピー</string>
+    <string name="quick_note_copied">メモをコピーしました</string>
+    <string name="quick_move_collection">コレクションに移動</string>
+    <string name="card_open_quick_actions">クイック操作を開く</string>
+    <string name="card_archived">アーカイブ済み</string>
+    <string name="card_reminder">リマインダー</string>
+    <string name="collection_new_collection">新しいコレクション</string>
+    <string name="collection_collection_name">コレクション名</string>
+    <string name="collection_emoji">絵文字</string>
+    <string name="collection_color">色</string>
+    <string name="collection_lock_collection">このコレクションをロック</string>
+    <string name="collection_hidden_home_search_everywhere_else">指紋、顔、またはスマートフォンの PIN でロックを解除するまで、ホームや検索などあらゆる場所で非表示になります。</string>
+    <string name="collection_set_screen_lock_phone_use">これを使うには、スマートフォンに画面ロックを設定してください。</string>
+    <string name="collection_name_e_g_weekend_reads">名前を付けましょう（例：週末に読むもの）</string>
+    <string name="collection_pick_emoji">絵文字を選択</string>
+    <string name="collection_pick_color">色を選択</string>
+    <string name="collection_create">作成</string>
+    <string name="help_i_keep_links_screenshots_pdfs">リンク、スクリーンショット、PDF、メモを PettiBox にまとめています。どのアプリからでも保存でき、記事をオフラインで読めて、画像内の文字も探せます。無料：%1$s</string>
+    <string name="help_share_pettibox">PettiBox を共有</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s：質問・問題</string>
+    <string name="help_please_keep_part_helps_me">——— この部分は消さずに残してください。サポートに役立ちます ———</string>
+    <string name="sync_edited_2_devices_needs_choice">2 台のデバイスで編集：選択が必要です</string>
+    <string name="lock_unlock_locked_collections">ロックしたコレクションを解除</string>
+    <string name="lock_unlock_pettibox">PettiBox のロックを解除</string>
+    <string name="lock_use_fingerprint_face_phone_pin">指紋、顔、またはスマートフォンの PIN を使用</string>
+    <string name="lock_pettibox_locked">PettiBox はロックされています</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">指紋、顔、またはスマートフォンの PIN でロックを解除してください。</string>
+    <string name="lock_unlock">ロック解除</string>
+    <string name="lock_save_locked_collection">このアイテムはロックされたコレクションにあります</string>
+    <string name="lock_go_back">戻る</string>
+    <string name="nav_settings">設定</string>
+    <string name="nav_not_selected">未選択</string>
+    <string name="widget_pettibox_locked">PettiBox はロックされています 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">ここにアイテムを表示するには、PettiBox のロックを解除してください。</string>
+    <string name="widget_nothing_waiting">待っているものはありません ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">リンクや写真を PettiBox に共有すると、開くまでここに表示されます。</string>
+    <string name="nav_home">ホーム</string>
+    <string name="nav_search">検索</string>
+    <string name="nav_browse">ブラウズ</string>
+</resources>

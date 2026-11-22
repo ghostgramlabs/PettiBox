@@ -1,5 +1,13 @@
 package com.ghostgramlabs.pettibox.ui.screens.home
 
+import com.ghostgramlabs.pettibox.domain.model.displayName
+
+import androidx.compose.ui.res.pluralStringResource
+
+import androidx.compose.ui.res.stringResource
+
+import com.ghostgramlabs.pettibox.R
+
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -149,7 +157,7 @@ fun HomeScreen(
             state.categories
         } else {
             state.categories.filter { category ->
-                category.name.contains(query, ignoreCase = true) ||
+                category.displayName.contains(query, ignoreCase = true) ||
                     category.emoji.contains(query)
             }
         }
@@ -231,12 +239,12 @@ fun HomeScreen(
             onDismissRequest = {
                 if (!isImportingDiscoveredBackup) viewModel.skipDiscoveredBackup()
             },
-            title = { Text("Restore your PettiBox?") },
+            title = { Text(stringResource(R.string.home_restore_pettibox)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("We found a backup in the PettiBox backup folder. Import it to bring your saves, collections, tags, reminders, and attachments back.")
+                    Text(stringResource(R.string.home_we_found_backup_pettibox_backup))
                     Text(
-                        "PettiBox only checks its own backup folder automatically. If your backup is somewhere else, skip this and choose the file from Settings.",
+                        stringResource(R.string.home_pettibox_only_checks_its_own),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -260,13 +268,13 @@ fun HomeScreen(
                             result
                                 .onSuccess { imported ->
                                     if (imported != null) {
-                                        snackbarHostState.showSnackbar("Restored ${imported.saves} saves from backup")
+                                        snackbarHostState.showSnackbar(ctx.resources.getQuantityString(R.plurals.home_restored_saves, imported.saves, imported.saves))
                                     } else {
-                                        snackbarHostState.showSnackbar("Backup was no longer available")
+                                        snackbarHostState.showSnackbar(ctx.getString(R.string.home_backup_was_no_longer_available))
                                     }
                                 }
                                 .onFailure {
-                                    snackbarHostState.showSnackbar("Couldn't import that backup")
+                                    snackbarHostState.showSnackbar(ctx.getString(R.string.home_couldnt_import_backup))
                                 }
                         }
                     }
@@ -278,14 +286,14 @@ fun HomeScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                     }
-                    Text(if (isImportingDiscoveredBackup) "Importing" else "Import")
+                    Text(if (isImportingDiscoveredBackup) stringResource(R.string.home_importing) else stringResource(R.string.home_import))
                 }
             },
             dismissButton = {
                 TextButton(
                     enabled = !isImportingDiscoveredBackup,
                     onClick = { viewModel.skipDiscoveredBackup() }
-                ) { Text("Skip") }
+                ) { Text(stringResource(R.string.home_skip)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -334,7 +342,7 @@ fun HomeScreen(
                 // from clipboard" toast for users who didn't pick this.
                 val text = readClipboardText(ctx)?.trim().orEmpty()
                 if (text.isBlank()) {
-                    Toast.makeText(ctx, "Nothing on clipboard to save", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(ctx, ctx.getString(R.string.home_nothing_clipboard_save), Toast.LENGTH_SHORT).show()
                 } else {
                     val isUrl = text.startsWith("http://", ignoreCase = true) ||
                         text.startsWith("https://", ignoreCase = true)
@@ -386,8 +394,8 @@ fun HomeScreen(
             // days — archived or not — so Undo here is just the fast path.
             viewModel.stageDelete(item)
             val result = snackbarHostState.showSnackbar(
-                message = "Moved to Recently deleted",
-                actionLabel = "Undo",
+                message = ctx.getString(R.string.browse_moved_one_to_trash),
+                actionLabel = ctx.getString(R.string.detail_undo),
                 duration = SnackbarDuration.Long
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.undoStagedDelete(item)
@@ -461,7 +469,7 @@ fun HomeScreen(
                         defaultElevation = if (light) 3.dp else 6.dp,
                         pressedElevation = if (light) 6.dp else 12.dp
                     )
-                ) { Icon(Icons.Rounded.Add, contentDescription = "Add to shelf") }
+                ) { Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.home_add_shelf)) }
             }
         }
     ) { padding ->
@@ -469,7 +477,7 @@ fun HomeScreen(
             Column(Modifier.padding(padding).fillMaxSize()) {
                 greeting()
                 Text(
-                    "Loading your shelf...",
+                    stringResource(R.string.home_loading_shelf),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp)
@@ -488,9 +496,10 @@ fun HomeScreen(
                     // path back to their saves is the Browse archive view.
                     EmptyState(
                         emoji = "\uD83D\uDDC3",
-                        headline = "Nothing live on your shelf",
-                        body = "You've archived everything. Open Browse \u2192 tap the archive icon on any collection to see what's tucked away.",
-                        fillScreen = false
+                        headline = stringResource(R.string.home_nothing_live_shelf),
+                        body = stringResource(R.string.home_youve_archived_everything_open_browse),
+                        fillScreen = false,
+                        pose = KeeperPose.Archive
                     )
                 } else {
                     // True fresh install \u2014 show the 3-step guide + the
@@ -509,9 +518,10 @@ fun HomeScreen(
                     // purely an explainer below it.
                     EmptyState(
                         emoji = "\uD83D\uDCE5",
-                        headline = "PettiBox lives in your Share menu",
-                        body = "In YouTube, Instagram, Chrome, Photos, or Files, tap Share and choose PettiBox. Pick a collection and it becomes searchable.",
-                        fillScreen = false
+                        headline = stringResource(R.string.home_pettibox_lives_share_menu),
+                        body = stringResource(R.string.home_youtube_instagram_chrome_photos_files),
+                        fillScreen = false,
+                        pose = KeeperPose.Search
                     )
                 }
             }
@@ -579,7 +589,7 @@ fun HomeScreen(
                             onRate = {
                                 viewModel.finishRateCard()
                                 if (!HelpLinks.openPlayListing(ctx)) {
-                                    Toast.makeText(ctx, "Couldn't open the Play Store", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(ctx, ctx.getString(R.string.home_couldnt_open_play_store), Toast.LENGTH_SHORT).show()
                                 }
                             },
                             onNotNow = viewModel::snoozeRateCard,
@@ -592,8 +602,8 @@ fun HomeScreen(
                         // the bottom nav already; the link was duplicate
                         // navigation cluttering the header.
                         SectionHeader(
-                            "Browse",
-                            subtitle = "Tap a vibe to explore"
+                            stringResource(R.string.home_browse),
+                            subtitle = stringResource(R.string.home_tap_vibe_explore)
                         )
                         Spacer(Modifier.height(12.dp))
                         if (state.categories.size > 8) {
@@ -610,7 +620,7 @@ fun HomeScreen(
                         )
                         if (visibleBrowseCategories.isEmpty()) {
                             Text(
-                                "No collection matches \"$collectionQuery\"",
+                                stringResource(R.string.home_no_collection_matches, collectionQuery),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
@@ -619,7 +629,7 @@ fun HomeScreen(
                         Spacer(Modifier.height(24.dp))
                     }
                     if (state.sources.isNotEmpty()) {
-                        SectionHeader("From", subtitle = "Where you saved it from")
+                        SectionHeader(stringResource(R.string.home_from), subtitle = stringResource(R.string.home_where_saved))
                         Spacer(Modifier.height(12.dp))
                         SourceStrip(
                             sources = state.sources,
@@ -628,7 +638,7 @@ fun HomeScreen(
                         Spacer(Modifier.height(24.dp))
                     }
                     if (state.pinned.isNotEmpty()) {
-                        SectionHeader("Pinned", subtitle = "Stuff you didn't want to lose")
+                        SectionHeader(stringResource(R.string.home_pinned), subtitle = stringResource(R.string.home_stuff_didnt_want_lose))
                         Spacer(Modifier.height(12.dp))
                         // Pinned items render as a leaning "shelf" instead of
                         // joining the staggered grid: alternating tilt, varying
@@ -647,7 +657,7 @@ fun HomeScreen(
                     // intents (Pinned = sticky for now, Favorites = saves
                     // you've signaled you love long-term). Hidden when empty.
                     if (state.favorites.isNotEmpty()) {
-                        SectionHeader("Loved", subtitle = "Things you marked with a heart")
+                        SectionHeader(stringResource(R.string.detail_loved), subtitle = stringResource(R.string.home_things_marked_heart))
                         Spacer(Modifier.height(12.dp))
                         FavoritesRow(
                             items = state.favorites,
@@ -665,8 +675,8 @@ fun HomeScreen(
                     Column {
                         Spacer(Modifier.height(24.dp))
                         SectionHeader(
-                            "Recent saves",
-                            subtitle = "Fresh from the share sheet"
+                            stringResource(R.string.home_recent_saves),
+                            subtitle = stringResource(R.string.home_fresh_share_sheet)
                         )
                         Spacer(Modifier.height(12.dp))
                     }
@@ -731,20 +741,20 @@ private fun RateCard(
         )
         Column(Modifier.weight(1f)) {
             Text(
-                "Enjoying PettiBox?",
+                stringResource(R.string.home_enjoying_pettibox),
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                 color = scheme.onSurface
             )
             Text(
-                "A quick rating helps a small, independent app get found.",
+                stringResource(R.string.home_quick_rating_helps_small_independent),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant
             )
         }
         Column(horizontalAlignment = Alignment.End) {
-            TextButton(onClick = onRate) { Text("Rate \u2B50", fontWeight = FontWeight.Bold) }
+            TextButton(onClick = onRate) { Text(stringResource(R.string.home_rate_u2b50), fontWeight = FontWeight.Bold) }
             TextButton(onClick = onNotNow) {
-                Text("Not now", color = scheme.onSurfaceVariant)
+                Text(stringResource(R.string.home_not_now), color = scheme.onSurfaceVariant)
             }
         }
     }
@@ -767,22 +777,21 @@ private fun SyncReviewBanner(
             .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
         Text(
-            "Another device removed or archived $count saves",
+            pluralStringResource(R.plurals.home_sync_review, count, count),
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
             color = scheme.onSurface
         )
         Text(
-            "Changes from your other devices wait until you choose. Apply here too does the same on this phone (a backup is made first). " +
-                "Put them back undoes it on every device.",
+            stringResource(R.string.home_changes_other_devices_wait_until),
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant
         )
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onApply, shape = RoundedCornerShape(12.dp)) {
-                Text("Apply here too", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.sync_apply_here_too), fontWeight = FontWeight.Bold)
             }
-            TextButton(onClick = onPutBack) { Text("Put them back") }
+            TextButton(onClick = onPutBack) { Text(stringResource(R.string.sync_put_them_back)) }
         }
     }
 }
@@ -808,13 +817,13 @@ private fun ReminderWarningBanner(
             modifier = Modifier.padding(end = 10.dp)
         )
         Text(
-            "Reminders need notifications turned on.",
+            stringResource(R.string.home_reminders_need_notifications_turned),
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
             color = scheme.onSurface,
             modifier = Modifier.weight(1f)
         )
-        TextButton(onClick = onEnable) { Text("Enable") }
-        TextButton(onClick = onDismiss) { Text("Hide") }
+        TextButton(onClick = onEnable) { Text(stringResource(R.string.home_enable)) }
+        TextButton(onClick = onDismiss) { Text(stringResource(R.string.home_hide)) }
     }
 }
 
@@ -827,25 +836,25 @@ private fun HomeOnboardingDialog(
     val steps = listOf(
         OnboardingStep(
             icon = Icons.Rounded.Share,
-            title = "Keep things for later",
-            body = "Save links, images, PDFs, notes, and reminders into one searchable PettiBox.",
+            title = stringResource(R.string.home_keep_things_later),
+            body = stringResource(R.string.home_save_links_images_pdfs_notes),
             tip = null
         ),
         OnboardingStep(
             icon = Icons.Rounded.GridView,
-            title = "Share into PettiBox",
-            body = "Tap Share in another app, choose PettiBox, then save it to a shelf. You can add notes, tags, or reminders when they help.",
+            title = stringResource(R.string.home_share_into_pettibox),
+            body = stringResource(R.string.home_tap_share_another_app_choose),
             tip = null,
             showDemoVideo = true
         ),
         OnboardingStep(
             icon = Icons.Rounded.Search,
-            title = "Find it fast",
-            body = "Search by words, source app, file type, tag, reminder, or text inside images and PDFs.",
+            title = stringResource(R.string.home_find_fast),
+            body = stringResource(R.string.home_search_words_source_app_file),
             // One-line discovery hint for the single most-leveraged
             // interaction in the app. Long-press is invisible without
             // it being said somewhere.
-            tip = "Tip: Archive is your safety net. Delete only when you're sure."
+            tip = stringResource(R.string.home_tip_archive_safety_net_delete)
         )
     )
     val current = steps[page]
@@ -874,7 +883,7 @@ private fun HomeOnboardingDialog(
                 if (current.showDemoVideo) {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "▶ Watch the short demo",
+                        stringResource(R.string.home_watch_short_demo),
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -905,11 +914,11 @@ private fun HomeOnboardingDialog(
                     if (page < steps.lastIndex) page++ else onAdd()
                 }
             ) {
-                Text(if (page < steps.lastIndex) "Next" else "Try a quick note")
+                Text(if (page < steps.lastIndex) stringResource(R.string.detail_next) else stringResource(R.string.home_try_quick_note))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Skip") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.home_skip)) }
         },
         shape = RoundedCornerShape(24.dp)
     )
@@ -974,7 +983,7 @@ private fun IndexingStatusChip(modifier: Modifier = Modifier) {
         }
         Spacer(Modifier.width(4.dp))
         Text(
-            "Indexing saved text",
+            stringResource(R.string.home_indexing_saved_text),
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
             color = scheme.primary
         )
@@ -995,19 +1004,19 @@ private fun FirstRunGuide(
             .padding(16.dp)
     ) {
         Text(
-            "Your shelf starts with one save",
+            stringResource(R.string.home_shelf_starts_one_save),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
             color = scheme.onSurface
         )
         Spacer(Modifier.height(12.dp))
         GuideStep(
             icon = Icons.Rounded.Share,
-            title = "Use Share",
-            body = "From Chrome, YouTube, Photos, Files, or another app, tap Share and choose PettiBox."
+            title = stringResource(R.string.home_use_share),
+            body = stringResource(R.string.home_chrome_youtube_photos_files_another)
         )
         val ctx = LocalContext.current
         Text(
-            "▶ Watch how it works",
+            stringResource(R.string.home_watch_how_works),
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
             color = scheme.primary,
             modifier = Modifier
@@ -1019,14 +1028,14 @@ private fun FirstRunGuide(
         Spacer(Modifier.height(10.dp))
         GuideStep(
             icon = Icons.Rounded.GridView,
-            title = "Pick a collection",
-            body = "Choose where it belongs. You can add a note, tag, or reminder later."
+            title = stringResource(R.string.home_pick_collection),
+            body = stringResource(R.string.home_choose_where_belongs_can_add)
         )
         Spacer(Modifier.height(10.dp))
         GuideStep(
             icon = Icons.Rounded.Search,
-            title = "Find it later",
-            body = "Search by words, source, type, tag, reminder, or text inside images and PDFs."
+            title = stringResource(R.string.settings_find_later),
+            body = stringResource(R.string.home_search_words_source_type_tag)
         )
         Spacer(Modifier.height(14.dp))
         Row(
@@ -1045,7 +1054,7 @@ private fun FirstRunGuide(
             )
             Spacer(Modifier.width(6.dp))
             Text(
-                "Add something now",
+                stringResource(R.string.home_add_something_now),
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                 color = scheme.onPrimary
             )
@@ -1089,16 +1098,14 @@ private fun GuideStep(
 @Composable
 private fun Greeting(sync: com.ghostgramlabs.pettibox.data.sync.SyncStatus? = null, onSync: () -> Unit = {}) {
     ScreenHeading(
-        title = "What's on the shelf?",
+        title = stringResource(R.string.home_whats_shelf),
         subtitle = sync?.let { s ->
             when {
-                s.progress.isNotBlank() -> "Syncing…"
-                s.needsReconnect -> "Sync paused: reconnect Google Drive in Settings"
-                s.lastError.isNotBlank() && s.lastErrorAt >= s.lastSyncAt -> "Sync problem: see Settings"
-                s.pendingReview > 0 -> "Sync is waiting for your choice"
-                s.lastSyncAt > 0 -> "Synced " + android.text.format.DateUtils.getRelativeTimeSpanString(
-                    s.lastSyncAt, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS
-                )
+                s.progress.isNotBlank() -> stringResource(R.string.settings_syncing)
+                s.needsReconnect -> stringResource(R.string.home_sync_paused_reconnect_google_drive)
+                s.lastError.isNotBlank() && s.lastErrorAt >= s.lastSyncAt -> stringResource(R.string.home_sync_problem_see_settings)
+                s.pendingReview > 0 -> stringResource(R.string.home_sync_waiting_choice)
+                s.lastSyncAt > 0 -> stringResource(R.string.home_synced_ago, com.ghostgramlabs.pettibox.data.util.TimeFormat.relative(s.lastSyncAt))
                 else -> null
             }
         },
@@ -1131,12 +1138,10 @@ private fun SyncButton(sync: com.ghostgramlabs.pettibox.data.sync.SyncStatus, on
         label = "angle"
     )
     val label = when {
-        running -> "Syncing…"
-        failed -> "Sync problem: ${sync.lastError.ifBlank { "reconnect Google Drive in Settings" }}"
-        sync.lastSyncAt > 0 -> "Synced " + android.text.format.DateUtils.getRelativeTimeSpanString(
-            sync.lastSyncAt, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS
-        )
-        else -> "Not synced yet"
+        running -> stringResource(R.string.settings_syncing)
+        failed -> stringResource(R.string.home_sync_problem_detail, sync.lastError.ifBlank { stringResource(R.string.home_sync_reconnect_hint) })
+        sync.lastSyncAt > 0 -> stringResource(R.string.home_synced_ago, com.ghostgramlabs.pettibox.data.util.TimeFormat.relative(sync.lastSyncAt))
+        else -> stringResource(R.string.sync_not_synced_yet)
     }
     androidx.compose.material3.IconButton(
         onClick = { askedAt = System.currentTimeMillis(); onSync() },
@@ -1144,7 +1149,7 @@ private fun SyncButton(sync: com.ghostgramlabs.pettibox.data.sync.SyncStatus, on
     ) {
         Icon(
             Icons.Rounded.Sync,
-            contentDescription = "Sync now. $label",
+            contentDescription = stringResource(R.string.home_sync_now, label),
             tint = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = if (running) Modifier.rotate(angle) else Modifier
         )
@@ -1203,7 +1208,7 @@ private fun SourceStrip(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    "${s.count} saved",
+                    pluralStringResource(R.plurals.home_count_saved, s.count, s.count),
                     style = MaterialTheme.typography.labelSmall,
                     color = scheme.onSurfaceVariant,
                     maxLines = 1
@@ -1226,7 +1231,7 @@ private fun CategoryStrip(
             // Alternating tilt - gives the row a hand-arranged feel.
             val tilt = if (c.sortOrder % 2 == 0) -2f else 1.5f
             CategoryChip(
-                label = c.name,
+                label = c.displayName,
                 emoji = c.emoji,
                 color = Color(c.colorHex),
                 selected = false,
@@ -1247,7 +1252,7 @@ private fun HomeCollectionFinder(
         value = query,
         onValueChange = onQueryChange,
         singleLine = true,
-        placeholder = { Text("Find collection") },
+        placeholder = { Text(stringResource(R.string.home_find_collection)) },
         leadingIcon = {
             Icon(
                 Icons.Rounded.Search,
@@ -1258,7 +1263,7 @@ private fun HomeCollectionFinder(
         trailingIcon = {
             if (query.isNotBlank()) {
                 androidx.compose.material3.IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Clear collection filter")
+                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.home_clear_collection_filter))
                 }
             }
         },
@@ -1278,7 +1283,7 @@ private fun CardForItem(
         item = item,
         accent = category?.let { Color(it.colorHex) } ?: MaterialTheme.colorScheme.primary,
         categoryEmoji = category?.emoji,
-        categoryName = category?.name,
+        categoryName = category?.displayName,
         onClick = { onOpen(item.id) },
         onLongClick = { onLongPress(item) }
     )
@@ -1323,7 +1328,7 @@ private fun PinnedShelf(
                         item = item,
                         accent = cat?.let { Color(it.colorHex) } ?: MaterialTheme.colorScheme.primary,
                         categoryEmoji = cat?.emoji,
-                        categoryName = cat?.name,
+                        categoryName = cat?.displayName,
                         onClick = { onOpenItem(item.id) },
                         onLongClick = { onLongPress(item) }
                     )
@@ -1364,7 +1369,7 @@ private fun FavoritesRow(
                     item = item,
                     accent = cat?.let { Color(it.colorHex) } ?: MaterialTheme.colorScheme.primary,
                     categoryEmoji = cat?.emoji,
-                    categoryName = cat?.name,
+                    categoryName = cat?.displayName,
                     onClick = { onOpenItem(item.id) },
                     onLongClick = { onLongPress(item) }
                 )
@@ -1433,28 +1438,28 @@ private fun AddChooserSheet(
                 .navigationBarsPadding()
         ) {
             Text(
-                "Add to your shelf",
+                stringResource(R.string.home_add_shelf_2),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Pick what you're saving.",
+                stringResource(R.string.home_pick_what_youre_saving),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(16.dp))
             ChooserRow(
                 icon = Icons.Rounded.EditNote,
-                title = "Note",
-                subtitle = "Jot a quick thought",
+                title = stringResource(R.string.content_note),
+                subtitle = stringResource(R.string.home_jot_quick_thought),
                 onClick = onPickNote
             )
             Spacer(Modifier.height(8.dp))
             ChooserRow(
                 icon = Icons.Rounded.Link,
-                title = "Link",
-                subtitle = "Paste a URL — we'll fetch the title",
+                title = stringResource(R.string.content_link),
+                subtitle = stringResource(R.string.home_paste_url_well_fetch_title),
                 onClick = onPickLink
             )
             Spacer(Modifier.height(8.dp))
@@ -1465,22 +1470,22 @@ private fun AddChooserSheet(
             // flow that was removed.
             ChooserRow(
                 icon = Icons.Rounded.ContentPaste,
-                title = "Paste",
-                subtitle = "Save whatever's on your clipboard",
+                title = stringResource(R.string.home_paste),
+                subtitle = stringResource(R.string.home_save_whatevers_clipboard),
                 onClick = onPickPaste
             )
             Spacer(Modifier.height(8.dp))
             ChooserRow(
                 icon = Icons.Rounded.Image,
-                title = "Picture",
-                subtitle = "From your gallery",
+                title = stringResource(R.string.home_picture),
+                subtitle = stringResource(R.string.home_gallery),
                 onClick = onPickImage
             )
             Spacer(Modifier.height(8.dp))
             ChooserRow(
                 icon = Icons.Rounded.AttachFile,
-                title = "File",
-                subtitle = "PDF, document, anything",
+                title = stringResource(R.string.content_file),
+                subtitle = stringResource(R.string.home_pdf_document_anything),
                 onClick = onPickFile
             )
         }
@@ -1555,13 +1560,13 @@ private fun AddLinkSheet(
                 .navigationBarsPadding()
         ) {
             Text(
-                "Save a link",
+                stringResource(R.string.shortcut_link_long),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Paste a URL — we'll fetch the title.",
+                stringResource(R.string.home_paste_url_well_fetch_title_2),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1577,7 +1582,7 @@ private fun AddLinkSheet(
             if (initial.isNotBlank() && initial == text) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Pulled from your clipboard.",
+                    stringResource(R.string.home_pulled_clipboard),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1588,13 +1593,13 @@ private fun AddLinkSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) }
                 Spacer(Modifier.width(8.dp))
                 Button(
                     enabled = isValid,
                     onClick = { onConfirm(trimmed) },
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Save", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.settings_save), fontWeight = FontWeight.Bold) }
             }
         }
     }
@@ -1641,16 +1646,16 @@ private fun NeedsChoiceBar(count: Int, onClick: () -> Unit, modifier: Modifier =
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                if (count == 1) "1 save was edited on 2 devices" else "$count saves were edited on 2 devices",
+                pluralStringResource(R.plurals.home_conflicts, count, count),
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                "Pick which version to keep. Choosing on any one device is enough.",
+                stringResource(R.string.home_pick_which_version_keep_choosing),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Text("Choose", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.settings_choose), style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.primary)
     }
 }

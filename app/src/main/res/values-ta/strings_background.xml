@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">உங்கள் அலமாரியில் ஏதோ காத்திருக்கிறது</string>
+    <string name="nudge_title">உங்கள் அலமாரியிலிருந்து</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">உங்களிடம் %d படிக்காத ஐட்டம் உள்ளது.</item>
+        <item quantity="other">உங்களிடம் %d படிக்காத ஐட்டங்கள் உள்ளன.</item>
+    </plurals>
+    <string name="nudge_body_one">“%1$s” — %2$s சேமித்தீர்கள்.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">“%1$s” — %2$s சேமித்தீர்கள். இன்னும் %3$d படிக்காதது உள்ளது.</item>
+        <item quantity="other">“%1$s” — %2$s சேமித்தீர்கள். இன்னும் %3$d படிக்காதவை உள்ளன.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">%d கோப்பு இந்த ஃபோனில் இல்லை, அதனால் அனுப்ப முடியாது. ஐட்டத்தைத் திறந்து கோப்பை மீண்டும் சேருங்கள்.</item>
+        <item quantity="other">%d கோப்புகள் இந்த ஃபோனில் இல்லை, அதனால் அனுப்ப முடியாது. ஐட்டத்தைத் திறந்து கோப்புகளை மீண்டும் சேருங்கள்.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">லைப்ரரி ஒத்திசைந்தது · %1$d கோப்பு வேறொரு சாதனம் அனுப்பக் காத்திருக்கிறது · %2$s சரிபார்த்தோம்</item>
+        <item quantity="other">லைப்ரரி ஒத்திசைந்தது · %1$d கோப்புகள் வேறொரு சாதனம் அனுப்பக் காத்திருக்கின்றன · %2$s சரிபார்த்தோம்</item>
+    </plurals>
+    <string name="files_all_in_drive">எல்லாப் படங்களும் கோப்புகளும் Google Drive-இல் உள்ளன · %1$s சரிபார்த்தோம்</string>
+    <string name="files_checked">படங்களும் கோப்புகளும் %1$s சரிபார்க்கப்பட்டன</string>
+    <string name="files_unreachable">படங்கள், கோப்புகளை அனுப்பும்போது Google Drive-ஐ அடைய முடியவில்லை (%1$s). விரைவில் தானாக மீண்டும் முயற்சிக்கும்.</string>
+    <string name="files_no_connection">இணைப்பு இல்லை</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d கோப்பை இந்த ஃபோனில் இனி படிக்க முடியாது (அது வந்த ஆப் இனி அனுமதிக்கவில்லை), அதனால் அனுப்ப முடியாது.</item>
+        <item quantity="other">%d கோப்புகளை இந்த ஃபோனில் இனி படிக்க முடியாது (அவை வந்த ஆப் இனி அனுமதிக்கவில்லை), அதனால் அனுப்ப முடியாது.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">%d படம் அல்லது கோப்பை Google Drive-க்கு அனுப்புகிறது…</item>
+        <item quantity="other">%d படங்கள், கோப்புகளை Google Drive-க்கு அனுப்புகிறது…</item>
+    </plurals>
+    <string name="files_sending_progress">படங்கள், கோப்புகளை Google Drive-க்கு அனுப்புகிறது… %2$d-இல் %1$d</string>
+    <string name="sync_step_connecting">இணைக்கும்போது</string>
+    <string name="sync_unreachable">Google Drive-ஐ அடைய முடியவில்லை</string>
+    <string name="sync_drive_error">Google Drive ஒரு பிழையுடன் பதிலளித்தது (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">விரைவில் தானாக மீண்டும் முயற்சிக்கும்.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">வேறொரு சாதனத்திலிருந்து வந்த %d சேதமடைந்த கோப்பைத் தவிர்த்தோம்; அதில் எதுவும் பயன்படுத்தப்படவில்லை</item>
+        <item quantity="other">வேறொரு சாதனத்திலிருந்து வந்த %d சேதமடைந்த கோப்புகளைத் தவிர்த்தோம்; அவற்றில் எதுவும் பயன்படுத்தப்படவில்லை</item>
+    </plurals>
+    <string name="sync_every_15_min">15 நிமிடங்கள்</string>
+    <string name="sync_every_30_min">30 நிமிடங்கள்</string>
+    <string name="sync_every_hour">1 மணிநேரம்</string>
+    <string name="sync_every_3_hours">3 மணிநேரம்</string>
+    <string name="sync_daily">தினமும்</string>
+    <string name="sync_weekly">வாரந்தோறும்</string>
+    <string name="sync_only_in_use">பயன்படுத்தும்போது மட்டும்</string>
+    <string name="reminder_save_locked_collection">பூட்டிய கலெக்ஷனில் உள்ள ஒரு ஐட்டம்</string>
+    <string name="reminder_saved_item">சேமித்த ஐட்டம்</string>
+    <string name="reminder_snooze_1h">1 மணிநேரத்தில் நினைவூட்டு</string>
+    <string name="reminder_evening">இன்று மாலை</string>
+    <string name="nudge_see_all_unread">படிக்காதவை அனைத்தையும் பார்</string>
+    <string name="nudge_once_week_one_thing_saved">வாரத்துக்கு ஒருமுறை, நீங்கள் சேமித்து இன்னும் திறக்காத ஒன்று.</string>
+    <string name="reminder_save_reminders">ஐட்டம் நினைவூட்டல்கள்</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">நீங்கள் PettiBox-இடம் நினைவூட்டச் சொன்னவற்றுக்கான அறிவிப்புகள்.</string>
+    <string name="files_photos_files_waiting_reconnect_google">படங்களும் கோப்புகளும் காத்திருக்கின்றன: அமைப்புகளில் Google Drive-ஐ மீண்டும் இணையுங்கள்.</string>
+    <string name="files_photos_files_sent_once_first">முதல் ஒத்திசைவு முடிந்ததும் படங்களும் கோப்புகளும் அனுப்பப்படும்.</string>
+    <string name="files_photos_files_arent_sent_google">படங்களும் கோப்புகளும் அனுப்பப்படவில்லை: Google Drive-இல் %1$s மூலம் உள்நுழைந்துள்ளது, %2$s மூலம் அல்ல.</string>
+    <string name="files_photos_files_couldnt_sent_tap">படங்கள், கோப்புகளை அனுப்ப முடியவில்லை: %1$s. மீண்டும் முயற்சிக்க இப்போதே ஒத்திசை என்பதைத் தட்டுங்கள்.</string>
+    <string name="files_photos_files_stopped_sending_trying">படங்கள், கோப்புகள் அனுப்புவது நின்றது: %1$s. விரைவில் மீண்டும் முயற்சிக்கும்.</string>
+    <string name="sync_sync_stopped">ஒத்திசைவு நின்றது: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">வேறொரு சாதனத்திலிருந்து Google Drive-இல் உள்ள ஒத்திசைவுத் தரவு நீக்கப்பட்டதால் ஒத்திசைவு அணைக்கப்பட்டது. இந்த ஃபோனில் எல்லாம் அப்படியே உள்ளது; புதிதாகத் தொடங்க ஒத்திசைவை மீண்டும் இயக்குங்கள்.</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive-ஐ மீண்டும் இணைக்க வேண்டும்</string>
+    <string name="sync_google_drive_didnt_say_which">இது எந்தக் கணக்கு என்று Google Drive சொல்லவில்லை</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive-இல் %1$s மூலம் உள்நுழைந்துள்ளது, ஆனால் இந்த லைப்ரரி %2$s உடன் ஒத்திசைகிறது. %3$s-க்குத் திரும்புங்கள், அல்லது %4$s உடன் ஒத்திசைக்க ஒத்திசைவை அணைத்து மீண்டும் இயக்குங்கள்.</string>
+    <string name="sync_couldnt_save_safety_copy_library">ஒத்திசைக்கும் முன் உங்கள் லைப்ரரியின் பாதுகாப்பு நகலைச் சேமிக்க முடியவில்லை. அடுத்த முறை மீண்டும் முயற்சிக்கும்.</string>
+    <string name="sync_checking_google_drive">Google Drive-ஐச் சரிபார்க்கிறது…</string>
+    <string name="sync_receiving_changes">மாற்றங்களைப் பெறுகிறது…</string>
+    <string name="sync_another_device_uses_newer_version">வேறொரு சாதனம் PettiBox-இன் புதிய பதிப்பைப் பயன்படுத்துகிறது. அது சேமித்த அனைத்தையும் பார்க்க இந்த ஆப்பைப் புதுப்பியுங்கள்.</string>
+    <string name="sync_preparing_changes">உங்கள் மாற்றங்களைத் தயார் செய்கிறது…</string>
+    <string name="sync_updating_library">உங்கள் லைப்ரரியைப் புதுப்பிக்கிறது…</string>
+    <string name="sync_couldnt_save_safety_copy_before">ஐட்டங்களை நீக்கும் முன் பாதுகாப்பு நகலைச் சேமிக்க முடியவில்லை, அதனால் எதுவும் நீக்கப்படவில்லை. சிறிது இடத்தைக் காலி செய்து மீண்டும் தேர்ந்தெடுங்கள்.</string>
+    <string name="sync_sending_changes">உங்கள் மாற்றங்களை அனுப்புகிறது…</string>
+    <string name="article_page_no_longer_exists">அந்தப் பக்கம் இப்போது இல்லை</string>
+    <string name="article_site_doesnt_allow_saving_copy">இந்தத் தளம் நகலைச் சேமிக்க அனுமதிக்கவில்லை</string>
+    <string name="article_site_answered_error">தளம் ஒரு பிழையுடன் பதிலளித்தது (%1$s)</string>
+    <string name="article_couldnt_find_article_page">இந்தப் பக்கத்தில் கட்டுரை எதுவும் கிடைக்கவில்லை</string>
+    <string name="article_page_too_long_keep_copy">நகல் வைக்க இந்தப் பக்கம் மிகப் பெரியது</string>
+    <string name="article_couldnt_reach_page_check_connection">பக்கத்தை அடைய முடியவில்லை. இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சியுங்கள்.</string>
+</resources>

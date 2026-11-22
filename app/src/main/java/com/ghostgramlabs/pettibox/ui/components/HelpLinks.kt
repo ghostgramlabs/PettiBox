@@ -1,5 +1,8 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -24,14 +27,13 @@ object HelpLinks {
     /** "Share PettiBox with a friend": the Play link with a one-line pitch. */
     fun shareApp(context: Context): Boolean = runCatching {
         val link = "https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}"
-        val text = "I keep links, screenshots, PDFs and notes in PettiBox — save from any app, " +
-            "read articles offline, and find text inside pictures. Free: $link"
+        val text = context.getString(R.string.help_i_keep_links_screenshots_pdfs, link)
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_SUBJECT, "PettiBox")
             putExtra(Intent.EXTRA_TEXT, text)
         }
-        context.startActivity(Intent.createChooser(send, "Share PettiBox"))
+        context.startActivity(Intent.createChooser(send, context.getString(R.string.help_share_pettibox)))
     }.isSuccess
 
     const val SUPPORT_EMAIL = "ghostgramlabs@gmail.com"
@@ -42,11 +44,11 @@ object HelpLinks {
      * are you on?" round trip. False when no email app is installed.
      */
     fun openSupportEmail(context: Context): Boolean = runCatching {
-        val subject = "PettiBox ${BuildConfig.VERSION_NAME} — question or problem"
+        val subject = context.getString(R.string.help_pettibox_question_problem, BuildConfig.VERSION_NAME)
         val body = buildString {
             appendLine()
             appendLine()
-            appendLine("——— Please keep this part, it helps me help you ———")
+            appendLine(context.getString(R.string.help_please_keep_part_helps_me))
             appendLine("App version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
             appendLine("Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
             appendLine("Device: ${Build.MANUFACTURER} ${Build.MODEL}")

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">vừa xong</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="other">%d phút trước</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="other">%d giờ trước</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="other">%d ngày trước</item>
+    </plurals>
+    <string name="reminder_preset_tonight">Tối nay</string>
+    <string name="reminder_preset_tomorrow">Ngày mai</string>
+    <string name="reminder_preset_weekend">Cuối tuần</string>
+    <string name="reminder_preset_next_week">Tuần sau</string>
+    <string name="reminder_preset_custom">Chọn giờ…</string>
+    <string name="reminder_today">Hôm nay</string>
+    <string name="reminder_tomorrow">Ngày mai</string>
+    <string name="reminder_today_at">Hôm nay %1$s</string>
+    <string name="reminder_tomorrow_at">Ngày mai %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">Hiện đặt lúc %1$s</string>
+    <string name="reminder_nudge_at">Chúng tôi sẽ nhắc bạn %1$s</string>
+    <string name="reminder_remind_at">Chúng tôi sẽ nhắc bạn %1$s</string>
+    <string name="reminder_remind_me">Nhắc tôi</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">PettiBox sẽ xin quyền thông báo khi cần. Nếu báo thức chính xác đang tắt, lời nhắc có thể đến trễ một chút.</string>
+    <string name="reminder_choose_date_time">Chọn ngày và giờ</string>
+    <string name="reminder_clear_reminder">Xóa lời nhắc</string>
+    <string name="reminder_custom_reminder">Lời nhắc tùy chỉnh</string>
+    <string name="reminder_pick_time_below_enable_set">Chọn giờ bên dưới để bật nút Đặt</string>
+    <string name="reminder_pick_date_time">Chọn ngày và giờ</string>
+    <string name="reminder_moment_has_already_passed_pick">Thời điểm đó đã qua, hãy chọn giờ trong tương lai</string>
+    <string name="reminder_date">Ngày</string>
+    <string name="reminder_tap_pick">Nhấn để chọn</string>
+    <string name="reminder_time">Giờ</string>
+    <string name="reminder_tap_set">Nhấn để đặt</string>
+    <string name="reminder_set_reminder">Đặt lời nhắc</string>
+    <string name="reminder_done">Xong</string>
+    <string name="reminder_pick_time">Chọn giờ</string>
+    <string name="reminder_set_time">Đặt giờ</string>
+</resources>

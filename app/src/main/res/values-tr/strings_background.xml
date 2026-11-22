@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">Rafında seni bekleyen bir şey var</string>
+    <string name="nudge_title">Rafından</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">%d okunmamış kaydın var.</item>
+        <item quantity="other">%d okunmamış kaydın var.</item>
+    </plurals>
+    <string name="nudge_body_one">“%1$s”, %2$s kaydedildi.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">“%1$s”, %2$s kaydedildi. Ayrıca %3$d okunmamış daha.</item>
+        <item quantity="other">“%1$s”, %2$s kaydedildi. Ayrıca %3$d okunmamış daha.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">%d dosya bu telefonda yok, bu yüzden gönderilemiyor. Kaydı aç ve dosyayı yeniden ekle.</item>
+        <item quantity="other">%d dosya bu telefonda yok, bu yüzden gönderilemiyor. Kaydı aç ve dosyaları yeniden ekle.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">Kitaplık eşitlendi · %1$d dosya başka bir cihazın göndermesini bekliyor · %2$s kontrol edildi</item>
+        <item quantity="other">Kitaplık eşitlendi · %1$d dosya başka bir cihazın göndermesini bekliyor · %2$s kontrol edildi</item>
+    </plurals>
+    <string name="files_all_in_drive">Tüm fotoğraf ve dosyalar Google Drive\'da · %1$s kontrol edildi</string>
+    <string name="files_checked">Fotoğraf ve dosyalar %1$s kontrol edildi</string>
+    <string name="files_unreachable">Fotoğraf ve dosyalar gönderilirken Google Drive\'a ulaşılamadı (%1$s). Kısa süre içinde kendiliğinden yeniden denenecek.</string>
+    <string name="files_no_connection">bağlantı yok</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d dosya artık bu telefonda okunamıyor (geldiği uygulama artık izin vermiyor), bu yüzden gönderilemiyor.</item>
+        <item quantity="other">%d dosya artık bu telefonda okunamıyor (geldikleri uygulama artık izin vermiyor), bu yüzden gönderilemiyor.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">%d fotoğraf ve dosyalar Google Drive\'a gönderiliyor…</item>
+        <item quantity="other">%d fotoğraf ve dosyalar Google Drive\'a gönderiliyor…</item>
+    </plurals>
+    <string name="files_sending_progress">Fotoğraf ve dosyalar Google Drive\'a gönderiliyor… %1$d / %2$d</string>
+    <string name="sync_step_connecting">bağlanırken</string>
+    <string name="sync_unreachable">Google Drive\'a ulaşılamadı</string>
+    <string name="sync_drive_error">Google Drive bir hatayla yanıt verdi (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">Kısa süre içinde kendiliğinden yeniden denenecek.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">Başka bir cihazdan gelen %d bozuk dosya atlandı; içinden hiçbir şey uygulanmadı</item>
+        <item quantity="other">Başka bir cihazdan gelen %d bozuk dosya atlandı; içlerinden hiçbir şey uygulanmadı</item>
+    </plurals>
+    <string name="sync_every_15_min">15 dk</string>
+    <string name="sync_every_30_min">30 dk</string>
+    <string name="sync_every_hour">1 saat</string>
+    <string name="sync_every_3_hours">3 saat</string>
+    <string name="sync_daily">Her gün</string>
+    <string name="sync_weekly">Her hafta</string>
+    <string name="sync_only_in_use">Yalnızca kullanırken</string>
+    <string name="reminder_save_locked_collection">Kilitli bir koleksiyondaki kayıt</string>
+    <string name="reminder_saved_item">Kaydedilen öğe</string>
+    <string name="reminder_snooze_1h">1 sa ertele</string>
+    <string name="reminder_evening">Bu akşam</string>
+    <string name="nudge_see_all_unread">Tüm okunmamışları gör</string>
+    <string name="nudge_once_week_one_thing_saved">Haftada bir, kaydettiğin ama henüz açmadığın bir şey.</string>
+    <string name="reminder_save_reminders">Kayıt hatırlatıcıları</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">PettiBox\'tan hatırlatmasını istediğin şeyler için uyarılar.</string>
+    <string name="files_photos_files_waiting_reconnect_google">Fotoğraf ve dosyalar bekliyor: Ayarlar\'da Google Drive\'ı yeniden bağla.</string>
+    <string name="files_photos_files_sent_once_first">Fotoğraf ve dosyalar ilk eşitleme bittiğinde gönderilir.</string>
+    <string name="files_photos_files_arent_sent_google">Fotoğraf ve dosyalar gönderilmiyor: Google Drive\'da %1$s oturumu açık, %2$s değil.</string>
+    <string name="files_photos_files_couldnt_sent_tap">Fotoğraf ve dosyalar gönderilemedi: %1$s. Yeniden denemek için Şimdi eşitle\'ye dokun.</string>
+    <string name="files_photos_files_stopped_sending_trying">Fotoğraf ve dosya gönderimi durdu: %1$s. Kısa süre içinde yeniden denenecek.</string>
+    <string name="sync_sync_stopped">Eşitleme durdu: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">Eşitlenen veriler başka bir cihazdan Google Drive\'dan silindiği için eşitleme kapatıldı. Bu telefondaki her şey hâlâ burada; baştan başlamak için eşitlemeyi yeniden aç.</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive\'ın yeniden bağlanması gerekiyor</string>
+    <string name="sync_google_drive_didnt_say_which">Google Drive bunun hangi hesap olduğunu söylemedi</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive\'da %1$s oturumu açık, ama bu kitaplık %2$s ile eşitleniyor. %3$s hesabına geri dön ya da %4$s ile eşitlemek için eşitlemeyi kapatıp yeniden aç.</string>
+    <string name="sync_couldnt_save_safety_copy_library">Eşitlemeden önce kitaplığının güvenlik kopyası kaydedilemedi. Bir dahaki sefere yeniden denenecek.</string>
+    <string name="sync_checking_google_drive">Google Drive kontrol ediliyor…</string>
+    <string name="sync_receiving_changes">Değişiklikler alınıyor…</string>
+    <string name="sync_another_device_uses_newer_version">Başka bir cihaz PettiBox\'ın daha yeni bir sürümünü kullanıyor. Kaydettiği her şeyi görmek için bu uygulamayı güncelle.</string>
+    <string name="sync_preparing_changes">Değişikliklerin hazırlanıyor…</string>
+    <string name="sync_updating_library">Kitaplığın güncelleniyor…</string>
+    <string name="sync_couldnt_save_safety_copy_before">Kayıtlar kaldırılmadan önce güvenlik kopyası kaydedilemedi, bu yüzden hiçbir şey kaldırılmadı. Biraz yer aç ve yeniden seç.</string>
+    <string name="sync_sending_changes">Değişikliklerin gönderiliyor…</string>
+    <string name="article_page_no_longer_exists">Sayfa artık yok</string>
+    <string name="article_site_doesnt_allow_saving_copy">Bu site kopya kaydetmeye izin vermiyor</string>
+    <string name="article_site_answered_error">Site bir hatayla yanıt verdi (%1$s)</string>
+    <string name="article_couldnt_find_article_page">Bu sayfada makale bulunamadı</string>
+    <string name="article_page_too_long_keep_copy">Bu sayfa kopyası tutulamayacak kadar uzun</string>
+    <string name="article_couldnt_reach_page_check_connection">Sayfaya ulaşılamadı. Bağlantını kontrol edip yeniden dene.</string>
+</resources>

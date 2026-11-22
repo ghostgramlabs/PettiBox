@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">PettiBox‌లో సేవ్ చేయండి</string>
+    <string name="widget_description">చదవని ఐటెమ్‌లు, ఒక్క ట్యాప్‌లో</string>
+    <string name="shortcut_note_short">కొత్త నోట్</string>
+    <string name="shortcut_note_long">కొత్త నోట్ రాయండి</string>
+    <string name="shortcut_link_short">లింక్ జోడించండి</string>
+    <string name="shortcut_link_long">లింక్ సేవ్ చేయండి</string>
+    <string name="shortcut_search_short">వెతకండి</string>
+    <string name="shortcut_search_long">మీ ఐటెమ్‌లలో వెతకండి</string>
+    <string name="shortcut_unread_short">చదవనివి</string>
+    <string name="shortcut_unread_long">మీరు ఇంకా తెరవని ఐటెమ్‌లు</string>
+</resources>

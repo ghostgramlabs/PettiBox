@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">クイック保存</string>
+    <string name="save_saved_image">保存した画像</string>
+    <string name="save_saved_pdf">保存した PDF</string>
+    <string name="save_saved_file">保存したファイル</string>
+    <string name="save_saved_when">%1$s に保存</string>
+    <plurals name="save_n_images">
+        <item quantity="other">画像 %d 枚</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="other">PDF %d 件</item>
+    </plurals>
+    <string name="save_discard_what_typed">入力した内容を破棄しますか？</string>
+    <string name="save_note_tags_havent_been_saved">メモとタグはまだ保存されていません。</string>
+    <string name="save_discard">破棄</string>
+    <string name="save_keep_editing">編集を続ける</string>
+    <string name="save_save">これを保存しますか？</string>
+    <string name="save_save_2">保存先</string>
+    <string name="save_no_collection_called_yet">「%1$s」というコレクションはまだありません</string>
+    <string name="save_want_start_one">作りますか？</string>
+    <string name="save_create">「%1$s」を作成</string>
+    <string name="save_new">新規</string>
+    <string name="save_remove_favorites">お気に入りから外す</string>
+    <string name="save_add_favorites">お気に入りに追加</string>
+    <string name="save_write_note_save">保存するメモを書いてください</string>
+    <string name="save_save_3">%1$s に保存</string>
+    <string name="save_save_without_collection">コレクションなしで保存</string>
+    <string name="save_selected">選択中：%1$s</string>
+    <string name="save_add_which_save">どのアイテムに追加しますか？</string>
+    <string name="save_add_note">メモを追加</string>
+    <string name="save_add_tags">タグを追加</string>
+    <string name="save_add_note_2">メモを追加</string>
+    <string name="save_tags_comma_separated">タグ（カンマ区切り）</string>
+    <string name="save_tucked_away">保存しました！</string>
+    <string name="save_find_home_screen_anytime">ホーム画面からいつでも見つけられます。</string>
+    <string name="save_append_save">アイテムに追加</string>
+    <string name="save_already_saved">これはもう保存しています</string>
+    <string name="save_open">開く</string>
+    <string name="save_save_anyway">それでも保存</string>
+    <string name="save_suggested">おすすめ</string>
+    <string name="save_recently_used">最近使った</string>
+    <string name="save_collections">あなたのコレクション</string>
+    <string name="save_starter_collections">スターターコレクション</string>
+</resources>

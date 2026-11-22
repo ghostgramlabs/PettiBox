@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">ദ്രുത സേവ്</string>
+    <string name="save_saved_image">സേവ് ചെയ്ത ഫോട്ടോ</string>
+    <string name="save_saved_pdf">സേവ് ചെയ്ത PDF</string>
+    <string name="save_saved_file">സേവ് ചെയ്ത ഫയൽ</string>
+    <string name="save_saved_when">%1$s സേവ് ചെയ്തു</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d ഫോട്ടോ</item>
+        <item quantity="other">%d ഫോട്ടോകൾ</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="other">%d PDF-കൾ</item>
+    </plurals>
+    <string name="save_discard_what_typed">നിങ്ങൾ ടൈപ്പ് ചെയ്തത് ഉപേക്ഷിക്കണോ?</string>
+    <string name="save_note_tags_havent_been_saved">നിങ്ങളുടെ കുറിപ്പും ടാഗുകളും ഇതുവരെ സേവ് ചെയ്തിട്ടില്ല.</string>
+    <string name="save_discard">ഉപേക്ഷിക്കുക</string>
+    <string name="save_keep_editing">എഡിറ്റ് ചെയ്യുന്നത് തുടരുക</string>
+    <string name="save_save">ഇത് സേവ് ചെയ്യണോ?</string>
+    <string name="save_save_2">എവിടെ സേവ് ചെയ്യണം</string>
+    <string name="save_no_collection_called_yet">“%1$s” എന്ന പേരിൽ ഇതുവരെ കളക്ഷനില്ല</string>
+    <string name="save_want_start_one">ഒന്ന് സൃഷ്ടിക്കണോ?</string>
+    <string name="save_create">“%1$s” സൃഷ്ടിക്കുക</string>
+    <string name="save_new">പുതിയത്</string>
+    <string name="save_remove_favorites">പ്രിയപ്പെട്ടവയിൽ നിന്ന് നീക്കുക</string>
+    <string name="save_add_favorites">പ്രിയപ്പെട്ടവയിൽ ചേർക്കുക</string>
+    <string name="save_write_note_save">സേവ് ചെയ്യാൻ ഒരു കുറിപ്പ് എഴുതൂ</string>
+    <string name="save_save_3">%1$s-ൽ സേവ് ചെയ്യുക</string>
+    <string name="save_save_without_collection">കളക്ഷനില്ലാതെ സേവ് ചെയ്യുക</string>
+    <string name="save_selected">തിരഞ്ഞെടുത്തത്: %1$s</string>
+    <string name="save_add_which_save">ഏത് ഇനത്തിൽ ചേർക്കണം?</string>
+    <string name="save_add_note">കുറിപ്പ് ചേർക്കുക</string>
+    <string name="save_add_tags">ടാഗുകൾ ചേർക്കുക</string>
+    <string name="save_add_note_2">ഒരു കുറിപ്പ് ചേർക്കൂ</string>
+    <string name="save_tags_comma_separated">ടാഗുകൾ, കോമ ഉപയോഗിച്ച് വേർതിരിക്കൂ</string>
+    <string name="save_tucked_away">സേവ് ചെയ്തു!</string>
+    <string name="save_find_home_screen_anytime">എപ്പോൾ വേണമെങ്കിലും ഹോം സ്ക്രീനിൽ കാണാം.</string>
+    <string name="save_append_save">ഒരു ഇനത്തിൽ ചേർക്കുക</string>
+    <string name="save_already_saved">നിങ്ങൾ ഇത് ഇതിനകം സേവ് ചെയ്തു</string>
+    <string name="save_open">തുറക്കുക</string>
+    <string name="save_save_anyway">എന്നാലും സേവ് ചെയ്യുക</string>
+    <string name="save_suggested">നിർദ്ദേശിച്ചവ</string>
+    <string name="save_recently_used">അടുത്തിടെ ഉപയോഗിച്ചവ</string>
+    <string name="save_collections">നിങ്ങളുടെ കളക്ഷനുകൾ</string>
+    <string name="save_starter_collections">തുടക്ക കളക്ഷനുകൾ</string>
+</resources>

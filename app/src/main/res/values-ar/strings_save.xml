@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">حفظ سريع</string>
+    <string name="save_saved_image">صورة محفوظة</string>
+    <string name="save_saved_pdf">PDF محفوظ</string>
+    <string name="save_saved_file">ملف محفوظ</string>
+    <string name="save_saved_when">حُفظ %1$s</string>
+    <plurals name="save_n_images">
+        <item quantity="zero">%d صورة</item>
+        <item quantity="one">صورة واحدة</item>
+        <item quantity="two">صورتان</item>
+        <item quantity="few">%d صور</item>
+        <item quantity="many">%d صورة</item>
+        <item quantity="other">%d صورة</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="zero">ملفات PDF: %d</item>
+        <item quantity="one">ملفات PDF: %d</item>
+        <item quantity="two">ملفات PDF: %d</item>
+        <item quantity="few">ملفات PDF: %d</item>
+        <item quantity="many">ملفات PDF: %d</item>
+        <item quantity="other">ملفات PDF: %d</item>
+    </plurals>
+    <string name="save_discard_what_typed">تجاهل ما كتبته؟</string>
+    <string name="save_note_tags_havent_been_saved">لم تُحفظ ملاحظتك وأوسامك بعد.</string>
+    <string name="save_discard">تجاهل</string>
+    <string name="save_keep_editing">متابعة التعديل</string>
+    <string name="save_save">حفظ هذا؟</string>
+    <string name="save_save_2">الحفظ في</string>
+    <string name="save_no_collection_called_yet">لا توجد مجموعة باسم «%1$s» بعد</string>
+    <string name="save_want_start_one">هل تريد إنشاءها؟</string>
+    <string name="save_create">إنشاء «%1$s»</string>
+    <string name="save_new">جديدة</string>
+    <string name="save_remove_favorites">إزالة من المفضلة</string>
+    <string name="save_add_favorites">إضافة إلى المفضلة</string>
+    <string name="save_write_note_save">اكتب ملاحظة لحفظها</string>
+    <string name="save_save_3">الحفظ في %1$s</string>
+    <string name="save_save_without_collection">الحفظ دون مجموعة</string>
+    <string name="save_selected">المحدد: %1$s</string>
+    <string name="save_add_which_save">الإضافة إلى أي عنصر؟</string>
+    <string name="save_add_note">إضافة ملاحظة</string>
+    <string name="save_add_tags">إضافة أوسام</string>
+    <string name="save_add_note_2">أضف ملاحظة</string>
+    <string name="save_tags_comma_separated">أوسام، مفصولة بفواصل</string>
+    <string name="save_tucked_away">تم الحفظ!</string>
+    <string name="save_find_home_screen_anytime">تجده في الشاشة الرئيسية متى شئت.</string>
+    <string name="save_append_save">الإضافة إلى عنصر</string>
+    <string name="save_already_saved">لقد حفظت هذا من قبل</string>
+    <string name="save_open">فتحه</string>
+    <string name="save_save_anyway">الحفظ على أي حال</string>
+    <string name="save_suggested">مقترحة</string>
+    <string name="save_recently_used">المستخدمة مؤخرًا</string>
+    <string name="save_collections">مجموعاتك</string>
+    <string name="save_starter_collections">المجموعات الأولية</string>
+</resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">gerade eben</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">vor %d Min.</item>
+        <item quantity="other">vor %d Min.</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">vor %d Std.</item>
+        <item quantity="other">vor %d Std.</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">vor %d Tag</item>
+        <item quantity="other">vor %d Tagen</item>
+    </plurals>
+    <string name="reminder_preset_tonight">Heute Abend</string>
+    <string name="reminder_preset_tomorrow">Morgen</string>
+    <string name="reminder_preset_weekend">Wochenende</string>
+    <string name="reminder_preset_next_week">Nächste Woche</string>
+    <string name="reminder_preset_custom">Zeit wählen…</string>
+    <string name="reminder_today">Heute</string>
+    <string name="reminder_tomorrow">Morgen</string>
+    <string name="reminder_today_at">Heute %1$s</string>
+    <string name="reminder_tomorrow_at">Morgen %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">Aktuell gestellt auf %1$s</string>
+    <string name="reminder_nudge_at">Wir erinnern dich %1$s</string>
+    <string name="reminder_remind_at">Wir erinnern dich %1$s</string>
+    <string name="reminder_remind_me">Erinnere mich</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">PettiBox fragt bei Bedarf nach der Erlaubnis für Benachrichtigungen. Sind genaue Wecker aus, kommen Erinnerungen vielleicht etwas später.</string>
+    <string name="reminder_choose_date_time">Datum &amp; Uhrzeit wählen</string>
+    <string name="reminder_clear_reminder">Erinnerung entfernen</string>
+    <string name="reminder_custom_reminder">Eigene Erinnerung</string>
+    <string name="reminder_pick_time_below_enable_set">Wähle unten eine Uhrzeit, um „Festlegen“ freizuschalten</string>
+    <string name="reminder_pick_date_time">Wähle Datum und Uhrzeit</string>
+    <string name="reminder_moment_has_already_passed_pick">Dieser Zeitpunkt ist schon vorbei – wähle eine Zeit in der Zukunft</string>
+    <string name="reminder_date">Datum</string>
+    <string name="reminder_tap_pick">Zum Auswählen tippen</string>
+    <string name="reminder_time">Uhrzeit</string>
+    <string name="reminder_tap_set">Zum Festlegen tippen</string>
+    <string name="reminder_set_reminder">Erinnerung festlegen</string>
+    <string name="reminder_done">Fertig</string>
+    <string name="reminder_pick_time">Uhrzeit wählen</string>
+    <string name="reminder_set_time">Uhrzeit festlegen</string>
+</resources>

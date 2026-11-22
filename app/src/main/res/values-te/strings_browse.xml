@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browse_deleted_one_for_good">శాశ్వతంగా తొలగించాం</string>
+    <string name="browse_moved_one_to_trash">ఇటీవల తొలగించినవిలోకి తరలించాం</string>
+    <string name="browse_restored_one">పునరుద్ధరించాం</string>
+    <string name="browse_empty">ఖాళీ</string>
+    <string name="browse_empty_collection_named">షేర్ మెను నుండి %1$sలో ఏదైనా సేవ్ చేయండి, అది ఇక్కడ కనిపిస్తుంది.</string>
+    <string name="browse_empty_collection">షేర్ మెను నుండి ఈ కలెక్షన్‌లో ఏదైనా సేవ్ చేయండి, అది ఇక్కడ కనిపిస్తుంది.</string>
+    <plurals name="browse_deleted_for_good">
+        <item quantity="one">%d ఐటెమ్‌ను శాశ్వతంగా తొలగించాం</item>
+        <item quantity="other">%d ఐటెమ్‌లను శాశ్వతంగా తొలగించాం</item>
+    </plurals>
+    <plurals name="browse_moved_to_trash">
+        <item quantity="one">%d ఐటెమ్‌ను ఇటీవల తొలగించినవిలోకి తరలించాం</item>
+        <item quantity="other">%d ఐటెమ్‌లను ఇటీవల తొలగించినవిలోకి తరలించాం</item>
+    </plurals>
+    <plurals name="browse_restored">
+        <item quantity="one">%d ఐటెమ్‌ను పునరుద్ధరించాం</item>
+        <item quantity="other">%d ఐటెమ్‌లను పునరుద్ధరించాం</item>
+    </plurals>
+    <plurals name="browse_delete_n_for_good">
+        <item quantity="one">%dని శాశ్వతంగా తొలగించాలా?</item>
+        <item quantity="other">%dని శాశ్వతంగా తొలగించాలా?</item>
+    </plurals>
+    <plurals name="browse_delete_n_selected">
+        <item quantity="one">ఎంచుకున్న %dని తొలగించాలా?</item>
+        <item quantity="other">ఎంచుకున్న %dని తొలగించాలా?</item>
+    </plurals>
+    <plurals name="browse_n_selected">
+        <item quantity="one">%d ఎంచుకున్నారు</item>
+        <item quantity="other">%d ఎంచుకున్నారు</item>
+    </plurals>
+    <string name="browse_saves_collection_will_stay_pettibox">ఈ కలెక్షన్‌లోని ఐటెమ్‌లు PettiBox‌లోనే ఉంటాయి, కానీ కలెక్షన్ తీసేయబడుతుంది.</string>
+    <string name="browse_locked_find_under_browse_locked">లాక్ చేశారు. దీన్ని బ్రౌజ్ › లాక్ చేసినవిలో చూడొచ్చు.</string>
+    <string name="browse_locked_open_settings_privacy">లాక్ చేశారు. సెట్టింగ్స్ › గోప్యత నుండి తెరవండి.</string>
+    <string name="browse_put_back_where_was_delete">ఉన్న చోటికే తిరిగి పెట్టాలా, లేక శాశ్వతంగా తొలగించాలా?</string>
+    <string name="browse_delete_good">శాశ్వతంగా తొలగించండి</string>
+    <string name="browse_empty_recently_deleted">ఇటీవల తొలగించినవి ఖాళీ చేయాలా?</string>
+    <string name="browse_everything_here_removed_good_including">ఇక్కడ ఉన్నవన్నీ వాటి ఫైల్‌లతో సహా శాశ్వతంగా తీసేయబడతాయి. దీన్ని రద్దు చేయలేరు.</string>
+    <string name="browse_favorites">ఇష్టమైనవి</string>
+    <string name="browse_recently_deleted">ఇటీవల తొలగించినవి</string>
+    <string name="browse_find_collection">కలెక్షన్ వెతకండి</string>
+    <string name="browse_clear_collection_search">కలెక్షన్ శోధనను క్లియర్ చేయండి</string>
+    <string name="browse_cross_cutting_labels_youve_added">మీరు ఐటెమ్‌లకు జోడించిన లేబుల్‌లు</string>
+    <string name="browse_no_tags_yet">ఇంకా ట్యాగ్‌లు లేవు</string>
+    <string name="browse_tags_short_labels_urgent_read">ట్యాగ్‌లు అంటే మీరు ఏ ఐటెమ్‌కైనా జోడించగల చిన్న లేబుల్‌లు (#అత్యవసరం, #తర్వాత-చదవాలి). ఇవి కలెక్షన్‌లను దాటి పనిచేస్తాయి — ఒక ఐటెమ్‌కు ఎన్నో ట్యాగ్‌లు ఉండొచ్చు. తర్వాతిసారి ఏదైనా సేవ్ చేసేటప్పుడు సేవ్ షీట్ నుండి ట్యాగ్‌లు జోడించండి.</string>
+    <string name="browse_saves_marked_heart">మీరు హార్ట్ ఇచ్చిన ఐటెమ్‌లు</string>
+    <string name="browse_everything_youve_tucked_away">మీరు ఆర్కైవ్ చేసినవన్నీ</string>
+    <string name="browse_upcoming_nudges_sorted_time">రాబోయే రిమైండర్‌లు, సమయం ప్రకారం</string>
+    <string name="browse_saved_but_not_opened_yet">సేవ్ చేశారు, కానీ ఇంకా తెరవలేదు</string>
+    <string name="browse_kept_30_days_then_removed">30 రోజులు ఉంచి, తర్వాత శాశ్వతంగా తీసేస్తాం. పునరుద్ధరించడానికి దేనినైనా ట్యాప్ చేయండి.</string>
+    <string name="browse_saves_carrying_tag">ఈ ట్యాగ్ ఉన్న ఐటెమ్‌లు</string>
+    <string name="browse_archived_saves">ఆర్కైవ్ చేసిన ఐటెమ్‌లు</string>
+    <string name="browse_show_active">యాక్టివ్ ఐటెమ్‌లు చూపండి</string>
+    <string name="browse_show_archived">ఆర్కైవ్ చూపండి</string>
+    <string name="browse_edit_collection">కలెక్షన్ ఎడిట్ చేయండి</string>
+    <string name="browse_delete_collection">కలెక్షన్ తొలగించండి</string>
+    <string name="browse_theyre_removed_good_including_their">ఇవి వాటి ఫైల్‌లతో సహా శాశ్వతంగా తీసేయబడతాయి. దీన్ని రద్దు చేయలేరు.</string>
+    <string name="browse_they_move_recently_deleted_browse">ఇవి 30 రోజుల పాటు ఇటీవల తొలగించినవి (బ్రౌజ్‌లో)కి వెళ్తాయి, కాబట్టి ఇంకా తిరిగి తెచ్చుకోవచ్చు.</string>
+    <string name="browse_no_favorites_yet">ఇంకా ఇష్టమైనవి లేవు</string>
+    <string name="browse_tap_heart_save_long_press">ఏదైనా ఐటెమ్‌పై హార్ట్ ట్యాప్ చేయండి (కార్డ్‌ను నొక్కి పట్టుకోండి → ❤️), అది ఇక్కడ ఉంటుంది.</string>
+    <string name="browse_nothing_archived">ఏదీ ఆర్కైవ్ చేయలేదు</string>
+    <string name="browse_archive_save_long_press_archive">ఐటెమ్‌ను తొలగించకుండా పక్కన పెట్టడానికి ఆర్కైవ్ చేయండి (నొక్కి పట్టుకోండి → ఆర్కైవ్).</string>
+    <string name="browse_no_reminders_waiting">ఎదురుచూస్తున్న రిమైండర్‌లు లేవు</string>
+    <string name="browse_set_reminder_save_card_save">ఐటెమ్ కార్డ్ లేదా సేవ్ షీట్ నుండి రిమైండర్ సెట్ చేయండి, రాబోయేవి ఇక్కడ కనిపిస్తాయి.</string>
+    <string name="browse_all_caught_up">అన్నీ చూసేశారు</string>
+    <string name="browse_youve_opened_everything_saved_new">మీరు సేవ్ చేసినవన్నీ తెరిచేశారు. కొత్త ఐటెమ్‌లు మీరు తెరిచే వరకు ఇక్కడ ఎదురుచూస్తాయి.</string>
+    <string name="browse_nothing_deleted">ఏదీ తొలగించలేదు</string>
+    <string name="browse_deleted_saves_stay_here_30">మీరు మనసు మార్చుకుంటే పనికొస్తుందని తొలగించిన ఐటెమ్‌లు 30 రోజులు ఇక్కడే ఉంటాయి.</string>
+    <string name="browse_no_saves">#%1$sతో ఐటెమ్‌లు లేవు</string>
+    <string name="browse_items_tagged_will_appear_here">#%1$s ట్యాగ్ ఉన్న ఐటెమ్‌లు ఇక్కడ కనిపిస్తాయి.</string>
+    <string name="browse_no_archived_saves">ఆర్కైవ్ చేసిన ఐటెమ్‌లు లేవు</string>
+    <string name="browse_nothing_here_yet">ఇక్కడ ఇంకా ఏమీ లేదు</string>
+    <string name="browse_archived_items_appear_here_toggle">ఆర్కైవ్ చేసిన ఐటెమ్‌లు ఇక్కడ కనిపిస్తాయి. యాక్టివ్ ఐటెమ్‌లు చూడడానికి దీన్ని ఆఫ్ చేయండి.</string>
+    <string name="browse_select">ఎంచుకోండి</string>
+    <string name="browse_selected">ఎంచుకున్నవి</string>
+    <string name="browse_exit_selection">ఎంపిక నుండి బయటకు</string>
+    <string name="browse_tap_saves_select">ఎంచుకోవడానికి ఐటెమ్‌లను ట్యాప్ చేయండి</string>
+    <string name="browse_clear_selection">ఎంపిక క్లియర్ చేయండి</string>
+    <string name="browse_locked">లాక్ చేసినవి</string>
+    <string name="browse_hide_locked_collections">లాక్ చేసిన కలెక్షన్‌లను దాచండి</string>
+    <string name="browse_archive_title">ఆర్కైవ్</string>
+    <string name="browse_empty_action">ఖాళీ చేయండి</string>
+</resources>

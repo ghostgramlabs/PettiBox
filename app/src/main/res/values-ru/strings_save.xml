@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">Быстрая запись</string>
+    <string name="save_saved_image">Сохранённое изображение</string>
+    <string name="save_saved_pdf">Сохранённый PDF</string>
+    <string name="save_saved_file">Сохранённый файл</string>
+    <string name="save_saved_when">сохранено %1$s</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d изображение</item>
+        <item quantity="few">%d изображения</item>
+        <item quantity="many">%d изображений</item>
+        <item quantity="other">%d изображения</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="few">%d PDF</item>
+        <item quantity="many">%d PDF</item>
+        <item quantity="other">%d PDF</item>
+    </plurals>
+    <string name="save_discard_what_typed">Отменить введённое?</string>
+    <string name="save_note_tags_havent_been_saved">Заметка и теги ещё не сохранены.</string>
+    <string name="save_discard">Отменить</string>
+    <string name="save_keep_editing">Продолжить</string>
+    <string name="save_save">Сохранить это?</string>
+    <string name="save_save_2">Сохранить в</string>
+    <string name="save_no_collection_called_yet">Коллекции «%1$s» пока нет</string>
+    <string name="save_want_start_one">Создать её?</string>
+    <string name="save_create">Создать «%1$s»</string>
+    <string name="save_new">Новая</string>
+    <string name="save_remove_favorites">Убрать из избранного</string>
+    <string name="save_add_favorites">Добавить в избранное</string>
+    <string name="save_write_note_save">Напишите заметку, чтобы сохранить</string>
+    <string name="save_save_3">Сохранить в «%1$s»</string>
+    <string name="save_save_without_collection">Сохранить без коллекции</string>
+    <string name="save_selected">Выбрано: %1$s</string>
+    <string name="save_add_which_save">К какой записи добавить?</string>
+    <string name="save_add_note">Добавить заметку</string>
+    <string name="save_add_tags">Добавить теги</string>
+    <string name="save_add_note_2">Добавьте заметку</string>
+    <string name="save_tags_comma_separated">Теги через запятую</string>
+    <string name="save_tucked_away">Сохранено!</string>
+    <string name="save_find_home_screen_anytime">Найдёте на главном экране в любой момент.</string>
+    <string name="save_append_save">Добавить к записи</string>
+    <string name="save_already_saved">Вы это уже сохраняли</string>
+    <string name="save_open">Открыть</string>
+    <string name="save_save_anyway">Всё равно сохранить</string>
+    <string name="save_suggested">Предлагаемая</string>
+    <string name="save_recently_used">Недавние</string>
+    <string name="save_collections">Ваши коллекции</string>
+    <string name="save_starter_collections">Стартовые коллекции</string>
+</resources>

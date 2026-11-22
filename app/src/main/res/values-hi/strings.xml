@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">PettiBox में सेव करें</string>
+    <string name="widget_description">आपके अनपढ़े आइटम, बस एक टैप दूर</string>
+    <string name="shortcut_note_short">नया नोट</string>
+    <string name="shortcut_note_long">नया नोट लिखें</string>
+    <string name="shortcut_link_short">लिंक जोड़ें</string>
+    <string name="shortcut_link_long">लिंक सेव करें</string>
+    <string name="shortcut_search_short">खोजें</string>
+    <string name="shortcut_search_long">अपने आइटम में खोजें</string>
+    <string name="shortcut_unread_short">अनपढ़े</string>
+    <string name="shortcut_unread_long">जो आइटम अभी तक नहीं खोले</string>
+</resources>

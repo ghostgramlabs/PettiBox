@@ -1,5 +1,8 @@
 package com.ghostgramlabs.pettibox.ui.screens.detail
 
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
@@ -211,7 +214,7 @@ fun PdfPages(
                             bitmap?.let {
                                 Image(
                                     bitmap = it,
-                                    contentDescription = "$title, page ${index + 1} of $pageCount",
+                                    contentDescription = stringResource(R.string.pdf_page, title, index + 1, pageCount),
                                     contentScale = ContentScale.FillWidth,
                                     modifier = Modifier.fillMaxSize()
                                 )
@@ -263,7 +266,7 @@ fun PdfFirstPage(uri: String, contentDescription: String, modifier: Modifier = M
 fun PdfUnavailable(
     onOpenExternally: () -> Unit,
     modifier: Modifier = Modifier,
-    message: String = "This PDF can't be shown here. It may be password-protected or damaged."
+    message: String = stringResource(R.string.pdf_pdf_cant_shown_here_may)
 ) {
     Column(
         modifier.fillMaxSize().padding(32.dp),
@@ -284,7 +287,7 @@ fun PdfUnavailable(
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(8.dp))
-        TextButton(onClick = onOpenExternally) { Text("Open in another app") }
+        TextButton(onClick = onOpenExternally) { Text(stringResource(R.string.detail_open_another_app)) }
     }
 }
 

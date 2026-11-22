@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.data.sync
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.util.Log
 import androidx.room.withTransaction
 import com.ghostgramlabs.pettibox.data.local.AppDatabase
@@ -93,18 +97,22 @@ class SyncEngine @Inject constructor(
                 SyncOutcome.NeedsReconnect
             } else {
                 // Which step, and Drive's own code, so a problem can be told apart from the next.
-                val step = prefs.status.first().progress.removeSuffix("…").lowercase().ifBlank { "connecting" }
+                val english = java.util.Locale.getDefault().language == "en"
+                var step = prefs.status.first().progress.removeSuffix("…")
+                // Mid-sentence in English ("…while receiving changes"); other languages keep their own case.
+                if (english) step = step.lowercase().replace("checking google drive", "checking for changes")
+                step = step.ifBlank { AppText.getString(R.string.sync_step_connecting) }
                 Log.w(TAG, "sync round failed while $step", e)
-                val what = if (e.status == 0) "Couldn't reach Google Drive" else "Google Drive answered with an error (${e.status})"
-                val msg = "$what while ${step.replace("checking google drive", "checking for changes")}." +
-                    if (e.transient) " Trying again by itself shortly." else ""
+                val what = if (e.status == 0) AppText.getString(R.string.sync_unreachable) else AppText.getString(R.string.sync_drive_error, e.status)
+                val msg = AppText.getString(R.string.sync_failed_while, what, step) +
+                    if (e.transient) " " + AppText.getString(R.string.sync_retrying) else ""
                 prefs.recordError(msg)
                 SyncOutcome.Failed(msg, retry = e.transient)
             }
         } catch (e: Exception) {
             // Never let sync take the app down; say what happened instead.
             Log.w(TAG, "sync round failed", e)
-            val msg = "Sync stopped: ${e.message ?: e.javaClass.simpleName}"
+            val msg = AppText.getString(R.string.sync_sync_stopped, e.message ?: e.javaClass.simpleName)
             prefs.recordError(msg)
             SyncOutcome.Failed(msg, retry = true)
         } finally {
@@ -116,7 +124,7 @@ class SyncEngine @Inject constructor(
     private suspend fun stopForReset(): SyncOutcome {
         prefs.setEnabled(false)
         prefs.resetForDisable()
-        prefs.recordError("Sync was turned off because the synced data was deleted from Google Drive on another device. Everything on this phone is still here; turn sync on again to start over.")
+        prefs.recordError(AppText.getString(R.string.sync_sync_was_turned_off_because))
         // Last: stopping cancels background sync work, possibly this very round.
         hooks.stopSync()
         return SyncOutcome.ResetElsewhere
@@ -137,7 +145,7 @@ class SyncEngine @Inject constructor(
 
     private suspend fun reconnect() {
         prefs.setNeedsReconnect(true)
-        prefs.recordError("Google Drive needs reconnecting")
+        prefs.recordError(AppText.getString(R.string.sync_google_drive_needs_reconnecting))
     }
 
     private suspend fun roundLocked(now: Long): SyncOutcome {
@@ -147,11 +155,11 @@ class SyncEngine @Inject constructor(
         val session = transport.open() ?: return SyncOutcome.NeedsReconnect
         // This library syncs with one Google account. If Drive is now signed
         // in as another (switched in Backup settings, say), touch nothing.
-        val account = session.accountEmail() ?: throw DriveSyncException(503, "Google Drive didn't say which account this is")
+        val account = session.accountEmail() ?: throw DriveSyncException(503, AppText.getString(R.string.sync_google_drive_didnt_say_which))
         val owner = prefs.status.first().accountEmail
         if (owner.isNotBlank() && !account.equals(owner, ignoreCase = true)) {
             return SyncOutcome.Failed(
-                "Google Drive is signed in as $account, but this library syncs with $owner. Switch back to $owner, or turn sync off and on again to sync with $account.",
+                AppText.getString(R.string.sync_google_drive_signed_but_library, account, owner, owner, account),
                 retry = false
             )
         }
@@ -175,10 +183,10 @@ class SyncEngine @Inject constructor(
         // since it never deletes anything.
         if (!prefs.firstBackupDone()) {
             if (hooks.safetyBackup()) prefs.markFirstBackupDone()
-            else prefs.recordError("Couldn't save a safety copy of your library before syncing. It will be tried again next time.")
+            else prefs.recordError(AppText.getString(R.string.sync_couldnt_save_safety_copy_library))
         }
 
-        prefs.setProgress("Checking Google Drive…")
+        prefs.setProgress(AppText.getString(R.string.sync_checking_google_drive))
         // Deleted from Google Drive on some device since sync was turned on
         // here? Then stop, rather than upload everything again.
         val marker = session.resetMarker() ?: ""
@@ -203,7 +211,7 @@ class SyncEngine @Inject constructor(
                 continue
             }
             if (f.md5.isNotBlank() && seen[f.name] == f.md5) continue
-            prefs.setProgress("Receiving changes…")
+            prefs.setProgress(AppText.getString(R.string.sync_receiving_changes))
             val decoded = try {
                 SyncCodec.decodeShard(session.read(f), now)
             } catch (e: SyncFormatException) {
@@ -272,9 +280,9 @@ class SyncEngine @Inject constructor(
         prefs.setCleanRoundAt(if (damaged == 0 && unreadable == 0) now else 0L)
         hooks.syncFiles(prefs.status.first().filesOnWifiOnly)
         if (damaged > 0) {
-            prefs.recordError("Skipped $damaged damaged file(s) from another device; nothing from them was applied")
+            prefs.recordError(AppText.plural(R.plurals.sync_damaged, damaged))
         } else if (unreadable > 0) {
-            prefs.recordError("Another device uses a newer version of PettiBox. Update this app to see everything it saved.")
+            prefs.recordError(AppText.getString(R.string.sync_another_device_uses_newer_version))
         }
         return SyncOutcome.Ok(applied, sent, damaged)
     }
@@ -330,7 +338,7 @@ class SyncEngine @Inject constructor(
     private suspend fun commitLocal(me: String, clock: HybridClock, remoteCollections: Set<String> = emptySet()) {
         val rows = syncDao.outbox()
         if (rows.isEmpty()) return
-        prefs.setProgress("Preparing your changes…")
+        prefs.setProgress(AppText.getString(R.string.sync_preparing_changes))
         for (chunk in rows.chunked(200)) {
           reserve(clock, chunk.size)
           db.withTransaction {
@@ -393,7 +401,7 @@ class SyncEngine @Inject constructor(
             syncDao.clearInbox() // only rows that couldn't be read, if any
             return 0
         }
-        prefs.setProgress("Updating your library…")
+        prefs.setProgress(AppText.getString(R.string.sync_updating_library))
         val changes = ArrayList<Pair<SyncRecord?, SyncRecord>>()
         val removing = ArrayList<String>()
         for (r in remote) {
@@ -424,7 +432,7 @@ class SyncEngine @Inject constructor(
         }
         if (big && !hooks.safetyBackup()) {
             // No safety copy, no mass removal: ask again once there's room.
-            prefs.recordError("Couldn't save a safety copy before removing saves, so nothing was removed. Free some space and choose again.")
+            prefs.recordError(AppText.getString(R.string.sync_couldnt_save_safety_copy_before))
             prefs.setPendingReview(removals)
             return -removals
         }
@@ -588,7 +596,7 @@ class SyncEngine @Inject constructor(
     private suspend fun uploadDirty(session: SyncTransport.Session, me: String, ours: Map<String, String>, now: Long, epoch: String): Int {
         val dirty = syncDao.dirtyShards()
         if (dirty.isEmpty()) return 0
-        prefs.setProgress("Sending your changes…")
+        prefs.setProgress(AppText.getString(R.string.sync_sending_changes))
         val name = prefs.deviceName()
         var sent = 0
         for (shard in dirty.sorted()) {

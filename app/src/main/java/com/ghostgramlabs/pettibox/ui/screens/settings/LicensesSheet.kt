@@ -1,5 +1,8 @@
 package com.ghostgramlabs.pettibox.ui.screens.settings
 
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -65,14 +68,13 @@ fun LicensesSheet(onDismiss: () -> Unit) {
         ) {
             item {
                 Text(
-                    "Open-source licenses",
+                    stringResource(R.string.settings_open_source_licenses),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                     color = scheme.onBackground
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "PettiBox is built with these open-source components. Tap one to read its license. " +
-                        "Text recognition also uses Google ML Kit, under Google's ML Kit terms.",
+                    stringResource(R.string.licenses_pettibox_built_these_open_source),
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant
                 )

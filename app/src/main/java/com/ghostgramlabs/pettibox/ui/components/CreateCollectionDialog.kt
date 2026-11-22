@@ -1,5 +1,8 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -102,7 +105,7 @@ fun CreateCollectionDialog(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                "New collection",
+                stringResource(R.string.collection_new_collection),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -110,13 +113,13 @@ fun CreateCollectionDialog(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it.take(28) },
-                placeholder = { Text("Name it (e.g. Weekend reads)") },
+                placeholder = { Text(stringResource(R.string.collection_name_e_g_weekend_reads)) },
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(16.dp))
-            Text("Pick an emoji", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.collection_pick_emoji), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(6.dp))
             LazyRow(
                 contentPadding = PaddingValues(vertical = 4.dp),
@@ -145,7 +148,7 @@ fun CreateCollectionDialog(
                 }
             }
             Spacer(Modifier.height(12.dp))
-            Text("Pick a color", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.collection_pick_color), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(6.dp))
             LazyRow(
                 contentPadding = PaddingValues(vertical = 4.dp),
@@ -173,7 +176,7 @@ fun CreateCollectionDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) }
                 Spacer(Modifier.width(8.dp))
                 Button(
                     enabled = name.isNotBlank(),
@@ -191,7 +194,7 @@ fun CreateCollectionDialog(
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Create", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.collection_create), fontWeight = FontWeight.Bold) }
             }
         }
     }
@@ -207,7 +210,7 @@ fun Color.toLongHex(): Long {
 
 /** The "+ New" chip that opens [CreateCollectionDialog], wherever collections are picked. */
 @Composable
-fun NewCollectionChip(label: String = "New", onClick: () -> Unit) {
+fun NewCollectionChip(label: String = stringResource(R.string.save_new), onClick: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     Row(
         verticalAlignment = Alignment.CenterVertically,

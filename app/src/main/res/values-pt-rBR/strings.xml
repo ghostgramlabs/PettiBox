@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">Salvar no PettiBox</string>
+    <string name="widget_description">Seus itens não lidos, a um toque</string>
+    <string name="shortcut_note_short">Nova nota</string>
+    <string name="shortcut_note_long">Escrever uma nova nota</string>
+    <string name="shortcut_link_short">Adicionar link</string>
+    <string name="shortcut_link_long">Salvar um link</string>
+    <string name="shortcut_search_short">Buscar</string>
+    <string name="shortcut_search_long">Buscar nos seus itens</string>
+    <string name="shortcut_unread_short">Não lidos</string>
+    <string name="shortcut_unread_long">Itens ainda não abertos</string>
+</resources>

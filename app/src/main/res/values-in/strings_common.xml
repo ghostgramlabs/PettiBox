@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">", "</string>
+    <plurals name="count_saves">
+        <item quantity="other">%d simpanan</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="other">%d file</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="other">%d favorit</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="other">%d diarsipkan</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="other">%d tag</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="other">%d koleksi</item>
+    </plurals>
+    <string name="source_web">Web</string>
+    <string name="source_maps">Maps</string>
+    <string name="source_files">File</string>
+    <string name="source_clipboard">Papan klip</string>
+    <string name="source_other">Lainnya</string>
+    <plurals name="count_items">
+        <item quantity="other">%d item</item>
+    </plurals>
+    <string name="untitled">Tanpa judul</string>
+    <string name="starter_recipes">Resep</string>
+    <string name="starter_travel">Jalan-jalan</string>
+    <string name="starter_fitness">Kebugaran</string>
+    <string name="starter_style">Gaya</string>
+    <string name="starter_home">Rumah</string>
+    <string name="starter_beauty">Kecantikan</string>
+    <string name="starter_read_later">Baca nanti</string>
+    <string name="starter_finance">Keuangan</string>
+    <string name="starter_music">Musik</string>
+    <string name="starter_books">Buku</string>
+    <string name="starter_food_spots">Tempat makan</string>
+    <string name="starter_shopping">Belanja</string>
+    <string name="starter_work">Kerja</string>
+    <string name="starter_ideas">Ide</string>
+    <string name="starter_watch">Tontonan</string>
+    <string name="starter_learning">Belajar</string>
+    <string name="starter_health">Kesehatan</string>
+    <string name="starter_docs">Dokumen</string>
+    <string name="starter_personal">Pribadi</string>
+    <string name="starter_tech">Teknologi</string>
+    <string name="starter_design">Desain</string>
+    <string name="starter_gifts">Hadiah</string>
+    <string name="starter_places">Tempat</string>
+    <string name="starter_kids">Anak-anak</string>
+    <string name="theme_system">Sistem</string>
+    <string name="theme_light">Terang</string>
+    <string name="theme_dark">Gelap</string>
+    <string name="widget_all_caught_up">Semua sudah dibaca</string>
+    <plurals name="widget_unread">
+        <item quantity="other">%d belum dibaca</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · salinan disimpan %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="other">%d mnt baca</item>
+    </plurals>
+    <string name="quick_change_reminder">Ubah pengingat</string>
+    <string name="quick_copy_link">Salin link</string>
+    <string name="quick_copy_note">Salin catatan</string>
+    <string name="quick_note_copied">Catatan disalin</string>
+    <string name="quick_move_collection">Pindahkan ke koleksi</string>
+    <string name="card_open_quick_actions">Buka tindakan cepat</string>
+    <string name="card_archived">Diarsipkan</string>
+    <string name="card_reminder">Pengingat</string>
+    <string name="collection_new_collection">Koleksi baru</string>
+    <string name="collection_collection_name">Nama koleksi</string>
+    <string name="collection_emoji">Emoji</string>
+    <string name="collection_color">Warna</string>
+    <string name="collection_lock_collection">Kunci koleksi ini</string>
+    <string name="collection_hidden_home_search_everywhere_else">Disembunyikan dari Beranda, pencarian, dan tempat lain sampai kamu membukanya dengan sidik jari, wajah, atau PIN ponsel.</string>
+    <string name="collection_set_screen_lock_phone_use">Pasang kunci layar di ponselmu untuk memakai ini.</string>
+    <string name="collection_name_e_g_weekend_reads">Beri nama (mis. Bacaan akhir pekan)</string>
+    <string name="collection_pick_emoji">Pilih emoji</string>
+    <string name="collection_pick_color">Pilih warna</string>
+    <string name="collection_create">Buat</string>
+    <string name="help_i_keep_links_screenshots_pdfs">Aku menyimpan link, screenshot, PDF, dan catatan di PettiBox: simpan dari aplikasi apa saja, baca artikel offline, dan temukan teks di dalam gambar. Gratis: %1$s</string>
+    <string name="help_share_pettibox">Bagikan PettiBox</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s — pertanyaan atau masalah</string>
+    <string name="help_please_keep_part_helps_me">——— Tolong biarkan bagian ini, ini membantuku membantumu ———</string>
+    <string name="sync_edited_2_devices_needs_choice">Diedit di 2 perangkat: perlu kamu pilih</string>
+    <string name="lock_unlock_locked_collections">Buka koleksi terkunci</string>
+    <string name="lock_unlock_pettibox">Buka PettiBox</string>
+    <string name="lock_use_fingerprint_face_phone_pin">Pakai sidik jari, wajah, atau PIN ponsel</string>
+    <string name="lock_pettibox_locked">PettiBox terkunci</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">Buka dengan sidik jari, wajah, atau PIN ponsel.</string>
+    <string name="lock_unlock">Buka</string>
+    <string name="lock_save_locked_collection">Simpanan ini ada di koleksi terkunci</string>
+    <string name="lock_go_back">Kembali</string>
+    <string name="nav_settings">Setelan</string>
+    <string name="nav_not_selected">Tidak dipilih</string>
+    <string name="widget_pettibox_locked">PettiBox terkunci 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">Buka PettiBox untuk melihat simpananmu di sini.</string>
+    <string name="widget_nothing_waiting">Tidak ada yang menunggu ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">Bagikan link atau foto ke PettiBox dan akan ada di sini sampai kamu buka.</string>
+    <string name="nav_home">Beranda</string>
+    <string name="nav_search">Cari</string>
+    <string name="nav_browse">Jelajah</string>
+</resources>

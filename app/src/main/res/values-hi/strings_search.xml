@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">सबसे मिलते-जुलते</string>
+    <string name="search_sort_newest">सबसे नए</string>
+    <string name="search_sort_oldest">सबसे पुराने</string>
+    <string name="search_sort_updated">हाल में बदले गए</string>
+    <string name="search_sort_reminder">रिमाइंडर का समय</string>
+    <plurals name="search_n_found">
+        <item quantity="one">%d मिला</item>
+        <item quantity="other">%d मिले</item>
+    </plurals>
+    <string name="search_look_up">खोजें</string>
+    <string name="search_titles_notes_saved_articles_text">शीर्षक, नोट, सेव किए गए लेख और तस्वीरों के अंदर का टेक्स्ट।</string>
+    <string name="search_search_anything_saved">जो कुछ सेव किया, उसमें खोजें</string>
+    <string name="search_matches">नतीजे</string>
+    <string name="search_start_anywhere">कहीं से भी शुरू करें</string>
+    <string name="search_use_type_source_tag_when">सही शब्द याद न हों, तो टाइप, सोर्स या टैग का इस्तेमाल करें</string>
+    <string name="search_types">टाइप</string>
+    <string name="search_sources">सोर्स</string>
+    <string name="search_find_anything_stashed">जो कुछ रखा है, वह ढूँढें</string>
+    <string name="search_search_titles_notes_links_sources">शीर्षक, नोट, लिंक, सोर्स, टैग, तस्वीरों या PDF के अंदर का टेक्स्ट, और ऑफ़लाइन पढ़ने के लिए सेव किए गए लेखों में खोजें। आर्काइव भी शामिल है, इसलिए आर्काइव किए गए आइटम भी दिखते हैं।</string>
+    <string name="search_screenshots">स्क्रीनशॉट</string>
+    <string name="search_links">लिंक</string>
+    <string name="search_pdfs">PDF</string>
+    <string name="search_upcoming_reminders">आने वाले रिमाइंडर</string>
+    <string name="search_notes">नोट</string>
+    <string name="search_nothing_matched">कुछ नहीं मिला</string>
+    <string name="search_some_saved_images_pdfs_still">कुछ सेव की गई तस्वीरें और PDF अभी पढ़े जा रहे हैं, इसलिए वे जल्द ही मिल सकते हैं। तब तक छोटा शब्द आज़माएँ या कोई फ़िल्टर हटाएँ।</string>
+    <string name="search_try_shorter_word_remove_filter">छोटा शब्द आज़माएँ, कोई फ़िल्टर हटाएँ, या किसी दूसरे सोर्स में खोजें। दूसरी भाषा के टेक्स्ट के लिए, सेटिंग › टेक्स्ट पहचान में उसे चालू करें।</string>
+    <string name="search_clear_filters">फ़िल्टर हटाएँ</string>
+    <string name="search_clear_search">खोज साफ़ करें</string>
+    <string name="search_change_filters">फ़िल्टर बदलें</string>
+    <string name="search_open_filters">फ़िल्टर खोलें</string>
+    <string name="search_filters">फ़िल्टर · %1$s</string>
+    <string name="search_filters_2">फ़िल्टर</string>
+    <string name="search_clear">साफ़ करें</string>
+    <string name="search_clear_all">सब साफ़ करें</string>
+    <string name="search_type">टाइप</string>
+    <string name="search_source">सोर्स</string>
+    <string name="search_images">तस्वीरें</string>
+    <string name="search_what_looking">आप क्या ढूँढ रहे हैं?</string>
+</resources>

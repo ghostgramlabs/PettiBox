@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">আপনার তাকে কিছু অপেক্ষা করছে</string>
+    <string name="nudge_title">আপনার তাক থেকে</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">আপনার %dটি না-পড়া আইটেম আছে।</item>
+        <item quantity="other">আপনার %dটি না-পড়া আইটেম আছে।</item>
+    </plurals>
+    <string name="nudge_body_one">“%1$s” — %2$s সেভ করা হয়েছে।</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">“%1$s” — %2$s সেভ করা হয়েছে। আরও %3$dটি না-পড়া আছে।</item>
+        <item quantity="other">“%1$s” — %2$s সেভ করা হয়েছে। আরও %3$dটি না-পড়া আছে।</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">এই ফোনে %dটি ফাইল নেই, তাই পাঠানো যাচ্ছে না। আইটেমটি খুলে ফাইলটি আবার যোগ করুন।</item>
+        <item quantity="other">এই ফোনে %dটি ফাইল নেই, তাই পাঠানো যাচ্ছে না। আইটেমটি খুলে ফাইলগুলো আবার যোগ করুন।</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">লাইব্রেরি সিঙ্ক হয়েছে · %1$dটি ফাইল অন্য ডিভাইস থেকে পাঠানোর অপেক্ষায় · %2$s-এ দেখা হয়েছে</item>
+        <item quantity="other">লাইব্রেরি সিঙ্ক হয়েছে · %1$dটি ফাইল অন্য ডিভাইস থেকে পাঠানোর অপেক্ষায় · %2$s-এ দেখা হয়েছে</item>
+    </plurals>
+    <string name="files_all_in_drive">সব ছবি ও ফাইল Google Drive-এ আছে · %1$s-এ দেখা হয়েছে</string>
+    <string name="files_checked">ছবি ও ফাইল %1$s-এ দেখা হয়েছে</string>
+    <string name="files_unreachable">ছবি ও ফাইল পাঠানোর সময় Google Drive-এ পৌঁছানো যায়নি (%1$s)। শিগগিরই নিজে থেকে আবার চেষ্টা করা হবে।</string>
+    <string name="files_no_connection">কোনো সংযোগ নেই</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%dটি ফাইল এই ফোনে আর পড়া যায় না (যে অ্যাপ থেকে এসেছিল সেটি আর অনুমতি দেয় না), তাই পাঠানো যাচ্ছে না।</item>
+        <item quantity="other">%dটি ফাইল এই ফোনে আর পড়া যায় না (যে অ্যাপ থেকে এসেছিল সেটি আর অনুমতি দেয় না), তাই পাঠানো যাচ্ছে না।</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">%dটি ছবি ও ফাইল Google Drive-এ পাঠানো হচ্ছে…</item>
+        <item quantity="other">%dটি ছবি ও ফাইল Google Drive-এ পাঠানো হচ্ছে…</item>
+    </plurals>
+    <string name="files_sending_progress">ছবি ও ফাইল Google Drive-এ পাঠানো হচ্ছে… %2$dটির মধ্যে %1$dটি</string>
+    <string name="sync_step_connecting">কানেক্ট করার সময়</string>
+    <string name="sync_unreachable">Google Drive-এ পৌঁছানো যায়নি</string>
+    <string name="sync_drive_error">Google Drive একটি সমস্যার উত্তর দিয়েছে (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s)।</string>
+    <string name="sync_retrying">শিগগিরই নিজে থেকে আবার চেষ্টা করা হবে।</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">অন্য ডিভাইসের %dটি ক্ষতিগ্রস্ত ফাইল বাদ দেওয়া হয়েছে; তার কিছুই প্রয়োগ করা হয়নি</item>
+        <item quantity="other">অন্য ডিভাইসের %dটি ক্ষতিগ্রস্ত ফাইল বাদ দেওয়া হয়েছে; সেগুলোর কিছুই প্রয়োগ করা হয়নি</item>
+    </plurals>
+    <string name="sync_every_15_min">১৫ মিনিট</string>
+    <string name="sync_every_30_min">৩০ মিনিট</string>
+    <string name="sync_every_hour">১ ঘণ্টা</string>
+    <string name="sync_every_3_hours">৩ ঘণ্টা</string>
+    <string name="sync_daily">প্রতিদিন</string>
+    <string name="sync_weekly">প্রতি সপ্তাহে</string>
+    <string name="sync_only_in_use">শুধু ব্যবহারের সময়</string>
+    <string name="reminder_save_locked_collection">লক করা কালেকশনের একটি আইটেম</string>
+    <string name="reminder_saved_item">সেভ করা আইটেম</string>
+    <string name="reminder_snooze_1h">১ ঘণ্টা পরে মনে করান</string>
+    <string name="reminder_evening">আজ সন্ধ্যায়</string>
+    <string name="nudge_see_all_unread">সব না-পড়া দেখুন</string>
+    <string name="nudge_once_week_one_thing_saved">সপ্তাহে একবার, এমন কিছু যা সেভ করেছেন কিন্তু এখনও খোলেননি।</string>
+    <string name="reminder_save_reminders">আইটেমের রিমাইন্ডার</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">যেসব জিনিস মনে করাতে PettiBox-কে বলেছিলেন, তার নোটিফিকেশন।</string>
+    <string name="files_photos_files_waiting_reconnect_google">ছবি ও ফাইল অপেক্ষায় আছে: সেটিংসে Google Drive আবার কানেক্ট করুন।</string>
+    <string name="files_photos_files_sent_once_first">প্রথম সিঙ্ক শেষ হলে ছবি ও ফাইল পাঠানো হয়।</string>
+    <string name="files_photos_files_arent_sent_google">ছবি ও ফাইল পাঠানো হচ্ছে না: Google Drive-এ %1$s দিয়ে সাইন ইন করা আছে, %2$s দিয়ে নয়।</string>
+    <string name="files_photos_files_couldnt_sent_tap">ছবি ও ফাইল পাঠানো যায়নি: %1$s। আবার চেষ্টা করতে এখনই সিঙ্ক করুন-এ ট্যাপ করুন।</string>
+    <string name="files_photos_files_stopped_sending_trying">ছবি ও ফাইল পাঠানো থেমে গেছে: %1$s। শিগগিরই আবার চেষ্টা করা হবে।</string>
+    <string name="sync_sync_stopped">সিঙ্ক থেমে গেছে: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">অন্য একটি ডিভাইস থেকে Google Drive-এর সিঙ্ক করা ডেটা মুছে ফেলায় সিঙ্ক বন্ধ করা হয়েছে। এই ফোনের সবকিছু এখনও আছে; নতুন করে শুরু করতে আবার সিঙ্ক চালু করুন।</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive আবার কানেক্ট করতে হবে</string>
+    <string name="sync_google_drive_didnt_say_which">Google Drive জানায়নি এটি কোন অ্যাকাউন্ট</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive-এ %1$s দিয়ে সাইন ইন করা আছে, কিন্তু এই লাইব্রেরি %2$s-এর সঙ্গে সিঙ্ক হয়। %3$s-এ ফিরে যান, অথবা %4$s-এর সঙ্গে সিঙ্ক করতে সিঙ্ক বন্ধ করে আবার চালু করুন।</string>
+    <string name="sync_couldnt_save_safety_copy_library">সিঙ্কের আগে আপনার লাইব্রেরির নিরাপত্তা কপি সেভ করা যায়নি। পরের বার আবার চেষ্টা করা হবে।</string>
+    <string name="sync_checking_google_drive">Google Drive দেখা হচ্ছে…</string>
+    <string name="sync_receiving_changes">পরিবর্তনগুলো আসছে…</string>
+    <string name="sync_another_device_uses_newer_version">অন্য একটি ডিভাইস PettiBox-এর নতুন ভার্সন ব্যবহার করছে। সেটি যা সেভ করেছে সব দেখতে এই অ্যাপটি আপডেট করুন।</string>
+    <string name="sync_preparing_changes">আপনার পরিবর্তনগুলো তৈরি হচ্ছে…</string>
+    <string name="sync_updating_library">আপনার লাইব্রেরি আপডেট হচ্ছে…</string>
+    <string name="sync_couldnt_save_safety_copy_before">আইটেম সরানোর আগে নিরাপত্তা কপি সেভ করা যায়নি, তাই কিছুই সরানো হয়নি। কিছু জায়গা খালি করে আবার বেছে নিন।</string>
+    <string name="sync_sending_changes">আপনার পরিবর্তনগুলো পাঠানো হচ্ছে…</string>
+    <string name="article_page_no_longer_exists">পেজটি আর নেই</string>
+    <string name="article_site_doesnt_allow_saving_copy">এই সাইট কপি সেভ করার অনুমতি দেয় না</string>
+    <string name="article_site_answered_error">সাইটটি একটি সমস্যার উত্তর দিয়েছে (%1$s)</string>
+    <string name="article_couldnt_find_article_page">এই পেজে কোনো লেখা পাওয়া যায়নি</string>
+    <string name="article_page_too_long_keep_copy">এই পেজটি কপি রাখার জন্য খুব বড়</string>
+    <string name="article_couldnt_reach_page_check_connection">পেজে পৌঁছানো যায়নি। সংযোগ দেখে আবার চেষ্টা করুন।</string>
+</resources>

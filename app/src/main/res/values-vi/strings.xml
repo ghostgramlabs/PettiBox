@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">Lưu vào PettiBox</string>
+    <string name="widget_description">Các mục chưa đọc, chỉ một chạm</string>
+    <string name="shortcut_note_short">Ghi chú mới</string>
+    <string name="shortcut_note_long">Viết ghi chú mới</string>
+    <string name="shortcut_link_short">Thêm liên kết</string>
+    <string name="shortcut_link_long">Lưu một liên kết</string>
+    <string name="shortcut_search_short">Tìm kiếm</string>
+    <string name="shortcut_search_long">Tìm trong các mục đã lưu</string>
+    <string name="shortcut_unread_short">Chưa đọc</string>
+    <string name="shortcut_unread_long">Các mục chưa mở</string>
+</resources>

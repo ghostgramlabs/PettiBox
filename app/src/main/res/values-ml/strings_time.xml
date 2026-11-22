@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">ഇപ്പോൾ</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d മിനിറ്റ് മുമ്പ്</item>
+        <item quantity="other">%d മിനിറ്റ് മുമ്പ്</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d മണിക്കൂർ മുമ്പ്</item>
+        <item quantity="other">%d മണിക്കൂർ മുമ്പ്</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%d ദിവസം മുമ്പ്</item>
+        <item quantity="other">%d ദിവസം മുമ്പ്</item>
+    </plurals>
+    <string name="reminder_preset_tonight">ഇന്ന് രാത്രി</string>
+    <string name="reminder_preset_tomorrow">നാളെ</string>
+    <string name="reminder_preset_weekend">ഈ വാരാന്ത്യം</string>
+    <string name="reminder_preset_next_week">അടുത്ത ആഴ്ച</string>
+    <string name="reminder_preset_custom">സമയം തിരഞ്ഞെടുക്കുക…</string>
+    <string name="reminder_today">ഇന്ന്</string>
+    <string name="reminder_tomorrow">നാളെ</string>
+    <string name="reminder_today_at">ഇന്ന് %1$s</string>
+    <string name="reminder_tomorrow_at">നാളെ %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">നിലവിൽ %1$s-ന് സജ്ജമാക്കിയിരിക്കുന്നു</string>
+    <string name="reminder_nudge_at">ഞങ്ങൾ %1$s ഓർമ്മിപ്പിക്കും</string>
+    <string name="reminder_remind_at">ഞങ്ങൾ %1$s ഓർമ്മിപ്പിക്കും</string>
+    <string name="reminder_remind_me">ഓർമ്മിപ്പിക്കുക</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">ആവശ്യമെങ്കിൽ PettiBox അറിയിപ്പ് അനുമതി ചോദിക്കും. കൃത്യമായ അലാറങ്ങൾ ഓഫാണെങ്കിൽ റിമൈൻഡറുകൾ അൽപ്പം വൈകി വന്നേക്കാം.</string>
+    <string name="reminder_choose_date_time">തീയതിയും സമയവും തിരഞ്ഞെടുക്കുക</string>
+    <string name="reminder_clear_reminder">റിമൈൻഡർ മായ്ക്കുക</string>
+    <string name="reminder_custom_reminder">ഇഷ്ടാനുസൃത റിമൈൻഡർ</string>
+    <string name="reminder_pick_time_below_enable_set">സജ്ജമാക്കുക സജീവമാക്കാൻ താഴെ സമയം തിരഞ്ഞെടുക്കൂ</string>
+    <string name="reminder_pick_date_time">തീയതിയും സമയവും തിരഞ്ഞെടുക്കൂ</string>
+    <string name="reminder_moment_has_already_passed_pick">ആ സമയം കഴിഞ്ഞുപോയി — ഭാവിയിലെ ഒരു സമയം തിരഞ്ഞെടുക്കൂ</string>
+    <string name="reminder_date">തീയതി</string>
+    <string name="reminder_tap_pick">തിരഞ്ഞെടുക്കാൻ ടാപ്പ് ചെയ്യൂ</string>
+    <string name="reminder_time">സമയം</string>
+    <string name="reminder_tap_set">സജ്ജമാക്കാൻ ടാപ്പ് ചെയ്യൂ</string>
+    <string name="reminder_set_reminder">റിമൈൻഡർ സജ്ജമാക്കുക</string>
+    <string name="reminder_done">പൂർത്തിയായി</string>
+    <string name="reminder_pick_time">സമയം തിരഞ്ഞെടുക്കുക</string>
+    <string name="reminder_set_time">സമയം സജ്ജമാക്കുക</string>
+</resources>

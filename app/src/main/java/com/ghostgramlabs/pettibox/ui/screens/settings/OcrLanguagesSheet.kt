@@ -1,5 +1,8 @@
 package com.ghostgramlabs.pettibox.ui.screens.settings
 
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,10 +36,17 @@ import com.ghostgramlabs.pettibox.data.ocr.OcrLanguages
 import kotlinx.coroutines.delay
 
 /** Short line for the Settings row: what's read now. */
-fun ocrLanguagesSummary(on: Set<String>): String {
-    val names = OcrLanguages.all.filter { it.code in on }.map { it.name }
-    return if (names.isEmpty()) "English and other Latin-alphabet languages"
-    else "English and Latin-alphabet languages, plus " + names.joinToString(", ")
+fun ocrLanguagesSummary(res: android.content.res.Resources, on: Set<String>): String {
+    val names = OcrLanguages.all.filter { it.code in on }.map { languageName(it.code) }
+    return if (names.isEmpty()) res.getString(R.string.ocr_languages_latin_only)
+    else res.getString(R.string.ocr_languages_latin_plus, names.joinToString(res.getString(R.string.list_separator)))
+}
+
+/** A language's name in the app's language ("Russian", "Russisch", "Русский"). */
+fun languageName(code: String): String {
+    val locale = java.util.Locale.getDefault()
+    val name = java.util.Locale.forLanguageTag(code).getDisplayLanguage(locale)
+    return name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
 }
 
 /**
@@ -81,28 +91,26 @@ fun OcrLanguagesSheet(
         ) {
             item {
                 Text(
-                    "Languages in images",
+                    stringResource(R.string.settings_languages_images),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                     color = scheme.onBackground
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "English, Spanish, Portuguese, French, German, Indonesian, Vietnamese, Turkish and other " +
-                        "Latin-alphabet languages are always read. Turn on the others you save text in.",
+                    stringResource(R.string.ocr_english_spanish_portuguese_french_german),
                     style = MaterialTheme.typography.bodyMedium,
                     color = scheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Each one downloads once (1–5 MB) and then works offline. Text recognition runs on your phone; if you turn on sync or Drive backup, your files are also copied to your Google Drive. " +
-                        "Turning one on reads your saved images and PDFs again, so older saves are found too.",
+                    stringResource(R.string.ocr_each_one_downloads_once_1),
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant
                 )
                 if (rereading) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Reading your saved images and PDFs again…",
+                        stringResource(R.string.ocr_reading_saved_images_pdfs_again),
                         style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                         color = scheme.primary
                     )
@@ -120,7 +128,7 @@ fun OcrLanguagesSheet(
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "${lang.name} · ${lang.nativeName}",
+                            languageName(lang.code).let { name -> if (name == lang.nativeName) name else "$name · ${lang.nativeName}" },
                             style = MaterialTheme.typography.bodyLarge,
                             color = scheme.onSurface
                         )
@@ -128,24 +136,24 @@ fun OcrLanguagesSheet(
                         val status = when {
                             !checked -> null
                             ready == null -> null
-                            lang.code in ready.orEmpty() -> "Ready"
-                            isFailed -> "Couldn't download"
-                            !online -> "Waiting for internet"
-                            else -> "Downloading…"
+                            lang.code in ready.orEmpty() -> stringResource(R.string.ocr_ready)
+                            isFailed -> stringResource(R.string.ocr_couldnt_download)
+                            !online -> stringResource(R.string.ocr_waiting_internet)
+                            else -> stringResource(R.string.ocr_downloading)
                         }
                         if (status != null) {
                             Text(
                                 status,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = when (status) {
-                                    "Ready" -> scheme.primary
-                                    "Couldn't download" -> scheme.error
+                                    stringResource(R.string.ocr_ready) -> scheme.primary
+                                    stringResource(R.string.ocr_couldnt_download) -> scheme.error
                                     else -> scheme.onSurfaceVariant
                                 }
                             )
                         }
                         if (checked && isFailed && lang.code !in ready.orEmpty()) {
-                            TextButton(onClick = onRetry, contentPadding = PaddingValues(0.dp)) { Text("Try again") }
+                            TextButton(onClick = onRetry, contentPadding = PaddingValues(0.dp)) { Text(stringResource(R.string.ocr_try_again)) }
                         }
                     }
                     Switch(checked = checked, onCheckedChange = { onToggle(lang.code, it) })

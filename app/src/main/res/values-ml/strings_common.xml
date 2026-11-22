@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">", "</string>
+    <plurals name="count_saves">
+        <item quantity="one">%d ഇനം</item>
+        <item quantity="other">%d ഇനങ്ങൾ</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="one">%d ഫയൽ</item>
+        <item quantity="other">%d ഫയലുകൾ</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="one">%d പ്രിയപ്പെട്ടത്</item>
+        <item quantity="other">%d പ്രിയപ്പെട്ടവ</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="one">%d ആർക്കൈവിൽ</item>
+        <item quantity="other">%d ആർക്കൈവിൽ</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="one">%d ടാഗ്</item>
+        <item quantity="other">%d ടാഗുകൾ</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="one">%d കളക്ഷൻ</item>
+        <item quantity="other">%d കളക്ഷനുകൾ</item>
+    </plurals>
+    <string name="source_web">വെബ്</string>
+    <string name="source_maps">Maps</string>
+    <string name="source_files">Files</string>
+    <string name="source_clipboard">ക്ലിപ്പ്ബോർഡ്</string>
+    <string name="source_other">മറ്റുള്ളവ</string>
+    <plurals name="count_items">
+        <item quantity="one">%d ഇനം</item>
+        <item quantity="other">%d ഇനങ്ങൾ</item>
+    </plurals>
+    <string name="untitled">പേരില്ലാത്തത്</string>
+    <string name="starter_recipes">പാചകക്കുറിപ്പുകൾ</string>
+    <string name="starter_travel">യാത്ര</string>
+    <string name="starter_fitness">ഫിറ്റ്നസ്</string>
+    <string name="starter_style">സ്റ്റൈൽ</string>
+    <string name="starter_home">വീട്</string>
+    <string name="starter_beauty">സൗന്ദര്യം</string>
+    <string name="starter_read_later">പിന്നീട് വായിക്കാൻ</string>
+    <string name="starter_finance">സാമ്പത്തികം</string>
+    <string name="starter_music">സംഗീതം</string>
+    <string name="starter_books">പുസ്തകങ്ങൾ</string>
+    <string name="starter_food_spots">ഭക്ഷണ സ്ഥലങ്ങൾ</string>
+    <string name="starter_shopping">ഷോപ്പിംഗ്</string>
+    <string name="starter_work">ജോലി</string>
+    <string name="starter_ideas">ആശയങ്ങൾ</string>
+    <string name="starter_watch">കാണാൻ</string>
+    <string name="starter_learning">പഠനം</string>
+    <string name="starter_health">ആരോഗ്യം</string>
+    <string name="starter_docs">രേഖകൾ</string>
+    <string name="starter_personal">വ്യക്തിപരം</string>
+    <string name="starter_tech">ടെക്</string>
+    <string name="starter_design">ഡിസൈൻ</string>
+    <string name="starter_gifts">സമ്മാനങ്ങൾ</string>
+    <string name="starter_places">സ്ഥലങ്ങൾ</string>
+    <string name="starter_kids">കുട്ടികൾ</string>
+    <string name="theme_system">സിസ്റ്റം</string>
+    <string name="theme_light">ലൈറ്റ്</string>
+    <string name="theme_dark">ഡാർക്ക്</string>
+    <string name="widget_all_caught_up">എല്ലാം കണ്ടുകഴിഞ്ഞു</string>
+    <plurals name="widget_unread">
+        <item quantity="one">%d വായിക്കാത്തത്</item>
+        <item quantity="other">%d വായിക്കാത്തവ</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · പകർപ്പ് സേവ് ചെയ്തു %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="one">%d മിനിറ്റ് വായന</item>
+        <item quantity="other">%d മിനിറ്റ് വായന</item>
+    </plurals>
+    <string name="quick_change_reminder">റിമൈൻഡർ മാറ്റുക</string>
+    <string name="quick_copy_link">ലിങ്ക് പകർത്തുക</string>
+    <string name="quick_copy_note">കുറിപ്പ് പകർത്തുക</string>
+    <string name="quick_note_copied">കുറിപ്പ് പകർത്തി</string>
+    <string name="quick_move_collection">കളക്ഷനിലേക്ക് നീക്കുക</string>
+    <string name="card_open_quick_actions">ദ്രുത പ്രവർത്തനങ്ങൾ തുറക്കുക</string>
+    <string name="card_archived">ആർക്കൈവ് ചെയ്തു</string>
+    <string name="card_reminder">റിമൈൻഡർ</string>
+    <string name="collection_new_collection">പുതിയ കളക്ഷൻ</string>
+    <string name="collection_collection_name">കളക്ഷന്റെ പേര്</string>
+    <string name="collection_emoji">ഇമോജി</string>
+    <string name="collection_color">നിറം</string>
+    <string name="collection_lock_collection">ഈ കളക്ഷൻ ലോക്ക് ചെയ്യുക</string>
+    <string name="collection_hidden_home_search_everywhere_else">നിങ്ങളുടെ വിരലടയാളം, മുഖം അല്ലെങ്കിൽ ഫോൺ PIN ഉപയോഗിച്ച് അൺലോക്ക് ചെയ്യുന്നത് വരെ ഹോം, തിരയൽ, മറ്റെല്ലായിടത്തും നിന്ന് മറഞ്ഞിരിക്കും.</string>
+    <string name="collection_set_screen_lock_phone_use">ഇത് ഉപയോഗിക്കാൻ നിങ്ങളുടെ ഫോണിൽ സ്ക്രീൻ ലോക്ക് സജ്ജമാക്കൂ.</string>
+    <string name="collection_name_e_g_weekend_reads">പേര് നൽകൂ (ഉദാ. വാരാന്ത്യ വായന)</string>
+    <string name="collection_pick_emoji">ഇമോജി തിരഞ്ഞെടുക്കുക</string>
+    <string name="collection_pick_color">നിറം തിരഞ്ഞെടുക്കുക</string>
+    <string name="collection_create">സൃഷ്ടിക്കുക</string>
+    <string name="help_i_keep_links_screenshots_pdfs">ഞാൻ ലിങ്കുകൾ, സ്ക്രീൻഷോട്ടുകൾ, PDF-കൾ, കുറിപ്പുകൾ PettiBox-ൽ സൂക്ഷിക്കുന്നു — ഏത് ആപ്പിൽ നിന്നും സേവ് ചെയ്യാം, ലേഖനങ്ങൾ ഓഫ്‌ലൈനായി വായിക്കാം, ഫോട്ടോകളിലെ എഴുത്ത് തിരയാം. സൗജന്യം: %1$s</string>
+    <string name="help_share_pettibox">PettiBox ഷെയർ ചെയ്യുക</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s — ചോദ്യം അല്ലെങ്കിൽ പ്രശ്നം</string>
+    <string name="help_please_keep_part_helps_me">——— ദയവായി ഈ ഭാഗം നിലനിർത്തൂ, നിങ്ങളെ സഹായിക്കാൻ ഇത് ഉപകരിക്കും ———</string>
+    <string name="sync_edited_2_devices_needs_choice">2 ഉപകരണങ്ങളിൽ എഡിറ്റ് ചെയ്തു: നിങ്ങൾ തിരഞ്ഞെടുക്കണം</string>
+    <string name="lock_unlock_locked_collections">ലോക്ക് ചെയ്ത കളക്ഷനുകൾ അൺലോക്ക് ചെയ്യുക</string>
+    <string name="lock_unlock_pettibox">PettiBox അൺലോക്ക് ചെയ്യുക</string>
+    <string name="lock_use_fingerprint_face_phone_pin">നിങ്ങളുടെ വിരലടയാളം, മുഖം അല്ലെങ്കിൽ ഫോൺ PIN ഉപയോഗിക്കൂ</string>
+    <string name="lock_pettibox_locked">PettiBox ലോക്ക് ചെയ്തിരിക്കുന്നു</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">നിങ്ങളുടെ വിരലടയാളം, മുഖം അല്ലെങ്കിൽ ഫോൺ PIN ഉപയോഗിച്ച് അൺലോക്ക് ചെയ്യൂ.</string>
+    <string name="lock_unlock">അൺലോക്ക് ചെയ്യുക</string>
+    <string name="lock_save_locked_collection">ഈ ഇനം ലോക്ക് ചെയ്ത കളക്ഷനിലാണ്</string>
+    <string name="lock_go_back">തിരികെ പോകുക</string>
+    <string name="nav_settings">ക്രമീകരണം</string>
+    <string name="nav_not_selected">തിരഞ്ഞെടുത്തിട്ടില്ല</string>
+    <string name="widget_pettibox_locked">PettiBox ലോക്ക് ചെയ്തിരിക്കുന്നു 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">നിങ്ങളുടെ ഇനങ്ങൾ ഇവിടെ കാണാൻ PettiBox അൺലോക്ക് ചെയ്യൂ.</string>
+    <string name="widget_nothing_waiting">ഒന്നും കാത്തിരിക്കുന്നില്ല ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">PettiBox-ലേക്ക് ഒരു ലിങ്കോ ഫോട്ടോയോ ഷെയർ ചെയ്യൂ, നിങ്ങൾ തുറക്കുന്നത് വരെ അത് ഇവിടെ ഉണ്ടാകും.</string>
+    <string name="nav_home">ഹോം</string>
+    <string name="nav_search">തിരയുക</string>
+    <string name="nav_browse">ബ്രൗസ്</string>
+</resources>

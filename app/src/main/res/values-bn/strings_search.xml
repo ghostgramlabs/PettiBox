@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">সবচেয়ে প্রাসঙ্গিক</string>
+    <string name="search_sort_newest">সবচেয়ে নতুন</string>
+    <string name="search_sort_oldest">সবচেয়ে পুরোনো</string>
+    <string name="search_sort_updated">সম্প্রতি এডিট করা</string>
+    <string name="search_sort_reminder">রিমাইন্ডারের সময়</string>
+    <plurals name="search_n_found">
+        <item quantity="one">%dটি পাওয়া গেছে</item>
+        <item quantity="other">%dটি পাওয়া গেছে</item>
+    </plurals>
+    <string name="search_look_up">খুঁজে দেখুন</string>
+    <string name="search_titles_notes_saved_articles_text">শিরোনাম, নোট, সেভ করা লেখা, আর ছবির ভেতরের লেখা।</string>
+    <string name="search_search_anything_saved">যা সেভ করেছেন তার মধ্যে খুঁজুন</string>
+    <string name="search_matches">ফলাফল</string>
+    <string name="search_start_anywhere">যেকোনো জায়গা থেকে শুরু করুন</string>
+    <string name="search_use_type_source_tag_when">সঠিক শব্দ মনে না পড়লে ধরন, উৎস বা ট্যাগ ব্যবহার করুন</string>
+    <string name="search_types">ধরন</string>
+    <string name="search_sources">উৎস</string>
+    <string name="search_find_anything_stashed">জমিয়ে রাখা যেকোনো কিছু খুঁজুন</string>
+    <string name="search_search_titles_notes_links_sources">শিরোনাম, নোট, লিংক, উৎস, ট্যাগ, ছবি বা PDF-এর ভেতরের লেখা, আর অফলাইনে পড়ার জন্য সেভ করা লেখায় খুঁজুন। আর্কাইভও এর মধ্যে আছে, তাই আর্কাইভ করা আইটেমও দেখা যায়।</string>
+    <string name="search_screenshots">স্ক্রিনশট</string>
+    <string name="search_links">লিংক</string>
+    <string name="search_pdfs">PDF</string>
+    <string name="search_upcoming_reminders">আসন্ন রিমাইন্ডার</string>
+    <string name="search_notes">নোট</string>
+    <string name="search_nothing_matched">কিছুই মেলেনি</string>
+    <string name="search_some_saved_images_pdfs_still">কিছু সেভ করা ছবি আর PDF এখনও পড়া হচ্ছে, তাই শিগগিরই মিলতে পারে। ততক্ষণ ছোট শব্দ চেষ্টা করুন বা একটি ফিল্টার সরান।</string>
+    <string name="search_try_shorter_word_remove_filter">ছোট শব্দ চেষ্টা করুন, একটি ফিল্টার সরান, বা অন্য উৎসে খুঁজুন। অন্য ভাষার লেখার জন্য সেটিংস › লেখা শনাক্তকরণ-এ সেটি চালু করুন।</string>
+    <string name="search_clear_filters">ফিল্টার মুছুন</string>
+    <string name="search_clear_search">খোঁজ মুছুন</string>
+    <string name="search_change_filters">ফিল্টার বদলান</string>
+    <string name="search_open_filters">ফিল্টার খুলুন</string>
+    <string name="search_filters">ফিল্টার · %1$s</string>
+    <string name="search_filters_2">ফিল্টার</string>
+    <string name="search_clear">মুছুন</string>
+    <string name="search_clear_all">সব মুছুন</string>
+    <string name="search_type">ধরন</string>
+    <string name="search_source">উৎস</string>
+    <string name="search_images">ছবি</string>
+    <string name="search_what_looking">আপনি কী খুঁজছেন?</string>
+</resources>

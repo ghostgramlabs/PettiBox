@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">هناك شيء ينتظرك على رفّك</string>
+    <string name="nudge_title">من رفّك</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="zero">لديك %d عنصر غير مقروء.</item>
+        <item quantity="one">لديك عنصر واحد غير مقروء.</item>
+        <item quantity="two">لديك عنصران غير مقروءين.</item>
+        <item quantity="few">لديك %d عناصر غير مقروءة.</item>
+        <item quantity="many">لديك %d عنصرًا غير مقروء.</item>
+        <item quantity="other">لديك %d عنصر غير مقروء.</item>
+    </plurals>
+    <string name="nudge_body_one">‏«%1$s» — حُفظ %2$s.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="zero">‏«%1$s» — حُفظ %2$s. وغير مقروء آخر: %3$d.</item>
+        <item quantity="one">‏«%1$s» — حُفظ %2$s. وغير مقروء آخر: %3$d.</item>
+        <item quantity="two">‏«%1$s» — حُفظ %2$s. وغير مقروء آخر: %3$d.</item>
+        <item quantity="few">‏«%1$s» — حُفظ %2$s. وغير مقروء آخر: %3$d.</item>
+        <item quantity="many">‏«%1$s» — حُفظ %2$s. وغير مقروء آخر: %3$d.</item>
+        <item quantity="other">‏«%1$s» — حُفظ %2$s. وغير مقروء آخر: %3$d.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="zero">ملفات غير موجودة على هذا الهاتف (%d)، لذا لا يمكن إرسالها. افتح العنصر وأضف الملفات مرة أخرى.</item>
+        <item quantity="one">ملف واحد غير موجود على هذا الهاتف، لذا لا يمكن إرساله. افتح العنصر وأضف الملف مرة أخرى.</item>
+        <item quantity="two">ملفات غير موجودة على هذا الهاتف (%d)، لذا لا يمكن إرسالها. افتح العنصر وأضف الملفات مرة أخرى.</item>
+        <item quantity="few">ملفات غير موجودة على هذا الهاتف (%d)، لذا لا يمكن إرسالها. افتح العنصر وأضف الملفات مرة أخرى.</item>
+        <item quantity="many">ملفات غير موجودة على هذا الهاتف (%d)، لذا لا يمكن إرسالها. افتح العنصر وأضف الملفات مرة أخرى.</item>
+        <item quantity="other">ملفات غير موجودة على هذا الهاتف (%d)، لذا لا يمكن إرسالها. افتح العنصر وأضف الملفات مرة أخرى.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="zero">تمت مزامنة المكتبة · %1$d ملف بانتظار أن يرسله جهاز آخر · تم التحقق %2$s</item>
+        <item quantity="one">تمت مزامنة المكتبة · %1$d ملف بانتظار أن يرسله جهاز آخر · تم التحقق %2$s</item>
+        <item quantity="two">تمت مزامنة المكتبة · %1$d ملف بانتظار أن يرسله جهاز آخر · تم التحقق %2$s</item>
+        <item quantity="few">تمت مزامنة المكتبة · %1$d ملف بانتظار أن يرسله جهاز آخر · تم التحقق %2$s</item>
+        <item quantity="many">تمت مزامنة المكتبة · %1$d ملف بانتظار أن يرسله جهاز آخر · تم التحقق %2$s</item>
+        <item quantity="other">تمت مزامنة المكتبة · %1$d ملف بانتظار أن يرسله جهاز آخر · تم التحقق %2$s</item>
+    </plurals>
+    <string name="files_all_in_drive">كل الصور والملفات موجودة في Google Drive · تم التحقق %1$s</string>
+    <string name="files_checked">تم التحقق من الصور والملفات %1$s</string>
+    <string name="files_unreachable">تعذّر الوصول إلى Google Drive أثناء إرسال الصور والملفات (%1$s). ستُعاد المحاولة تلقائيًا قريبًا.</string>
+    <string name="files_no_connection">لا يوجد اتصال</string>
+    <plurals name="files_unreadable">
+        <item quantity="zero">لم يعد ممكنًا قراءة ملفات على هذا الهاتف (%d) لأن التطبيق الذي جاءت منه لم يعد يسمح بذلك، لذا لا يمكن إرسالها.</item>
+        <item quantity="one">لم يعد ممكنًا قراءة ملف واحد على هذا الهاتف (التطبيق الذي جاء منه لم يعد يسمح بذلك)، لذا لا يمكن إرساله.</item>
+        <item quantity="two">لم يعد ممكنًا قراءة ملفات على هذا الهاتف (%d) لأن التطبيق الذي جاءت منه لم يعد يسمح بذلك، لذا لا يمكن إرسالها.</item>
+        <item quantity="few">لم يعد ممكنًا قراءة ملفات على هذا الهاتف (%d) لأن التطبيق الذي جاءت منه لم يعد يسمح بذلك، لذا لا يمكن إرسالها.</item>
+        <item quantity="many">لم يعد ممكنًا قراءة ملفات على هذا الهاتف (%d) لأن التطبيق الذي جاءت منه لم يعد يسمح بذلك، لذا لا يمكن إرسالها.</item>
+        <item quantity="other">لم يعد ممكنًا قراءة ملفات على هذا الهاتف (%d) لأن التطبيق الذي جاءت منه لم يعد يسمح بذلك، لذا لا يمكن إرسالها.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="zero">جارٍ إرسال الصور والملفات (%d) إلى Google Drive…</item>
+        <item quantity="one">جارٍ إرسال الصور والملفات (%d) إلى Google Drive…</item>
+        <item quantity="two">جارٍ إرسال الصور والملفات (%d) إلى Google Drive…</item>
+        <item quantity="few">جارٍ إرسال الصور والملفات (%d) إلى Google Drive…</item>
+        <item quantity="many">جارٍ إرسال الصور والملفات (%d) إلى Google Drive…</item>
+        <item quantity="other">جارٍ إرسال الصور والملفات (%d) إلى Google Drive…</item>
+    </plurals>
+    <string name="files_sending_progress">جارٍ إرسال الصور والملفات إلى Google Drive… %1$d من %2$d</string>
+    <string name="sync_step_connecting">أثناء الاتصال</string>
+    <string name="sync_unreachable">تعذّر الوصول إلى Google Drive</string>
+    <string name="sync_drive_error">ردّ Google Drive بخطأ (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">ستُعاد المحاولة تلقائيًا قريبًا.</string>
+    <plurals name="sync_damaged">
+        <item quantity="zero">تم تخطي ملفات تالفة من جهاز آخر (%d)؛ لم يُطبَّق شيء منها</item>
+        <item quantity="one">تم تخطي ملف تالف واحد من جهاز آخر؛ لم يُطبَّق شيء منه</item>
+        <item quantity="two">تم تخطي ملفات تالفة من جهاز آخر (%d)؛ لم يُطبَّق شيء منها</item>
+        <item quantity="few">تم تخطي ملفات تالفة من جهاز آخر (%d)؛ لم يُطبَّق شيء منها</item>
+        <item quantity="many">تم تخطي ملفات تالفة من جهاز آخر (%d)؛ لم يُطبَّق شيء منها</item>
+        <item quantity="other">تم تخطي ملفات تالفة من جهاز آخر (%d)؛ لم يُطبَّق شيء منها</item>
+    </plurals>
+    <string name="sync_every_15_min">١٥ دقيقة</string>
+    <string name="sync_every_30_min">٣٠ دقيقة</string>
+    <string name="sync_every_hour">ساعة واحدة</string>
+    <string name="sync_every_3_hours">٣ ساعات</string>
+    <string name="sync_daily">يوميًا</string>
+    <string name="sync_weekly">أسبوعيًا</string>
+    <string name="sync_only_in_use">أثناء الاستخدام فقط</string>
+    <string name="reminder_save_locked_collection">عنصر في مجموعة مقفلة</string>
+    <string name="reminder_saved_item">عنصر محفوظ</string>
+    <string name="reminder_snooze_1h">تأجيل ساعة</string>
+    <string name="reminder_evening">هذا المساء</string>
+    <string name="nudge_see_all_unread">عرض كل غير المقروء</string>
+    <string name="nudge_once_week_one_thing_saved">مرة في الأسبوع، شيء حفظته ولم تفتحه بعد.</string>
+    <string name="reminder_save_reminders">تذكيرات العناصر</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">تنبيهات لأشياء طلبت من PettiBox أن يذكّرك بها.</string>
+    <string name="files_photos_files_waiting_reconnect_google">الصور والملفات في الانتظار: أعد ربط Google Drive من الإعدادات.</string>
+    <string name="files_photos_files_sent_once_first">تُرسَل الصور والملفات بعد انتهاء المزامنة الأولى.</string>
+    <string name="files_photos_files_arent_sent_google">لا تُرسَل الصور والملفات: تم تسجيل الدخول إلى Google Drive بحساب %1$s، وليس %2$s.</string>
+    <string name="files_photos_files_couldnt_sent_tap">تعذّر إرسال الصور والملفات: %1$s. انقر على «مزامنة الآن» للمحاولة مرة أخرى.</string>
+    <string name="files_photos_files_stopped_sending_trying">توقّف إرسال الصور والملفات: %1$s. ستُعاد المحاولة قريبًا.</string>
+    <string name="sync_sync_stopped">توقفت المزامنة: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">أُوقفت المزامنة لأن البيانات المتزامنة حُذفت من Google Drive على جهاز آخر. كل شيء على هذا الهاتف ما زال هنا؛ شغّل المزامنة مرة أخرى للبدء من جديد.</string>
+    <string name="sync_google_drive_needs_reconnecting">يجب إعادة ربط Google Drive</string>
+    <string name="sync_google_drive_didnt_say_which">لم يحدد Google Drive الحساب المستخدَم</string>
+    <string name="sync_google_drive_signed_but_library">تم تسجيل الدخول إلى Google Drive بحساب %1$s، لكن هذه المكتبة تتزامن مع %2$s. عُد إلى %3$s، أو أوقف المزامنة ثم شغّلها للمزامنة مع %4$s.</string>
+    <string name="sync_couldnt_save_safety_copy_library">تعذّر حفظ نسخة أمان من مكتبتك قبل المزامنة. ستُعاد المحاولة في المرة القادمة.</string>
+    <string name="sync_checking_google_drive">جارٍ التحقق من Google Drive…</string>
+    <string name="sync_receiving_changes">جارٍ استلام التغييرات…</string>
+    <string name="sync_another_device_uses_newer_version">يستخدم جهاز آخر إصدارًا أحدث من PettiBox. حدّث هذا التطبيق لترى كل ما حفظه.</string>
+    <string name="sync_preparing_changes">جارٍ تجهيز تغييراتك…</string>
+    <string name="sync_updating_library">جارٍ تحديث مكتبتك…</string>
+    <string name="sync_couldnt_save_safety_copy_before">تعذّر حفظ نسخة أمان قبل إزالة العناصر، لذا لم يُزَل شيء. وفّر بعض المساحة واختر مرة أخرى.</string>
+    <string name="sync_sending_changes">جارٍ إرسال تغييراتك…</string>
+    <string name="article_page_no_longer_exists">الصفحة لم تعد موجودة</string>
+    <string name="article_site_doesnt_allow_saving_copy">هذا الموقع لا يسمح بحفظ نسخة</string>
+    <string name="article_site_answered_error">ردّ الموقع بخطأ (%1$s)</string>
+    <string name="article_couldnt_find_article_page">تعذّر العثور على مقال في هذه الصفحة</string>
+    <string name="article_page_too_long_keep_copy">هذه الصفحة أطول من أن تُحفظ منها نسخة</string>
+    <string name="article_couldnt_reach_page_check_connection">تعذّر الوصول إلى الصفحة. تحقق من اتصالك وحاول مرة أخرى.</string>
+</resources>

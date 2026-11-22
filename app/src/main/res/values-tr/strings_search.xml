@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">İlgili</string>
+    <string name="search_sort_newest">En yeni</string>
+    <string name="search_sort_oldest">En eski</string>
+    <string name="search_sort_updated">Son düzenlenen</string>
+    <string name="search_sort_reminder">Hatırlatma saati</string>
+    <plurals name="search_n_found">
+        <item quantity="one">%d bulundu</item>
+        <item quantity="other">%d bulundu</item>
+    </plurals>
+    <string name="search_look_up">Ara bul</string>
+    <string name="search_titles_notes_saved_articles_text">Başlıklar, notlar, kaydedilen makaleler ve resimlerdeki metin.</string>
+    <string name="search_search_anything_saved">Kaydettiğin her şeyde ara</string>
+    <string name="search_matches">Sonuçlar</string>
+    <string name="search_start_anywhere">İstediğin yerden başla</string>
+    <string name="search_use_type_source_tag_when">Tam kelimeleri hatırlamıyorsan tür, kaynak ya da etiket kullan</string>
+    <string name="search_types">Türler</string>
+    <string name="search_sources">Kaynaklar</string>
+    <string name="search_find_anything_stashed">Kaldırdığın her şeyi bul</string>
+    <string name="search_search_titles_notes_links_sources">Başlıklarda, notlarda, bağlantılarda, kaynaklarda, etiketlerde, resim ya da PDF\'lerdeki metinde ve çevrimdışı okumak için kaydedilen makalelerde ara. Arşiv de dahil, yani kenara kaldırılan kayıtlar da görünür.</string>
+    <string name="search_screenshots">Ekran görüntüleri</string>
+    <string name="search_links">Bağlantılar</string>
+    <string name="search_pdfs">PDF\'ler</string>
+    <string name="search_upcoming_reminders">Yaklaşan hatırlatıcılar</string>
+    <string name="search_notes">Notlar</string>
+    <string name="search_nothing_matched">Eşleşen yok</string>
+    <string name="search_some_saved_images_pdfs_still">Bazı kayıtlı resim ve PDF\'ler hâlâ okunuyor, yakında eşleşebilirler. Bu arada daha kısa bir kelime dene ya da bir filtreyi kaldır.</string>
+    <string name="search_try_shorter_word_remove_filter">Daha kısa bir kelime dene, bir filtreyi kaldır ya da başka bir kaynakta ara. Başka bir dildeki metin için o dili Ayarlar › Metin tanıma\'dan aç.</string>
+    <string name="search_clear_filters">Filtreleri temizle</string>
+    <string name="search_clear_search">Aramayı temizle</string>
+    <string name="search_change_filters">Filtreleri değiştir</string>
+    <string name="search_open_filters">Filtreleri aç</string>
+    <string name="search_filters">Filtreler · %1$s</string>
+    <string name="search_filters_2">Filtreler</string>
+    <string name="search_clear">Temizle</string>
+    <string name="search_clear_all">Tümünü temizle</string>
+    <string name="search_type">Tür</string>
+    <string name="search_source">Kaynak</string>
+    <string name="search_images">Resimler</string>
+    <string name="search_what_looking">Ne arıyorsun?</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">PettiBox-এ সেভ করুন</string>
+    <string name="widget_description">না-পড়া আইটেমগুলো, এক ট্যাপেই</string>
+    <string name="shortcut_note_short">নতুন নোট</string>
+    <string name="shortcut_note_long">নতুন নোট লিখুন</string>
+    <string name="shortcut_link_short">লিংক যোগ করুন</string>
+    <string name="shortcut_link_long">লিংক সেভ করুন</string>
+    <string name="shortcut_search_short">খুঁজুন</string>
+    <string name="shortcut_search_long">আপনার আইটেমে খুঁজুন</string>
+    <string name="shortcut_unread_short">না-পড়া</string>
+    <string name="shortcut_unread_long">যে আইটেম এখনও খোলেননি</string>
+</resources>

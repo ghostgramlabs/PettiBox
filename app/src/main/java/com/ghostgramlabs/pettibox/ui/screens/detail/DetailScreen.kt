@@ -1,5 +1,13 @@
 package com.ghostgramlabs.pettibox.ui.screens.detail
 
+import com.ghostgramlabs.pettibox.domain.model.displayName
+
+import androidx.compose.ui.res.pluralStringResource
+
+import androidx.compose.ui.res.stringResource
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
@@ -169,8 +177,8 @@ fun DetailScreen(
         scope.launch {
             if (!viewModel.removeAttachment(id)) return@launch
             val result = snackbarHostState.showSnackbar(
-                message = "Item removed",
-                actionLabel = "Undo",
+                message = ctx.getString(R.string.detail_item_removed),
+                actionLabel = ctx.getString(R.string.detail_undo),
                 duration = SnackbarDuration.Long
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.undoRemoveAttachment(id)
@@ -182,11 +190,10 @@ fun DetailScreen(
         val isArchived = state.item?.isArchived == true
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete this save?") },
+            title = { Text(stringResource(R.string.detail_delete_save)) },
             text = {
                 Text(
-                    "It moves to Recently deleted (in Browse) for 30 days, so you can still bring it back." +
-                        if (isArchived) "" else " Want it out of the way but kept? Tap \"Archive instead\"."
+                    stringResource(if (isArchived) R.string.detail_delete_body else R.string.detail_delete_body_archive_hint)
                 )
             },
             confirmButton = {
@@ -195,8 +202,8 @@ fun DetailScreen(
                     scope.launch {
                         val stagedItem = viewModel.stageDelete() ?: return@launch
                         val result = snackbarHostState.showSnackbar(
-                            message = "Moved to Recently deleted",
-                            actionLabel = "Undo",
+                            message = ctx.getString(R.string.detail_moved_recently_deleted),
+                            actionLabel = ctx.getString(R.string.detail_undo),
                             duration = SnackbarDuration.Long
                         )
                         if (result == SnackbarResult.ActionPerformed) {
@@ -206,20 +213,20 @@ fun DetailScreen(
                         }
                     }
                 }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.settings_delete_2), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 Row {
-                    TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+                    TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.settings_cancel)) }
                     if (!isArchived) {
                         TextButton(onClick = {
                             showDeleteConfirm = false
                             viewModel.setArchived(true)
                             scope.launch {
-                                snackbarHostState.showSnackbar("Tucked away in Archive")
+                                snackbarHostState.showSnackbar(ctx.getString(R.string.detail_tucked_away_archive))
                             }
-                        }) { Text("Archive instead") }
+                        }) { Text(stringResource(R.string.detail_archive_instead)) }
                     }
                 }
             },
@@ -236,12 +243,12 @@ fun DetailScreen(
                     requestNotificationPermission {
                         viewModel.setRemindAt(at)
                         scope.launch {
-                            snackbarHostState.showSnackbar("We'll remind you " + formatReminderAt(at))
+                            snackbarHostState.showSnackbar(ctx.getString(R.string.reminder_remind_at, formatReminderAt(at)))
                         }
                     }
                 } else {
                     viewModel.setRemindAt(null)
-                    scope.launch { snackbarHostState.showSnackbar("Reminder cleared") }
+                    scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.detail_reminder_cleared)) }
                 }
             },
             onCustom = {
@@ -259,7 +266,7 @@ fun DetailScreen(
                 requestNotificationPermission {
                     viewModel.setRemindAt(at)
                     scope.launch {
-                        snackbarHostState.showSnackbar("We'll remind you " + formatReminderAt(at))
+                        snackbarHostState.showSnackbar(ctx.getString(R.string.reminder_remind_at, formatReminderAt(at)))
                     }
                 }
             },
@@ -270,15 +277,15 @@ fun DetailScreen(
     attachmentDeleteCandidate?.let { id ->
         AlertDialog(
             onDismissRequest = { attachmentDeleteCandidate = null },
-            title = { Text("Remove this item?") },
-            text = { Text("You can undo right after.") },
+            title = { Text(stringResource(R.string.detail_remove_item)) },
+            text = { Text(stringResource(R.string.detail_can_undo_right_after)) },
             confirmButton = {
                 TextButton(onClick = { confirmAttachmentDelete(id) }) {
-                    Text("Remove", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.settings_remove), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { attachmentDeleteCandidate = null }) { Text("Cancel") }
+                TextButton(onClick = { attachmentDeleteCandidate = null }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -303,7 +310,7 @@ fun DetailScreen(
                 )
             } else {
                 Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                    Text("Loading...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.detail_loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             return@Scaffold
@@ -320,7 +327,7 @@ fun DetailScreen(
                 val i = Intent(Intent.ACTION_VIEW, url.toUri())
                 runCatching { ctx.startActivity(i) }
                     .onFailure {
-                        scope.launch { snackbarHostState.showSnackbar("Couldn't open original") }
+                        scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.detail_couldnt_open_original)) }
                     }
             }
         }
@@ -354,11 +361,11 @@ fun DetailScreen(
             // the same displayMedium-Black treatment as every other
             // screen.
             ScreenHeading(
-                title = item.title.ifBlank { "Untitled save" },
-                subtitle = "${source.emoji} ${source.displayName} · saved ${TimeFormat.relative(item.createdAt)}",
+                title = item.title.ifBlank { stringResource(R.string.detail_untitled_save) },
+                subtitle = stringResource(R.string.detail_subtitle, source.emoji, source.displayName, TimeFormat.relative(item.createdAt)),
                 leading = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.detail_back))
                     }
                 }
             )
@@ -381,8 +388,8 @@ fun DetailScreen(
                     viewModel.setArchived(!nowArchived)
                     scope.launch {
                         val result = snackbarHostState.showSnackbar(
-                            message = if (!nowArchived) "Tucked away" else "Back on the shelf",
-                            actionLabel = "Undo",
+                            message = if (!nowArchived) ctx.getString(R.string.detail_tucked_away) else ctx.getString(R.string.detail_back_shelf),
+                            actionLabel = ctx.getString(R.string.detail_undo),
                             duration = SnackbarDuration.Long
                         )
                         if (result == SnackbarResult.ActionPerformed) {
@@ -396,9 +403,9 @@ fun DetailScreen(
                         putExtra(Intent.EXTRA_TEXT, item.url ?: item.title)
                     }
                     runCatching {
-                        ctx.startActivity(Intent.createChooser(intent, "Share"))
+                        ctx.startActivity(Intent.createChooser(intent, ctx.getString(R.string.detail_share)))
                     }.onFailure {
-                        scope.launch { snackbarHostState.showSnackbar("Couldn't share this save") }
+                        scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.detail_couldnt_share_save)) }
                     }
                 },
                 onDelete = { showDeleteConfirm = true }
@@ -429,12 +436,12 @@ fun DetailScreen(
                     onDismiss = { viewerIndex = null },
                     onShare = { galleryItem ->
                         if (!shareGalleryItem(ctx, galleryItem, item.title)) {
-                            scope.launch { snackbarHostState.showSnackbar("Couldn't share this item") }
+                            scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.detail_couldnt_share_item)) }
                         }
                     },
                     onOpenExternally = { galleryItem ->
                         if (!openGalleryItemExternally(ctx, galleryItem)) {
-                            scope.launch { snackbarHostState.showSnackbar("No app on this phone can open this file") }
+                            scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.detail_no_app_phone_can_open)) }
                         }
                     },
                     onDelete = { galleryItem ->
@@ -457,7 +464,7 @@ fun DetailScreen(
                             onOpen = { viewerIndex = gallery.indexOf(galleryItem) },
                             onShare = {
                                 if (!shareGalleryItem(ctx, galleryItem, item.title)) {
-                                    scope.launch { snackbarHostState.showSnackbar("Couldn't share this item") }
+                                    scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.detail_couldnt_share_item)) }
                                 }
                             },
                             onDelete = {
@@ -480,7 +487,7 @@ fun DetailScreen(
                     linkPreview = heroIsLinkPreview,
                     onShare = {
                         if (!shareGalleryItem(ctx, gallery.first(), item.title)) {
-                            scope.launch { snackbarHostState.showSnackbar("Couldn't share this item") }
+                            scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.detail_couldnt_share_item)) }
                         }
                     },
                     onDelete = {
@@ -516,7 +523,7 @@ fun DetailScreen(
                                 )
                                 Spacer(Modifier.width(6.dp))
                                 Text(
-                                    "Open link",
+                                    stringResource(R.string.detail_open_link),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = accent,
                                     fontWeight = FontWeight.SemiBold
@@ -532,7 +539,7 @@ fun DetailScreen(
             if (gallery.size > 1) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "${gallery.size} items · swipe through, share one",
+                    pluralStringResource(R.plurals.detail_gallery_hint, gallery.size, gallery.size),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 20.dp)
@@ -548,7 +555,7 @@ fun DetailScreen(
                 conflicts.forEach { conflict ->
                     val settled: (Boolean) -> Unit = { changed ->
                         if (!changed) scope.launch {
-                            snackbarHostState.showSnackbar("Already chosen on another device. Nothing to pick here.")
+                            snackbarHostState.showSnackbar(ctx.getString(R.string.detail_already_chosen_another_device_nothing))
                         }
                     }
                     ConflictCard(
@@ -568,8 +575,8 @@ fun DetailScreen(
                         viewModel.updateTitle(new)
                         scope.launch {
                             val r = snackbarHostState.showSnackbar(
-                                message = "Title updated",
-                                actionLabel = "Undo",
+                                message = ctx.getString(R.string.detail_title_updated),
+                                actionLabel = ctx.getString(R.string.detail_undo),
                                 duration = SnackbarDuration.Short
                             )
                             if (r == SnackbarResult.ActionPerformed) viewModel.updateTitle(old)
@@ -600,7 +607,7 @@ fun DetailScreen(
                         )
                         Spacer(Modifier.width(10.dp))
                         Text(
-                            "We'll nudge you " + formatReminderAt(item.remindAt),
+                            stringResource(R.string.reminder_nudge_at, formatReminderAt(item.remindAt)),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                             color = accent
                         )
@@ -645,7 +652,7 @@ fun DetailScreen(
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                             Text(
-                                "Open original",
+                                stringResource(R.string.detail_open_original),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = accent,
                                 fontWeight = FontWeight.SemiBold
@@ -659,7 +666,7 @@ fun DetailScreen(
                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
                                 .clickable {
                                     clipboard.setText(AnnotatedString(item.url))
-                                    Toast.makeText(ctx, "Link copied", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(ctx, ctx.getString(R.string.detail_link_copied), Toast.LENGTH_SHORT).show()
                                 }
                                 .padding(horizontal = 14.dp, vertical = 10.dp)
                         ) {
@@ -669,7 +676,7 @@ fun DetailScreen(
                                 modifier = Modifier.padding(end = 8.dp).size(18.dp)
                             )
                             Text(
-                                "Copy",
+                                stringResource(R.string.detail_copy),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.SemiBold
@@ -686,7 +693,7 @@ fun DetailScreen(
                                 scope.launch {
                                     val copy = viewModel.loadArticle()
                                     if (copy?.html.isNullOrBlank()) {
-                                        snackbarHostState.showSnackbar("Couldn't open the offline copy")
+                                        snackbarHostState.showSnackbar(ctx.getString(R.string.detail_couldnt_open_offline_copy))
                                     } else {
                                         readerCopy = copy
                                     }
@@ -700,7 +707,7 @@ fun DetailScreen(
                         TextButton(
                             onClick = {
                                 viewModel.requestPageScreenshot()
-                                Toast.makeText(ctx, "Taking a screenshot of the page…", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(ctx, ctx.getString(R.string.detail_taking_screenshot_page), Toast.LENGTH_SHORT).show()
                             },
                             modifier = Modifier.padding(top = 2.dp)
                         ) {
@@ -710,7 +717,7 @@ fun DetailScreen(
                                 modifier = Modifier.padding(end = 8.dp).size(18.dp)
                             )
                             Text(
-                                "Use a page screenshot as the picture",
+                                stringResource(R.string.detail_use_page_screenshot_picture),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -727,7 +734,7 @@ fun DetailScreen(
                         onOpenOriginal = openOriginal,
                         onUpdateCopy = {
                             viewModel.requestArticleCopy()
-                            Toast.makeText(ctx, "Updating the offline copy…", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(ctx, ctx.getString(R.string.detail_updating_offline_copy), Toast.LENGTH_SHORT).show()
                         },
                         onDismiss = {
                             readerCopy = null
@@ -741,7 +748,7 @@ fun DetailScreen(
 
                 Spacer(Modifier.height(20.dp))
                 Text(
-                    "Collection",
+                    stringResource(R.string.detail_collection),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -762,7 +769,7 @@ fun DetailScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (current != null) {
                             CategoryChip(
-                                label = current.name,
+                                label = current.displayName,
                                 emoji = current.emoji,
                                 color = Color(current.colorHex),
                                 selected = true,
@@ -771,7 +778,7 @@ fun DetailScreen(
                             )
                         }
                         CollectionFinderChip(
-                            label = if (current != null) "Change" else "Choose collection",
+                            label = if (current != null) stringResource(R.string.settings_change) else stringResource(R.string.detail_choose_collection),
                             onClick = { showCollectionPicker = true }
                         )
                     }
@@ -793,7 +800,7 @@ fun DetailScreen(
                             // every time you see it.
                             val tilt = if (c.sortOrder % 2 == 0) -2f else 1.5f
                             CategoryChip(
-                                label = c.name,
+                                label = c.displayName,
                                 emoji = c.emoji,
                                 color = Color(c.colorHex),
                                 selected = item.categoryId == c.id,
@@ -826,8 +833,8 @@ fun DetailScreen(
                         if (clean.isNotBlank() && clean.length <= 24) {
                             scope.launch {
                                 val r = snackbarHostState.showSnackbar(
-                                    message = "Tag added",
-                                    actionLabel = "Undo",
+                                    message = ctx.getString(R.string.detail_tag_added),
+                                    actionLabel = ctx.getString(R.string.detail_undo),
                                     duration = SnackbarDuration.Short
                                 )
                                 if (r == SnackbarResult.ActionPerformed) viewModel.removeTag(clean)
@@ -838,8 +845,8 @@ fun DetailScreen(
                         viewModel.removeTag(tag)
                         scope.launch {
                             val r = snackbarHostState.showSnackbar(
-                                message = "Tag removed",
-                                actionLabel = "Undo",
+                                message = ctx.getString(R.string.detail_tag_removed),
+                                actionLabel = ctx.getString(R.string.detail_undo),
                                 duration = SnackbarDuration.Short
                             )
                             if (r == SnackbarResult.ActionPerformed) viewModel.addTag(tag)
@@ -855,8 +862,8 @@ fun DetailScreen(
                         viewModel.updateNotes(new)
                         scope.launch {
                             val r = snackbarHostState.showSnackbar(
-                                message = "Note updated",
-                                actionLabel = "Undo",
+                                message = ctx.getString(R.string.detail_note_updated),
+                                actionLabel = ctx.getString(R.string.detail_undo),
                                 duration = SnackbarDuration.Short
                             )
                             if (r == SnackbarResult.ActionPerformed) viewModel.updateNotes(old)
@@ -902,11 +909,11 @@ private fun MissingSaveState(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         ScreenHeading(
-            title = "Save unavailable",
-            subtitle = "It may have been deleted or moved since this reminder was created.",
+            title = stringResource(R.string.detail_save_unavailable),
+            subtitle = stringResource(R.string.detail_may_have_been_deleted_moved),
             leading = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.detail_back))
                 }
             }
         )
@@ -914,19 +921,19 @@ private fun MissingSaveState(
         KeeperMascot(size = 128.dp, pose = KeeperPose.MissingSave)
         Spacer(Modifier.height(20.dp))
         Text(
-            "This save is no longer available.",
+            stringResource(R.string.detail_save_no_longer_available),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            "You can head back and keep browsing your shelf.",
+            stringResource(R.string.detail_can_head_back_keep_browsing),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(18.dp))
         TextButton(onClick = onBack) {
-            Text("Back to PettiBox")
+            Text(stringResource(R.string.detail_back_pettibox))
         }
     }
 }
@@ -966,37 +973,37 @@ private fun DetailActionBar(
     ) {
         DetailActionButton(
             icon = if (isPinned) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
-            label = if (isPinned) "Unpin" else "Pin",
+            label = if (isPinned) stringResource(R.string.detail_unpin) else stringResource(R.string.detail_pin),
             active = isPinned,
             onClick = onTogglePin
         )
         DetailActionButton(
             icon = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-            label = if (isFavorite) "Loved" else "Love it",
+            label = if (isFavorite) stringResource(R.string.detail_loved) else stringResource(R.string.detail_love),
             active = isFavorite,
             onClick = onToggleFavorite
         )
         DetailActionButton(
             icon = Icons.Rounded.AccessTime,
-            label = if (hasReminder) "Reminder set" else "Remind",
+            label = if (hasReminder) stringResource(R.string.detail_reminder_set) else stringResource(R.string.detail_remind),
             active = hasReminder,
             onClick = onRemind
         )
         DetailActionButton(
             icon = if (isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
-            label = if (isArchived) "Unarchive" else "Archive",
+            label = if (isArchived) stringResource(R.string.detail_unarchive) else stringResource(R.string.detail_archive),
             active = isArchived,
             onClick = onToggleArchive
         )
         DetailActionButton(
             icon = Icons.Rounded.Share,
-            label = "Share",
+            label = stringResource(R.string.detail_share),
             active = false,
             onClick = onShare
         )
         DetailActionButton(
             icon = Icons.Rounded.Delete,
-            label = "Delete",
+            label = stringResource(R.string.settings_delete_2),
             active = false,
             destructive = true,
             onClick = onDelete
@@ -1071,8 +1078,8 @@ private fun AttachmentViewerDialog(
     val header = listOfNotNull(
         pdfPages[pagerState.currentPage]
             ?.takeIf { current.contentType() == ContentType.PDF }
-            ?.let { (page, count) -> "Page $page of $count" },
-        "${pagerState.currentPage + 1} of ${items.size}".takeIf { items.size > 1 }
+            ?.let { (page, count) -> stringResource(R.string.detail_page_of, page, count) },
+        stringResource(R.string.detail_item_of, pagerState.currentPage + 1, items.size).takeIf { items.size > 1 }
     ).joinToString(" · ")
 
     LaunchedEffect(pagerState.currentPage) {
@@ -1106,13 +1113,13 @@ private fun AttachmentViewerDialog(
                     )
                     ContentType.FILE -> PdfUnavailable(
                         onOpenExternally = { onOpenExternally(pageItem) },
-                        message = "This file type opens in another app."
+                        message = stringResource(R.string.detail_file_type_opens_another_app)
                     )
                     else -> {
                         val zoom = rememberZoomState()
                         AsyncImage(
                             model = pageItem.uri,
-                            contentDescription = "$title, item ${page + 1} of ${items.size}",
+                            contentDescription = stringResource(R.string.detail_item, title, page + 1, items.size),
                             contentScale = ContentScale.Fit,
                             modifier = Modifier
                                 .fillMaxSize()
@@ -1132,7 +1139,7 @@ private fun AttachmentViewerDialog(
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Close")
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.detail_close))
                 }
                 Text(
                     header,
@@ -1143,17 +1150,17 @@ private fun AttachmentViewerDialog(
                 val type = current.contentType()
                 if (type == ContentType.PDF || type == ContentType.FILE) {
                     IconButton(onClick = { onOpenExternally(current) }) {
-                        Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = "Open in another app", tint = accent)
+                        Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = stringResource(R.string.detail_open_another_app), tint = accent)
                     }
                 }
                 IconButton(onClick = { onShare(current) }) {
-                    Icon(Icons.Rounded.Share, contentDescription = "Share this item", tint = accent)
+                    Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.detail_share_item), tint = accent)
                 }
                 if (current.attachmentId != null) {
                     IconButton(onClick = {
                         onDelete(current)
                     }) {
-                        Icon(Icons.Rounded.Delete, contentDescription = "Delete this item", tint = MaterialTheme.colorScheme.error)
+                        Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.detail_delete_item), tint = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -1170,13 +1177,13 @@ private fun AttachmentViewerDialog(
                     onClick = {
                         scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
                     }
-                ) { Text("Previous") }
+                ) { Text(stringResource(R.string.detail_previous)) }
                 TextButton(
                     enabled = pagerState.currentPage < items.lastIndex,
                     onClick = {
                         scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
                     }
-                ) { Text("Next") }
+                ) { Text(stringResource(R.string.detail_next)) }
             }
         }
     }
@@ -1205,7 +1212,7 @@ private fun AttachmentPreview(
         if (galleryItem.contentType() == ContentType.PDF) {
             PdfFirstPage(
                 uri = galleryItem.uri,
-                contentDescription = "Open $title",
+                contentDescription = stringResource(R.string.detail_open, title),
                 // A whole portrait page would push the rest of the detail
                 // screen far down; show its top, like a photo hero.
                 modifier = Modifier
@@ -1216,7 +1223,7 @@ private fun AttachmentPreview(
         } else {
             AsyncImage(
                 model = galleryItem.uri,
-                contentDescription = if (linkPreview) "Open $title in browser" else title,
+                contentDescription = if (linkPreview) stringResource(R.string.detail_open_browser, title) else title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
@@ -1242,7 +1249,7 @@ private fun AttachmentPreview(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    "Open link",
+                    stringResource(R.string.detail_open_link),
                     style = MaterialTheme.typography.labelMedium,
                     color = accent,
                     fontWeight = FontWeight.SemiBold
@@ -1267,7 +1274,7 @@ private fun AttachmentPreview(
                         .background(scheme.surface.copy(alpha = 0.92f))
                         .size(48.dp)
                 ) {
-                    Icon(Icons.Rounded.Share, contentDescription = "Share this item", tint = scheme.primary)
+                    Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.detail_share_item), tint = scheme.primary)
                 }
             }
             if (galleryItem.attachmentId != null) {
@@ -1278,7 +1285,7 @@ private fun AttachmentPreview(
                         .background(scheme.surface.copy(alpha = 0.92f))
                         .size(48.dp)
                 ) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete this item", tint = scheme.error)
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.detail_delete_item), tint = scheme.error)
                 }
             }
         }
@@ -1305,7 +1312,7 @@ private fun openGalleryItemExternally(ctx: Context, item: GalleryItem): Boolean 
         setDataAndType(uri, mimeForKind(item.kind))
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    return runCatching { ctx.startActivity(Intent.createChooser(intent, "Open with")) }.isSuccess
+    return runCatching { ctx.startActivity(Intent.createChooser(intent, ctx.getString(R.string.detail_open_2))) }.isSuccess
 }
 
 private fun shareGalleryItem(ctx: Context, item: GalleryItem, title: String): Boolean {
@@ -1318,7 +1325,7 @@ private fun shareGalleryItem(ctx: Context, item: GalleryItem, title: String): Bo
         clipData = ClipData.newUri(ctx.contentResolver, title, shareUri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    return runCatching { ctx.startActivity(Intent.createChooser(intent, "Share this item")) }.isSuccess
+    return runCatching { ctx.startActivity(Intent.createChooser(intent, ctx.getString(R.string.detail_share_item))) }.isSuccess
 }
 
 private fun mimeForKind(kind: String): String = when (
@@ -1360,7 +1367,7 @@ private fun IndexingTextSection() {
             .padding(16.dp)
     ) {
         Text(
-            "Indexing text from this save. Search will improve when OCR finishes.",
+            stringResource(R.string.detail_indexing_text_save_search_will),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -1380,7 +1387,7 @@ private data class OcrDocText(
 @Composable
 private fun AboutLinkSection(details: String) {
     Text(
-        "About this link",
+        stringResource(R.string.detail_about_link),
         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
         color = MaterialTheme.colorScheme.onBackground
     )
@@ -1410,15 +1417,16 @@ private fun OcrTextSections(
     onRetry: () -> Unit
 ) {
     val itemState = states[OcrStatusEntity.sourceOf(itemId, null)]
+    val res = LocalContext.current.resources
     val attachmentDocs = attachments
         .filter { isIndexableKind(it.kind) }
         .mapIndexed { index, attachment ->
             val type = runCatching { ContentType.valueOf(attachment.kind) }.getOrDefault(ContentType.FILE)
             OcrDocText(
-                title = "${type.displayLabel()} ${index + 1}",
-                subtitle = if (type == ContentType.PDF) "Extracted from this PDF" else "Extracted from this image",
+                title = stringResource(R.string.detail_ocr_numbered, stringResource(type.displayLabel()), index + 1),
+                subtitle = stringResource(if (type == ContentType.PDF) R.string.detail_ocr_from_this_pdf else R.string.detail_ocr_from_this_image),
                 text = attachment.ocrText,
-                status = ocrStatusText(attachment.ocrText, autoScanEnabled, type, states[OcrStatusEntity.sourceOf(itemId, attachment.id)]),
+                status = ocrStatusText(res, attachment.ocrText, autoScanEnabled, type, states[OcrStatusEntity.sourceOf(itemId, attachment.id)]),
                 retry = canRetry(attachment.ocrText, states[OcrStatusEntity.sourceOf(itemId, attachment.id)])
             )
         }
@@ -1428,27 +1436,27 @@ private fun OcrTextSections(
         // The combined card is for older saves that kept all their text together: only when there is some.
         if (hasAttachmentText || itemText.isNullOrBlank()) attachmentDocs else {
             attachmentDocs + OcrDocText(
-                title = "Combined extracted text",
-                subtitle = "Older saves may store OCR as one combined result",
+                title = stringResource(R.string.detail_combined_extracted_text),
+                subtitle = stringResource(R.string.detail_older_saves_may_store_ocr),
                 text = itemText,
-                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE), itemState),
+                status = ocrStatusText(res, itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE), itemState),
                 retry = canRetry(itemText, itemState)
             )
         }
     } else {
         listOf(
             OcrDocText(
-                title = "Extracted text",
-                subtitle = "From this ${runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE).displayLabel().lowercase()}",
+                title = stringResource(R.string.detail_extracted_text),
+                subtitle = stringResource(fromThisLabel(runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE))),
                 text = itemText,
-                status = ocrStatusText(itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE), itemState),
+                status = ocrStatusText(res, itemText, autoScanEnabled, runCatching { ContentType.valueOf(itemKind) }.getOrDefault(ContentType.FILE), itemState),
                 retry = canRetry(itemText, itemState)
             )
         )
     }
 
     Text(
-        "Extracted text",
+        stringResource(R.string.detail_extracted_text),
         style = MaterialTheme.typography.titleMedium
     )
     Spacer(Modifier.height(8.dp))
@@ -1460,42 +1468,54 @@ private fun OcrTextSections(
 }
 
 /** What a file's reading came to, said plainly ([OcrStatusEntity]); without a record, the general case. */
-private fun ocrStatusText(text: String?, autoScanEnabled: Boolean, type: ContentType, state: OcrStatusEntity?): String? {
-    val what = if (type == ContentType.PDF) "this PDF" else "this image"
+private fun ocrStatusText(
+    res: android.content.res.Resources,
+    text: String?,
+    autoScanEnabled: Boolean,
+    type: ContentType,
+    state: OcrStatusEntity?
+): String? {
+    val pdf = type == ContentType.PDF
     if (!text.isNullOrBlank()) {
         // There's text from before; say if the latest reading didn't go through.
         return when (state?.state) {
-            OcrStatusEntity.READING -> "Reading again: ${state.pagesDone} page${if (state.pagesDone == 1) "" else "s"} so far. The text below is from before."
-            OcrStatusEntity.FAILED -> "The latest reading of $what failed. The text below is from before."
-            OcrStatusEntity.UNREADABLE -> "This file couldn't be opened just now. The text below is from before."
+            OcrStatusEntity.READING -> res.getQuantityString(R.plurals.detail_ocr_reading_again, state.pagesDone, state.pagesDone)
+            OcrStatusEntity.FAILED -> res.getString(if (pdf) R.string.detail_ocr_failed_again_pdf else R.string.detail_ocr_failed_again_image)
+            OcrStatusEntity.UNREADABLE -> res.getString(R.string.detail_ocr_unreadable_now)
             else -> null
         }
     }
     when (state?.state) {
-        OcrStatusEntity.PENDING -> return "Waiting to be read. It happens in the background, and the text appears here."
-        OcrStatusEntity.READING -> return "Being read: ${state.pagesDone} page${if (state.pagesDone == 1) "" else "s"} so far."
-        OcrStatusEntity.NO_TEXT -> return "No text found in $what. If it's in another language, turn that language on in Settings › Text recognition, then try again."
-        OcrStatusEntity.UNREADABLE -> return "This file couldn't be opened on this phone, so its text can't be read. Add the file to the save again."
-        OcrStatusEntity.FAILED -> return "Couldn't read the text in $what."
+        OcrStatusEntity.PENDING -> return res.getString(R.string.detail_ocr_pending)
+        OcrStatusEntity.READING -> return res.getQuantityString(R.plurals.detail_ocr_reading, state.pagesDone, state.pagesDone)
+        OcrStatusEntity.NO_TEXT -> return res.getString(if (pdf) R.string.detail_ocr_no_text_pdf else R.string.detail_ocr_no_text_image)
+        OcrStatusEntity.UNREADABLE -> return res.getString(R.string.detail_ocr_unreadable)
+        OcrStatusEntity.FAILED -> return res.getString(if (pdf) R.string.detail_ocr_failed_pdf else R.string.detail_ocr_failed_image)
     }
-    if (!autoScanEnabled) return "Text recognition is off for this save."
-    return if (type == ContentType.PDF) {
-        "No extracted text yet. It may still be indexing, the PDF may be scanned/locked, or text may be outside the selected page limit."
-    } else {
-        "No extracted text yet. It may still be indexing or the image may not contain readable text."
-    }
+    if (!autoScanEnabled) return res.getString(R.string.detail_ocr_off)
+    return res.getString(if (pdf) R.string.detail_ocr_none_yet_pdf else R.string.detail_ocr_none_yet_image)
 }
 
 private fun canRetry(text: String?, state: OcrStatusEntity?): Boolean =
     state?.state == OcrStatusEntity.FAILED || (text.isNullOrBlank() && state?.state == OcrStatusEntity.NO_TEXT)
 
-private fun ContentType.displayLabel(): String = when (this) {
-    ContentType.IMAGE -> "Image"
-    ContentType.PDF -> "PDF"
-    ContentType.TEXT -> "Text"
-    ContentType.NOTE -> "Note"
-    ContentType.LINK -> "Link"
-    ContentType.FILE -> "File"
+private fun ContentType.displayLabel(): Int = when (this) {
+    ContentType.IMAGE -> R.string.content_image
+    ContentType.PDF -> R.string.content_pdf
+    ContentType.TEXT -> R.string.content_text
+    ContentType.NOTE -> R.string.content_note
+    ContentType.LINK -> R.string.content_link
+    ContentType.FILE -> R.string.content_file
+}
+
+/** "From this PDF", "From this image"…: where a card's extracted text came from. */
+private fun fromThisLabel(type: ContentType): Int = when (type) {
+    ContentType.IMAGE -> R.string.detail_ocr_from_image
+    ContentType.PDF -> R.string.detail_ocr_from_pdf
+    ContentType.TEXT -> R.string.detail_ocr_from_text
+    ContentType.NOTE -> R.string.detail_ocr_from_note
+    ContentType.LINK -> R.string.detail_ocr_from_link
+    ContentType.FILE -> R.string.detail_ocr_from_file
 }
 
 @Composable
@@ -1530,10 +1550,10 @@ private fun OcrTextSection(doc: OcrDocText, onRetry: () -> Unit) {
                 IconButton(
                     onClick = {
                         clipboard.setText(AnnotatedString(doc.text))
-                        Toast.makeText(ctx, "Extracted text copied", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(ctx, ctx.getString(R.string.detail_extracted_text_copied), Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy all extracted text")
+                    Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.detail_copy_all_extracted_text))
                 }
             }
         }
@@ -1550,7 +1570,7 @@ private fun OcrTextSection(doc: OcrDocText, onRetry: () -> Unit) {
                 )
             }
             if (doc.retry) {
-                TextButton(onClick = onRetry) { Text("Try again", fontWeight = FontWeight.Bold) }
+                TextButton(onClick = onRetry) { Text(stringResource(R.string.ocr_try_again), fontWeight = FontWeight.Bold) }
             }
         } else {
             // Text from before, with what became of the latest reading if it didn't go through.
@@ -1561,11 +1581,11 @@ private fun OcrTextSection(doc: OcrDocText, onRetry: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = if (doc.retry) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (doc.retry) TextButton(onClick = onRetry) { Text("Try again", fontWeight = FontWeight.Bold) }
+                if (doc.retry) TextButton(onClick = onRetry) { Text(stringResource(R.string.ocr_try_again), fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.height(6.dp))
             }
             Text(
-                "Long-press to select a line or drag for multiple lines.",
+                stringResource(R.string.detail_long_press_select_line_drag),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1581,7 +1601,7 @@ private fun OcrTextSection(doc: OcrDocText, onRetry: () -> Unit) {
             }
             if (doc.text.lineSequence().count() > 6 || doc.text.length > 360) {
                 androidx.compose.material3.TextButton(onClick = { expanded = !expanded }) {
-                    Text(if (expanded) "Show less" else "Show all")
+                    Text(if (expanded) stringResource(R.string.detail_show_less) else stringResource(R.string.detail_show_all))
                 }
             }
         }
@@ -1640,7 +1660,7 @@ private fun EditableTitle(initial: String, onCommit: (old: String, new: String) 
 
     Column {
         Text(
-            "Title",
+            stringResource(R.string.detail_title),
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -1674,7 +1694,7 @@ private fun EditableTitle(initial: String, onCommit: (old: String, new: String) 
             )
             Icon(
                 imageVector = Icons.Rounded.Edit,
-                contentDescription = "Edit title",
+                contentDescription = stringResource(R.string.detail_edit_title),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(top = 6.dp)
@@ -1707,7 +1727,7 @@ private fun TagsRow(
         }
     }
     Column {
-        Text("Tags", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.detail_tags), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         if (tags.isNotEmpty()) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1748,7 +1768,7 @@ private fun TagsRow(
         androidx.compose.material3.OutlinedTextField(
             value = input,
             onValueChange = { input = it },
-            placeholder = { Text("Add a tag") },
+            placeholder = { Text(stringResource(R.string.detail_add_tag)) },
             singleLine = true,
             shape = RoundedCornerShape(18.dp),
             modifier = Modifier
@@ -1780,12 +1800,12 @@ private fun TagsRow(
 private fun NotesEditor(initial: String, onCommit: (old: String, new: String) -> Unit) {
     var text by remember(initial) { mutableStateOf(initial) }
     Column {
-        Text("Your note", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.detail_note), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = text,
             onValueChange = { text = it },
-            placeholder = { Text("Add a thought, a reminder, why you saved this...") },
+            placeholder = { Text(stringResource(R.string.detail_add_thought_reminder_why_saved)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 100.dp)
@@ -1826,20 +1846,20 @@ private fun ConflictCard(conflict: SyncConflict, onUse: (String) -> Unit, onKeep
             .padding(14.dp)
     ) {
         Text(
-            "${conflict.label} edited on 2 devices",
+            stringResource(conflict.label),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = scheme.onSurface
         )
         Text(
-            "Both versions were kept. Pick the one to use everywhere.",
+            stringResource(R.string.detail_both_versions_were_kept_pick),
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant
         )
         Spacer(Modifier.height(10.dp))
-        ConflictVersion(label = "Shown now", value = conflict.shown.orEmpty(), action = "Keep", onClick = onKeep)
+        ConflictVersion(label = stringResource(R.string.detail_shown_now), value = conflict.shown.orEmpty(), action = stringResource(R.string.detail_keep), onClick = onKeep)
         conflict.others.forEach { other ->
             Spacer(Modifier.height(8.dp))
-            ConflictVersion(label = "Other version", value = other, action = "Use this", onClick = { onUse(other) })
+            ConflictVersion(label = stringResource(R.string.detail_other_version), value = other, action = stringResource(R.string.detail_use), onClick = { onUse(other) })
         }
     }
 }
@@ -1857,7 +1877,7 @@ private fun ConflictVersion(label: String, value: String, action: String, onClic
         Column(Modifier.weight(1f)) {
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                value.ifBlank { "(empty)" },
+                value.ifBlank { stringResource(R.string.detail_empty) },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 4,

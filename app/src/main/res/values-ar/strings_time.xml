@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">الآن</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="zero">قبل %d دقيقة</item>
+        <item quantity="one">قبل دقيقة</item>
+        <item quantity="two">قبل دقيقتين</item>
+        <item quantity="few">قبل %d دقائق</item>
+        <item quantity="many">قبل %d دقيقة</item>
+        <item quantity="other">قبل %d دقيقة</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="zero">قبل %d ساعة</item>
+        <item quantity="one">قبل ساعة</item>
+        <item quantity="two">قبل ساعتين</item>
+        <item quantity="few">قبل %d ساعات</item>
+        <item quantity="many">قبل %d ساعة</item>
+        <item quantity="other">قبل %d ساعة</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="zero">قبل %d يوم</item>
+        <item quantity="one">قبل يوم</item>
+        <item quantity="two">قبل يومين</item>
+        <item quantity="few">قبل %d أيام</item>
+        <item quantity="many">قبل %d يومًا</item>
+        <item quantity="other">قبل %d يوم</item>
+    </plurals>
+    <string name="reminder_preset_tonight">الليلة</string>
+    <string name="reminder_preset_tomorrow">غدًا</string>
+    <string name="reminder_preset_weekend">نهاية الأسبوع</string>
+    <string name="reminder_preset_next_week">الأسبوع القادم</string>
+    <string name="reminder_preset_custom">اختيار وقت…</string>
+    <string name="reminder_today">اليوم</string>
+    <string name="reminder_tomorrow">غدًا</string>
+    <string name="reminder_today_at">اليوم %1$s</string>
+    <string name="reminder_tomorrow_at">غدًا %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">مضبوط حاليًا على %1$s</string>
+    <string name="reminder_nudge_at">سنذكّرك %1$s</string>
+    <string name="reminder_remind_at">سنذكّرك %1$s</string>
+    <string name="reminder_remind_me">ذكّرني</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">سيطلب PettiBox إذن الإشعارات عند الحاجة. إن كانت المنبهات الدقيقة متوقفة، فقد تصل التذكيرات متأخرة قليلاً.</string>
+    <string name="reminder_choose_date_time">اختيار التاريخ والوقت</string>
+    <string name="reminder_clear_reminder">مسح التذكير</string>
+    <string name="reminder_custom_reminder">تذكير مخصص</string>
+    <string name="reminder_pick_time_below_enable_set">اختر وقتًا أدناه لتفعيل «ضبط»</string>
+    <string name="reminder_pick_date_time">اختر تاريخًا ووقتًا</string>
+    <string name="reminder_moment_has_already_passed_pick">هذه اللحظة مضت بالفعل — اختر وقتًا في المستقبل</string>
+    <string name="reminder_date">التاريخ</string>
+    <string name="reminder_tap_pick">انقر للاختيار</string>
+    <string name="reminder_time">الوقت</string>
+    <string name="reminder_tap_set">انقر للضبط</string>
+    <string name="reminder_set_reminder">ضبط التذكير</string>
+    <string name="reminder_done">تم</string>
+    <string name="reminder_pick_time">اختر وقتًا</string>
+    <string name="reminder_set_time">ضبط الوقت</string>
+</resources>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">agora mesmo</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">há %d min</item>
+        <item quantity="many">há %d min</item>
+        <item quantity="other">há %d min</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">há %d h</item>
+        <item quantity="many">há %d h</item>
+        <item quantity="other">há %d h</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">há %d dia</item>
+        <item quantity="many">há %d dias</item>
+        <item quantity="other">há %d dias</item>
+    </plurals>
+    <string name="reminder_preset_tonight">Hoje à noite</string>
+    <string name="reminder_preset_tomorrow">Amanhã</string>
+    <string name="reminder_preset_weekend">Fim de semana</string>
+    <string name="reminder_preset_next_week">Próxima semana</string>
+    <string name="reminder_preset_custom">Escolher um horário…</string>
+    <string name="reminder_today">Hoje</string>
+    <string name="reminder_tomorrow">Amanhã</string>
+    <string name="reminder_today_at">Hoje %1$s</string>
+    <string name="reminder_tomorrow_at">Amanhã %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">Definido para %1$s</string>
+    <string name="reminder_nudge_at">Vamos lembrar você: %1$s</string>
+    <string name="reminder_remind_at">Vamos lembrar você: %1$s</string>
+    <string name="reminder_remind_me">Me lembre</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">O PettiBox vai pedir permissão para notificações quando precisar. Se os alarmes exatos estiverem desativados, os lembretes podem chegar um pouco depois.</string>
+    <string name="reminder_choose_date_time">Escolha data e hora</string>
+    <string name="reminder_clear_reminder">Remover lembrete</string>
+    <string name="reminder_custom_reminder">Lembrete personalizado</string>
+    <string name="reminder_pick_time_below_enable_set">Escolha um horário abaixo para ativar Definir</string>
+    <string name="reminder_pick_date_time">Escolha uma data e um horário</string>
+    <string name="reminder_moment_has_already_passed_pick">Esse momento já passou: escolha um horário futuro</string>
+    <string name="reminder_date">Data</string>
+    <string name="reminder_tap_pick">Toque para escolher</string>
+    <string name="reminder_time">Horário</string>
+    <string name="reminder_tap_set">Toque para definir</string>
+    <string name="reminder_set_reminder">Definir lembrete</string>
+    <string name="reminder_done">Pronto</string>
+    <string name="reminder_pick_time">Escolha um horário</string>
+    <string name="reminder_set_time">Definir horário</string>
+</resources>

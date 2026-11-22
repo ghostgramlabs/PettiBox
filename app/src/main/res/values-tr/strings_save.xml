@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">Hızlı kayıt</string>
+    <string name="save_saved_image">Kaydedilen resim</string>
+    <string name="save_saved_pdf">Kaydedilen PDF</string>
+    <string name="save_saved_file">Kaydedilen dosya</string>
+    <string name="save_saved_when">%1$s kaydedildi</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d resim</item>
+        <item quantity="other">%d resim</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="other">%d PDF</item>
+    </plurals>
+    <string name="save_discard_what_typed">Yazdıkların silinsin mi?</string>
+    <string name="save_note_tags_havent_been_saved">Notun ve etiketlerin henüz kaydedilmedi.</string>
+    <string name="save_discard">Sil</string>
+    <string name="save_keep_editing">Düzenlemeye devam et</string>
+    <string name="save_save">Bu kaydedilsin mi?</string>
+    <string name="save_save_2">Şuraya kaydet</string>
+    <string name="save_no_collection_called_yet">Henüz “%1$s” adında bir koleksiyon yok</string>
+    <string name="save_want_start_one">Oluşturmak ister misin?</string>
+    <string name="save_create">“%1$s” oluştur</string>
+    <string name="save_new">Yeni</string>
+    <string name="save_remove_favorites">Favorilerden çıkar</string>
+    <string name="save_add_favorites">Favorilere ekle</string>
+    <string name="save_write_note_save">Kaydetmek için bir not yaz</string>
+    <string name="save_save_3">%1$s koleksiyonuna kaydet</string>
+    <string name="save_save_without_collection">Koleksiyonsuz kaydet</string>
+    <string name="save_selected">Seçili: %1$s</string>
+    <string name="save_add_which_save">Hangi kayda eklensin?</string>
+    <string name="save_add_note">Not ekle</string>
+    <string name="save_add_tags">Etiket ekle</string>
+    <string name="save_add_note_2">Bir not ekle</string>
+    <string name="save_tags_comma_separated">Etiketler, virgülle ayrılmış</string>
+    <string name="save_tucked_away">Kaldırıldı!</string>
+    <string name="save_find_home_screen_anytime">İstediğin zaman ana ekranda bul.</string>
+    <string name="save_append_save">Bir kayda ekle</string>
+    <string name="save_already_saved">Bunu zaten kaydettin</string>
+    <string name="save_open">Aç</string>
+    <string name="save_save_anyway">Yine de kaydet</string>
+    <string name="save_suggested">Önerilen</string>
+    <string name="save_recently_used">Son kullanılan</string>
+    <string name="save_collections">Koleksiyonların</string>
+    <string name="save_starter_collections">Başlangıç koleksiyonları</string>
+</resources>

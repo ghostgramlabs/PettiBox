@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">Item rápido</string>
+    <string name="save_saved_image">Imagem salva</string>
+    <string name="save_saved_pdf">PDF salvo</string>
+    <string name="save_saved_file">Arquivo salvo</string>
+    <string name="save_saved_when">salvo %1$s</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d imagem</item>
+        <item quantity="many">%d imagens</item>
+        <item quantity="other">%d imagens</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="many">%d PDFs</item>
+        <item quantity="other">%d PDFs</item>
+    </plurals>
+    <string name="save_discard_what_typed">Descartar o que você digitou?</string>
+    <string name="save_note_tags_havent_been_saved">Sua nota e suas tags ainda não foram salvas.</string>
+    <string name="save_discard">Descartar</string>
+    <string name="save_keep_editing">Continuar editando</string>
+    <string name="save_save">Salvar isto?</string>
+    <string name="save_save_2">Salvar em</string>
+    <string name="save_no_collection_called_yet">Ainda não há uma coleção chamada “%1$s”</string>
+    <string name="save_want_start_one">Quer criar uma?</string>
+    <string name="save_create">Criar “%1$s”</string>
+    <string name="save_new">Nova</string>
+    <string name="save_remove_favorites">Remover dos favoritos</string>
+    <string name="save_add_favorites">Adicionar aos favoritos</string>
+    <string name="save_write_note_save">Escreva uma nota para salvar</string>
+    <string name="save_save_3">Salvar em %1$s</string>
+    <string name="save_save_without_collection">Salvar sem coleção</string>
+    <string name="save_selected">Selecionada: %1$s</string>
+    <string name="save_add_which_save">Adicionar a qual item?</string>
+    <string name="save_add_note">Adicionar nota</string>
+    <string name="save_add_tags">Adicionar tags</string>
+    <string name="save_add_note_2">Adicione uma nota</string>
+    <string name="save_tags_comma_separated">Tags, separadas por vírgula</string>
+    <string name="save_tucked_away">Guardado!</string>
+    <string name="save_find_home_screen_anytime">Encontre na tela inicial quando quiser.</string>
+    <string name="save_append_save">Adicionar a um item</string>
+    <string name="save_already_saved">Você já salvou isto</string>
+    <string name="save_open">Abrir</string>
+    <string name="save_save_anyway">Salvar mesmo assim</string>
+    <string name="save_suggested">Sugerida</string>
+    <string name="save_recently_used">Usadas recentemente</string>
+    <string name="save_collections">Suas coleções</string>
+    <string name="save_starter_collections">Coleções iniciais</string>
+</resources>

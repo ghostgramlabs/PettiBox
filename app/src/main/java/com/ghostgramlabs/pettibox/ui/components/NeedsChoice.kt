@@ -1,5 +1,10 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -50,7 +55,7 @@ fun NeedsChoiceDot(modifier: Modifier = Modifier, size: Dp = 12.dp) {
         label = "fade"
     )
     Box(
-        modifier.semantics { contentDescription = "Edited on 2 devices: needs your choice" },
+        modifier.semantics { contentDescription = AppText.getString(R.string.sync_edited_2_devices_needs_choice) },
         contentAlignment = Alignment.Center
     ) {
         Box(

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">棚であなたを待っているものがあります</string>
+    <string name="nudge_title">あなたの棚から</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="other">未読のアイテムが %d 件あります。</item>
+    </plurals>
+    <string name="nudge_body_one">「%1$s」（%2$s に保存）</string>
+    <plurals name="nudge_body_more">
+        <item quantity="other">「%1$s」（%2$s に保存）。ほかに未読が %3$d 件あります。</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="other">このスマートフォンに %d 件のファイルがないため、送信できません。アイテムを開いて、ファイルを追加し直してください。</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="other">ライブラリを同期済み · %1$d 件のファイルがほかのデバイスからの送信待ち · %2$s に確認</item>
+    </plurals>
+    <string name="files_all_in_drive">すべての写真とファイルが Google ドライブにあります · %1$s に確認</string>
+    <string name="files_checked">写真とファイルを %1$s に確認</string>
+    <string name="files_unreachable">写真とファイルの送信中に Google ドライブに接続できませんでした（%1$s）。まもなく自動で再試行します。</string>
+    <string name="files_no_connection">接続なし</string>
+    <plurals name="files_unreadable">
+        <item quantity="other">%d 件のファイルはこのスマートフォンで読み取れなくなりました（元のアプリが許可しなくなりました）。そのため送信できません。</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="other">%d 件の写真とファイルを Google ドライブに送信中…</item>
+    </plurals>
+    <string name="files_sending_progress">写真とファイルを Google ドライブに送信中… %1$d/%2$d</string>
+    <string name="sync_step_connecting">接続中</string>
+    <string name="sync_unreachable">Google ドライブに接続できませんでした</string>
+    <string name="sync_drive_error">Google ドライブからエラーが返されました（%1$d）</string>
+    <string name="sync_failed_while">%1$s（%2$s）。</string>
+    <string name="sync_retrying">まもなく自動で再試行します。</string>
+    <plurals name="sync_damaged">
+        <item quantity="other">ほかのデバイスからの破損したファイル %d 件をスキップしました。その内容は適用されていません</item>
+    </plurals>
+    <string name="sync_every_15_min">15 分</string>
+    <string name="sync_every_30_min">30 分</string>
+    <string name="sync_every_hour">1 時間</string>
+    <string name="sync_every_3_hours">3 時間</string>
+    <string name="sync_daily">毎日</string>
+    <string name="sync_weekly">毎週</string>
+    <string name="sync_only_in_use">使っているときだけ</string>
+    <string name="reminder_save_locked_collection">ロックされたコレクション内のアイテム</string>
+    <string name="reminder_saved_item">保存したアイテム</string>
+    <string name="reminder_snooze_1h">1 時間後に再通知</string>
+    <string name="reminder_evening">今晩</string>
+    <string name="nudge_see_all_unread">未読をすべて表示</string>
+    <string name="nudge_once_week_one_thing_saved">週に 1 回、保存したけれどまだ開いていないものをお知らせします。</string>
+    <string name="reminder_save_reminders">アイテムのリマインダー</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">PettiBox にリマインドを頼んだもののお知らせ。</string>
+    <string name="files_photos_files_waiting_reconnect_google">写真とファイルは待機中です：設定で Google ドライブに再接続してください。</string>
+    <string name="files_photos_files_sent_once_first">写真とファイルは、最初の同期が終わると送信されます。</string>
+    <string name="files_photos_files_arent_sent_google">写真とファイルは送信されません：Google ドライブは %2$s ではなく %1$s でログインしています。</string>
+    <string name="files_photos_files_couldnt_sent_tap">写真とファイルを送信できませんでした：%1$s。「今すぐ同期」をタップしてもう一度お試しください。</string>
+    <string name="files_photos_files_stopped_sending_trying">写真とファイルの送信が止まりました：%1$s。まもなく再試行します。</string>
+    <string name="sync_sync_stopped">同期が停止しました：%1$s</string>
+    <string name="sync_sync_was_turned_off_because">ほかのデバイスで同期データが Google ドライブから削除されたため、同期をオフにしました。このスマートフォンの内容はすべて残っています。最初からやり直すには、同期をもう一度オンにしてください。</string>
+    <string name="sync_google_drive_needs_reconnecting">Google ドライブへの再接続が必要です</string>
+    <string name="sync_google_drive_didnt_say_which">Google ドライブからアカウントの情報が返されませんでした</string>
+    <string name="sync_google_drive_signed_but_library">Google ドライブは %1$s でログインしていますが、このライブラリは %2$s と同期しています。%3$s に戻すか、同期をオフにしてからオンに戻して %4$s と同期してください。</string>
+    <string name="sync_couldnt_save_safety_copy_library">同期の前にライブラリの安全コピーを保存できませんでした。次回もう一度試します。</string>
+    <string name="sync_checking_google_drive">Google ドライブを確認中…</string>
+    <string name="sync_receiving_changes">変更を受信中…</string>
+    <string name="sync_another_device_uses_newer_version">ほかのデバイスが新しいバージョンの PettiBox を使っています。保存された内容をすべて見るには、このアプリを更新してください。</string>
+    <string name="sync_preparing_changes">変更を準備中…</string>
+    <string name="sync_updating_library">ライブラリを更新中…</string>
+    <string name="sync_couldnt_save_safety_copy_before">アイテムを削除する前に安全コピーを保存できなかったため、何も削除していません。空き容量を増やして、もう一度選んでください。</string>
+    <string name="sync_sending_changes">変更を送信中…</string>
+    <string name="article_page_no_longer_exists">このページはもう存在しません</string>
+    <string name="article_site_doesnt_allow_saving_copy">このサイトはコピーの保存を許可していません</string>
+    <string name="article_site_answered_error">サイトからエラーが返されました（%1$s）</string>
+    <string name="article_couldnt_find_article_page">このページで記事が見つかりませんでした</string>
+    <string name="article_page_too_long_keep_copy">このページは長すぎてコピーを保存できません</string>
+    <string name="article_couldnt_reach_page_check_connection">ページに接続できませんでした。接続を確認して、もう一度お試しください。</string>
+</resources>

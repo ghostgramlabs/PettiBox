@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">आपकी शेल्फ़ पर कुछ इंतज़ार कर रहा है</string>
+    <string name="nudge_title">आपकी शेल्फ़ से</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">आपके पास %d अनपढ़ा आइटम है।</item>
+        <item quantity="other">आपके पास %d अनपढ़े आइटम हैं।</item>
+    </plurals>
+    <string name="nudge_body_one">“%1$s” — %2$s सेव किया गया।</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">“%1$s” — %2$s सेव किया गया। साथ में %3$d और अनपढ़ा।</item>
+        <item quantity="other">“%1$s” — %2$s सेव किया गया। साथ में %3$d और अनपढ़े।</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">इस फ़ोन पर %d फ़ाइल नहीं है, इसलिए उसे भेजा नहीं जा सकता। आइटम खोलें और फ़ाइल फिर से जोड़ें।</item>
+        <item quantity="other">इस फ़ोन पर %d फ़ाइलें नहीं हैं, इसलिए उन्हें भेजा नहीं जा सकता। आइटम खोलें और फ़ाइलें फिर से जोड़ें।</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">लाइब्रेरी सिंक हो गई · %1$d फ़ाइल किसी दूसरे डिवाइस के भेजने का इंतज़ार कर रही है · %2$s पर जाँची गई</item>
+        <item quantity="other">लाइब्रेरी सिंक हो गई · %1$d फ़ाइलें किसी दूसरे डिवाइस के भेजने का इंतज़ार कर रही हैं · %2$s पर जाँची गईं</item>
+    </plurals>
+    <string name="files_all_in_drive">सभी फ़ोटो और फ़ाइलें Google Drive में हैं · %1$s पर जाँचा गया</string>
+    <string name="files_checked">फ़ोटो और फ़ाइलें %1$s पर जाँची गईं</string>
+    <string name="files_unreachable">फ़ोटो और फ़ाइलें भेजते समय Google Drive से कनेक्ट नहीं हो सका (%1$s)। कुछ देर में अपने-आप फिर कोशिश होगी।</string>
+    <string name="files_no_connection">कोई कनेक्शन नहीं</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d फ़ाइल अब इस फ़ोन पर नहीं पढ़ी जा सकती (जिस ऐप से आई थी, वह अब इसकी इजाज़त नहीं देता), इसलिए उसे भेजा नहीं जा सकता।</item>
+        <item quantity="other">%d फ़ाइलें अब इस फ़ोन पर नहीं पढ़ी जा सकतीं (जिस ऐप से आई थीं, वह अब इसकी इजाज़त नहीं देता), इसलिए उन्हें भेजा नहीं जा सकता।</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">%d फ़ोटो और फ़ाइलें Google Drive पर भेजी जा रही हैं…</item>
+        <item quantity="other">%d फ़ोटो और फ़ाइलें Google Drive पर भेजी जा रही हैं…</item>
+    </plurals>
+    <string name="files_sending_progress">फ़ोटो और फ़ाइलें Google Drive पर भेजी जा रही हैं… %2$d में से %1$d</string>
+    <string name="sync_step_connecting">कनेक्ट करते समय</string>
+    <string name="sync_unreachable">Google Drive से कनेक्ट नहीं हो सका</string>
+    <string name="sync_drive_error">Google Drive ने गड़बड़ी के साथ जवाब दिया (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s)।</string>
+    <string name="sync_retrying">कुछ देर में अपने-आप फिर कोशिश होगी।</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">दूसरे डिवाइस की %d खराब फ़ाइल छोड़ दी गई; उसमें से कुछ भी लागू नहीं किया गया</item>
+        <item quantity="other">दूसरे डिवाइस की %d खराब फ़ाइलें छोड़ दी गईं; उनमें से कुछ भी लागू नहीं किया गया</item>
+    </plurals>
+    <string name="sync_every_15_min">15 मिनट</string>
+    <string name="sync_every_30_min">30 मिनट</string>
+    <string name="sync_every_hour">1 घंटा</string>
+    <string name="sync_every_3_hours">3 घंटे</string>
+    <string name="sync_daily">रोज़</string>
+    <string name="sync_weekly">हर हफ़्ते</string>
+    <string name="sync_only_in_use">सिर्फ़ इस्तेमाल के दौरान</string>
+    <string name="reminder_save_locked_collection">लॉक किए गए कलेक्शन का एक आइटम</string>
+    <string name="reminder_saved_item">सेव किया गया आइटम</string>
+    <string name="reminder_snooze_1h">1 घंटे बाद याद दिलाएँ</string>
+    <string name="reminder_evening">आज शाम</string>
+    <string name="nudge_see_all_unread">सभी अनपढ़े देखें</string>
+    <string name="nudge_once_week_one_thing_saved">हफ़्ते में एक बार, कोई ऐसी चीज़ जिसे आपने सेव किया पर अभी तक खोला नहीं।</string>
+    <string name="reminder_save_reminders">आइटम के रिमाइंडर</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">उन चीज़ों की याद जिनके लिए आपने PettiBox से कहा था।</string>
+    <string name="files_photos_files_waiting_reconnect_google">फ़ोटो और फ़ाइलें इंतज़ार में हैं: सेटिंग में Google Drive फिर से कनेक्ट करें।</string>
+    <string name="files_photos_files_sent_once_first">पहला सिंक पूरा होते ही फ़ोटो और फ़ाइलें भेजी जाती हैं।</string>
+    <string name="files_photos_files_arent_sent_google">फ़ोटो और फ़ाइलें नहीं भेजी जा रहीं: Google Drive में %1$s से साइन इन है, %2$s से नहीं।</string>
+    <string name="files_photos_files_couldnt_sent_tap">फ़ोटो और फ़ाइलें नहीं भेजी जा सकीं: %1$s। फिर कोशिश करने के लिए अभी सिंक करें पर टैप करें।</string>
+    <string name="files_photos_files_stopped_sending_trying">फ़ोटो और फ़ाइलें भेजना रुक गया: %1$s। कुछ देर में फिर कोशिश होगी।</string>
+    <string name="sync_sync_stopped">सिंक रुक गया: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">सिंक बंद कर दिया गया क्योंकि किसी दूसरे डिवाइस से Google Drive का सिंक किया गया डेटा मिटा दिया गया। इस फ़ोन पर सब कुछ अब भी है; नए सिरे से शुरू करने के लिए सिंक फिर से चालू करें।</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive को फिर से कनेक्ट करना होगा</string>
+    <string name="sync_google_drive_didnt_say_which">Google Drive ने नहीं बताया कि यह कौन-सा खाता है</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive में %1$s से साइन इन है, लेकिन यह लाइब्रेरी %2$s के साथ सिंक होती है। %3$s पर वापस जाएँ, या %4$s के साथ सिंक करने के लिए सिंक बंद करके फिर चालू करें।</string>
+    <string name="sync_couldnt_save_safety_copy_library">सिंक से पहले आपकी लाइब्रेरी की सुरक्षा कॉपी सेव नहीं हो सकी। अगली बार फिर कोशिश होगी।</string>
+    <string name="sync_checking_google_drive">Google Drive जाँचा जा रहा है…</string>
+    <string name="sync_receiving_changes">बदलाव मिल रहे हैं…</string>
+    <string name="sync_another_device_uses_newer_version">दूसरा डिवाइस PettiBox का नया वर्शन इस्तेमाल कर रहा है। उसका सेव किया सब कुछ देखने के लिए यह ऐप अपडेट करें।</string>
+    <string name="sync_preparing_changes">आपके बदलाव तैयार किए जा रहे हैं…</string>
+    <string name="sync_updating_library">आपकी लाइब्रेरी अपडेट हो रही है…</string>
+    <string name="sync_couldnt_save_safety_copy_before">आइटम हटाने से पहले सुरक्षा कॉपी सेव नहीं हो सकी, इसलिए कुछ नहीं हटाया गया। थोड़ी जगह खाली करें और फिर से चुनें।</string>
+    <string name="sync_sending_changes">आपके बदलाव भेजे जा रहे हैं…</string>
+    <string name="article_page_no_longer_exists">यह पेज अब मौजूद नहीं है</string>
+    <string name="article_site_doesnt_allow_saving_copy">यह साइट कॉपी सेव करने की इजाज़त नहीं देती</string>
+    <string name="article_site_answered_error">साइट ने गड़बड़ी के साथ जवाब दिया (%1$s)</string>
+    <string name="article_couldnt_find_article_page">इस पेज पर कोई लेख नहीं मिला</string>
+    <string name="article_page_too_long_keep_copy">यह पेज कॉपी रखने के लिए बहुत लंबा है</string>
+    <string name="article_couldnt_reach_page_check_connection">पेज तक नहीं पहुँच सके। अपना कनेक्शन जाँचें और फिर कोशिश करें।</string>
+</resources>

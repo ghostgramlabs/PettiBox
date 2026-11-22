@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browse_deleted_one_for_good">Excluído para sempre</string>
+    <string name="browse_moved_one_to_trash">Movido para Excluídos recentemente</string>
+    <string name="browse_restored_one">Restaurado</string>
+    <string name="browse_empty">Vazia</string>
+    <string name="browse_empty_collection_named">Salve algo em %1$s pelo menu Compartilhar e ele vai aparecer aqui.</string>
+    <string name="browse_empty_collection">Salve algo nesta coleção pelo menu Compartilhar e ele vai aparecer aqui.</string>
+    <plurals name="browse_deleted_for_good">
+        <item quantity="one">%d item excluído para sempre</item>
+        <item quantity="many">%d itens excluídos para sempre</item>
+        <item quantity="other">%d itens excluídos para sempre</item>
+    </plurals>
+    <plurals name="browse_moved_to_trash">
+        <item quantity="one">%d item movido para Excluídos recentemente</item>
+        <item quantity="many">%d itens movidos para Excluídos recentemente</item>
+        <item quantity="other">%d itens movidos para Excluídos recentemente</item>
+    </plurals>
+    <plurals name="browse_restored">
+        <item quantity="one">%d item restaurado</item>
+        <item quantity="many">%d itens restaurados</item>
+        <item quantity="other">%d itens restaurados</item>
+    </plurals>
+    <plurals name="browse_delete_n_for_good">
+        <item quantity="one">Excluir %d para sempre?</item>
+        <item quantity="many">Excluir %d para sempre?</item>
+        <item quantity="other">Excluir %d para sempre?</item>
+    </plurals>
+    <plurals name="browse_delete_n_selected">
+        <item quantity="one">Excluir %d selecionado?</item>
+        <item quantity="many">Excluir %d selecionados?</item>
+        <item quantity="other">Excluir %d selecionados?</item>
+    </plurals>
+    <plurals name="browse_n_selected">
+        <item quantity="one">%d selecionado</item>
+        <item quantity="many">%d selecionados</item>
+        <item quantity="other">%d selecionados</item>
+    </plurals>
+    <string name="browse_saves_collection_will_stay_pettibox">Os itens desta coleção continuam no PettiBox, mas a coleção será removida.</string>
+    <string name="browse_locked_find_under_browse_locked">Bloqueada. Ela está em Explorar › Bloqueadas.</string>
+    <string name="browse_locked_open_settings_privacy">Bloqueada. Abra em Configurações › Privacidade.</string>
+    <string name="browse_put_back_where_was_delete">Devolver para onde estava ou excluir para sempre?</string>
+    <string name="browse_delete_good">Excluir para sempre</string>
+    <string name="browse_empty_recently_deleted">Esvaziar Excluídos recentemente?</string>
+    <string name="browse_everything_here_removed_good_including">Tudo aqui é removido para sempre, incluindo os arquivos. Isso não pode ser desfeito.</string>
+    <string name="browse_favorites">Favoritos</string>
+    <string name="browse_recently_deleted">Excluídos recentemente</string>
+    <string name="browse_find_collection">Encontrar uma coleção</string>
+    <string name="browse_clear_collection_search">Limpar busca de coleções</string>
+    <string name="browse_cross_cutting_labels_youve_added">Etiquetas que você adicionou aos itens</string>
+    <string name="browse_no_tags_yet">Ainda não há tags</string>
+    <string name="browse_tags_short_labels_urgent_read">Tags são etiquetas curtas (#urgente, #ler-depois) que você pode adicionar a um item. Elas atravessam as coleções: um item pode ter várias tags. Adicione tags na tela de salvar da próxima vez que guardar algo.</string>
+    <string name="browse_saves_marked_heart">Itens que você marcou com um coração</string>
+    <string name="browse_everything_youve_tucked_away">Tudo o que você guardou no arquivo</string>
+    <string name="browse_upcoming_nudges_sorted_time">Próximos lembretes, por horário</string>
+    <string name="browse_saved_but_not_opened_yet">Salvos, mas ainda não abertos</string>
+    <string name="browse_kept_30_days_then_removed">Ficam guardados por 30 dias e depois são removidos para sempre. Toque em um para restaurá-lo.</string>
+    <string name="browse_saves_carrying_tag">Itens com esta tag</string>
+    <string name="browse_archived_saves">Itens arquivados</string>
+    <string name="browse_show_active">Mostrar ativos</string>
+    <string name="browse_show_archived">Mostrar arquivados</string>
+    <string name="browse_edit_collection">Editar coleção</string>
+    <string name="browse_delete_collection">Excluir coleção</string>
+    <string name="browse_theyre_removed_good_including_their">Eles são removidos para sempre, incluindo os arquivos. Isso não pode ser desfeito.</string>
+    <string name="browse_they_move_recently_deleted_browse">Eles vão para Excluídos recentemente (em Explorar) por 30 dias, então você ainda pode recuperá-los.</string>
+    <string name="browse_no_favorites_yet">Ainda não há favoritos</string>
+    <string name="browse_tap_heart_save_long_press">Toque no coração de um item (toque e segure um card → ❤️) e ele vai ficar aqui.</string>
+    <string name="browse_nothing_archived">Nada arquivado</string>
+    <string name="browse_archive_save_long_press_archive">Arquive um item (toque e segure → arquivar) para guardá-lo sem excluir.</string>
+    <string name="browse_no_reminders_waiting">Nenhum lembrete pendente</string>
+    <string name="browse_set_reminder_save_card_save">Crie um lembrete em um card ou na tela de salvar, e os próximos lembretes vão se reunir aqui.</string>
+    <string name="browse_all_caught_up">Tudo em dia</string>
+    <string name="browse_youve_opened_everything_saved_new">Você abriu tudo o que salvou. Novos itens esperam aqui até você abri-los.</string>
+    <string name="browse_nothing_deleted">Nada excluído</string>
+    <string name="browse_deleted_saves_stay_here_30">Itens excluídos ficam aqui por 30 dias, caso você mude de ideia.</string>
+    <string name="browse_no_saves">Nenhum item com #%1$s</string>
+    <string name="browse_items_tagged_will_appear_here">Itens com a tag #%1$s vão aparecer aqui.</string>
+    <string name="browse_no_archived_saves">Nenhum item arquivado</string>
+    <string name="browse_nothing_here_yet">Nada aqui ainda</string>
+    <string name="browse_archived_items_appear_here_toggle">Itens arquivados aparecem aqui. Desative para ver seus itens ativos.</string>
+    <string name="browse_select">Selecionar</string>
+    <string name="browse_selected">Selecionado</string>
+    <string name="browse_exit_selection">Sair da seleção</string>
+    <string name="browse_tap_saves_select">Toque nos itens para selecionar</string>
+    <string name="browse_clear_selection">Limpar seleção</string>
+    <string name="browse_locked">Bloqueadas</string>
+    <string name="browse_hide_locked_collections">Ocultar coleções bloqueadas</string>
+    <string name="browse_archive_title">Arquivo</string>
+    <string name="browse_empty_action">Esvaziar</string>
+</resources>

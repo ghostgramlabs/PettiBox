@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">Schnellspeicherung</string>
+    <string name="save_saved_image">Gespeichertes Bild</string>
+    <string name="save_saved_pdf">Gespeichertes PDF</string>
+    <string name="save_saved_file">Gespeicherte Datei</string>
+    <string name="save_saved_when">gespeichert %1$s</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d Bild</item>
+        <item quantity="other">%d Bilder</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="other">%d PDFs</item>
+    </plurals>
+    <string name="save_discard_what_typed">Eingabe verwerfen?</string>
+    <string name="save_note_tags_havent_been_saved">Deine Notiz und Tags sind noch nicht gespeichert.</string>
+    <string name="save_discard">Verwerfen</string>
+    <string name="save_keep_editing">Weiter bearbeiten</string>
+    <string name="save_save">Speichern?</string>
+    <string name="save_save_2">Speichern in</string>
+    <string name="save_no_collection_called_yet">Noch keine Sammlung namens „%1$s“</string>
+    <string name="save_want_start_one">Möchtest du sie anlegen?</string>
+    <string name="save_create">„%1$s“ erstellen</string>
+    <string name="save_new">Neu</string>
+    <string name="save_remove_favorites">Aus Favoriten entfernen</string>
+    <string name="save_add_favorites">Zu Favoriten hinzufügen</string>
+    <string name="save_write_note_save">Schreib eine Notiz zum Speichern</string>
+    <string name="save_save_3">In %1$s speichern</string>
+    <string name="save_save_without_collection">Ohne Sammlung speichern</string>
+    <string name="save_selected">Ausgewählt: %1$s</string>
+    <string name="save_add_which_save">Zu welchem Eintrag hinzufügen?</string>
+    <string name="save_add_note">Notiz hinzufügen</string>
+    <string name="save_add_tags">Tags hinzufügen</string>
+    <string name="save_add_note_2">Notiz hinzufügen</string>
+    <string name="save_tags_comma_separated">Tags, durch Komma getrennt</string>
+    <string name="save_tucked_away">Abgelegt!</string>
+    <string name="save_find_home_screen_anytime">Du findest es jederzeit auf der Startseite.</string>
+    <string name="save_append_save">An einen Eintrag anhängen</string>
+    <string name="save_already_saved">Das hast du schon gespeichert</string>
+    <string name="save_open">Öffnen</string>
+    <string name="save_save_anyway">Trotzdem speichern</string>
+    <string name="save_suggested">Vorgeschlagen</string>
+    <string name="save_recently_used">Zuletzt verwendet</string>
+    <string name="save_collections">Deine Sammlungen</string>
+    <string name="save_starter_collections">Start-Sammlungen</string>
+</resources>

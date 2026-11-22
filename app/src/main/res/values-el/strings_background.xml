@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">Κάτι σας περιμένει στο ράφι</string>
+    <string name="nudge_title">Από το ράφι σας</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">Έχετε %d μη αναγνωσμένο στοιχείο.</item>
+        <item quantity="other">Έχετε %d μη αναγνωσμένα στοιχεία.</item>
+    </plurals>
+    <string name="nudge_body_one">«%1$s» — αποθηκεύτηκε %2$s.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">«%1$s» — αποθηκεύτηκε %2$s. Και %3$d ακόμη μη αναγνωσμένο.</item>
+        <item quantity="other">«%1$s» — αποθηκεύτηκε %2$s. Και %3$d ακόμη μη αναγνωσμένα.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">Λείπει %d αρχείο από αυτό το τηλέφωνο, οπότε δεν μπορεί να σταλεί. Ανοίξτε το στοιχείο και προσθέστε ξανά το αρχείο.</item>
+        <item quantity="other">Λείπουν %d αρχεία από αυτό το τηλέφωνο, οπότε δεν μπορούν να σταλούν. Ανοίξτε το στοιχείο και προσθέστε ξανά τα αρχεία.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">Η βιβλιοθήκη συγχρονίστηκε · %1$d αρχείο περιμένει να το στείλει άλλη συσκευή · έλεγχος στις %2$s</item>
+        <item quantity="other">Η βιβλιοθήκη συγχρονίστηκε · %1$d αρχεία περιμένουν να τα στείλει άλλη συσκευή · έλεγχος στις %2$s</item>
+    </plurals>
+    <string name="files_all_in_drive">Όλες οι φωτογραφίες και τα αρχεία είναι στο Google Drive · έλεγχος στις %1$s</string>
+    <string name="files_checked">Οι φωτογραφίες και τα αρχεία ελέγχθηκαν στις %1$s</string>
+    <string name="files_unreachable">Δεν ήταν δυνατή η σύνδεση με το Google Drive κατά την αποστολή φωτογραφιών και αρχείων (%1$s). Νέα προσπάθεια σύντομα.</string>
+    <string name="files_no_connection">χωρίς σύνδεση</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d αρχείο δεν μπορεί πλέον να διαβαστεί σε αυτό το τηλέφωνο (η εφαρμογή από την οποία προήλθε δεν το επιτρέπει πια), οπότε δεν μπορεί να σταλεί.</item>
+        <item quantity="other">%d αρχεία δεν μπορούν πλέον να διαβαστούν σε αυτό το τηλέφωνο (η εφαρμογή από την οποία προήλθαν δεν το επιτρέπει πια), οπότε δεν μπορούν να σταλούν.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">Αποστολή %d φωτογραφίας και αρχείων στο Google Drive…</item>
+        <item quantity="other">Αποστολή %d φωτογραφιών και αρχείων στο Google Drive…</item>
+    </plurals>
+    <string name="files_sending_progress">Αποστολή φωτογραφιών και αρχείων στο Google Drive… %1$d από %2$d</string>
+    <string name="sync_step_connecting">κατά τη σύνδεση</string>
+    <string name="sync_unreachable">Δεν ήταν δυνατή η σύνδεση με το Google Drive</string>
+    <string name="sync_drive_error">Το Google Drive απάντησε με σφάλμα (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">Νέα προσπάθεια σύντομα.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">Παραλείφθηκε %d κατεστραμμένο αρχείο από άλλη συσκευή· δεν εφαρμόστηκε τίποτα από αυτό</item>
+        <item quantity="other">Παραλείφθηκαν %d κατεστραμμένα αρχεία από άλλη συσκευή· δεν εφαρμόστηκε τίποτα από αυτά</item>
+    </plurals>
+    <string name="sync_every_15_min">15 λεπτά</string>
+    <string name="sync_every_30_min">30 λεπτά</string>
+    <string name="sync_every_hour">1 ώρα</string>
+    <string name="sync_every_3_hours">3 ώρες</string>
+    <string name="sync_daily">Καθημερινά</string>
+    <string name="sync_weekly">Εβδομαδιαία</string>
+    <string name="sync_only_in_use">Μόνο κατά τη χρήση</string>
+    <string name="reminder_save_locked_collection">Ένα στοιχείο σε κλειδωμένη συλλογή</string>
+    <string name="reminder_saved_item">Αποθηκευμένο στοιχείο</string>
+    <string name="reminder_snooze_1h">Αναβολή 1 ώρα</string>
+    <string name="reminder_evening">Απόψε</string>
+    <string name="nudge_see_all_unread">Όλα τα μη αναγνωσμένα</string>
+    <string name="nudge_once_week_one_thing_saved">Μία φορά την εβδομάδα, κάτι που αποθηκεύσατε αλλά δεν έχετε ανοίξει ακόμη.</string>
+    <string name="reminder_save_reminders">Υπενθυμίσεις στοιχείων</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">Υπενθυμίσεις για όσα ζητήσατε από το PettiBox να σας θυμίσει.</string>
+    <string name="files_photos_files_waiting_reconnect_google">Οι φωτογραφίες και τα αρχεία περιμένουν: συνδέστε ξανά το Google Drive στις Ρυθμίσεις.</string>
+    <string name="files_photos_files_sent_once_first">Οι φωτογραφίες και τα αρχεία στέλνονται μόλις ολοκληρωθεί ο πρώτος συγχρονισμός.</string>
+    <string name="files_photos_files_arent_sent_google">Οι φωτογραφίες και τα αρχεία δεν στέλνονται: το Google Drive είναι συνδεδεμένο ως %1$s, όχι ως %2$s.</string>
+    <string name="files_photos_files_couldnt_sent_tap">Δεν ήταν δυνατή η αποστολή φωτογραφιών και αρχείων: %1$s. Πατήστε «Συγχρονισμός τώρα» για να δοκιμάσετε ξανά.</string>
+    <string name="files_photos_files_stopped_sending_trying">Η αποστολή φωτογραφιών και αρχείων σταμάτησε: %1$s. Νέα προσπάθεια σύντομα.</string>
+    <string name="sync_sync_stopped">Ο συγχρονισμός σταμάτησε: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">Ο συγχρονισμός απενεργοποιήθηκε επειδή τα συγχρονισμένα δεδομένα διαγράφηκαν από το Google Drive σε άλλη συσκευή. Όλα σε αυτό το τηλέφωνο είναι ακόμη εδώ· ενεργοποιήστε ξανά τον συγχρονισμό για να ξεκινήσετε από την αρχή.</string>
+    <string name="sync_google_drive_needs_reconnecting">Το Google Drive χρειάζεται νέα σύνδεση</string>
+    <string name="sync_google_drive_didnt_say_which">Το Google Drive δεν ανέφερε ποιος λογαριασμός είναι</string>
+    <string name="sync_google_drive_signed_but_library">Το Google Drive είναι συνδεδεμένο ως %1$s, αλλά αυτή η βιβλιοθήκη συγχρονίζεται με τον %2$s. Επιστρέψτε στον %3$s ή απενεργοποιήστε και ενεργοποιήστε ξανά τον συγχρονισμό για συγχρονισμό με τον %4$s.</string>
+    <string name="sync_couldnt_save_safety_copy_library">Δεν ήταν δυνατή η αποθήκευση αντιγράφου ασφαλείας της βιβλιοθήκης πριν από τον συγχρονισμό. Θα γίνει νέα προσπάθεια την επόμενη φορά.</string>
+    <string name="sync_checking_google_drive">Έλεγχος του Google Drive…</string>
+    <string name="sync_receiving_changes">Λήψη αλλαγών…</string>
+    <string name="sync_another_device_uses_newer_version">Άλλη συσκευή χρησιμοποιεί νεότερη έκδοση του PettiBox. Ενημερώστε αυτή την εφαρμογή για να δείτε όλα όσα αποθήκευσε.</string>
+    <string name="sync_preparing_changes">Προετοιμασία των αλλαγών σας…</string>
+    <string name="sync_updating_library">Ενημέρωση της βιβλιοθήκης σας…</string>
+    <string name="sync_couldnt_save_safety_copy_before">Δεν ήταν δυνατή η αποθήκευση αντιγράφου ασφαλείας πριν από την αφαίρεση στοιχείων, οπότε δεν αφαιρέθηκε τίποτα. Ελευθερώστε χώρο και επιλέξτε ξανά.</string>
+    <string name="sync_sending_changes">Αποστολή των αλλαγών σας…</string>
+    <string name="article_page_no_longer_exists">Η σελίδα δεν υπάρχει πια</string>
+    <string name="article_site_doesnt_allow_saving_copy">Αυτός ο ιστότοπος δεν επιτρέπει την αποθήκευση αντιγράφου</string>
+    <string name="article_site_answered_error">Ο ιστότοπος απάντησε με σφάλμα (%1$s)</string>
+    <string name="article_couldnt_find_article_page">Δεν βρέθηκε άρθρο σε αυτή τη σελίδα</string>
+    <string name="article_page_too_long_keep_copy">Η σελίδα είναι πολύ μεγάλη για να κρατηθεί αντίγραφο</string>
+    <string name="article_couldnt_reach_page_check_connection">Δεν ήταν δυνατή η πρόσβαση στη σελίδα. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.</string>
+</resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">az önce</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d dk önce</item>
+        <item quantity="other">%d dk önce</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d sa önce</item>
+        <item quantity="other">%d sa önce</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%d gün önce</item>
+        <item quantity="other">%d gün önce</item>
+    </plurals>
+    <string name="reminder_preset_tonight">Bu akşam</string>
+    <string name="reminder_preset_tomorrow">Yarın</string>
+    <string name="reminder_preset_weekend">Hafta sonu</string>
+    <string name="reminder_preset_next_week">Gelecek hafta</string>
+    <string name="reminder_preset_custom">Saat seç…</string>
+    <string name="reminder_today">Bugün</string>
+    <string name="reminder_tomorrow">Yarın</string>
+    <string name="reminder_today_at">Bugün %1$s</string>
+    <string name="reminder_tomorrow_at">Yarın %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">Şu an %1$s için ayarlı</string>
+    <string name="reminder_nudge_at">Sana hatırlatacağız: %1$s</string>
+    <string name="reminder_remind_at">Sana hatırlatacağız: %1$s</string>
+    <string name="reminder_remind_me">Bana hatırlat</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">PettiBox gerektiğinde bildirim izni isteyecek. Tam alarmlar kapalıysa hatırlatıcılar biraz geç gelebilir.</string>
+    <string name="reminder_choose_date_time">Tarih ve saat seç</string>
+    <string name="reminder_clear_reminder">Hatırlatıcıyı kaldır</string>
+    <string name="reminder_custom_reminder">Özel hatırlatıcı</string>
+    <string name="reminder_pick_time_below_enable_set">Ayarla\'yı etkinleştirmek için aşağıdan bir saat seç</string>
+    <string name="reminder_pick_date_time">Bir tarih ve saat seç</string>
+    <string name="reminder_moment_has_already_passed_pick">O an çoktan geçti: ileri bir saat seç</string>
+    <string name="reminder_date">Tarih</string>
+    <string name="reminder_tap_pick">Seçmek için dokun</string>
+    <string name="reminder_time">Saat</string>
+    <string name="reminder_tap_set">Ayarlamak için dokun</string>
+    <string name="reminder_set_reminder">Hatırlatıcı kur</string>
+    <string name="reminder_done">Bitti</string>
+    <string name="reminder_pick_time">Bir saat seç</string>
+    <string name="reminder_set_time">Saati ayarla</string>
+</resources>

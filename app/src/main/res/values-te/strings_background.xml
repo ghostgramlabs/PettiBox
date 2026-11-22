@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">మీ షెల్ఫ్‌లో ఏదో ఎదురుచూస్తోంది</string>
+    <string name="nudge_title">మీ షెల్ఫ్ నుండి</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">మీకు %d చదవని ఐటెమ్ ఉంది.</item>
+        <item quantity="other">మీకు %d చదవని ఐటెమ్‌లు ఉన్నాయి.</item>
+    </plurals>
+    <string name="nudge_body_one">“%1$s” — %2$s సేవ్ చేశారు.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">“%1$s” — %2$s సేవ్ చేశారు. ఇంకా %3$d చదవనిది ఉంది.</item>
+        <item quantity="other">“%1$s” — %2$s సేవ్ చేశారు. ఇంకా %3$d చదవనివి ఉన్నాయి.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">%d ఫైల్ ఈ ఫోన్‌లో లేదు, కాబట్టి పంపలేము. ఐటెమ్‌ను తెరిచి ఫైల్‌ను మళ్లీ జోడించండి.</item>
+        <item quantity="other">%d ఫైల్‌లు ఈ ఫోన్‌లో లేవు, కాబట్టి పంపలేము. ఐటెమ్‌ను తెరిచి ఫైల్‌లను మళ్లీ జోడించండి.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">లైబ్రరీ సింక్ అయింది · %1$d ఫైల్ మరో పరికరం పంపడానికి ఎదురుచూస్తోంది · %2$s చెక్ చేశాం</item>
+        <item quantity="other">లైబ్రరీ సింక్ అయింది · %1$d ఫైల్‌లు మరో పరికరం పంపడానికి ఎదురుచూస్తున్నాయి · %2$s చెక్ చేశాం</item>
+    </plurals>
+    <string name="files_all_in_drive">అన్ని ఫోటోలు, ఫైల్‌లు Google Drive‌లో ఉన్నాయి · %1$s చెక్ చేశాం</string>
+    <string name="files_checked">ఫోటోలు, ఫైల్‌లు %1$s చెక్ చేశాం</string>
+    <string name="files_unreachable">ఫోటోలు, ఫైల్‌లు పంపేటప్పుడు Google Drive‌ను చేరలేకపోయాం (%1$s). త్వరలో దానంతట అదే మళ్లీ ప్రయత్నిస్తుంది.</string>
+    <string name="files_no_connection">కనెక్షన్ లేదు</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d ఫైల్‌ను ఈ ఫోన్‌లో ఇక చదవలేము (అది వచ్చిన యాప్ ఇక అనుమతించడం లేదు), కాబట్టి పంపలేము.</item>
+        <item quantity="other">%d ఫైల్‌లను ఈ ఫోన్‌లో ఇక చదవలేము (అవి వచ్చిన యాప్ ఇక అనుమతించడం లేదు), కాబట్టి పంపలేము.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">%d ఫోటో లేదా ఫైల్‌ను Google Drive‌కు పంపుతోంది…</item>
+        <item quantity="other">%d ఫోటోలు, ఫైల్‌లను Google Drive‌కు పంపుతోంది…</item>
+    </plurals>
+    <string name="files_sending_progress">ఫోటోలు, ఫైల్‌లను Google Drive‌కు పంపుతోంది… %2$dలో %1$d</string>
+    <string name="sync_step_connecting">కనెక్ట్ చేస్తున్నప్పుడు</string>
+    <string name="sync_unreachable">Google Drive‌ను చేరలేకపోయాం</string>
+    <string name="sync_drive_error">Google Drive సమస్యతో స్పందించింది (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">త్వరలో దానంతట అదే మళ్లీ ప్రయత్నిస్తుంది.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">మరో పరికరం నుండి వచ్చిన %d పాడైన ఫైల్‌ను వదిలేశాం; దానిలోని ఏదీ వర్తింపజేయలేదు</item>
+        <item quantity="other">మరో పరికరం నుండి వచ్చిన %d పాడైన ఫైల్‌లను వదిలేశాం; వాటిలోని ఏదీ వర్తింపజేయలేదు</item>
+    </plurals>
+    <string name="sync_every_15_min">15 నిమిషాలు</string>
+    <string name="sync_every_30_min">30 నిమిషాలు</string>
+    <string name="sync_every_hour">1 గంట</string>
+    <string name="sync_every_3_hours">3 గంటలు</string>
+    <string name="sync_daily">ప్రతిరోజూ</string>
+    <string name="sync_weekly">ప్రతి వారం</string>
+    <string name="sync_only_in_use">వాడుతున్నప్పుడు మాత్రమే</string>
+    <string name="reminder_save_locked_collection">లాక్ చేసిన కలెక్షన్‌లోని ఒక ఐటెమ్</string>
+    <string name="reminder_saved_item">సేవ్ చేసిన ఐటెమ్</string>
+    <string name="reminder_snooze_1h">1 గంటలో గుర్తు చేయండి</string>
+    <string name="reminder_evening">ఈ సాయంత్రం</string>
+    <string name="nudge_see_all_unread">చదవనివన్నీ చూడండి</string>
+    <string name="nudge_once_week_one_thing_saved">వారానికి ఒకసారి, మీరు సేవ్ చేసి ఇంకా తెరవని ఒక విషయం.</string>
+    <string name="reminder_save_reminders">ఐటెమ్ రిమైండర్‌లు</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">మీరు PettiBox‌ను గుర్తు చేయమని అడిగిన విషయాల నోటిఫికేషన్‌లు.</string>
+    <string name="files_photos_files_waiting_reconnect_google">ఫోటోలు, ఫైల్‌లు ఎదురుచూస్తున్నాయి: సెట్టింగ్స్‌లో Google Drive‌ను మళ్లీ కనెక్ట్ చేయండి.</string>
+    <string name="files_photos_files_sent_once_first">మొదటి సింక్ పూర్తయ్యాక ఫోటోలు, ఫైల్‌లు పంపబడతాయి.</string>
+    <string name="files_photos_files_arent_sent_google">ఫోటోలు, ఫైల్‌లు పంపడం లేదు: Google Drive‌లో %1$sతో సైన్ ఇన్ అయి ఉంది, %2$sతో కాదు.</string>
+    <string name="files_photos_files_couldnt_sent_tap">ఫోటోలు, ఫైల్‌లు పంపలేకపోయాం: %1$s. మళ్లీ ప్రయత్నించడానికి ఇప్పుడే సింక్ చేయండి ట్యాప్ చేయండి.</string>
+    <string name="files_photos_files_stopped_sending_trying">ఫోటోలు, ఫైల్‌లు పంపడం ఆగిపోయింది: %1$s. త్వరలో మళ్లీ ప్రయత్నిస్తుంది.</string>
+    <string name="sync_sync_stopped">సింక్ ఆగిపోయింది: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">మరో పరికరం నుండి Google Drive‌లోని సింక్ డేటా తొలగించడంతో సింక్ ఆఫ్ అయింది. ఈ ఫోన్‌లో అన్నీ అలాగే ఉన్నాయి; కొత్తగా మొదలుపెట్టడానికి సింక్‌ను మళ్లీ ఆన్ చేయండి.</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive‌ను మళ్లీ కనెక్ట్ చేయాలి</string>
+    <string name="sync_google_drive_didnt_say_which">ఇది ఏ ఖాతానో Google Drive చెప్పలేదు</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive‌లో %1$sతో సైన్ ఇన్ అయి ఉంది, కానీ ఈ లైబ్రరీ %2$sతో సింక్ అవుతుంది. %3$sకి తిరిగి మారండి, లేదా %4$sతో సింక్ చేయడానికి సింక్ ఆఫ్ చేసి మళ్లీ ఆన్ చేయండి.</string>
+    <string name="sync_couldnt_save_safety_copy_library">సింక్ చేసే ముందు మీ లైబ్రరీ భద్రతా కాపీని సేవ్ చేయలేకపోయాం. తర్వాతిసారి మళ్లీ ప్రయత్నిస్తుంది.</string>
+    <string name="sync_checking_google_drive">Google Drive‌ను చెక్ చేస్తోంది…</string>
+    <string name="sync_receiving_changes">మార్పులు అందుకుంటోంది…</string>
+    <string name="sync_another_device_uses_newer_version">మరో పరికరం PettiBox కొత్త వెర్షన్ వాడుతోంది. అది సేవ్ చేసినవన్నీ చూడడానికి ఈ యాప్‌ను అప్‌డేట్ చేయండి.</string>
+    <string name="sync_preparing_changes">మీ మార్పులను సిద్ధం చేస్తోంది…</string>
+    <string name="sync_updating_library">మీ లైబ్రరీని అప్‌డేట్ చేస్తోంది…</string>
+    <string name="sync_couldnt_save_safety_copy_before">ఐటెమ్‌లను తీసేసే ముందు భద్రతా కాపీని సేవ్ చేయలేకపోయాం, కాబట్టి ఏదీ తీసేయలేదు. కొంత స్థలం ఖాళీ చేసి మళ్లీ ఎంచుకోండి.</string>
+    <string name="sync_sending_changes">మీ మార్పులను పంపుతోంది…</string>
+    <string name="article_page_no_longer_exists">ఆ పేజీ ఇక లేదు</string>
+    <string name="article_site_doesnt_allow_saving_copy">ఈ సైట్ కాపీ సేవ్ చేయడానికి అనుమతించదు</string>
+    <string name="article_site_answered_error">సైట్ సమస్యతో స్పందించింది (%1$s)</string>
+    <string name="article_couldnt_find_article_page">ఈ పేజీలో వ్యాసం కనిపించలేదు</string>
+    <string name="article_page_too_long_keep_copy">కాపీ ఉంచడానికి ఈ పేజీ చాలా పెద్దది</string>
+    <string name="article_couldnt_reach_page_check_connection">పేజీని చేరలేకపోయాం. కనెక్షన్ చెక్ చేసి మళ్లీ ప్రయత్నించండి.</string>
+</resources>

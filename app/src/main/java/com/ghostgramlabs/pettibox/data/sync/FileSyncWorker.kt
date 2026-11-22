@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.data.sync
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import android.net.Uri
 import android.webkit.MimeTypeMap
@@ -63,7 +67,7 @@ class FileSyncWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         if (!prefs.isEnabled()) return Result.success()
         val token = auth.silentAccessToken() ?: run {
-            prefs.setFilesProblem("Photos and files are waiting: reconnect Google Drive in Settings.")
+            prefs.setFilesProblem(AppText.getString(R.string.files_photos_files_waiting_reconnect_google))
             return Result.success()
         }
         return try {
@@ -73,16 +77,16 @@ class FileSyncWorker @AssistedInject constructor(
             val owner = prefs.status.first().accountEmail
             val account = client.accountEmail(token) // throws if it can't be told: tried again later
             if (owner.isBlank()) {
-                prefs.setFilesProblem("Photos and files are sent once the first sync has finished.")
+                prefs.setFilesProblem(AppText.getString(R.string.files_photos_files_sent_once_first))
                 return Result.success()
             }
             if (!account.equals(owner, ignoreCase = true)) {
-                prefs.setFilesProblem("Photos and files aren't sent: Google Drive is signed in as $account, not $owner.")
+                prefs.setFilesProblem(AppText.getString(R.string.files_photos_files_arent_sent_google, account, owner))
                 return Result.success()
             }
             val syncFolder = client.syncFolder(token)
             val known = prefs.knownReset() ?: run {
-                prefs.setFilesProblem("Photos and files are sent once the first sync has finished.")
+                prefs.setFilesProblem(AppText.getString(R.string.files_photos_files_sent_once_first))
                 return Result.success()
             }
             resetCheck = { (client.readResetMarker(token, syncFolder) ?: "") == known }
@@ -100,26 +104,23 @@ class FileSyncWorker @AssistedInject constructor(
                 val missing = missingHere
                 if (unreadable == 0 && missing == 0) prefs.setFilesProblem("")
                 if (missing > 0) {
-                    prefs.setFilesProblem(
-                        "$missing file${if (missing == 1) " is" else "s are"} missing on this phone, so " +
-                            "${if (missing == 1) "it" else "they"} can't be sent. Open the save and add the file again."
-                    )
+                    prefs.setFilesProblem(AppText.plural(R.plurals.files_missing, missing))
                 }
                 val waiting = syncDao.pendingFiles().size
                 prefs.setFilesStatus(
-                    if (waiting > 0) "Library synced · $waiting file${if (waiting == 1) "" else "s"} waiting for another device to send ${if (waiting == 1) "it" else "them"} · checked " + clockTime(System.currentTimeMillis())
-                    else if (unreadable == 0 && missing == 0) "All photos and files are in Google Drive · checked " + clockTime(System.currentTimeMillis())
-                    else "Photos and files checked " + clockTime(System.currentTimeMillis())
+                    if (waiting > 0) AppText.plural(R.plurals.files_waiting_other_device, waiting, waiting, clockTime(System.currentTimeMillis()))
+                    else if (unreadable == 0 && missing == 0) AppText.getString(R.string.files_all_in_drive, clockTime(System.currentTimeMillis()))
+                    else AppText.getString(R.string.files_checked, clockTime(System.currentTimeMillis()))
                 )
             }
             Result.success()
         } catch (e: DriveSyncException) {
             android.util.Log.w("PettiBoxSync", "file sync failed", e)
             if (e.transient && runAttemptCount < 5) {
-                prefs.setFilesProblem("Couldn't reach Google Drive while sending photos and files (${e.status.takeIf { it > 0 } ?: "no connection"}). Trying again by itself shortly.")
+                prefs.setFilesProblem(AppText.getString(R.string.files_unreachable, e.status.takeIf { it > 0 }?.toString() ?: AppText.getString(R.string.files_no_connection)))
                 Result.retry()
             } else {
-                prefs.setFilesProblem("Photos and files couldn't be sent: ${e.message}. Tap Sync now to try again.")
+                prefs.setFilesProblem(AppText.getString(R.string.files_photos_files_couldnt_sent_tap, e.message))
                 Result.success()
             }
         } catch (e: LibraryReset) {
@@ -129,7 +130,7 @@ class FileSyncWorker @AssistedInject constructor(
         } catch (e: Exception) {
             // Never stop quietly: say what happened, and try again.
             android.util.Log.w("PettiBoxSync", "file sync stopped", e)
-            prefs.setFilesProblem("Photos and files stopped sending: ${e.message ?: e.javaClass.simpleName}. Trying again shortly.")
+            prefs.setFilesProblem(AppText.getString(R.string.files_photos_files_stopped_sending_trying, e.message ?: e.javaClass.simpleName))
             if (runAttemptCount < 5) Result.retry() else Result.success()
         }
     }
@@ -172,13 +173,13 @@ class FileSyncWorker @AssistedInject constructor(
             }
         }
         if (!thumbsOnly && unreadable > 0) {
-            prefs.setFilesProblem("$unreadable file${if (unreadable == 1) "" else "s"} can't be read on this phone any more (the app it came from no longer allows it), so it can't be sent.")
+            prefs.setFilesProblem(AppText.plural(R.plurals.files_unreadable, unreadable))
         }
         val sent = HashSet(inDrive)
         // How many still need sending, said in Settings while it happens.
         val toSend = uris.count { uri -> library.shaOf(uri)?.let { it !in inDrive } == true }
         var done = 0
-        if (!thumbsOnly && toSend > 0) prefs.setFilesStatus("Sending $toSend photo${if (toSend == 1) "" else "s"} and files to Google Drive…")
+        if (!thumbsOnly && toSend > 0) prefs.setFilesStatus(AppText.plural(R.plurals.files_sending, toSend))
         missingHere = 0
         val fileSet = files.toSet()
         for (uri in uris) {
@@ -202,7 +203,7 @@ class FileSyncWorker @AssistedInject constructor(
                 }
             }
             done++
-            if (!thumbsOnly && toSend > 1) prefs.setFilesStatus("Sending photos and files to Google Drive… $done of $toSend")
+            if (!thumbsOnly && toSend > 1) prefs.setFilesStatus(AppText.getString(R.string.files_sending_progress, done, toSend))
         }
         return unreadable
     }

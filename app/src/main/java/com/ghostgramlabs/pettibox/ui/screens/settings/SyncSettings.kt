@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.ui.screens.settings
 
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -87,7 +91,7 @@ fun SyncSettingsCard(
             .padding(16.dp)
     ) {
         Text(
-            "Sync between devices",
+            stringResource(R.string.sync_sync_between_devices),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
             color = scheme.onSurface
         )
@@ -95,9 +99,7 @@ fun SyncSettingsCard(
 
         if (!status.enabled) {
             Text(
-                "Keep the same library on your phones and tablets. " +
-                    "PettiBox has no servers: your library stays on your devices, and they keep in step through your own Google Drive, " +
-                    "in a \"PettiBox\" folder. Nothing passes through anyone else, and we can't see your saves.",
+                stringResource(R.string.sync_keep_same_library_phones_tablets),
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onSurfaceVariant
             )
@@ -105,7 +107,7 @@ fun SyncSettingsCard(
             Button(onClick = onTurnOn, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Rounded.Sync, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Turn on sync", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.sync_turn_sync), fontWeight = FontWeight.Bold)
             }
             return@Column
         }
@@ -119,17 +121,17 @@ fun SyncSettingsCard(
                     // What needs doing comes before a reassuring "Last synced".
                     when {
                         status.progress.isNotBlank() -> status.progress
-                        status.needsReconnect -> "Reconnect Google Drive to keep syncing"
-                        status.pendingReview > 0 -> "Waiting for your choice below"
-                        status.lastSyncAt > 0 -> "Last synced ${TimeFormat.relative(status.lastSyncAt)}"
-                        else -> "Not synced yet"
+                        status.needsReconnect -> stringResource(R.string.sync_reconnect_google_drive_keep_syncing)
+                        status.pendingReview > 0 -> stringResource(R.string.sync_waiting_choice_below)
+                        status.lastSyncAt > 0 -> stringResource(R.string.sync_last_synced, TimeFormat.relative(status.lastSyncAt))
+                        else -> stringResource(R.string.sync_not_synced_yet)
                     },
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                     color = scheme.onSurface
                 )
                 if (status.accountEmail.isNotBlank()) {
                     Text(
-                        "Google account: ${status.accountEmail}",
+                        stringResource(R.string.sync_google_account, status.accountEmail),
                         style = MaterialTheme.typography.bodySmall,
                         color = scheme.onSurfaceVariant
                     )
@@ -139,13 +141,13 @@ fun SyncSettingsCard(
                 onClick = onSyncNow,
                 shape = RoundedCornerShape(12.dp),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-            ) { Text("Sync now", fontWeight = FontWeight.Bold) }
+            ) { Text(stringResource(R.string.sync_sync_now), fontWeight = FontWeight.Bold) }
         }
         if (status.lastError.isNotBlank()) {
             Spacer(Modifier.height(8.dp))
             Text(status.lastError, style = MaterialTheme.typography.bodySmall, color = scheme.error)
             if (status.needsReconnect) {
-                TextButton(onClick = onReconnect) { Text("Reconnect Google Drive", fontWeight = FontWeight.Bold) }
+                TextButton(onClick = onReconnect) { Text(stringResource(R.string.sync_reconnect_google_drive), fontWeight = FontWeight.Bold) }
             }
         }
         // Photos and files, said separately from the text sync: a problem if
@@ -153,8 +155,8 @@ fun SyncSettingsCard(
         // Sync now sends them too; only while they wait (on mobile data with
         // Wi-Fi only on, or a low battery) is there a one-off way round it.
         val waiting = when (status.filesWaiting) {
-            SyncPreferences.WAIT_WIFI -> "Photos and files are waiting for Wi-Fi." to "Send on mobile data"
-            SyncPreferences.WAIT_BATTERY -> "Photos and files are waiting for the battery to charge." to "Send anyway"
+            SyncPreferences.WAIT_WIFI -> stringResource(R.string.sync_photos_files_waiting_wi_fi) to stringResource(R.string.sync_send_mobile_data)
+            SyncPreferences.WAIT_BATTERY -> stringResource(R.string.sync_photos_files_waiting_battery_charge) to stringResource(R.string.sync_send_anyway)
             else -> null
         }
         val filesLine = status.filesProblem.ifBlank { waiting?.first ?: status.filesStatus }
@@ -190,13 +192,12 @@ fun SyncSettingsCard(
                     .padding(12.dp)
             ) {
                 Text(
-                    "Another device wants to remove or archive ${status.pendingReview} saves",
+                    pluralStringResource(R.plurals.sync_pending_review, status.pendingReview, status.pendingReview),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                     color = scheme.onSurface
                 )
                 Text(
-                    "Changes from your other devices wait until you choose; your own changes still go out. Apply here too moves them to Recently deleted or Archive on this phone as well " +
-                        "(a backup is made first). Put them back undoes it on every device.",
+                    stringResource(R.string.sync_changes_other_devices_wait_until),
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant
                 )
@@ -204,17 +205,17 @@ fun SyncSettingsCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     // Usually the person did this on their other device, so applying is the main choice.
                     Button(onClick = { onReview(false) }, shape = RoundedCornerShape(12.dp)) {
-                        Text("Apply here too", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.sync_apply_here_too), fontWeight = FontWeight.Bold)
                     }
                     OutlinedButton(onClick = { onReview(true) }, shape = RoundedCornerShape(12.dp)) {
-                        Text("Put them back")
+                        Text(stringResource(R.string.sync_put_them_back))
                     }
                 }
             }
         }
 
         Spacer(Modifier.height(16.dp))
-        Text("Sync in the background", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = scheme.onSurface)
+        Text(stringResource(R.string.sync_sync_background), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = scheme.onSurface)
         Spacer(Modifier.height(8.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             SyncInterval.entries.forEach { interval ->
@@ -223,7 +224,7 @@ fun SyncSettingsCard(
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "While PettiBox is open, changes go both ways within seconds. This is for when it's closed.",
+            stringResource(R.string.sync_while_pettibox_open_changes_go),
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant
         )
@@ -233,9 +234,9 @@ fun SyncSettingsCard(
             Icon(Icons.Rounded.Wifi, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(22.dp))
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Text("Photos and files on Wi-Fi only", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = scheme.onSurface)
+                Text(stringResource(R.string.sync_photos_files_wi_fi_only), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = scheme.onSurface)
                 Text(
-                    "Off: photos and files sync on any connection, right along with your saves. On: they wait for Wi-Fi, to save mobile data.",
+                    stringResource(R.string.sync_off_photos_files_sync_any),
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant
                 )
@@ -248,46 +249,44 @@ fun SyncSettingsCard(
             Icon(Icons.Rounded.Devices, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(22.dp))
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Text("This device: ${status.deviceName}", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = scheme.onSurface)
-                Text("How your other devices see this one", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+                Text(stringResource(R.string.sync_device, status.deviceName), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = scheme.onSurface)
+                Text(stringResource(R.string.sync_how_other_devices_see_one), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
             }
-            TextButton(onClick = { renaming = true }) { Text("Rename") }
+            TextButton(onClick = { renaming = true }) { Text(stringResource(R.string.sync_rename)) }
         }
         if (devices.isNotEmpty()) {
             Spacer(Modifier.height(8.dp))
-            Text("Your other devices", style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
+            Text(stringResource(R.string.sync_other_devices), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
             devices.entries.sortedByDescending { it.value.second }.forEach { (id, info) ->
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 32.dp)) {
                     Column(Modifier.weight(1f)) {
-                        Text(info.first.ifBlank { "Unnamed device" }, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface)
+                        Text(info.first.ifBlank { stringResource(R.string.sync_unnamed_device) }, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface)
                         if (info.second > 0) {
                             Text(
-                                "Last synced ${TimeFormat.relative(info.second)}",
+                                stringResource(R.string.sync_last_synced, TimeFormat.relative(info.second)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = scheme.onSurfaceVariant
                             )
                         }
                     }
-                    TextButton(onClick = { removing = id to info.first }) { Text("Remove") }
+                    TextButton(onClick = { removing = id to info.first }) { Text(stringResource(R.string.settings_remove)) }
                 }
             }
         }
 
         Spacer(Modifier.height(12.dp))
         Text(
-            "Where your library lives: on this phone, on your other devices, and in your own Google Drive. PettiBox has no servers. " +
-                "Changes reach your other devices the next time they sync. If a save is edited on two devices at once, both versions are kept: " +
-                "open the save to pick one. Deleted saves go to Recently deleted on every device, and leave every device when it's emptied.",
+            stringResource(R.string.sync_where_library_lives_phone_other),
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = { confirmOff = true }) {
-                Text("Turn off sync", color = scheme.error, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.sync_turn_off_sync), color = scheme.error, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.weight(1f))
             TextButton(onClick = { confirmDelete = true }) {
-                Text("Delete synced data…", color = scheme.error)
+                Text(stringResource(R.string.sync_delete_synced_data), color = scheme.error)
             }
         }
     }
@@ -296,10 +295,10 @@ fun SyncSettingsCard(
         var removeMine by remember { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = { confirmOff = false },
-            title = { Text("Turn off sync on this device?") },
+            title = { Text(stringResource(R.string.sync_turn_off_sync_device)) },
             text = {
                 Column {
-                    Text("This phone stops sending and receiving changes. Everything on it stays, and your other devices keep syncing.")
+                    Text(stringResource(R.string.sync_phone_stops_sending_receiving_changes))
                     Spacer(Modifier.height(12.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -311,9 +310,9 @@ fun SyncSettingsCard(
                     ) {
                         Checkbox(checked = removeMine, onCheckedChange = { removeMine = it })
                         Column(Modifier.weight(1f)) {
-                            Text("Also remove this phone's copy from Google Drive", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.sync_also_remove_phones_copy_google), fontWeight = FontWeight.Bold)
                             Text(
-                                "For a phone you're giving away or no longer use. Your other devices still have everything.",
+                                stringResource(R.string.sync_phone_youre_giving_away_no),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -322,42 +321,39 @@ fun SyncSettingsCard(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { confirmOff = false; onTurnOff(removeMine) }) { Text("Turn off", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = { confirmOff = false; onTurnOff(removeMine) }) { Text(stringResource(R.string.sync_turn_off), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { confirmOff = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmOff = false }) { Text(stringResource(R.string.settings_cancel)) } },
             shape = RoundedCornerShape(24.dp)
         )
     }
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete synced data from Google Drive?") },
+            title = { Text(stringResource(R.string.sync_delete_synced_data_google_drive)) },
             text = {
                 Text(
-                    "This deletes the sync data in the \"PettiBox\" folder of your Google Drive (PettiBox › Sync), with every device's copy and the synced photos and files, " +
-                        "and turns sync off on all your devices.\n\n" +
-                        "Nothing is deleted from any phone: each keeps its own library. Your Drive backups aren't touched. " +
-                        "You can turn sync on again later to start fresh."
+                    stringResource(R.string.sync_deletes_sync_data_pettibox_folder)
                 )
             },
             confirmButton = {
                 TextButton(onClick = { confirmDelete = false; onDeleteSynced() }) {
-                    Text("Delete from Drive", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.sync_delete_drive), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.settings_cancel)) } },
             shape = RoundedCornerShape(24.dp)
         )
     }
     removing?.let { (id, name) ->
         AlertDialog(
             onDismissRequest = { removing = null },
-            title = { Text("Remove ${name.ifBlank { "this device" }}?") },
-            text = { Text("Removes its copy from Google Drive, for a phone you no longer use. Your library stays on your other devices. If it syncs again, it comes back.") },
+            title = { Text(stringResource(R.string.sync_remove_device_title, name.ifBlank { stringResource(R.string.sync_this_device) })) },
+            text = { Text(stringResource(R.string.sync_removes_its_copy_google_drive)) },
             confirmButton = {
-                TextButton(onClick = { removing = null; onRemoveDevice(id) }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = { removing = null; onRemoveDevice(id) }) { Text(stringResource(R.string.settings_remove), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { removing = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { removing = null }) { Text(stringResource(R.string.settings_cancel)) } },
             shape = RoundedCornerShape(24.dp)
         )
     }
@@ -406,7 +402,7 @@ private fun RenameDeviceSheet(current: String, onDone: (String?) -> Unit) {
                 .imePadding()
         ) {
             Text(
-                "Name this device",
+                stringResource(R.string.sync_name_device),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -415,16 +411,16 @@ private fun RenameDeviceSheet(current: String, onDone: (String?) -> Unit) {
                 value = name,
                 onValueChange = { name = it.take(40) },
                 singleLine = true,
-                placeholder = { Text("e.g. Work phone") },
+                placeholder = { Text(stringResource(R.string.sync_e_g_work_phone)) },
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(16.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = { onDone(null) }) { Text("Cancel") }
+                TextButton(onClick = { onDone(null) }) { Text(stringResource(R.string.settings_cancel)) }
                 Spacer(Modifier.width(8.dp))
                 Button(enabled = name.isNotBlank(), onClick = { onDone(name.trim()) }, shape = RoundedCornerShape(12.dp)) {
-                    Text("Save", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_save), fontWeight = FontWeight.Bold)
                 }
             }
         }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">Guardar en PettiBox</string>
+    <string name="widget_description">Tus guardados sin leer, a un toque</string>
+    <string name="shortcut_note_short">Nota nueva</string>
+    <string name="shortcut_note_long">Escribir una nota nueva</string>
+    <string name="shortcut_link_short">Añadir un enlace</string>
+    <string name="shortcut_link_long">Guardar un enlace</string>
+    <string name="shortcut_search_short">Buscar</string>
+    <string name="shortcut_search_long">Buscar en tus guardados</string>
+    <string name="shortcut_unread_short">Sin leer</string>
+    <string name="shortcut_unread_long">Guardados que aún no has abierto</string>
+</resources>

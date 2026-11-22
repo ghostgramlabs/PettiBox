@@ -1,5 +1,12 @@
 package com.ghostgramlabs.pettibox.ui.screens.settings
 
+import com.ghostgramlabs.pettibox.domain.model.displayName
+
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import com.ghostgramlabs.pettibox.R
+import com.ghostgramlabs.pettibox.util.AppLocale
+
 import android.accounts.AccountManager
 import android.app.Activity
 import android.content.ClipData
@@ -214,7 +221,7 @@ fun SettingsScreen(
                 editingCollection = null
                 viewModel.updateCollection(target, name, emoji, colorHex) { updated ->
                     scope.launch {
-                        snackbarHostState.showSnackbar("Updated ${updated.emoji} ${updated.name}")
+                        snackbarHostState.showSnackbar(ctx.getString(R.string.settings_updated, updated.emoji, updated.displayName))
                     }
                 }
             },
@@ -232,10 +239,10 @@ fun SettingsScreen(
     deletingCollection?.let { target ->
         AlertDialog(
             onDismissRequest = { deletingCollection = null },
-            title = { Text("Delete ${target.name}?") },
+            title = { Text(stringResource(R.string.settings_delete, target.name)) },
             text = {
                 Text(
-                    "Saves in this collection will stay in PettiBox — they'll just no longer belong to a collection. You can move them somewhere else from each save's detail screen."
+                    stringResource(R.string.settings_saves_collection_will_stay_pettibox)
                 )
             },
             confirmButton = {
@@ -245,13 +252,13 @@ fun SettingsScreen(
                     deletingCollection = null
                     viewModel.deleteCollection(target) {
                         scope.launch {
-                            snackbarHostState.showSnackbar("Deleted $emoji $name")
+                            snackbarHostState.showSnackbar(ctx.getString(R.string.settings_deleted, emoji, name))
                         }
                     }
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.settings_delete_2), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { deletingCollection = null }) { Text("Cancel") }
+                TextButton(onClick = { deletingCollection = null }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -260,11 +267,10 @@ fun SettingsScreen(
     if (showRemoveOfflineCopies) {
         AlertDialog(
             onDismissRequest = { showRemoveOfflineCopies = false },
-            title = { Text("Remove offline copies?") },
+            title = { Text(stringResource(R.string.settings_remove_offline_copies)) },
             text = {
                 Text(
-                    "Your saved links stay exactly as they are — only the article copies kept for offline reading are deleted. " +
-                        "You can save a copy again from any link."
+                    stringResource(R.string.settings_saved_links_stay_exactly_they)
                 )
             },
             confirmButton = {
@@ -272,12 +278,12 @@ fun SettingsScreen(
                     showRemoveOfflineCopies = false
                     scope.launch {
                         viewModel.removeAllOfflineCopies()
-                        snackbarHostState.showSnackbar("Offline copies removed")
+                        snackbarHostState.showSnackbar(ctx.getString(R.string.settings_offline_copies_removed))
                     }
-                }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.settings_remove), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showRemoveOfflineCopies = false }) { Text("Cancel") }
+                TextButton(onClick = { showRemoveOfflineCopies = false }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -286,12 +292,10 @@ fun SettingsScreen(
     if (showRemoveStarters) {
         AlertDialog(
             onDismissRequest = { showRemoveStarters = false },
-            title = { Text("Remove starter collections?") },
+            title = { Text(stringResource(R.string.settings_remove_starter_collections)) },
             text = {
                 Text(
-                    "Empty starter collections will be removed in one go, and they won't come back. " +
-                        "Starters that hold saves are kept so nothing loses its place — you can empty or delete those individually. " +
-                        "Collections you created yourself aren't touched."
+                    stringResource(R.string.settings_empty_starter_collections_will_removed)
                 )
             },
             confirmButton = {
@@ -302,18 +306,19 @@ fun SettingsScreen(
                         snackbarHostState.showSnackbar(
                             when {
                                 result.removed == 0 && result.keptWithSaves > 0 ->
-                                    "No empty starters to remove — ${result.keptWithSaves} hold saves"
+                                    ctx.resources.getQuantityString(R.plurals.settings_starters_none_removed, result.keptWithSaves, result.keptWithSaves)
                                 result.keptWithSaves > 0 ->
-                                    "Removed ${result.removed} starter collections · ${result.keptWithSaves} kept (they hold saves)"
+                                    ctx.resources.getQuantityString(R.plurals.settings_starters_removed, result.removed, result.removed) + " · " +
+                                        ctx.resources.getQuantityString(R.plurals.settings_starters_kept, result.keptWithSaves, result.keptWithSaves)
                                 else ->
-                                    "Removed ${result.removed} starter collections"
+                                    ctx.resources.getQuantityString(R.plurals.settings_starters_removed, result.removed, result.removed)
                             }
                         )
                     }
-                }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.settings_remove), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showRemoveStarters = false }) { Text("Cancel") }
+                TextButton(onClick = { showRemoveStarters = false }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -322,19 +327,19 @@ fun SettingsScreen(
     editingReminderTime?.let { target ->
         val current = if (target == ReminderTimeTarget.MORNING) morningReminderTime else eveningReminderTime
         ReminderTimeDialog(
-            title = if (target == ReminderTimeTarget.MORNING) "Set morning time" else "Set evening time",
+            title = if (target == ReminderTimeTarget.MORNING) stringResource(R.string.settings_set_morning_time) else stringResource(R.string.settings_set_evening_time),
             initialHour = current.hour,
             initialMinute = current.minute,
             onDismiss = { editingReminderTime = null },
             onConfirm = { hour, minute ->
                 editingReminderTime = null
-                val label = if (target == ReminderTimeTarget.MORNING) {
-                    viewModel.setMorningReminderTime(hour, minute); "Morning"
+                val message = if (target == ReminderTimeTarget.MORNING) {
+                    viewModel.setMorningReminderTime(hour, minute); R.string.settings_morning_time_set
                 } else {
-                    viewModel.setEveningReminderTime(hour, minute); "Evening"
+                    viewModel.setEveningReminderTime(hour, minute); R.string.settings_evening_time_set
                 }
                 scope.launch {
-                    snackbarHostState.showSnackbar("$label time set to ${formatClock(hour, minute)}")
+                    snackbarHostState.showSnackbar(ctx.getString(message, formatClock(hour, minute)))
                 }
             }
         )
@@ -351,14 +356,14 @@ fun SettingsScreen(
                 }
                 if (duplicate) {
                     scope.launch {
-                        snackbarHostState.showSnackbar("A collection named \"${newCollection.name}\" already exists")
+                        snackbarHostState.showSnackbar(ctx.getString(R.string.settings_collection_named_already_exists, newCollection.name))
                     }
                     return@CreateCollectionDialog
                 }
                 viewModel.createCollection(newCollection) { created ->
                     scope.launch {
                         snackbarHostState.showSnackbar(
-                            "Created ${created.emoji} ${created.name}"
+                            ctx.getString(R.string.settings_created, created.emoji, created.name)
                         )
                     }
                 }
@@ -374,14 +379,14 @@ fun SettingsScreen(
 
     val runFileRestore: (Uri) -> Unit = { uri ->
         scope.launch {
-            busyLabel = "Importing backup"
+            busyLabel = ctx.getString(R.string.settings_importing_backup)
             runCatching { viewModel.importBackupUri(uri) }
                 .onSuccess { result ->
-                    snackbarHostState.showSnackbar(restoreResultMessage(result))
+                    snackbarHostState.showSnackbar(restoreResultMessage(ctx.resources, result))
                     if (result.saves > 0) askForReview(RatingPreferences.MOMENT_RESTORE)
                 }
                 .onFailure {
-                    snackbarHostState.showSnackbar("That backup file couldn't be imported")
+                    snackbarHostState.showSnackbar(ctx.getString(R.string.settings_backup_file_couldnt_imported))
                 }
             busyLabel = null
         }
@@ -404,14 +409,14 @@ fun SettingsScreen(
 
     val runLocalRestore: (File) -> Unit = { file ->
         scope.launch {
-            busyLabel = "Restoring backup"
+            busyLabel = ctx.getString(R.string.settings_restoring_backup)
             runCatching { viewModel.restoreFromLocal(file) }
                 .onSuccess { result ->
-                    snackbarHostState.showSnackbar(restoreResultMessage(result))
+                    snackbarHostState.showSnackbar(restoreResultMessage(ctx.resources, result))
                     if (result.saves > 0) askForReview(RatingPreferences.MOMENT_RESTORE)
                 }
                 .onFailure {
-                    snackbarHostState.showSnackbar("That backup couldn't be restored")
+                    snackbarHostState.showSnackbar(ctx.getString(R.string.settings_backup_couldnt_restored))
                 }
             busyLabel = null
         }
@@ -421,7 +426,7 @@ fun SettingsScreen(
         scope.launch {
             val copies = viewModel.listLocalBackups()
             if (copies.isEmpty()) {
-                snackbarHostState.showSnackbar("No copies on this phone yet — tap \"Back up now\" first")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_no_copies_phone_yet_tap))
             } else {
                 localRestoreChoices = copies
             }
@@ -433,30 +438,30 @@ fun SettingsScreen(
 
     val runDriveRestore: (DriveBackupFile) -> Unit = { backup ->
         scope.launch {
-            busyLabel = "Restoring from Google Drive"
+            busyLabel = ctx.getString(R.string.settings_restoring_google_drive)
             runCatching { viewModel.restoreFromDrive(backup.id) }
                 .onSuccess { result ->
-                    snackbarHostState.showSnackbar(restoreResultMessage(result))
+                    snackbarHostState.showSnackbar(restoreResultMessage(ctx.resources, result))
                     if (result.saves > 0) askForReview(RatingPreferences.MOMENT_RESTORE)
                 }
                 .onFailure {
-                    snackbarHostState.showSnackbar("Couldn't restore that backup — try again")
+                    snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_restore_backup_try_again))
                 }
             busyLabel = null
         }
     }
 
     val uploadToDriveNow: suspend () -> Unit = {
-        busyLabel = "Backing up"
+        busyLabel = ctx.getString(R.string.settings_backing_up)
         val outcome = runCatching { viewModel.backupToDriveNow() }
             .getOrElse { DriveBackupManager.UploadOutcome.Failed(it) }
         when (outcome) {
             is DriveBackupManager.UploadOutcome.Uploaded ->
-                snackbarHostState.showSnackbar("Backed up — copy saved on this phone and in your Google Drive")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_backed_up_copy_saved_phone))
             DriveBackupManager.UploadOutcome.NeedsReconnect ->
-                snackbarHostState.showSnackbar("Saved on this phone. Google Drive needs reconnecting — tap Connect again")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_saved_phone_google_drive_needs))
             is DriveBackupManager.UploadOutcome.Failed ->
-                snackbarHostState.showSnackbar("Saved on this phone, but the Drive upload failed — check your connection")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_saved_phone_but_drive_upload))
         }
         busyLabel = null
     }
@@ -474,9 +479,9 @@ fun SettingsScreen(
     ) { result ->
         scope.launch {
             if (result.resultCode == Activity.RESULT_OK && viewModel.completeSyncConnect(result.data)) {
-                snackbarHostState.showSnackbar("Sync is on. Your library is syncing now.")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_sync_library_syncing_now))
             } else {
-                snackbarHostState.showSnackbar("Sync wasn't turned on")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_sync_wasnt_turned))
             }
         }
     }
@@ -486,13 +491,13 @@ fun SettingsScreen(
                 .onSuccess { step ->
                     when (step) {
                         SettingsViewModel.DriveConnectStep.Connected ->
-                            snackbarHostState.showSnackbar("Sync is on. Your library is syncing now.")
+                            snackbarHostState.showSnackbar(ctx.getString(R.string.settings_sync_library_syncing_now))
                         is SettingsViewModel.DriveConnectStep.NeedsConsent ->
                             syncConsent.launch(IntentSenderRequest.Builder(step.pendingIntent.intentSender).build())
                     }
                 }
                 .onFailure {
-                    snackbarHostState.showSnackbar("Couldn't reach Google Play services. Is this device signed in to Google?")
+                    snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_reach_google_play_services))
                 }
         }
     }
@@ -502,23 +507,23 @@ fun SettingsScreen(
     ) { result ->
         scope.launch {
             if (result.resultCode == Activity.RESULT_OK && viewModel.completeDriveConnect(result.data)) {
-                snackbarHostState.showSnackbar("Google Drive connected")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_google_drive_connected))
                 uploadToDriveNow()
             } else {
-                snackbarHostState.showSnackbar("Google Drive connection was cancelled")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_google_drive_connection_was_cancelled))
             }
         }
     }
 
     val connectDrive: () -> Unit = {
         scope.launch {
-            busyLabel = "Connecting Google Drive"
+            busyLabel = ctx.getString(R.string.settings_connecting_google_drive)
             runCatching { viewModel.beginDriveConnect() }
                 .onSuccess { step ->
                     busyLabel = null
                     when (step) {
                         SettingsViewModel.DriveConnectStep.Connected -> {
-                            snackbarHostState.showSnackbar("Google Drive connected")
+                            snackbarHostState.showSnackbar(ctx.getString(R.string.settings_google_drive_connected))
                             uploadToDriveNow()
                         }
                         is SettingsViewModel.DriveConnectStep.NeedsConsent ->
@@ -530,7 +535,7 @@ fun SettingsScreen(
                 .onFailure {
                     busyLabel = null
                     snackbarHostState.showSnackbar(
-                        "Couldn't reach Google Play services — is this device signed in to Google?"
+                        ctx.getString(R.string.settings_couldnt_reach_google_play_services_2)
                     )
                 }
         }
@@ -548,13 +553,13 @@ fun SettingsScreen(
         val accountName = result.data?.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
         if (result.resultCode != Activity.RESULT_OK || accountName == null) return@rememberLauncherForActivityResult
         scope.launch {
-            busyLabel = "Switching Google account"
+            busyLabel = ctx.getString(R.string.settings_switching_google_account)
             runCatching { viewModel.switchDriveAccount(accountName) }
                 .onSuccess { step ->
                     busyLabel = null
                     when (step) {
                         SettingsViewModel.DriveConnectStep.Connected -> {
-                            snackbarHostState.showSnackbar("Google Drive connected as $accountName")
+                            snackbarHostState.showSnackbar(ctx.getString(R.string.settings_google_drive_connected_2, accountName))
                             uploadToDriveNow()
                         }
                         is SettingsViewModel.DriveConnectStep.NeedsConsent ->
@@ -565,7 +570,7 @@ fun SettingsScreen(
                 }
                 .onFailure {
                     busyLabel = null
-                    snackbarHostState.showSnackbar("Couldn't switch Google account")
+                    snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_switch_google_account))
                 }
         }
     }
@@ -577,22 +582,22 @@ fun SettingsScreen(
             )
         }.onFailure {
             scope.launch {
-                snackbarHostState.showSnackbar("No account chooser available on this device")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_no_account_chooser_available_device))
             }
         }
     }
 
     val openDriveRestore: () -> Unit = {
         scope.launch {
-            busyLabel = "Checking Google Drive"
+            busyLabel = ctx.getString(R.string.settings_checking_google_drive)
             val backups = runCatching { viewModel.listDriveBackups() }.getOrNull()
             busyLabel = null
             when {
                 backups == null -> snackbarHostState.showSnackbar(
-                    "Couldn't reach Google Drive — reconnect and try again"
+                    ctx.getString(R.string.settings_couldnt_reach_google_drive_reconnect)
                 )
                 backups.isEmpty() -> snackbarHostState.showSnackbar(
-                    "No Drive backups yet — tap \"Back up now\" first"
+                    ctx.getString(R.string.settings_no_drive_backups_yet_tap)
                 )
                 else -> driveRestoreChoices = backups
             }
@@ -602,16 +607,16 @@ fun SettingsScreen(
     if (showRestoreChooser) {
         AlertDialog(
             onDismissRequest = { showRestoreChooser = false },
-            title = { Text("Restore a backup") },
+            title = { Text(stringResource(R.string.settings_restore_backup)) },
             text = {
                 Column {
                     RestoreSourceRow(
                         icon = Icons.Rounded.Cloud,
-                        title = "From Google Drive",
+                        title = stringResource(R.string.settings_google_drive),
                         caption = if (driveBackupStatus.enabled) {
-                            "Pick one of your cloud copies"
+                            stringResource(R.string.settings_pick_one_cloud_copies)
                         } else {
-                            "Connect Google Drive first — new phone? Your copies are waiting there"
+                            stringResource(R.string.settings_connect_google_drive_first_new)
                         },
                         onClick = {
                             showRestoreChooser = false
@@ -620,8 +625,8 @@ fun SettingsScreen(
                     )
                     RestoreSourceRow(
                         icon = Icons.Rounded.PhoneAndroid,
-                        title = "From this phone",
-                        caption = "One of the automatic copies PettiBox keeps here",
+                        title = stringResource(R.string.settings_phone),
+                        caption = stringResource(R.string.settings_one_automatic_copies_pettibox_keeps),
                         onClick = {
                             showRestoreChooser = false
                             openLocalRestore()
@@ -629,8 +634,8 @@ fun SettingsScreen(
                     )
                     RestoreSourceRow(
                         icon = Icons.Rounded.FolderOpen,
-                        title = "From a file",
-                        caption = "Pick a PettiBox backup zip from this phone",
+                        title = stringResource(R.string.settings_file),
+                        caption = stringResource(R.string.settings_pick_pettibox_backup_zip_phone),
                         onClick = {
                             showRestoreChooser = false
                             importBackup.launch(arrayOf("application/zip", "application/json", "text/*", "*/*"))
@@ -640,7 +645,7 @@ fun SettingsScreen(
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { showRestoreChooser = false }) { Text("Cancel") }
+                TextButton(onClick = { showRestoreChooser = false }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -649,12 +654,9 @@ fun SettingsScreen(
     pendingRestore?.let { pending ->
         AlertDialog(
             onDismissRequest = { pendingRestore = null },
-            title = { Text("Restore on top of your shelf?") },
+            title = { Text(stringResource(R.string.settings_restore_top_shelf)) },
             text = {
-                Text(
-                    "You already have $totalSaves saves. Restoring adds the backup's items alongside them — " +
-                        "anything already on your shelf is skipped, so nothing gets duplicated."
-                )
+                Text(pluralStringResource(R.plurals.settings_restore_on_top_body, totalSaves, totalSaves))
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -664,10 +666,10 @@ fun SettingsScreen(
                         is PendingRestore.FromDrive -> runDriveRestore(pending.backup)
                         is PendingRestore.FromLocal -> runLocalRestore(pending.file)
                     }
-                }) { Text("Restore") }
+                }) { Text(stringResource(R.string.settings_restore)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingRestore = null }) { Text("Cancel") }
+                TextButton(onClick = { pendingRestore = null }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -676,11 +678,11 @@ fun SettingsScreen(
     localRestoreChoices?.let { copies ->
         AlertDialog(
             onDismissRequest = { localRestoreChoices = null },
-            title = { Text("Restore from this phone") },
+            title = { Text(stringResource(R.string.settings_restore_phone)) },
             text = {
                 Column {
                     Text(
-                        "Pick a copy. Your current saves stay — the backup's items are added alongside them, and anything already here is skipped.",
+                        stringResource(R.string.settings_pick_copy_current_saves_stay),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -716,7 +718,7 @@ fun SettingsScreen(
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { localRestoreChoices = null }) { Text("Cancel") }
+                TextButton(onClick = { localRestoreChoices = null }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -725,11 +727,11 @@ fun SettingsScreen(
     driveRestoreChoices?.let { backups ->
         AlertDialog(
             onDismissRequest = { driveRestoreChoices = null },
-            title = { Text("Restore from Google Drive") },
+            title = { Text(stringResource(R.string.settings_restore_google_drive)) },
             text = {
                 Column {
                     Text(
-                        "Pick a backup to bring onto this device. Your current saves stay — the backup's items are added alongside them, and anything already here is skipped.",
+                        stringResource(R.string.settings_pick_backup_bring_onto_device),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -765,7 +767,7 @@ fun SettingsScreen(
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { driveRestoreChoices = null }) { Text("Cancel") }
+                TextButton(onClick = { driveRestoreChoices = null }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -776,15 +778,15 @@ fun SettingsScreen(
     ) { uri: Uri? ->
         if (uri != null) {
             scope.launch {
-                busyLabel = "Importing bookmarks"
+                busyLabel = ctx.getString(R.string.settings_importing_bookmarks)
                 runCatching { viewModel.importBookmarksUri(uri) }
                     .onSuccess { result ->
-                        snackbarHostState.showSnackbar(bookmarkImportMessage(result))
+                        snackbarHostState.showSnackbar(bookmarkImportMessage(ctx.resources, result))
                         if (result.imported > 0) askForReview(RatingPreferences.MOMENT_IMPORT)
                     }
                     .onFailure {
                         snackbarHostState.showSnackbar(
-                            "Couldn't read that file. Export from your bookmark app as HTML or CSV, then try again."
+                            ctx.getString(R.string.settings_couldnt_read_file_export_bookmark)
                         )
                     }
                 busyLabel = null
@@ -797,8 +799,8 @@ fun SettingsScreen(
         if (uri != null) {
             scope.launch {
                 runCatching { viewModel.setLocalBackupFolder(uri) }
-                    .onSuccess { snackbarHostState.showSnackbar("Backup folder selected") }
-                    .onFailure { snackbarHostState.showSnackbar("Couldn't use that folder") }
+                    .onSuccess { snackbarHostState.showSnackbar(ctx.getString(R.string.settings_backup_folder_selected)) }
+                    .onFailure { snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_use_folder)) }
             }
         }
     }
@@ -815,8 +817,8 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             ScreenHeading(
-                title = "Make it yours",
-                subtitle = "Your shelf settings, safety copies, and quick help."
+                title = stringResource(R.string.settings_make_yours),
+                subtitle = stringResource(R.string.settings_shelf_settings_safety_copies_quick)
             )
 
             Spacer(Modifier.height(8.dp))
@@ -839,9 +841,9 @@ fun SettingsScreen(
                         val removed = viewModel.turnOffSync(removeMine)
                         snackbarHostState.showSnackbar(
                             when {
-                                !removed -> "Sync is off. Couldn't reach Google Drive to remove this phone's copy; remove it later from another device"
-                                removeMine -> "Sync is off, and this phone's copy was removed from Google Drive"
-                                else -> "Sync is off on this device"
+                                !removed -> ctx.getString(R.string.settings_sync_off_couldnt_reach_google)
+                                removeMine -> ctx.getString(R.string.settings_sync_off_phones_copy_was)
+                                else -> ctx.getString(R.string.settings_sync_off_device)
                             }
                         )
                     }
@@ -850,19 +852,19 @@ fun SettingsScreen(
                     scope.launch {
                         val ok = viewModel.deleteSyncedData()
                         snackbarHostState.showSnackbar(
-                            if (ok) "Synced data deleted from Google Drive. Sync is off on all your devices."
-                            else "Couldn't finish deleting from Google Drive. Some synced data may already be gone; try again to finish. Your library on this phone is untouched."
+                            if (ok) ctx.getString(R.string.settings_synced_data_deleted_google_drive)
+                            else ctx.getString(R.string.settings_couldnt_finish_deleting_google_drive)
                         )
                     }
                 },
                 onSyncNow = {
                     viewModel.syncNow()
-                    scope.launch { snackbarHostState.showSnackbar("Syncing…") }
+                    scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.settings_syncing)) }
                 },
                 onSendFiles = {
                     scope.launch {
                         viewModel.sendFilesNow()
-                        snackbarHostState.showSnackbar("Sending photos and files, on any connection")
+                        snackbarHostState.showSnackbar(ctx.getString(R.string.settings_sending_photos_files_any_connection))
                     }
                 },
                 onReconnect = connectSync,
@@ -872,19 +874,34 @@ fun SettingsScreen(
                 onRemoveDevice = { id ->
                     scope.launch {
                         val ok = viewModel.removeSyncDevice(id)
-                        snackbarHostState.showSnackbar(if (ok) "Removed" else "Couldn't reach Google Drive")
+                        snackbarHostState.showSnackbar(if (ok) ctx.getString(R.string.settings_removed) else ctx.getString(R.string.settings_couldnt_reach_google_drive))
                     }
                 },
                 onReview = { keep ->
                     scope.launch {
                         viewModel.answerSyncReview(keep)
-                        snackbarHostState.showSnackbar(if (keep) "Keeping your saves" else "Applying the changes")
+                        snackbarHostState.showSnackbar(if (keep) ctx.getString(R.string.settings_keeping_saves) else ctx.getString(R.string.settings_applying_changes))
                     }
                 }
             )
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Text recognition") {
+            // Near the top: someone who can't read the current language looks for this first.
+            SettingsSection(title = stringResource(R.string.settings_language)) {
+                Text(
+                    stringResource(R.string.settings_language_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(10.dp))
+                AppLanguageChoices(
+                    selected = AppLocale.currentTag(ctx),
+                    onSelect = { tag -> AppLocale.activityFrom(ctx)?.let { AppLocale.set(it, tag) } }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+            SettingsSection(title = stringResource(R.string.settings_text_recognition)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -898,12 +915,12 @@ fun SettingsScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Auto-scan images and PDFs for search",
+                            stringResource(R.string.settings_auto_scan_images_pdfs_search),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Applies to new saves only.",
+                            stringResource(R.string.settings_applies_new_saves_only),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -914,8 +931,8 @@ fun SettingsScreen(
                             scope.launch {
                                 viewModel.setAutoScanOcr(enabled)
                                 snackbarHostState.showSnackbar(
-                                    if (enabled) "Auto-scan is on for new saves"
-                                    else "Auto-scan is off for new saves"
+                                    if (enabled) ctx.getString(R.string.settings_auto_scan_new_saves)
+                                    else ctx.getString(R.string.settings_auto_scan_off_new_saves)
                                 )
                             }
                         }
@@ -932,17 +949,17 @@ fun SettingsScreen(
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Languages in images",
+                            stringResource(R.string.settings_languages_images),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            ocrLanguagesSummary(ocrLanguages),
+                            ocrLanguagesSummary(ctx.resources, ocrLanguages),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Text("Change", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_change), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
                 if (showOcrLanguages) {
                     OcrLanguagesSheet(
@@ -960,31 +977,31 @@ fun SettingsScreen(
                 OutlinedButton(
                     onClick = {
                         scope.launch {
-                            busyLabel = "Queueing text scan"
+                            busyLabel = ctx.getString(R.string.settings_queueing_text_scan)
                             runCatching { viewModel.scanExistingSaves() }
                                 .onSuccess { count ->
                                     snackbarHostState.showSnackbar(
-                                        if (count == 0) "No older images or PDFs need scanning"
-                                        else "Scanning existing saves for search: queued $count item${if (count == 1) "" else "s"}"
+                                        if (count == 0) ctx.getString(R.string.settings_no_older_images_pdfs_need)
+                                        else ctx.resources.getQuantityString(R.plurals.settings_scan_queued, count, count)
                                     )
                                 }
-                                .onFailure { snackbarHostState.showSnackbar("Couldn't queue text scan") }
+                                .onFailure { snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_queue_text_scan)) }
                             busyLabel = null
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp)
                 ) {
-                    Text("Scan existing saves", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_scan_existing_saves), fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(14.dp))
                 Text(
-                    "PDF scan limit",
+                    stringResource(R.string.settings_pdf_scan_limit),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    "Higher limits make more pages searchable, but large PDFs take longer. Raising it also reads the extra pages of PDFs you already saved. All reads every page, stopping only if a very long PDF's text gets too big to keep.",
+                    stringResource(R.string.settings_higher_limits_make_more_pages),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -995,15 +1012,22 @@ fun SettingsScreen(
                         scope.launch {
                             val before = pdfPageLimit
                             viewModel.setPdfPageLimit(limit)
-                            val pages = if (limit == OcrPreferences.ALL_PDF_PAGES) "every page" else "up to $limit pages"
-                            snackbarHostState.showSnackbar(if (limit > before) "Reading $pages, saved PDFs included" else "New PDFs: $pages. Text already found stays.")
+                            val all = limit == OcrPreferences.ALL_PDF_PAGES
+                            snackbarHostState.showSnackbar(
+                                when {
+                                    limit > before && all -> ctx.getString(R.string.settings_pdf_limit_raised_all)
+                                    limit > before -> ctx.getString(R.string.settings_pdf_limit_raised, limit)
+                                    all -> ctx.getString(R.string.settings_pdf_limit_lowered_all)
+                                    else -> ctx.getString(R.string.settings_pdf_limit_lowered, limit)
+                                }
+                            )
                         }
                     }
                 )
             }
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Appearance") {
+            SettingsSection(title = stringResource(R.string.settings_appearance)) {
                 ThemeChoice(
                     mode = ThemeMode.SYSTEM,
                     icon = Icons.Rounded.PhoneAndroid,
@@ -1025,7 +1049,7 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Collections") {
+            SettingsSection(title = stringResource(R.string.settings_collections)) {
                 CollectionsManager(
                     collections = collections,
                     onCreateClick = { showCreateCollection = true },
@@ -1041,13 +1065,13 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Remove starter collections", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.settings_remove_starter_collections_2), fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Offline reading") {
+            SettingsSection(title = stringResource(R.string.settings_offline_reading)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -1061,12 +1085,12 @@ fun SettingsScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Save articles to read offline",
+                            stringResource(R.string.settings_save_articles_read_offline),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "When you save a link, keep a copy of the article's text on this phone — readable without internet, even if the page changes or disappears. Text only, so it takes little space.",
+                            stringResource(R.string.settings_when_save_link_keep_copy),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1077,8 +1101,8 @@ fun SettingsScreen(
                             scope.launch {
                                 viewModel.setKeepOfflineCopies(enabled)
                                 snackbarHostState.showSnackbar(
-                                    if (enabled) "New links will be saved for offline reading"
-                                    else "New links won't be saved offline — you can still save one from its page"
+                                    if (enabled) ctx.getString(R.string.settings_new_links_will_saved_offline)
+                                    else ctx.getString(R.string.settings_new_links_wont_saved_offline)
                                 )
                             }
                         }
@@ -1091,15 +1115,15 @@ fun SettingsScreen(
                             scope.launch {
                                 val queued = viewModel.saveCopiesForExistingLinks()
                                 snackbarHostState.showSnackbar(
-                                    if (queued == 0) "None of your older links can be saved offline"
-                                    else "Saving $queued link${if (queued == 1) "" else "s"} in the background — keep using the app"
+                                    if (queued == 0) ctx.getString(R.string.settings_none_older_links_can_saved)
+                                    else ctx.resources.getQuantityString(R.plurals.settings_offline_queued, queued, queued)
                                 )
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp)
                     ) {
-                        Text("Save older links too ($linksWithoutCopy)", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.settings_save_older_links_too, linksWithoutCopy), fontWeight = FontWeight.Bold)
                     }
                 }
                 if (offlineCopyStats.count > 0) {
@@ -1109,44 +1133,43 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "${offlineCopyStats.count} article${if (offlineCopyStats.count == 1) "" else "s"} saved · " +
-                                formatStorage(offlineCopyStats.bytes),
+                            pluralStringResource(R.plurals.settings_offline_articles_saved, offlineCopyStats.count, offlineCopyStats.count, formatStorage(offlineCopyStats.bytes)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f)
                         )
                         TextButton(onClick = { showRemoveOfflineCopies = true }) {
-                            Text("Remove all", color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.settings_remove_all), color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
             }
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Reminders") {
+            SettingsSection(title = stringResource(R.string.settings_reminders)) {
                 Text(
-                    "Default reminder times",
+                    stringResource(R.string.settings_default_reminder_times),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    "When you tap a quick reminder, this is the time of day it lands on. You can always pick an exact date and time with \"Custom\".",
+                    stringResource(R.string.settings_when_tap_quick_reminder_time),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(10.dp))
                 ReminderTimeRow(
                     icon = Icons.Rounded.LightMode,
-                    label = "Morning time",
-                    sub = "Used by Tomorrow, This weekend & Next week",
+                    label = stringResource(R.string.settings_morning_time),
+                    sub = stringResource(R.string.settings_used_tomorrow_weekend_next_week),
                     time = formatClock(morningReminderTime.hour, morningReminderTime.minute),
                     onClick = { editingReminderTime = ReminderTimeTarget.MORNING }
                 )
                 Spacer(Modifier.height(8.dp))
                 ReminderTimeRow(
                     icon = Icons.Rounded.DarkMode,
-                    label = "Evening time",
-                    sub = "Used by Tonight",
+                    label = stringResource(R.string.settings_evening_time),
+                    sub = stringResource(R.string.settings_used_tonight),
                     time = formatClock(eveningReminderTime.hour, eveningReminderTime.minute),
                     onClick = { editingReminderTime = ReminderTimeTarget.EVENING }
                 )
@@ -1164,12 +1187,12 @@ fun SettingsScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Weekly shelf nudge",
+                            stringResource(R.string.settings_weekly_shelf_nudge),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Saturday morning, one thing you saved but haven't opened yet. Silent, and skipped when there's nothing unread.",
+                            stringResource(R.string.settings_saturday_morning_one_thing_saved),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1181,8 +1204,8 @@ fun SettingsScreen(
                                 scope.launch {
                                     viewModel.setWeeklyNudge(enabled)
                                     snackbarHostState.showSnackbar(
-                                        if (enabled) "You'll get one nudge on Saturday mornings"
-                                        else "Weekly nudge turned off"
+                                        if (enabled) ctx.getString(R.string.settings_youll_get_one_nudge_saturday)
+                                        else ctx.getString(R.string.settings_weekly_nudge_turned_off)
                                     )
                                 }
                                 Unit
@@ -1205,15 +1228,15 @@ fun SettingsScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "On-time reminders",
+                            stringResource(R.string.settings_time_reminders),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             if (hasExactAlarmPermission) {
-                                "Reminders fire at the exact time you set."
+                                stringResource(R.string.settings_reminders_fire_exact_time_set)
                             } else {
-                                "Android may delay reminders by a few minutes. Turn on exact alarms for on-the-dot delivery."
+                                stringResource(R.string.settings_android_may_delay_reminders_few)
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1223,12 +1246,12 @@ fun SettingsScreen(
                 if (!hasExactAlarmPermission) {
                     Spacer(Modifier.height(12.dp))
                     NoticeBanner(
-                        text = "For on-the-dot reminders, allow Alarms & reminders in Android settings.",
-                        action = "Open settings",
+                        text = stringResource(R.string.settings_dot_reminders_allow_alarms_reminders),
+                        action = stringResource(R.string.settings_open_settings),
                         pose = KeeperPose.Reminder,
                         onAction = {
                             if (!viewModel.openExactAlarmSettings()) {
-                                scope.launch { snackbarHostState.showSnackbar("Couldn't open alarm settings") }
+                                scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_open_alarm_settings)) }
                             }
                             hasExactAlarmPermission = viewModel.hasExactAlarmPermission()
                         }
@@ -1237,7 +1260,7 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Help") {
+            SettingsSection(title = stringResource(R.string.settings_help)) {
                 HelpFlow()
                 Spacer(Modifier.height(12.dp))
                 // The share-sheet flow is the app's core gesture and the
@@ -1246,7 +1269,7 @@ fun SettingsScreen(
                     onClick = {
                         if (!HelpLinks.openShareDemo(ctx)) {
                             scope.launch {
-                                snackbarHostState.showSnackbar("Couldn't open the video — no browser on this device")
+                                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_open_video_no_browser))
                             }
                         }
                     },
@@ -1255,7 +1278,7 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Watch: save from any app", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_watch_save_any_app), fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
@@ -1264,7 +1287,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        if (showHelpDetails) "Hide detailed guide" else "Show detailed guide",
+                        if (showHelpDetails) stringResource(R.string.settings_hide_detailed_guide) else stringResource(R.string.settings_show_detailed_guide),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -1277,163 +1300,163 @@ fun SettingsScreen(
                 // (Favorites, Archive, Tags, Settings → New collection)
                 // without making the wall taller.
                 Spacer(Modifier.height(14.dp))
-                HelpGroupTitle("The basics")
+                HelpGroupTitle(stringResource(R.string.settings_basics))
                 HelpItem(
-                    title = "Save from any app",
-                    body = "Tap Share in another app, choose PettiBox, pick a collection, then save. Several photos, PDFs or files shared together become one save. You can also highlight text in any app and choose \"Save to PettiBox\" from the selection menu. Add a note or reminder only when you need it.",
+                    title = stringResource(R.string.settings_save_any_app),
+                    body = stringResource(R.string.settings_tap_share_another_app_choose),
                     icon = Icons.Rounded.Share
                 )
                 HelpItem(
-                    title = "Add from PettiBox",
-                    body = "Tap the + button on Home to add a note, paste a link, choose pictures, or pick one or more files.",
+                    title = stringResource(R.string.settings_add_pettibox),
+                    body = stringResource(R.string.settings_tap_button_home_add_note),
                     icon = Icons.Rounded.PhoneAndroid
                 )
                 HelpItem(
-                    title = "Find it later",
-                    body = "Search by words, source app, file type, tag, collection, or upcoming reminders. It also checks text found inside images and PDFs (in the languages you turn on under Text recognition), and the text of articles saved for offline reading.",
+                    title = stringResource(R.string.settings_find_later),
+                    body = stringResource(R.string.settings_search_words_source_app_file),
                     icon = Icons.Rounded.Search
                 )
                 HelpItem(
-                    title = "Make a new collection",
-                    body = "Use Collections above to create or rename shelves. New collections show up in Browse and in the save sheet.",
+                    title = stringResource(R.string.settings_make_new_collection),
+                    body = stringResource(R.string.settings_use_collections_above_create_rename),
                     icon = Icons.Rounded.GridView
                 )
                 HelpItem(
-                    title = "Lots of collections? Search them",
-                    body = "Once you have more than 8 collections, a \"Find collection\" box appears when you save something, in Browse, and when you move a save (open it and tap Choose collection or Change, or long-press → Move to collection). Type a few letters to jump straight to the one you want.",
+                    title = stringResource(R.string.settings_lots_collections_search_them),
+                    body = stringResource(R.string.settings_once_have_more_than_8),
                     icon = Icons.Rounded.Search
                 )
 
                 Spacer(Modifier.height(14.dp))
-                HelpGroupTitle("Get more out of it")
+                HelpGroupTitle(stringResource(R.string.settings_get_more_out))
                 HelpItem(
-                    title = "Long-press for quick actions",
-                    body = "Press and hold any save to pin, favorite, archive, set a reminder, move it, copy a link, or delete it.",
+                    title = stringResource(R.string.settings_long_press_quick_actions),
+                    body = stringResource(R.string.settings_press_hold_any_save_pin),
                     icon = Icons.Rounded.TouchApp
                 )
                 HelpItem(
-                    title = "Love it — see all favorites",
-                    body = "Tap the heart on a save (or long-press → ❤️). Open Browse → Favorites to see every save you've hearted, all in one place.",
+                    title = stringResource(R.string.settings_love_see_all_favorites),
+                    body = stringResource(R.string.settings_tap_heart_save_long_press),
                     icon = Icons.Rounded.Favorite
                 )
                 HelpItem(
-                    title = "Tags cut across collections",
-                    body = "A save lives in one collection, but can carry many tags. Add tags from the save sheet or the detail screen. Open Browse → Tags to see every tag with its save count.",
+                    title = stringResource(R.string.settings_tags_cut_across_collections),
+                    body = stringResource(R.string.settings_save_lives_one_collection_but),
                     icon = Icons.Rounded.LocalOffer
                 )
                 HelpItem(
-                    title = "Edit anytime — it saves itself",
-                    body = "Open any save to change its title, note, or tags. Edits save automatically when you tap away or leave the screen, and a quick Undo appears in case you change your mind.",
+                    title = stringResource(R.string.settings_edit_anytime_saves_itself),
+                    body = stringResource(R.string.settings_open_any_save_change_its),
                     icon = Icons.Rounded.Edit
                 )
                 HelpItem(
-                    title = "Unread: your read-later list",
-                    body = "Anything you save stays in Browse → Unread until you open it, newest first. Once a week (Saturday morning) PettiBox can nudge you about one of them — turn that off under Reminders above.",
+                    title = stringResource(R.string.settings_unread_read_later_list),
+                    body = stringResource(R.string.settings_anything_save_stays_browse_unread),
                     icon = Icons.Rounded.AutoStories
                 )
                 HelpItem(
-                    title = "Widget and app-icon shortcuts",
-                    body = "Long-press the PettiBox icon for New note, Add a link, Search, or Unread. Add the PettiBox widget to your home screen (long-press an empty spot → Widgets) to see unread saves and add new ones in one tap.",
+                    title = stringResource(R.string.settings_widget_app_icon_shortcuts),
+                    body = stringResource(R.string.settings_long_press_pettibox_icon_new),
                     icon = Icons.Rounded.Widgets
                 )
                 HelpItem(
-                    title = "Archive when you're done",
-                    body = "Archived saves disappear from Home but stay searchable. Use Archive instead of Delete when you may need something again.",
+                    title = stringResource(R.string.settings_archive_when_youre_done),
+                    body = stringResource(R.string.settings_archived_saves_disappear_home_but),
                     icon = Icons.Rounded.Archive
                 )
                 HelpItem(
-                    title = "Remind me later",
-                    body = "Tap the clock on any save or in the save sheet. Quick reminders use your Morning and Evening times above; Custom lets you pick the exact date and time.",
+                    title = stringResource(R.string.settings_remind_me_later),
+                    body = stringResource(R.string.settings_tap_clock_any_save_save),
                     icon = Icons.Rounded.AccessTime
                 )
                 HelpItem(
-                    title = "Read links offline",
-                    body = "When you save a link, PettiBox keeps a copy of the article's text. Open the save and tap \"Read offline\" — it works with no internet, even if the page is later changed or taken down. The copy is made in the background whenever you're online. Videos and social posts (YouTube, Instagram, X) don't have copies. Turn this off, or save older links too, under Offline reading above.",
+                    title = stringResource(R.string.settings_read_links_offline),
+                    body = stringResource(R.string.settings_when_save_link_pettibox_keeps),
                     icon = Icons.AutoMirrored.Rounded.MenuBook
                 )
                 HelpItem(
-                    title = "Pictures for every link",
-                    body = "Links show the picture the website provides. If it has none, PettiBox takes a screenshot of the top of the page in the background, so you can spot the save by eye later. Not a helpful picture? Open the save and tap \"Use a page screenshot as the picture\".",
+                    title = stringResource(R.string.settings_pictures_every_link),
+                    body = stringResource(R.string.settings_links_show_picture_website_provides),
                     icon = Icons.Rounded.Wallpaper
                 )
                 HelpItem(
-                    title = "\"No offline copy\"?",
-                    body = "Some pages can't be copied: paywalled or login-only articles, pages that no longer exist, and very long pages. Tap \"Try again\" on the save — or \"Open original\" to read it on the web.",
+                    title = stringResource(R.string.settings_no_offline_copy),
+                    body = stringResource(R.string.settings_some_pages_cant_copied_paywalled),
                     icon = Icons.AutoMirrored.Rounded.MenuBook
                 )
                 HelpItem(
-                    title = "Zoom pictures, read PDFs",
-                    body = "Tap a picture to open it full screen, then pinch or double-tap to zoom and drag to look around. PDFs open right inside PettiBox: scroll through the pages, pinch to zoom, or tap the open-in-app icon to use another PDF app.",
+                    title = stringResource(R.string.settings_zoom_pictures_read_pdfs),
+                    body = stringResource(R.string.settings_tap_picture_open_full_screen),
                     icon = Icons.Rounded.ZoomIn
                 )
                 HelpItem(
-                    title = "Text recognition is optional",
-                    body = "Auto-scan makes the text in screenshots, photos and PDFs searchable: English and other Latin-alphabet languages always, plus the languages you turn on under Text recognition › Languages in images. PDFs are read up to the page limit you choose there.",
+                    title = stringResource(R.string.settings_text_recognition_optional),
+                    body = stringResource(R.string.settings_auto_scan_makes_text_screenshots),
                     icon = Icons.AutoMirrored.Rounded.TextSnippet
                 )
 
                 Spacer(Modifier.height(14.dp))
-                HelpGroupTitle("Backups & safety")
+                HelpGroupTitle(stringResource(R.string.settings_backups_safety))
                 HelpItem(
-                    title = "Share and remove safely",
-                    body = "Open a saved item to share one attachment from a group, swipe through items, or remove an attachment with Undo.",
+                    title = stringResource(R.string.settings_share_remove_safely),
+                    body = stringResource(R.string.settings_open_saved_item_share_one),
                     icon = Icons.Rounded.Share
                 )
                 HelpItem(
-                    title = "Deleted something by mistake?",
-                    body = "Deleted saves wait in Browse → Recently deleted for 30 days. Tap one to restore it, or delete it for good. After 30 days they're removed automatically.",
+                    title = stringResource(R.string.settings_deleted_something_mistake),
+                    body = stringResource(R.string.settings_deleted_saves_wait_browse_recently),
                     icon = Icons.Rounded.RestoreFromTrash
                 )
                 HelpItem(
-                    title = "Lock PettiBox",
-                    body = "Turn on App lock under Privacy to require your fingerprint, face, or phone PIN. Pick how soon it locks again after you leave the app (a minute by default); locking your phone's screen locks it right away. The widget shows titles only while PettiBox is unlocked, and the weekly nudge never shows them.",
+                    title = stringResource(R.string.settings_lock_pettibox),
+                    body = stringResource(R.string.settings_turn_app_lock_under_privacy),
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
-                    title = "Lock a collection",
-                    body = "Open a collection, tap Edit, and turn on \"Lock this collection\". It disappears from Home, Browse, search, and the widget. To see it again, tap Locked at the bottom of Browse (or Open under Privacy here) and unlock with your fingerprint, face, or phone PIN. It hides again when your screen locks. Want no trace of it in Browse? Turn off \"Show Locked in Browse\" under Privacy.",
+                    title = stringResource(R.string.settings_lock_collection),
+                    body = stringResource(R.string.settings_open_collection_tap_edit_turn),
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
-                    title = "Sync between your devices",
-                    body = "Turn on Sync between devices on each phone or tablet, signed in to the same Google account. Your library travels through your own Google Drive (a \"PettiBox\" folder). PettiBox syncs when you open it, about a minute after you change something, and in the background on the schedule you pick (15 minutes to weekly, or \"Only while in use\" for none). Photos and files follow, on Wi-Fi by default. Reminders ring on every device that has the save.",
+                    title = stringResource(R.string.settings_sync_between_devices),
+                    body = stringResource(R.string.settings_turn_sync_between_devices_each),
                     icon = Icons.Rounded.Sync
                 )
                 HelpItem(
-                    title = "Where is my library kept?",
-                    body = "PettiBox has no servers. Your library lives on your phone and, with sync on, on your other devices and in your own Google Drive. Nobody else can see it. Turning sync off never deletes anything on the phone; you can also remove this phone's copy from Drive, or use \"Delete synced data\" to clear the synced data from Drive and stop sync on every device, while each device keeps its library.",
+                    title = stringResource(R.string.settings_where_my_library_kept),
+                    body = stringResource(R.string.settings_pettibox_has_no_servers_library),
                     icon = Icons.Rounded.Lock
                 )
                 HelpItem(
-                    title = "Edited on two devices?",
-                    body = "If the same title, note or link was changed on two devices before they synced, both versions are kept. Open the save and pick the one to use; every device follows. A delete never wipes an edit made elsewhere: the save stays, and anything removed by sync waits in Recently deleted for 30 days. If another device wants to remove many saves at once, sync pauses and asks you first, after making a backup.",
+                    title = stringResource(R.string.settings_edited_two_devices),
+                    body = stringResource(R.string.settings_if_same_title_note_link),
                     icon = Icons.Rounded.Devices
                 )
                 HelpItem(
-                    title = "Back up your shelf",
-                    body = "Every backup always keeps a copy on this phone; connect Google Drive (and optionally an extra folder) to send the same copy there too. \"Back up now\" fills every destination in one tap. Offline article copies are included, so they come back on a new phone too.",
+                    title = stringResource(R.string.settings_back_up_shelf),
+                    body = stringResource(R.string.settings_every_backup_always_keeps_copy),
                     icon = Icons.Rounded.Download
                 )
                 HelpItem(
-                    title = "Restore from a backup",
-                    body = "New phone, or need to recover? Tap \"Restore a backup\" in the Backup section and choose Google Drive, one of the automatic copies on this phone, or a backup file. Saves you already have are skipped, so nothing gets duplicated.",
+                    title = stringResource(R.string.settings_restore_backup_2),
+                    body = stringResource(R.string.settings_new_phone_need_recover_tap),
                     icon = Icons.Rounded.FolderOpen
                 )
                 HelpItem(
-                    title = "Bring bookmarks from other apps",
-                    body = "Coming from Chrome, Firefox, Raindrop.io, or Pocket? Export your bookmarks there (HTML or CSV), then use \"Import bookmarks file\" below. Folders and tags carry over.",
+                    title = stringResource(R.string.settings_bring_bookmarks_other_apps),
+                    body = stringResource(R.string.settings_coming_chrome_firefox_raindrop_io),
                     icon = Icons.Rounded.FolderOpen
                 )
                 HelpItem(
-                    title = "Back up to your Google Drive",
-                    body = "Connect Google Drive in the Backup section and every nightly safety copy also uploads to a \"PettiBox › Backups\" folder in your own Drive. PettiBox can only see files it created — never the rest of your Drive. Wrong account connected? Tap \"Switch account\" under Google Drive to pick a different one.",
+                    title = stringResource(R.string.settings_back_up_google_drive),
+                    body = stringResource(R.string.settings_connect_google_drive_backup_section),
                     icon = Icons.Rounded.Cloud
                 )
                 }
             }
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Privacy") {
+            SettingsSection(title = stringResource(R.string.settings_privacy)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -1447,12 +1470,12 @@ fun SettingsScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Lock PettiBox",
+                            stringResource(R.string.settings_lock_pettibox),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Ask for your fingerprint, face, or phone PIN to open PettiBox or save into it. The widget shows titles only while PettiBox is unlocked, and notifications hide them.",
+                            stringResource(R.string.settings_ask_fingerprint_face_phone_pin),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1464,21 +1487,21 @@ fun SettingsScreen(
                             when {
                                 !enabled -> scope.launch {
                                     viewModel.setAppLock(false)
-                                    snackbarHostState.showSnackbar("App lock is off")
+                                    snackbarHostState.showSnackbar(ctx.getString(R.string.settings_app_lock_off))
                                 }
                                 !AppLockSession.isAvailable(ctx) -> scope.launch {
                                     snackbarHostState.showSnackbar(
-                                        "Set up a screen lock (PIN, pattern, or fingerprint) in your phone's settings first"
+                                        ctx.getString(R.string.settings_set_up_screen_lock_pin)
                                     )
                                 }
                                 // Confirm it works before switching it on, so no one locks themselves out.
                                 activity != null -> AppLockSession.prompt(
                                     activity,
-                                    title = "Turn on App lock",
+                                    title = ctx.getString(R.string.settings_turn_app_lock),
                                     onSuccess = {
                                         scope.launch {
                                             viewModel.setAppLock(true)
-                                            snackbarHostState.showSnackbar("App lock is on")
+                                            snackbarHostState.showSnackbar(ctx.getString(R.string.settings_app_lock))
                                         }
                                     }
                                 )
@@ -1491,14 +1514,14 @@ fun SettingsScreen(
                     // with; say so instead of showing a switch that lies.
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        "Paused: this phone has no screen lock right now, so PettiBox opens without asking. Set a PIN, pattern, or fingerprint in your phone's settings and the lock comes back on its own.",
+                        stringResource(R.string.settings_paused_phone_has_no_screen),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error
                     )
                 } else if (appLockOn) {
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        "Lock after leaving",
+                        stringResource(R.string.settings_lock_after_leaving),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -1509,7 +1532,7 @@ fun SettingsScreen(
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "Locking your phone's screen always locks PettiBox right away, so it's safe to hand your phone to someone.",
+                        stringResource(R.string.settings_locking_phones_screen_always_locks),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1531,12 +1554,12 @@ fun SettingsScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Locked collections",
+                            stringResource(R.string.settings_locked_collections),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Lock a collection from its Edit screen to hide it everywhere until you unlock it.",
+                            stringResource(R.string.settings_lock_collection_its_edit_screen),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1546,7 +1569,7 @@ fun SettingsScreen(
                         when {
                             collectionsUnlocked -> {
                                 AppLockSession.lockCollections()
-                                scope.launch { snackbarHostState.showSnackbar("Locked collections are hidden again") }
+                                scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.settings_locked_collections_hidden_again)) }
                             }
                             activity != null -> AppLockSession.unlockCollections(activity) {
                                 scope.launch {
@@ -1554,14 +1577,14 @@ fun SettingsScreen(
                                         onOpenBrowse()
                                     } else {
                                         snackbarHostState.showSnackbar(
-                                            "Nothing locked yet. Lock a collection from its Edit screen."
+                                            ctx.getString(R.string.settings_nothing_locked_yet_lock_collection)
                                         )
                                     }
                                 }
                             }
                         }
                     }) {
-                        Text(if (collectionsUnlocked) "Lock again" else "Open", fontWeight = FontWeight.Bold)
+                        Text(if (collectionsUnlocked) stringResource(R.string.settings_lock_again) else stringResource(R.string.settings_open), fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -1572,13 +1595,13 @@ fun SettingsScreen(
                     Spacer(Modifier.width(36.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Show Locked in Browse",
+                            stringResource(R.string.settings_show_locked_browse),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            if (showLockedTile) "A Locked tile at the bottom of Browse opens them."
-                            else "No trace in Browse. Open them here, with the button above.",
+                            if (showLockedTile) stringResource(R.string.settings_locked_tile_bottom_browse_opens)
+                            else stringResource(R.string.settings_no_trace_browse_open_them),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1591,7 +1614,7 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Backup") {
+            SettingsSection(title = stringResource(R.string.settings_backup)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -1605,15 +1628,15 @@ fun SettingsScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Automatic nightly backup",
+                            stringResource(R.string.settings_automatic_nightly_backup),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             if (localBackupStatus.lastBackupAt > 0L) {
-                                "Runs overnight. Last backup: ${formatBackupTime(localBackupStatus.lastBackupAt)}."
+                                stringResource(R.string.settings_runs_overnight_last_backup, formatBackupTime(localBackupStatus.lastBackupAt))
                             } else {
-                                "Runs overnight — every place below gets a fresh copy."
+                                stringResource(R.string.settings_runs_overnight_every_place_below)
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1625,8 +1648,8 @@ fun SettingsScreen(
                             scope.launch {
                                 viewModel.setAutoLocalBackup(enabled)
                                 snackbarHostState.showSnackbar(
-                                    if (enabled) "Automatic nightly backup is on"
-                                    else "Automatic nightly backup is off"
+                                    if (enabled) ctx.getString(R.string.settings_automatic_nightly_backup_2)
+                                    else ctx.getString(R.string.settings_automatic_nightly_backup_off)
                                 )
                             }
                         }
@@ -1634,50 +1657,50 @@ fun SettingsScreen(
                 }
                 Spacer(Modifier.height(14.dp))
                 Text(
-                    "Where your backups go",
+                    stringResource(R.string.settings_where_backups_go),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
                 BackupDestinationRow(
                     icon = Icons.Rounded.PhoneAndroid,
-                    title = "This phone",
-                    caption = "Always included — keeps the 3 newest copies in PettiBox storage."
+                    title = stringResource(R.string.settings_phone_2),
+                    caption = stringResource(R.string.settings_always_included_keeps_3_newest)
                 )
                 BackupDestinationRow(
                     icon = Icons.Rounded.Cloud,
-                    title = "Google Drive",
+                    title = stringResource(R.string.settings_google_drive_2),
                     caption = when {
                         !driveBackupStatus.enabled ->
-                            "Not connected. Cloud copies survive a lost or broken phone."
+                            stringResource(R.string.settings_not_connected_cloud_copies_survive)
                         driveBackupStatus.accountEmail.isNotBlank() && driveBackupStatus.lastBackupAt > 0L ->
-                            "${driveBackupStatus.accountEmail} · Last upload: ${formatBackupTime(driveBackupStatus.lastBackupAt)}"
+                            stringResource(R.string.settings_last_upload, driveBackupStatus.accountEmail, formatBackupTime(driveBackupStatus.lastBackupAt))
                         driveBackupStatus.accountEmail.isNotBlank() ->
-                            "${driveBackupStatus.accountEmail} · Uploads with tonight's backup"
+                            stringResource(R.string.settings_uploads_tonights_backup, driveBackupStatus.accountEmail)
                         driveBackupStatus.lastBackupAt > 0L ->
-                            "Connected · Last upload: ${formatBackupTime(driveBackupStatus.lastBackupAt)}"
-                        else -> "Connected · Uploads with tonight's backup"
+                            stringResource(R.string.settings_connected_last_upload, formatBackupTime(driveBackupStatus.lastBackupAt))
+                        else -> stringResource(R.string.settings_connected_uploads_tonights_backup)
                     },
-                    actionLabel = if (driveBackupStatus.enabled) "Disconnect" else "Connect",
+                    actionLabel = if (driveBackupStatus.enabled) stringResource(R.string.settings_disconnect) else stringResource(R.string.settings_connect),
                     onAction = {
                         if (driveBackupStatus.enabled) {
                             scope.launch {
                                 viewModel.disconnectDrive()
                                 snackbarHostState.showSnackbar(
-                                    "Google Drive disconnected. Copies already uploaded stay in your Drive."
+                                    ctx.getString(R.string.settings_google_drive_disconnected_copies_already)
                                 )
                             }
                         } else {
                             connectDrive()
                         }
                     },
-                    secondaryActionLabel = if (driveBackupStatus.enabled) "Switch account" else null,
+                    secondaryActionLabel = if (driveBackupStatus.enabled) stringResource(R.string.settings_switch_account) else null,
                     onSecondaryAction = if (driveBackupStatus.enabled) switchDriveAccount else null
                 )
                 if (driveBackupStatus.enabled && driveBackupStatus.needsReconnectAt > 0L) {
                     NoticeBanner(
-                        text = "PettiBox lost access to your Google Drive, so cloud copies are paused. Reconnect to resume them.",
-                        action = "Reconnect",
+                        text = stringResource(R.string.settings_pettibox_lost_access_google_drive),
+                        action = stringResource(R.string.settings_reconnect),
                         onAction = connectDrive,
                         pose = KeeperPose.BackupWarning,
                         isError = true
@@ -1685,7 +1708,7 @@ fun SettingsScreen(
                     Spacer(Modifier.height(6.dp))
                 } else if (driveBackupStatus.enabled && driveBackupStatus.lastFailedAt > 0L) {
                     Text(
-                        "Last Drive upload didn't finish — maybe offline. It retries with tonight's backup.",
+                        stringResource(R.string.settings_last_drive_upload_didnt_finish),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -1693,13 +1716,13 @@ fun SettingsScreen(
                 }
                 BackupDestinationRow(
                     icon = Icons.Rounded.FolderOpen,
-                    title = "Extra folder",
+                    title = stringResource(R.string.settings_extra_folder),
                     caption = if (localBackupStatus.folderUri.isBlank()) {
-                        "Optional — also drop each copy into a folder you pick."
+                        stringResource(R.string.settings_optional_also_drop_each_copy)
                     } else {
-                        "Each backup is also copied to your chosen folder."
+                        stringResource(R.string.settings_each_backup_also_copied_chosen)
                     },
-                    actionLabel = if (localBackupStatus.folderUri.isBlank()) "Choose" else "Change",
+                    actionLabel = if (localBackupStatus.folderUri.isBlank()) stringResource(R.string.settings_choose) else stringResource(R.string.settings_change),
                     onAction = {
                         // Some OEM builds ship without a Storage Access
                         // Framework picker or block the implicit intent —
@@ -1710,7 +1733,7 @@ fun SettingsScreen(
                             .onFailure {
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
-                                        "No file picker available on this device. Backups will stay in PettiBox storage."
+                                        ctx.getString(R.string.settings_no_file_picker_available_device)
                                     )
                                 }
                             }
@@ -1718,8 +1741,8 @@ fun SettingsScreen(
                 )
                 if (localBackupStatus.lastCopyFailedAt > 0L) {
                     NoticeBanner(
-                        text = "PettiBox made a backup, but couldn't copy it to your extra folder. Pick the folder again if it moved or permissions changed.",
-                        action = "Choose folder",
+                        text = stringResource(R.string.settings_pettibox_made_backup_but_couldnt),
+                        action = stringResource(R.string.settings_choose_folder),
                         onAction = { chooseBackupFolder.launch(null) },
                         pose = KeeperPose.BackupWarning,
                         isError = true
@@ -1737,15 +1760,15 @@ fun SettingsScreen(
                             if (driveBackupStatus.enabled) {
                                 uploadToDriveNow()
                             } else {
-                                busyLabel = "Backing up"
+                                busyLabel = ctx.getString(R.string.settings_backing_up)
                                 runCatching { viewModel.createLocalBackupNow() }
                                     .onSuccess { (_, result) ->
                                         snackbarHostState.showSnackbar(
-                                            backupSummaryMessage("Backed up on this phone:", result)
+                                            backupSummaryMessage(ctx.resources, R.string.settings_backed_up_summary, result)
                                         )
                                     }
                                     .onFailure {
-                                        snackbarHostState.showSnackbar("Couldn't make a backup")
+                                        snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_make_backup))
                                     }
                                 busyLabel = null
                             }
@@ -1757,7 +1780,7 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Back up now", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_back_up_now), fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
@@ -1767,25 +1790,25 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Restore a backup", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_restore_backup), fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
                     onClick = {
                         scope.launch {
-                            busyLabel = "Preparing export"
+                            busyLabel = ctx.getString(R.string.settings_preparing_export)
                             runCatching { viewModel.exportBackupZipFile() }
                                 .onSuccess { (file, result) ->
                                     if (!shareBackupFile(ctx, file)) {
-                                        snackbarHostState.showSnackbar("Couldn't export backup")
+                                        snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_export_backup))
                                     } else {
                                         snackbarHostState.showSnackbar(
-                                            backupSummaryMessage("Backup includes", result)
+                                            backupSummaryMessage(ctx.resources, R.string.settings_backup_includes_summary, result)
                                         )
                                     }
                                 }
                                 .onFailure {
-                                    snackbarHostState.showSnackbar("Couldn't export backup")
+                                    snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_export_backup))
                                 }
                             busyLabel = null
                         }
@@ -1795,17 +1818,14 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Export & share a backup file", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_export_share_backup_file), fontWeight = FontWeight.Bold)
                 }
             }
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "Move between apps") {
+            SettingsSection(title = stringResource(R.string.settings_move_between_apps)) {
                 Text(
-                    "Coming from Chrome, Firefox, Raindrop.io, Pocket, or another bookmark app? " +
-                        "Export your bookmarks there as an HTML or CSV file, then bring that file in here. " +
-                        "Folders become collections, tags come along, and links you already have are skipped. " +
-                        "Going the other way? Export your links as a CSV any app can read.",
+                    stringResource(R.string.settings_coming_chrome_firefox_raindrop_io_2),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1826,7 +1846,7 @@ fun SettingsScreen(
                             )
                         }.onFailure {
                             scope.launch {
-                                snackbarHostState.showSnackbar("No file picker available on this device.")
+                                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_no_file_picker_available_device_2))
                             }
                         }
                     },
@@ -1835,29 +1855,29 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Import bookmarks file", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_import_bookmarks_file), fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
                     onClick = {
                         scope.launch {
-                            busyLabel = "Preparing CSV"
+                            busyLabel = ctx.getString(R.string.settings_preparing_csv)
                             runCatching { viewModel.exportCsvFile() }
                                 .onSuccess { (file, links) ->
                                     when {
                                         links == 0 -> snackbarHostState.showSnackbar(
-                                            "No links to export yet — the CSV covers saves that have a web address"
+                                            ctx.getString(R.string.settings_no_links_export_yet_csv)
                                         )
                                         !shareCsvFile(ctx, file) -> snackbarHostState.showSnackbar(
-                                            "Couldn't export the CSV"
+                                            ctx.getString(R.string.settings_couldnt_export_csv)
                                         )
                                         else -> snackbarHostState.showSnackbar(
-                                            "Exported $links ${if (links == 1) "link" else "links"} as CSV"
+                                            ctx.resources.getQuantityString(R.plurals.settings_csv_exported, links, links)
                                         )
                                     }
                                 }
                                 .onFailure {
-                                    snackbarHostState.showSnackbar("Couldn't export the CSV")
+                                    snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_export_csv))
                                 }
                             busyLabel = null
                         }
@@ -1867,14 +1887,14 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Export links as CSV", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_export_links_csv), fontWeight = FontWeight.Bold)
                 }
             }
 
             Spacer(Modifier.height(16.dp))
-            SettingsSection(title = "About") {
+            SettingsSection(title = stringResource(R.string.settings_about)) {
                 Text(
-                    "Enjoying PettiBox, or ran into something odd? Either way, I'd love to hear it.",
+                    stringResource(R.string.settings_enjoying_pettibox_ran_into_something),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1883,7 +1903,7 @@ fun SettingsScreen(
                     onClick = {
                         if (!HelpLinks.openPlayListing(ctx)) {
                             scope.launch {
-                                snackbarHostState.showSnackbar("Couldn't open the Play Store on this device")
+                                snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_open_play_store_device))
                             }
                         }
                     },
@@ -1892,7 +1912,7 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.Star, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Rate PettiBox", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_rate_pettibox), fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
@@ -1900,7 +1920,7 @@ fun SettingsScreen(
                         if (!HelpLinks.openSupportEmail(ctx)) {
                             scope.launch {
                                 snackbarHostState.showSnackbar(
-                                    "No email app found — write to ${HelpLinks.SUPPORT_EMAIL}"
+                                    ctx.getString(R.string.settings_no_email_app_found_write, HelpLinks.SUPPORT_EMAIL)
                                 )
                             }
                         }
@@ -1910,13 +1930,13 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.Email, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Email support", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_email_support), fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
                     onClick = {
                         if (!HelpLinks.shareApp(ctx)) {
-                            scope.launch { snackbarHostState.showSnackbar("Couldn't open the share sheet") }
+                            scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.settings_couldnt_open_share_sheet)) }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -1924,11 +1944,11 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Share PettiBox with a friend", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_share_pettibox_friend), fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(4.dp))
                 TextButton(onClick = { showLicenses = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Open-source licenses")
+                    Text(stringResource(R.string.settings_open_source_licenses))
                 }
                 if (showLicenses) LicensesSheet(onDismiss = { showLicenses = false })
                 Text(
@@ -2108,19 +2128,19 @@ private fun BackupConfidenceBanner(status: LocalBackupStatus) {
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                if (hasBackup) "Last backup: ${formatBackupTime(status.lastBackupAt)}"
-                else if (status.enabled) "Safety copy is on"
-                else "Safety copy is off",
+                if (hasBackup) stringResource(R.string.settings_last_backup, formatBackupTime(status.lastBackupAt))
+                else if (status.enabled) stringResource(R.string.settings_safety_copy)
+                else stringResource(R.string.settings_safety_copy_off),
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 when {
-                    status.lastCopyFailedAt > 0L -> "PettiBox made a private copy, but the extra folder copy needs attention."
-                    hasBackup && status.folderUri.isNotBlank() -> "Also copied to the folder you chose."
-                    hasBackup -> "Stored privately on this device."
-                    status.enabled -> "PettiBox will make a copy overnight."
-                    else -> "Turn on automatic safety copy below."
+                    status.lastCopyFailedAt > 0L -> stringResource(R.string.settings_pettibox_made_private_copy_but)
+                    hasBackup && status.folderUri.isNotBlank() -> stringResource(R.string.settings_also_copied_folder_chose)
+                    hasBackup -> stringResource(R.string.settings_stored_privately_device)
+                    status.enabled -> stringResource(R.string.settings_pettibox_will_make_copy_overnight)
+                    else -> stringResource(R.string.settings_turn_automatic_safety_copy_below)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -2174,15 +2194,15 @@ private fun HelpFlow() {
             .padding(12.dp)
     ) {
         Text(
-            "The main idea",
+            stringResource(R.string.settings_main_idea),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold),
             color = MaterialTheme.colorScheme.primary
         )
         Spacer(Modifier.height(8.dp))
-        HelpStep(number = "1", title = "Save", body = "Tap Share in any app and choose PettiBox, or use + on Home.")
-        HelpStep(number = "2", title = "Organize", body = "Pick a collection. Add notes, tags, or reminders only when useful.")
-        HelpStep(number = "3", title = "Find", body = "Search by words, source, type, tag, collection, reminder, or text inside images/PDFs.")
-        HelpStep(number = "4", title = "Protect", body = "Archive instead of deleting, and keep automatic safety copy on.")
+        HelpStep(number = "1", title = stringResource(R.string.settings_save), body = stringResource(R.string.settings_tap_share_any_app_choose))
+        HelpStep(number = "2", title = stringResource(R.string.settings_organize), body = stringResource(R.string.settings_pick_collection_add_notes_tags))
+        HelpStep(number = "3", title = stringResource(R.string.settings_find), body = stringResource(R.string.settings_search_words_source_type_tag))
+        HelpStep(number = "4", title = stringResource(R.string.settings_protect), body = stringResource(R.string.settings_archive_instead_deleting_keep_automatic))
     }
 }
 
@@ -2313,7 +2333,7 @@ private fun PageLimitChoice(
         shape = RoundedCornerShape(12.dp),
         colors = colors
     ) {
-        Text(if (limit == OcrPreferences.ALL_PDF_PAGES) "All" else "$limit", fontWeight = FontWeight.Bold)
+        Text(if (limit == OcrPreferences.ALL_PDF_PAGES) stringResource(R.string.settings_pdf_limit_all) else limit.toString(), fontWeight = FontWeight.Bold)
     }
 }
 
@@ -2325,7 +2345,7 @@ private fun LockAfterChoices(selectedMs: Long, onSelect: (Long) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         AppLockPreferences.LOCK_AFTER_OPTIONS.forEach { (label, ms) ->
-            LockAfterChoice(label = label, selected = selectedMs == ms, onClick = { onSelect(ms) })
+            LockAfterChoice(label = stringResource(label), selected = selectedMs == ms, onClick = { onSelect(ms) })
         }
     }
 }
@@ -2369,7 +2389,9 @@ private fun formatClock(hour: Int, minute: Int): String {
         set(Calendar.HOUR_OF_DAY, hour)
         set(Calendar.MINUTE, minute)
     }
-    return SimpleDateFormat("h:mm a", Locale.getDefault()).format(cal.time)
+    // The app language's own clock ("9:00 PM", "21:00").
+    val locale = Locale.getDefault()
+    return SimpleDateFormat(android.text.format.DateFormat.getBestDateTimePattern(locale, "jmm"), locale).format(cal.time)
 }
 
 /** Tappable Settings row showing a reminder anchor and its current time. */
@@ -2471,12 +2493,12 @@ private fun ReminderTimeDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) }
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = { onConfirm(timeState.hour, timeState.minute) },
                         shape = RoundedCornerShape(12.dp)
-                    ) { Text("Set", fontWeight = FontWeight.Bold) }
+                    ) { Text(stringResource(R.string.settings_set), fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -2504,9 +2526,9 @@ private fun CollectionsManager(
     }
     Text(
         if (customCollections.isEmpty()) {
-            "No collections yet. Create one whenever you need a shelf like \"Trip ideas\" or \"Client work\"."
+            stringResource(R.string.settings_no_collections_yet_create_one)
         } else {
-            "Tap any collection to rename it, change its emoji or color, or delete it — starter collections included."
+            stringResource(R.string.settings_tap_any_collection_rename_change)
         },
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -2530,7 +2552,7 @@ private fun CollectionsManager(
                     Text(c.emoji, style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        c.name,
+                        c.displayName,
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1
@@ -2548,7 +2570,38 @@ private fun CollectionsManager(
     ) {
         Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(8.dp))
-        Text("Create a collection", fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.settings_create_collection), fontWeight = FontWeight.Bold)
+    }
+}
+
+/** Every app language, each named in its own script; "System" follows the phone. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AppLanguageChoices(selected: String, onSelect: (String) -> Unit) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AppLocale.supported.forEach { (tag, name) ->
+            val isSelected = selected == tag
+            OutlinedButton(
+                onClick = { onSelect(tag) },
+                shape = RoundedCornerShape(12.dp),
+                colors = if (isSelected) {
+                    ButtonDefaults.outlinedButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
+                }
+            ) {
+                Text(
+                    if (tag.isEmpty()) stringResource(R.string.settings_language_system) else name,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                )
+            }
+        }
     }
 }
 
@@ -2596,10 +2649,10 @@ private sealed interface PendingRestore {
 }
 
 private fun shareBackupFile(ctx: Context, file: File): Boolean =
-    shareExportFile(ctx, file, "application/zip", "PettiBox backup", "Export PettiBox backup")
+    shareExportFile(ctx, file, "application/zip", ctx.getString(R.string.settings_share_backup_subject), ctx.getString(R.string.settings_share_backup_chooser))
 
 private fun shareCsvFile(ctx: Context, file: File): Boolean =
-    shareExportFile(ctx, file, "text/csv", "PettiBox links", "Export links as CSV")
+    shareExportFile(ctx, file, "text/csv", ctx.getString(R.string.settings_share_links_subject), ctx.getString(R.string.settings_export_links_csv))
 
 private fun shareExportFile(
     ctx: Context,
@@ -2621,42 +2674,52 @@ private fun shareExportFile(
     }.isSuccess
 }
 
+private fun android.content.res.Resources.count(id: Int, n: Int): String = getQuantityString(id, n, n)
+
+/** "[prefix] 12 saves, 3 files, 2 favorites…": [prefix] is a string resource ending where the list starts. */
 private fun backupSummaryMessage(
-    prefix: String,
+    res: android.content.res.Resources,
+    prefix: Int,
     result: SaveRepository.BackupExportResult
 ): String {
-    val extras = buildList {
-        if (result.favorites > 0) add("${result.favorites} favorites")
-        if (result.archived > 0) add("${result.archived} archived")
-        if (result.tags > 0) add("${result.tags} tags")
+    val parts = buildList {
+        add(res.count(R.plurals.count_saves, result.saves))
+        add(res.count(R.plurals.count_files, result.embeddedFiles))
+        if (result.favorites > 0) add(res.count(R.plurals.count_favorites, result.favorites))
+        if (result.archived > 0) add(res.count(R.plurals.count_archived, result.archived))
+        if (result.tags > 0) add(res.count(R.plurals.count_tags, result.tags))
     }
-    val extraText = if (extras.isEmpty()) "" else ", " + extras.joinToString(", ")
-    return "$prefix ${result.saves} saves, ${result.embeddedFiles} files$extraText"
+    return res.getString(prefix, parts.joinToString(res.getString(R.string.list_separator)))
 }
 
-private fun restoreResultMessage(result: SaveRepository.BackupImportResult): String {
+private fun restoreResultMessage(res: android.content.res.Resources, result: SaveRepository.BackupImportResult): String {
     if (result.saves == 0 && result.skippedDuplicates > 0) {
-        return "Everything in that backup is already on your shelf — nothing added"
+        return res.getString(R.string.settings_restore_nothing_new)
     }
-    val base = "Restored ${result.saves} saves, ${result.categories} collections, ${result.tags} tags"
+    val parts = listOf(
+        res.count(R.plurals.count_saves, result.saves),
+        res.count(R.plurals.count_collections, result.categories),
+        res.count(R.plurals.count_tags, result.tags)
+    ).joinToString(res.getString(R.string.list_separator))
+    val base = res.getString(R.string.settings_restored_summary, parts)
     return if (result.skippedDuplicates > 0) {
-        "$base (${result.skippedDuplicates} already on your shelf)"
+        res.getString(R.string.settings_restored_with_skipped, base, res.count(R.plurals.settings_already_on_shelf, result.skippedDuplicates))
     } else base
 }
 
-private fun bookmarkImportMessage(result: SaveRepository.BookmarkImportResult): String {
+private fun bookmarkImportMessage(res: android.content.res.Resources, result: SaveRepository.BookmarkImportResult): String {
     if (result.imported == 0) {
-        return "Nothing new to import — those links are already on your shelf"
+        return res.getString(R.string.settings_import_nothing_new)
     }
     val parts = buildList {
-        add("Imported ${result.imported} ${if (result.imported == 1) "link" else "links"}")
-        if (result.newCollections > 0) {
-            add("${result.newCollections} new ${if (result.newCollections == 1) "collection" else "collections"}")
-        }
-        if (result.skippedDuplicates > 0) add("${result.skippedDuplicates} already saved")
+        add(res.count(R.plurals.settings_imported_links, result.imported))
+        if (result.newCollections > 0) add(res.count(R.plurals.settings_new_collections, result.newCollections))
+        if (result.skippedDuplicates > 0) add(res.count(R.plurals.settings_already_saved, result.skippedDuplicates))
     }
-    return parts.joinToString(", ")
+    return parts.joinToString(res.getString(R.string.list_separator))
 }
 
-private fun formatBackupTime(timestamp: Long): String =
-    SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(Date(timestamp))
+private fun formatBackupTime(timestamp: Long): String {
+    val locale = Locale.getDefault()
+    return SimpleDateFormat(android.text.format.DateFormat.getBestDateTimePattern(locale, "MMMdjmm"), locale).format(Date(timestamp))
+}

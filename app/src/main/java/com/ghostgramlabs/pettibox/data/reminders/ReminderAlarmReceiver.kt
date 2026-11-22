@@ -1,5 +1,7 @@
 package com.ghostgramlabs.pettibox.data.reminders
 
+import com.ghostgramlabs.pettibox.util.AppText
+
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -91,8 +93,8 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
         ReminderNotifications.ensureChannel(ctx)
         // A locked collection's save still reminds you, but never says what
         // it is on the lock screen; tapping it asks to unlock first.
-        val title = if (repository.isInLockedCollection(item)) "A save in a locked collection"
-            else item.title.ifBlank { "Saved item" }
+        val title = if (repository.isInLockedCollection(item)) AppText.getString(R.string.reminder_save_locked_collection)
+            else item.title.ifBlank { AppText.getString(R.string.reminder_saved_item) }
         postNotification(ctx, itemId, title)
         repository.setRemindAt(itemId, null)
     }
@@ -124,14 +126,14 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val now = System.currentTimeMillis()
-        // "This evening" snoozes to the same evening time the user configured
+        // AppText.getString(R.string.reminder_evening) snoozes to the same evening time the user configured
         // for the "Tonight" preset in Settings, so a snooze from a notification
         // and a save-time reminder land at the same hour instead of two
         // different hard-coded ones.
         val evening = reminderPreferences.eveningTime.first()
         val notif = NotificationCompat.Builder(ctx, ReminderNotifications.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("From your shelf")
+            .setContentTitle(AppText.getString(R.string.nudge_title))
             .setContentText(title)
             .setStyle(NotificationCompat.BigTextStyle().bigText(title))
             .setContentIntent(openPi)
@@ -140,10 +142,10 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
             // Snooze actions let the user re-defer without opening the app —
             // the whole point of a "remind me later" save. Tapping the body
             // still opens the item.
-            .addAction(snoozeAction(ctx, itemId, "Snooze 1h", "1h", now + ONE_HOUR_MS))
+            .addAction(snoozeAction(ctx, itemId, AppText.getString(R.string.reminder_snooze_1h), "1h", now + ONE_HOUR_MS))
             .addAction(
                 snoozeAction(
-                    ctx, itemId, "This evening", "evening",
+                    ctx, itemId, AppText.getString(R.string.reminder_evening), "evening",
                     thisEveningMillis(now, evening.hour, evening.minute)
                 )
             )

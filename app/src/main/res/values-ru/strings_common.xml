@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">", "</string>
+    <plurals name="count_saves">
+        <item quantity="one">%d запись</item>
+        <item quantity="few">%d записи</item>
+        <item quantity="many">%d записей</item>
+        <item quantity="other">%d записи</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="one">%d файл</item>
+        <item quantity="few">%d файла</item>
+        <item quantity="many">%d файлов</item>
+        <item quantity="other">%d файла</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="one">%d в избранном</item>
+        <item quantity="few">%d в избранном</item>
+        <item quantity="many">%d в избранном</item>
+        <item quantity="other">%d в избранном</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="one">%d в архиве</item>
+        <item quantity="few">%d в архиве</item>
+        <item quantity="many">%d в архиве</item>
+        <item quantity="other">%d в архиве</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="one">%d тег</item>
+        <item quantity="few">%d тега</item>
+        <item quantity="many">%d тегов</item>
+        <item quantity="other">%d тега</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="one">%d коллекция</item>
+        <item quantity="few">%d коллекции</item>
+        <item quantity="many">%d коллекций</item>
+        <item quantity="other">%d коллекции</item>
+    </plurals>
+    <string name="source_web">Веб</string>
+    <string name="source_maps">Карты</string>
+    <string name="source_files">Файлы</string>
+    <string name="source_clipboard">Буфер обмена</string>
+    <string name="source_other">Другое</string>
+    <plurals name="count_items">
+        <item quantity="one">%d элемент</item>
+        <item quantity="few">%d элемента</item>
+        <item quantity="many">%d элементов</item>
+        <item quantity="other">%d элемента</item>
+    </plurals>
+    <string name="untitled">Без названия</string>
+    <string name="starter_recipes">Рецепты</string>
+    <string name="starter_travel">Путешествия</string>
+    <string name="starter_fitness">Спорт</string>
+    <string name="starter_style">Стиль</string>
+    <string name="starter_home">Дом</string>
+    <string name="starter_beauty">Красота</string>
+    <string name="starter_read_later">Прочитать позже</string>
+    <string name="starter_finance">Финансы</string>
+    <string name="starter_music">Музыка</string>
+    <string name="starter_books">Книги</string>
+    <string name="starter_food_spots">Где поесть</string>
+    <string name="starter_shopping">Покупки</string>
+    <string name="starter_work">Работа</string>
+    <string name="starter_ideas">Идеи</string>
+    <string name="starter_watch">Посмотреть</string>
+    <string name="starter_learning">Учёба</string>
+    <string name="starter_health">Здоровье</string>
+    <string name="starter_docs">Документы</string>
+    <string name="starter_personal">Личное</string>
+    <string name="starter_tech">Техника</string>
+    <string name="starter_design">Дизайн</string>
+    <string name="starter_gifts">Подарки</string>
+    <string name="starter_places">Места</string>
+    <string name="starter_kids">Дети</string>
+    <string name="theme_system">Как в системе</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="widget_all_caught_up">Всё прочитано</string>
+    <plurals name="widget_unread">
+        <item quantity="one">%d непрочитанная</item>
+        <item quantity="few">%d непрочитанные</item>
+        <item quantity="many">%d непрочитанных</item>
+        <item quantity="other">%d непрочитанной</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · копия сохранена %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="one">%d мин чтения</item>
+        <item quantity="few">%d мин чтения</item>
+        <item quantity="many">%d мин чтения</item>
+        <item quantity="other">%d мин чтения</item>
+    </plurals>
+    <string name="quick_change_reminder">Изменить напоминание</string>
+    <string name="quick_copy_link">Копировать ссылку</string>
+    <string name="quick_copy_note">Копировать заметку</string>
+    <string name="quick_note_copied">Заметка скопирована</string>
+    <string name="quick_move_collection">Переместить в коллекцию</string>
+    <string name="card_open_quick_actions">Открыть быстрые действия</string>
+    <string name="card_archived">В архиве</string>
+    <string name="card_reminder">Напоминание</string>
+    <string name="collection_new_collection">Новая коллекция</string>
+    <string name="collection_collection_name">Название коллекции</string>
+    <string name="collection_emoji">Эмодзи</string>
+    <string name="collection_color">Цвет</string>
+    <string name="collection_lock_collection">Заблокировать коллекцию</string>
+    <string name="collection_hidden_home_search_everywhere_else">Скрыта на главной, в поиске и везде, пока вы не разблокируете её отпечатком пальца, лицом или PIN-кодом телефона.</string>
+    <string name="collection_set_screen_lock_phone_use">Чтобы использовать это, настройте блокировку экрана на телефоне.</string>
+    <string name="collection_name_e_g_weekend_reads">Название (например, «Почитать на выходных»)</string>
+    <string name="collection_pick_emoji">Выберите эмодзи</string>
+    <string name="collection_pick_color">Выберите цвет</string>
+    <string name="collection_create">Создать</string>
+    <string name="help_i_keep_links_screenshots_pdfs">Храню ссылки, скриншоты, PDF и заметки в PettiBox: сохраняет из любого приложения, читает статьи без интернета и находит текст на картинках. Бесплатно: %1$s</string>
+    <string name="help_share_pettibox">Поделиться PettiBox</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s — вопрос или проблема</string>
+    <string name="help_please_keep_part_helps_me">——— Пожалуйста, оставьте эту часть, она поможет мне вам помочь ———</string>
+    <string name="sync_edited_2_devices_needs_choice">Изменено на 2 устройствах: нужен ваш выбор</string>
+    <string name="lock_unlock_locked_collections">Разблокировать коллекции</string>
+    <string name="lock_unlock_pettibox">Разблокировать PettiBox</string>
+    <string name="lock_use_fingerprint_face_phone_pin">Используйте отпечаток пальца, лицо или PIN-код телефона</string>
+    <string name="lock_pettibox_locked">PettiBox заблокирован</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">Разблокируйте отпечатком пальца, лицом или PIN-кодом телефона.</string>
+    <string name="lock_unlock">Разблокировать</string>
+    <string name="lock_save_locked_collection">Эта запись в заблокированной коллекции</string>
+    <string name="lock_go_back">Назад</string>
+    <string name="nav_settings">Настройки</string>
+    <string name="nav_not_selected">Не выбрано</string>
+    <string name="widget_pettibox_locked">PettiBox заблокирован 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">Разблокируйте PettiBox, чтобы видеть записи здесь.</string>
+    <string name="widget_nothing_waiting">Ничего не ждёт ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">Поделитесь ссылкой или фото с PettiBox, и они будут здесь, пока вы их не откроете.</string>
+    <string name="nav_home">Главная</string>
+    <string name="nav_search">Поиск</string>
+    <string name="nav_browse">Обзор</string>
+</resources>

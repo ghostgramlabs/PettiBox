@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">Có thứ đang chờ bạn trên kệ</string>
+    <string name="nudge_title">Từ kệ của bạn</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="other">Bạn có %d mục chưa đọc.</item>
+    </plurals>
+    <string name="nudge_body_one">“%1$s” — đã lưu %2$s.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="other">“%1$s” — đã lưu %2$s. Còn %3$d mục chưa đọc khác.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="other">%d tệp không có trên điện thoại này nên không gửi được. Hãy mở mục và thêm lại tệp.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="other">Đã đồng bộ thư viện · %1$d tệp đang chờ thiết bị khác gửi · kiểm tra lúc %2$s</item>
+    </plurals>
+    <string name="files_all_in_drive">Mọi ảnh và tệp đã có trên Google Drive · kiểm tra lúc %1$s</string>
+    <string name="files_checked">Đã kiểm tra ảnh và tệp lúc %1$s</string>
+    <string name="files_unreachable">Không kết nối được Google Drive khi gửi ảnh và tệp (%1$s). Sẽ tự thử lại trong giây lát.</string>
+    <string name="files_no_connection">không có kết nối</string>
+    <plurals name="files_unreadable">
+        <item quantity="other">%d tệp không còn đọc được trên điện thoại này (ứng dụng nguồn không còn cho phép) nên không gửi được.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="other">Đang gửi %d ảnh và tệp lên Google Drive…</item>
+    </plurals>
+    <string name="files_sending_progress">Đang gửi ảnh và tệp lên Google Drive… %1$d/%2$d</string>
+    <string name="sync_step_connecting">khi kết nối</string>
+    <string name="sync_unreachable">Không kết nối được Google Drive</string>
+    <string name="sync_drive_error">Google Drive trả về lỗi (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">Sẽ tự thử lại trong giây lát.</string>
+    <plurals name="sync_damaged">
+        <item quantity="other">Đã bỏ qua %d tệp hỏng từ thiết bị khác; không áp dụng nội dung nào từ đó</item>
+    </plurals>
+    <string name="sync_every_15_min">15 phút</string>
+    <string name="sync_every_30_min">30 phút</string>
+    <string name="sync_every_hour">1 giờ</string>
+    <string name="sync_every_3_hours">3 giờ</string>
+    <string name="sync_daily">Hằng ngày</string>
+    <string name="sync_weekly">Hằng tuần</string>
+    <string name="sync_only_in_use">Chỉ khi đang dùng</string>
+    <string name="reminder_save_locked_collection">Một mục trong bộ sưu tập đã khóa</string>
+    <string name="reminder_saved_item">Mục đã lưu</string>
+    <string name="reminder_snooze_1h">Báo lại sau 1 giờ</string>
+    <string name="reminder_evening">Tối nay</string>
+    <string name="nudge_see_all_unread">Xem mọi mục chưa đọc</string>
+    <string name="nudge_once_week_one_thing_saved">Mỗi tuần một lần, một thứ bạn đã lưu nhưng chưa mở.</string>
+    <string name="reminder_save_reminders">Lời nhắc cho mục đã lưu</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">Nhắc những điều bạn đã nhờ PettiBox nhắc.</string>
+    <string name="files_photos_files_waiting_reconnect_google">Ảnh và tệp đang chờ: hãy kết nối lại Google Drive trong Cài đặt.</string>
+    <string name="files_photos_files_sent_once_first">Ảnh và tệp sẽ được gửi khi lần đồng bộ đầu tiên xong.</string>
+    <string name="files_photos_files_arent_sent_google">Ảnh và tệp không được gửi: Google Drive đang đăng nhập bằng %1$s, không phải %2$s.</string>
+    <string name="files_photos_files_couldnt_sent_tap">Không gửi được ảnh và tệp: %1$s. Nhấn Đồng bộ ngay để thử lại.</string>
+    <string name="files_photos_files_stopped_sending_trying">Việc gửi ảnh và tệp đã dừng: %1$s. Sẽ thử lại trong giây lát.</string>
+    <string name="sync_sync_stopped">Đồng bộ đã dừng: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">Đồng bộ đã tắt vì dữ liệu đồng bộ bị xóa khỏi Google Drive trên một thiết bị khác. Mọi thứ trên điện thoại này vẫn còn; hãy bật lại đồng bộ để bắt đầu lại.</string>
+    <string name="sync_google_drive_needs_reconnecting">Cần kết nối lại Google Drive</string>
+    <string name="sync_google_drive_didnt_say_which">Google Drive không cho biết đây là tài khoản nào</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive đang đăng nhập bằng %1$s, nhưng thư viện này đồng bộ với %2$s. Hãy chuyển lại sang %3$s, hoặc tắt rồi bật lại đồng bộ để đồng bộ với %4$s.</string>
+    <string name="sync_couldnt_save_safety_copy_library">Không lưu được bản sao an toàn của thư viện trước khi đồng bộ. Sẽ thử lại lần sau.</string>
+    <string name="sync_checking_google_drive">Đang kiểm tra Google Drive…</string>
+    <string name="sync_receiving_changes">Đang nhận thay đổi…</string>
+    <string name="sync_another_device_uses_newer_version">Một thiết bị khác đang dùng PettiBox phiên bản mới hơn. Hãy cập nhật ứng dụng này để xem mọi thứ thiết bị đó đã lưu.</string>
+    <string name="sync_preparing_changes">Đang chuẩn bị thay đổi của bạn…</string>
+    <string name="sync_updating_library">Đang cập nhật thư viện…</string>
+    <string name="sync_couldnt_save_safety_copy_before">Không lưu được bản sao an toàn trước khi xóa mục, nên chưa xóa gì cả. Hãy giải phóng dung lượng rồi chọn lại.</string>
+    <string name="sync_sending_changes">Đang gửi thay đổi của bạn…</string>
+    <string name="article_page_no_longer_exists">Trang không còn tồn tại</string>
+    <string name="article_site_doesnt_allow_saving_copy">Trang web này không cho phép lưu bản sao</string>
+    <string name="article_site_answered_error">Trang web trả về lỗi (%1$s)</string>
+    <string name="article_couldnt_find_article_page">Không tìm thấy bài viết trên trang này</string>
+    <string name="article_page_too_long_keep_copy">Trang này quá dài để lưu bản sao</string>
+    <string name="article_couldnt_reach_page_check_connection">Không mở được trang. Hãy kiểm tra kết nối và thử lại.</string>
+</resources>

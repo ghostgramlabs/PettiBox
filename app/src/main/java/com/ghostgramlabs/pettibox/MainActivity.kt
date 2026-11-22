@@ -51,6 +51,10 @@ class MainActivity : FragmentActivity() {
      */
     private var pendingLaunch by mutableStateOf<AppLaunch?>(null)
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.ghostgramlabs.pettibox.util.AppLocale.wrapContext(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

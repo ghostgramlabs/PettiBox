@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">Quick save</string>
+    <string name="save_saved_image">Saved image</string>
+    <string name="save_saved_pdf">Saved PDF</string>
+    <string name="save_saved_file">Saved file</string>
+    <!-- %1$s: when, "3h ago" -->
+    <string name="save_saved_when">saved %1$s</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d image</item>
+        <item quantity="other">%d images</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="other">%d PDFs</item>
+    </plurals>
+    <string name="save_discard_what_typed">Discard what you typed?</string>
+    <string name="save_note_tags_havent_been_saved">Your note and tags haven\'t been saved yet.</string>
+    <string name="save_discard">Discard</string>
+    <string name="save_keep_editing">Keep editing</string>
+    <string name="save_save">Save this?</string>
+    <string name="save_save_2">Save to</string>
+    <string name="save_no_collection_called_yet">No collection called \"%1$s\" yet</string>
+    <string name="save_want_start_one">Want to start one?</string>
+    <string name="save_create">Create \"%1$s\"</string>
+    <string name="save_new">New</string>
+    <string name="save_remove_favorites">Remove from favorites</string>
+    <string name="save_add_favorites">Add to favorites</string>
+    <string name="save_write_note_save">Write a note to save</string>
+    <string name="save_save_3">Save to %1$s</string>
+    <string name="save_save_without_collection">Save without collection</string>
+    <string name="save_selected">Selected: %1$s</string>
+    <string name="save_add_which_save">Add to which save?</string>
+    <string name="save_add_note">Add note</string>
+    <string name="save_add_tags">Add tags</string>
+    <string name="save_add_note_2">Add a note</string>
+    <string name="save_tags_comma_separated">Tags, comma-separated</string>
+    <string name="save_tucked_away">Tucked away!</string>
+    <string name="save_find_home_screen_anytime">Find it from the home screen anytime.</string>
+    <string name="save_append_save">Append to a save</string>
+    <string name="save_already_saved">You already saved this</string>
+    <string name="save_open">Open it</string>
+    <string name="save_save_anyway">Save anyway</string>
+    <string name="save_suggested">Suggested</string>
+    <string name="save_recently_used">Recently used</string>
+    <string name="save_collections">Your collections</string>
+    <string name="save_starter_collections">Starter collections</string>
+</resources>

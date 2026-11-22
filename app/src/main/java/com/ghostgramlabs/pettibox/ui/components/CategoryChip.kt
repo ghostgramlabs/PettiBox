@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,11 +91,13 @@ fun CategoryChip(
             .semantics {
                 role = Role.Button
                 this.selected = selected
-                stateDescription = when {
-                    selected -> "Selected"
-                    suggested -> "Suggested"
-                    else -> "Not selected"
-                }
+                stateDescription = AppText.getString(
+                    when {
+                        selected -> R.string.browse_selected
+                        suggested -> R.string.save_suggested
+                        else -> R.string.nav_not_selected
+                    }
+                )
             }
             .clickable { onClick() }
             .padding(horizontal = 14.dp, vertical = 9.dp)

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">الأكثر صلة</string>
+    <string name="search_sort_newest">الأحدث</string>
+    <string name="search_sort_oldest">الأقدم</string>
+    <string name="search_sort_updated">المعدّلة مؤخرًا</string>
+    <string name="search_sort_reminder">وقت التذكير</string>
+    <plurals name="search_n_found">
+        <item quantity="zero">النتائج: %d</item>
+        <item quantity="one">النتائج: %d</item>
+        <item quantity="two">النتائج: %d</item>
+        <item quantity="few">النتائج: %d</item>
+        <item quantity="many">النتائج: %d</item>
+        <item quantity="other">النتائج: %d</item>
+    </plurals>
+    <string name="search_look_up">ابحث عنه</string>
+    <string name="search_titles_notes_saved_articles_text">العناوين والملاحظات والمقالات المحفوظة والنص داخل الصور.</string>
+    <string name="search_search_anything_saved">ابحث في كل ما حفظته</string>
+    <string name="search_matches">النتائج</string>
+    <string name="search_start_anywhere">ابدأ من أي مكان</string>
+    <string name="search_use_type_source_tag_when">استخدم نوعًا أو مصدرًا أو وسمًا حين لا تتذكر الكلمات بالضبط</string>
+    <string name="search_types">الأنواع</string>
+    <string name="search_sources">المصادر</string>
+    <string name="search_find_anything_stashed">اعثر على أي شيء خبأته</string>
+    <string name="search_search_titles_notes_links_sources">ابحث في العناوين والملاحظات والروابط والمصادر والأوسام والنص داخل الصور أو ملفات PDF والمقالات المحفوظة للقراءة دون اتصال. الأرشيف مشمول، لذا تظهر العناصر المؤرشفة أيضًا.</string>
+    <string name="search_screenshots">لقطات الشاشة</string>
+    <string name="search_links">الروابط</string>
+    <string name="search_pdfs">ملفات PDF</string>
+    <string name="search_upcoming_reminders">التذكيرات القادمة</string>
+    <string name="search_notes">الملاحظات</string>
+    <string name="search_nothing_matched">لا توجد نتائج</string>
+    <string name="search_some_saved_images_pdfs_still">لا تزال بعض الصور وملفات PDF المحفوظة قيد القراءة، فقد تظهر قريبًا. في الأثناء، جرّب كلمة أقصر أو أزل عامل تصفية.</string>
+    <string name="search_try_shorter_word_remove_filter">جرّب كلمة أقصر، أو أزل عامل تصفية، أو ابحث في مصدر آخر. للنص بلغة أخرى، شغّلها من الإعدادات › التعرّف على النص.</string>
+    <string name="search_clear_filters">مسح عوامل التصفية</string>
+    <string name="search_clear_search">مسح البحث</string>
+    <string name="search_change_filters">تغيير عوامل التصفية</string>
+    <string name="search_open_filters">فتح عوامل التصفية</string>
+    <string name="search_filters">عوامل التصفية · %1$s</string>
+    <string name="search_filters_2">عوامل التصفية</string>
+    <string name="search_clear">مسح</string>
+    <string name="search_clear_all">مسح الكل</string>
+    <string name="search_type">النوع</string>
+    <string name="search_source">المصدر</string>
+    <string name="search_images">الصور</string>
+    <string name="search_what_looking">عمّ تبحث؟</string>
+</resources>

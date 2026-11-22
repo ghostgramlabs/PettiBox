@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">అత్యంత సంబంధితం</string>
+    <string name="search_sort_newest">కొత్తవి ముందు</string>
+    <string name="search_sort_oldest">పాతవి ముందు</string>
+    <string name="search_sort_updated">ఇటీవల ఎడిట్ చేసినవి</string>
+    <string name="search_sort_reminder">రిమైండర్ సమయం</string>
+    <plurals name="search_n_found">
+        <item quantity="one">%d దొరికింది</item>
+        <item quantity="other">%d దొరికాయి</item>
+    </plurals>
+    <string name="search_look_up">వెతకండి</string>
+    <string name="search_titles_notes_saved_articles_text">శీర్షికలు, నోట్‌లు, సేవ్ చేసిన వ్యాసాలు, ఫోటోల్లోని టెక్స్ట్.</string>
+    <string name="search_search_anything_saved">మీరు సేవ్ చేసిన దేనిలోనైనా వెతకండి</string>
+    <string name="search_matches">ఫలితాలు</string>
+    <string name="search_start_anywhere">ఎక్కడి నుండైనా మొదలుపెట్టండి</string>
+    <string name="search_use_type_source_tag_when">సరైన పదం గుర్తు రానప్పుడు రకం, మూలం లేదా ట్యాగ్ వాడండి</string>
+    <string name="search_types">రకాలు</string>
+    <string name="search_sources">మూలాలు</string>
+    <string name="search_find_anything_stashed">మీరు దాచుకున్న ఏదైనా కనుగొనండి</string>
+    <string name="search_search_titles_notes_links_sources">శీర్షికలు, నోట్‌లు, లింక్‌లు, మూలాలు, ట్యాగ్‌లు, ఫోటోలు లేదా PDFలలోని టెక్స్ట్, ఆఫ్‌లైన్‌లో చదవడానికి సేవ్ చేసిన వ్యాసాల్లో వెతకండి. ఆర్కైవ్ కూడా ఇందులో ఉంటుంది, కాబట్టి ఆర్కైవ్ చేసిన ఐటెమ్‌లు కూడా కనిపిస్తాయి.</string>
+    <string name="search_screenshots">స్క్రీన్‌షాట్‌లు</string>
+    <string name="search_links">లింక్‌లు</string>
+    <string name="search_pdfs">PDFలు</string>
+    <string name="search_upcoming_reminders">రాబోయే రిమైండర్‌లు</string>
+    <string name="search_notes">నోట్‌లు</string>
+    <string name="search_nothing_matched">ఏదీ సరిపోలేదు</string>
+    <string name="search_some_saved_images_pdfs_still">కొన్ని సేవ్ చేసిన ఫోటోలు, PDFలు ఇంకా చదువుతున్నాం, కాబట్టి త్వరలో సరిపోవచ్చు. ఈలోగా చిన్న పదం ప్రయత్నించండి లేదా ఒక ఫిల్టర్ తీసేయండి.</string>
+    <string name="search_try_shorter_word_remove_filter">చిన్న పదం ప్రయత్నించండి, ఒక ఫిల్టర్ తీసేయండి, లేదా వేరే మూలంలో వెతకండి. ఇతర భాషల టెక్స్ట్ కోసం సెట్టింగ్స్ › టెక్స్ట్ గుర్తింపులో దాన్ని ఆన్ చేయండి.</string>
+    <string name="search_clear_filters">ఫిల్టర్‌లు క్లియర్ చేయండి</string>
+    <string name="search_clear_search">శోధన క్లియర్ చేయండి</string>
+    <string name="search_change_filters">ఫిల్టర్‌లు మార్చండి</string>
+    <string name="search_open_filters">ఫిల్టర్‌లు తెరవండి</string>
+    <string name="search_filters">ఫిల్టర్‌లు · %1$s</string>
+    <string name="search_filters_2">ఫిల్టర్‌లు</string>
+    <string name="search_clear">క్లియర్ చేయండి</string>
+    <string name="search_clear_all">అన్నీ క్లియర్ చేయండి</string>
+    <string name="search_type">రకం</string>
+    <string name="search_source">మూలం</string>
+    <string name="search_images">ఫోటోలు</string>
+    <string name="search_what_looking">మీరు ఏం వెతుకుతున్నారు?</string>
+</resources>

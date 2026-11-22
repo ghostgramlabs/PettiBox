@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">", "</string>
+    <plurals name="count_saves">
+        <item quantity="one">%d ஐட்டம்</item>
+        <item quantity="other">%d ஐட்டங்கள்</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="one">%d கோப்பு</item>
+        <item quantity="other">%d கோப்புகள்</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="one">%d பிடித்தது</item>
+        <item quantity="other">%d பிடித்தவை</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="one">%d காப்பகத்தில்</item>
+        <item quantity="other">%d காப்பகத்தில்</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="one">%d டேக்</item>
+        <item quantity="other">%d டேக்குகள்</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="one">%d கலெக்ஷன்</item>
+        <item quantity="other">%d கலெக்ஷன்கள்</item>
+    </plurals>
+    <string name="source_web">இணையம்</string>
+    <string name="source_maps">Maps</string>
+    <string name="source_files">Files</string>
+    <string name="source_clipboard">கிளிப்போர்டு</string>
+    <string name="source_other">மற்றவை</string>
+    <plurals name="count_items">
+        <item quantity="one">%d ஐட்டம்</item>
+        <item quantity="other">%d ஐட்டங்கள்</item>
+    </plurals>
+    <string name="untitled">தலைப்பில்லாதது</string>
+    <string name="starter_recipes">சமையல் குறிப்புகள்</string>
+    <string name="starter_travel">பயணம்</string>
+    <string name="starter_fitness">உடற்பயிற்சி</string>
+    <string name="starter_style">ஸ்டைல்</string>
+    <string name="starter_home">வீடு</string>
+    <string name="starter_beauty">அழகு</string>
+    <string name="starter_read_later">பிறகு படிக்க</string>
+    <string name="starter_finance">நிதி</string>
+    <string name="starter_music">இசை</string>
+    <string name="starter_books">புத்தகங்கள்</string>
+    <string name="starter_food_spots">சாப்பிடும் இடங்கள்</string>
+    <string name="starter_shopping">ஷாப்பிங்</string>
+    <string name="starter_work">வேலை</string>
+    <string name="starter_ideas">யோசனைகள்</string>
+    <string name="starter_watch">பார்க்க</string>
+    <string name="starter_learning">கற்றல்</string>
+    <string name="starter_health">ஆரோக்கியம்</string>
+    <string name="starter_docs">ஆவணங்கள்</string>
+    <string name="starter_personal">தனிப்பட்டவை</string>
+    <string name="starter_tech">தொழில்நுட்பம்</string>
+    <string name="starter_design">டிசைன்</string>
+    <string name="starter_gifts">பரிசுகள்</string>
+    <string name="starter_places">இடங்கள்</string>
+    <string name="starter_kids">குழந்தைகள்</string>
+    <string name="theme_system">சிஸ்டம்</string>
+    <string name="theme_light">லைட்</string>
+    <string name="theme_dark">டார்க்</string>
+    <string name="widget_all_caught_up">எல்லாம் பார்த்தாகிவிட்டது</string>
+    <plurals name="widget_unread">
+        <item quantity="one">%d படிக்காதது</item>
+        <item quantity="other">%d படிக்காதவை</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · நகல் சேமிக்கப்பட்டது %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="one">%d நிமிட வாசிப்பு</item>
+        <item quantity="other">%d நிமிட வாசிப்பு</item>
+    </plurals>
+    <string name="quick_change_reminder">நினைவூட்டலை மாற்று</string>
+    <string name="quick_copy_link">இணைப்பை நகலெடு</string>
+    <string name="quick_copy_note">குறிப்பை நகலெடு</string>
+    <string name="quick_note_copied">குறிப்பு நகலெடுக்கப்பட்டது</string>
+    <string name="quick_move_collection">கலெக்ஷனுக்கு நகர்த்து</string>
+    <string name="card_open_quick_actions">விரைவுச் செயல்களைத் திற</string>
+    <string name="card_archived">காப்பகத்தில்</string>
+    <string name="card_reminder">நினைவூட்டல்</string>
+    <string name="collection_new_collection">புதிய கலெக்ஷன்</string>
+    <string name="collection_collection_name">கலெக்ஷன் பெயர்</string>
+    <string name="collection_emoji">எமோஜி</string>
+    <string name="collection_color">நிறம்</string>
+    <string name="collection_lock_collection">இந்த கலெக்ஷனைப் பூட்டு</string>
+    <string name="collection_hidden_home_search_everywhere_else">உங்கள் கைரேகை, முகம் அல்லது ஃபோன் PIN மூலம் திறக்கும் வரை முகப்பு, தேடல் மற்றும் மற்ற எல்லா இடங்களிலிருந்தும் மறைக்கப்படும்.</string>
+    <string name="collection_set_screen_lock_phone_use">இதைப் பயன்படுத்த உங்கள் ஃபோனில் திரைப் பூட்டை அமையுங்கள்.</string>
+    <string name="collection_name_e_g_weekend_reads">பெயரிடுங்கள் (எ.கா. வார இறுதி வாசிப்பு)</string>
+    <string name="collection_pick_emoji">எமோஜியைத் தேர்ந்தெடு</string>
+    <string name="collection_pick_color">நிறத்தைத் தேர்ந்தெடு</string>
+    <string name="collection_create">உருவாக்கு</string>
+    <string name="help_i_keep_links_screenshots_pdfs">நான் இணைப்புகள், ஸ்கிரீன்ஷாட்கள், PDF-கள், குறிப்புகளை PettiBox-இல் வைக்கிறேன் — எந்த ஆப்பிலிருந்தும் சேமியுங்கள், கட்டுரைகளை ஆஃப்லைனில் படியுங்கள், படங்களுக்குள் உள்ள எழுத்துகளைத் தேடுங்கள். இலவசம்: %1$s</string>
+    <string name="help_share_pettibox">PettiBox-ஐப் பகிர்</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s — கேள்வி அல்லது சிக்கல்</string>
+    <string name="help_please_keep_part_helps_me">——— தயவுசெய்து இந்தப் பகுதியை வைத்திருங்கள், உங்களுக்கு உதவ இது பயன்படும் ———</string>
+    <string name="sync_edited_2_devices_needs_choice">2 சாதனங்களில் திருத்தப்பட்டது: நீங்கள் தேர்ந்தெடுக்க வேண்டும்</string>
+    <string name="lock_unlock_locked_collections">பூட்டிய கலெக்ஷன்களைத் திற</string>
+    <string name="lock_unlock_pettibox">PettiBox-ஐத் திற</string>
+    <string name="lock_use_fingerprint_face_phone_pin">உங்கள் கைரேகை, முகம் அல்லது ஃபோன் PIN-ஐப் பயன்படுத்துங்கள்</string>
+    <string name="lock_pettibox_locked">PettiBox பூட்டப்பட்டுள்ளது</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">உங்கள் கைரேகை, முகம் அல்லது ஃபோன் PIN மூலம் திறங்கள்.</string>
+    <string name="lock_unlock">திற</string>
+    <string name="lock_save_locked_collection">இந்த ஐட்டம் பூட்டிய கலெக்ஷனில் உள்ளது</string>
+    <string name="lock_go_back">பின்செல்</string>
+    <string name="nav_settings">அமைப்புகள்</string>
+    <string name="nav_not_selected">தேர்ந்தெடுக்கப்படவில்லை</string>
+    <string name="widget_pettibox_locked">PettiBox பூட்டப்பட்டுள்ளது 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">உங்கள் ஐட்டங்களை இங்கே பார்க்க PettiBox-ஐத் திறங்கள்.</string>
+    <string name="widget_nothing_waiting">எதுவும் காத்திருக்கவில்லை ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">PettiBox-க்கு ஒரு இணைப்பு அல்லது படத்தைப் பகிருங்கள், நீங்கள் திறக்கும் வரை அது இங்கேயே இருக்கும்.</string>
+    <string name="nav_home">முகப்பு</string>
+    <string name="nav_search">தேடல்</string>
+    <string name="nav_browse">உலாவு</string>
+</resources>

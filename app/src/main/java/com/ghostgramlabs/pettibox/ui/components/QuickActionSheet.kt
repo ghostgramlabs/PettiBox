@@ -1,5 +1,13 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import androidx.compose.ui.res.stringResource
+
+import com.ghostgramlabs.pettibox.R
+
+import com.ghostgramlabs.pettibox.domain.model.displayName
+
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -118,11 +126,10 @@ fun QuickActionSheet(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete this save?") },
+            title = { Text(stringResource(R.string.detail_delete_save)) },
             text = {
                 Text(
-                    "It moves to Recently deleted (in Browse) for 30 days, so you can still bring it back." +
-                        if (item.isArchived) "" else " Want it out of the way but kept? Tap \"Archive instead\"."
+                    stringResource(if (item.isArchived) R.string.detail_delete_body else R.string.detail_delete_body_archive_hint)
                 )
             },
             confirmButton = {
@@ -131,18 +138,18 @@ fun QuickActionSheet(
                     onDelete()
                     onDismiss()
                 }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.settings_delete_2), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 Row {
-                    TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+                    TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.settings_cancel)) }
                     if (!item.isArchived) {
                         TextButton(onClick = {
                             showDeleteConfirm = false
                             onToggleArchive()
                             onDismiss()
-                        }) { Text("Archive instead") }
+                        }) { Text(stringResource(R.string.detail_archive_instead)) }
                     }
                 }
             },
@@ -163,7 +170,7 @@ fun QuickActionSheet(
                 .padding(top = 4.dp, bottom = 16.dp)
         ) {
             Text(
-                item.title.ifBlank { "Untitled" },
+                item.title.ifBlank { stringResource(R.string.untitled) },
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 2
@@ -172,22 +179,22 @@ fun QuickActionSheet(
 
             ActionRow(
                 icon = if (item.isPinned) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
-                title = if (item.isPinned) "Unpin" else "Pin",
+                title = if (item.isPinned) stringResource(R.string.detail_unpin) else stringResource(R.string.detail_pin),
                 onClick = { onTogglePin(); onDismiss() }
             )
             ActionRow(
                 icon = if (item.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                title = if (item.isFavorite) "Remove from favorites" else "Add to favorites",
+                title = if (item.isFavorite) stringResource(R.string.save_remove_favorites) else stringResource(R.string.save_add_favorites),
                 onClick = { onToggleFavorite(); onDismiss() }
             )
             ActionRow(
                 icon = Icons.Rounded.AccessTime,
-                title = if (item.remindAt != null) "Change reminder" else "Remind me",
+                title = if (item.remindAt != null) stringResource(R.string.quick_change_reminder) else stringResource(R.string.reminder_remind_me),
                 onClick = { onRemind(); onDismiss() }
             )
             ActionRow(
                 icon = if (item.isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
-                title = if (item.isArchived) "Unarchive" else "Archive",
+                title = if (item.isArchived) stringResource(R.string.detail_unarchive) else stringResource(R.string.detail_archive),
                 onClick = { onToggleArchive(); onDismiss() }
             )
             // Copy actions — grab the link or the note text without opening
@@ -195,10 +202,10 @@ fun QuickActionSheet(
             if (!item.url.isNullOrBlank()) {
                 ActionRow(
                     icon = Icons.Rounded.Link,
-                    title = "Copy link",
+                    title = stringResource(R.string.quick_copy_link),
                     onClick = {
                         clipboard.setText(AnnotatedString(item.url.orEmpty()))
-                        Toast.makeText(ctx, "Link copied", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(ctx, AppText.getString(R.string.detail_link_copied), Toast.LENGTH_SHORT).show()
                         onDismiss()
                     }
                 )
@@ -206,17 +213,17 @@ fun QuickActionSheet(
             if (!item.notes.isNullOrBlank()) {
                 ActionRow(
                     icon = Icons.Rounded.ContentCopy,
-                    title = "Copy note",
+                    title = stringResource(R.string.quick_copy_note),
                     onClick = {
                         clipboard.setText(AnnotatedString(item.notes.orEmpty()))
-                        Toast.makeText(ctx, "Note copied", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(ctx, AppText.getString(R.string.quick_note_copied), Toast.LENGTH_SHORT).show()
                         onDismiss()
                     }
                 )
             }
             ActionRow(
                 icon = Icons.Rounded.MoveDown,
-                title = "Move to collection",
+                title = stringResource(R.string.quick_move_collection),
                 onClick = { if (useFinder) showPicker = true else showMove = !showMove }
             )
             if (showMove) {
@@ -229,7 +236,7 @@ fun QuickActionSheet(
                         val selected = item.categoryId == c.id
                         val tilt = if (c.sortOrder % 2 == 0) -2f else 1.5f
                         CategoryChip(
-                            label = c.name,
+                            label = c.displayName,
                             emoji = c.emoji,
                             color = Color(c.colorHex),
                             selected = selected,
@@ -246,7 +253,7 @@ fun QuickActionSheet(
             }
             ActionRow(
                 icon = Icons.Rounded.Delete,
-                title = "Delete",
+                title = stringResource(R.string.settings_delete_2),
                 tint = MaterialTheme.colorScheme.error,
                 onClick = { showDeleteConfirm = true }
             )

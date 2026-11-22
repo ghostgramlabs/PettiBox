@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.ui.screens.search
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -47,12 +51,14 @@ data class SearchState(
     val sort: SearchSort = SearchSort.RELEVANT
 )
 
-enum class SearchSort(val label: String) {
-    RELEVANT("Relevant"),
-    NEWEST("Newest"),
-    OLDEST("Oldest"),
-    UPDATED("Recently edited"),
-    REMINDER("Reminder time")
+enum class SearchSort(private val labelRes: Int) {
+    RELEVANT(R.string.search_sort_relevant),
+    NEWEST(R.string.search_sort_newest),
+    OLDEST(R.string.search_sort_oldest),
+    UPDATED(R.string.search_sort_updated),
+    REMINDER(R.string.search_sort_reminder);
+
+    val label: String get() = AppText.getString(labelRes)
 }
 
 /** What the results area should run. */

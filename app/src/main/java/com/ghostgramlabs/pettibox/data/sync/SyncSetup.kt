@@ -44,17 +44,13 @@ class SyncSetup @Inject constructor(private val db: AppDatabase) {
         sql.execSQL("INSERT OR IGNORE INTO sync_dirty(shard) SELECT DISTINCT shard FROM sync_meta")
         // Removed for good while sync was off: still in the merged copy but not here.
         sql.execSQL(
-            "INSERT OR REPLACE INTO sync_outbox(kind, sync_id, ts) SELECT kind, sync_id, $NOW FROM sync_meta m " +
-                "WHERE (kind = 'item' AND NOT EXISTS (SELECT 1 FROM save_items s WHERE s.sync_id = m.sync_id)) " +
-                "OR (kind = 'col' AND NOT EXISTS (SELECT 1 FROM categories c WHERE c.id = m.sync_id))"
+            "INSERT OR REPLACE INTO sync_outbox(kind, sync_id, ts) SELECT kind, sync_id, $NOW FROM sync_meta m WHERE (kind = 'item' AND NOT EXISTS (SELECT 1 FROM save_items s WHERE s.sync_id = m.sync_id)) OR (kind = 'col' AND NOT EXISTS (SELECT 1 FROM categories c WHERE c.id = m.sync_id))"
         )
         // Starters removed before this phone ever synced: every phone seeds
         // them, so say they're gone, or a phone joining later brings them back.
         if (startersSeeded) for (id in CategoryPalette.Defaults.map { it.id }) {
             sql.execSQL(
-                "INSERT OR REPLACE INTO sync_outbox(kind, sync_id, ts) SELECT 'col', ?, $NOW " +
-                    "WHERE NOT EXISTS (SELECT 1 FROM categories WHERE id = ?) " +
-                    "AND NOT EXISTS (SELECT 1 FROM sync_meta WHERE kind = 'col' AND sync_id = ?)",
+                "INSERT OR REPLACE INTO sync_outbox(kind, sync_id, ts) SELECT 'col', ?, $NOW WHERE NOT EXISTS (SELECT 1 FROM categories WHERE id = ?) AND NOT EXISTS (SELECT 1 FROM sync_meta WHERE kind = 'col' AND sync_id = ?)",
                 arrayOf<Any>(id, id, id)
             )
         }
@@ -90,10 +86,7 @@ class SyncSetup @Inject constructor(private val db: AppDatabase) {
     private fun createTriggers(sql: SupportSQLiteDatabase) {
         fun queue(name: String, event: String, table: String, kind: String, idExpr: String, guard: String = "") {
             sql.execSQL(
-                "CREATE TRIGGER IF NOT EXISTS $name AFTER $event ON $table " +
-                    "WHEN NOT EXISTS (SELECT 1 FROM sync_applying)$guard " +
-                    "BEGIN DELETE FROM sync_outbox WHERE kind = '$kind' AND sync_id = $idExpr; " +
-                    "INSERT INTO sync_outbox(kind, sync_id, ts) VALUES ('$kind', $idExpr, $NOW); END"
+                "CREATE TRIGGER IF NOT EXISTS $name AFTER $event ON $table WHEN NOT EXISTS (SELECT 1 FROM sync_applying)$guard BEGIN DELETE FROM sync_outbox WHERE kind = '$kind' AND sync_id = $idExpr; INSERT INTO sync_outbox(kind, sync_id, ts) VALUES ('$kind', $idExpr, $NOW); END"
             )
         }
         queue("sync_q_item_ins", "INSERT", "save_items", "item", "NEW.sync_id")

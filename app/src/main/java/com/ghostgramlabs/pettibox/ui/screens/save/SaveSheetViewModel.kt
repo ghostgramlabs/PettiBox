@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.ui.screens.save
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -37,7 +41,7 @@ import javax.inject.Inject
 enum class SaveMode { NEW, PICK_EXISTING }
 
 /** Placeholder title for a save with nothing better to be called (a blank quick note). */
-private const val QUICK_SAVE_TITLE = "Quick save"
+private val QUICK_SAVE_TITLE: String get() = AppText.getString(R.string.save_quick_save_title)
 
 data class SaveSheetState(
     val mode: SaveMode = SaveMode.NEW,
@@ -142,10 +146,10 @@ class SaveSheetViewModel @Inject constructor(
         }
 
         val fallbackTitle = when {
-            streams.size > 1 && kinds.any { it != type } -> "${streams.size} files"
-            type == ContentType.IMAGE -> if (streams.size > 1) "${streams.size} images" else "Saved image"
-            type == ContentType.PDF -> if (streams.size > 1) "${streams.size} PDFs" else "Saved PDF"
-            type == ContentType.FILE -> "Saved file"
+            streams.size > 1 && kinds.any { it != type } -> AppText.plural(R.plurals.count_files, streams.size)
+            type == ContentType.IMAGE -> if (streams.size > 1) AppText.plural(R.plurals.save_n_images, streams.size) else AppText.getString(R.string.save_saved_image)
+            type == ContentType.PDF -> if (streams.size > 1) AppText.plural(R.plurals.save_n_pdfs, streams.size) else AppText.getString(R.string.save_saved_pdf)
+            type == ContentType.FILE -> AppText.getString(R.string.save_saved_file)
             else -> QUICK_SAVE_TITLE
         }
         val initialTitle = TextUtils.smartTitle(share.text, fallback = TextUtils.hostOf(firstUrl) ?: fallbackTitle)
@@ -428,7 +432,7 @@ class SaveSheetViewModel @Inject constructor(
         val title = if (s.contentType == ContentType.NOTE && s.title == QUICK_SAVE_TITLE && s.notes.isNotBlank()) {
             TextUtils.smartTitle(s.notes, fallback = QUICK_SAVE_TITLE)
         } else {
-            s.title.ifBlank { "Untitled" }
+            s.title.ifBlank { AppText.getString(R.string.untitled) }
         }
 
         val entity = SaveItemEntity(

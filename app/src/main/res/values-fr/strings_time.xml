@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">à l’instant</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">il y a %d min</item>
+        <item quantity="many">il y a %d min</item>
+        <item quantity="other">il y a %d min</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">il y a %d h</item>
+        <item quantity="many">il y a %d h</item>
+        <item quantity="other">il y a %d h</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">il y a %d j</item>
+        <item quantity="many">il y a %d j</item>
+        <item quantity="other">il y a %d j</item>
+    </plurals>
+    <string name="reminder_preset_tonight">Ce soir</string>
+    <string name="reminder_preset_tomorrow">Demain</string>
+    <string name="reminder_preset_weekend">Week-end</string>
+    <string name="reminder_preset_next_week">Semaine prochaine</string>
+    <string name="reminder_preset_custom">Choisir une heure…</string>
+    <string name="reminder_today">Aujourd’hui</string>
+    <string name="reminder_tomorrow">Demain</string>
+    <string name="reminder_today_at">Aujourd’hui %1$s</string>
+    <string name="reminder_tomorrow_at">Demain %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">Actuellement prévu %1$s</string>
+    <string name="reminder_nudge_at">On vous le rappellera : %1$s</string>
+    <string name="reminder_remind_at">On vous le rappellera : %1$s</string>
+    <string name="reminder_remind_me">Me le rappeler</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">PettiBox demandera l’autorisation d’envoyer des notifications si besoin. Si les alarmes exactes sont désactivées, les rappels peuvent arriver un peu plus tard.</string>
+    <string name="reminder_choose_date_time">Choisir la date et l’heure</string>
+    <string name="reminder_clear_reminder">Supprimer le rappel</string>
+    <string name="reminder_custom_reminder">Rappel personnalisé</string>
+    <string name="reminder_pick_time_below_enable_set">Choisissez une heure ci-dessous pour activer Valider</string>
+    <string name="reminder_pick_date_time">Choisissez une date et une heure</string>
+    <string name="reminder_moment_has_already_passed_pick">Ce moment est déjà passé : choisissez une heure future</string>
+    <string name="reminder_date">Date</string>
+    <string name="reminder_tap_pick">Touchez pour choisir</string>
+    <string name="reminder_time">Heure</string>
+    <string name="reminder_tap_set">Touchez pour régler</string>
+    <string name="reminder_set_reminder">Définir le rappel</string>
+    <string name="reminder_done">OK</string>
+    <string name="reminder_pick_time">Choisir une heure</string>
+    <string name="reminder_set_time">Régler l’heure</string>
+</resources>

@@ -53,6 +53,10 @@ SYNC BETWEEN YOUR PHONES AND TABLETS
 
 Turn on sync to keep the same library on your Android phones and tablets. Saves, collections, tags, notes, photos and files stay in step through a PettiBox folder in your own Google Drive. There are no PettiBox servers, and we can't see your saves.
 
+PETTIBOX SPEAKS YOUR LANGUAGE
+
+Use the app in English or 16 other languages, including Spanish, German, French, Hindi, Arabic and Japanese.
+
 Great for saving:
 
 - Recipes and meal ideas
@@ -60,7 +64,6 @@ Great for saving:
 - Study materials and class notes
 - Shopping ideas and wish lists
 - Travel plans and places
-- Work links and documents
 - Screenshots with important text
 - PDFs and reference material
 

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">", "</string>
+    <plurals name="count_saves">
+        <item quantity="other">%d mục</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="other">%d tệp</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="other">%d yêu thích</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="other">%d đã lưu trữ</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="other">%d thẻ</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="other">%d bộ sưu tập</item>
+    </plurals>
+    <string name="source_web">Web</string>
+    <string name="source_maps">Bản đồ</string>
+    <string name="source_files">Tệp</string>
+    <string name="source_clipboard">Bộ nhớ tạm</string>
+    <string name="source_other">Khác</string>
+    <plurals name="count_items">
+        <item quantity="other">%d mục</item>
+    </plurals>
+    <string name="untitled">Không có tiêu đề</string>
+    <string name="starter_recipes">Công thức nấu ăn</string>
+    <string name="starter_travel">Du lịch</string>
+    <string name="starter_fitness">Thể dục</string>
+    <string name="starter_style">Phong cách</string>
+    <string name="starter_home">Nhà cửa</string>
+    <string name="starter_beauty">Làm đẹp</string>
+    <string name="starter_read_later">Đọc sau</string>
+    <string name="starter_finance">Tài chính</string>
+    <string name="starter_music">Âm nhạc</string>
+    <string name="starter_books">Sách</string>
+    <string name="starter_food_spots">Quán ăn</string>
+    <string name="starter_shopping">Mua sắm</string>
+    <string name="starter_work">Công việc</string>
+    <string name="starter_ideas">Ý tưởng</string>
+    <string name="starter_watch">Để xem</string>
+    <string name="starter_learning">Học tập</string>
+    <string name="starter_health">Sức khỏe</string>
+    <string name="starter_docs">Tài liệu</string>
+    <string name="starter_personal">Cá nhân</string>
+    <string name="starter_tech">Công nghệ</string>
+    <string name="starter_design">Thiết kế</string>
+    <string name="starter_gifts">Quà tặng</string>
+    <string name="starter_places">Địa điểm</string>
+    <string name="starter_kids">Trẻ em</string>
+    <string name="theme_system">Hệ thống</string>
+    <string name="theme_light">Sáng</string>
+    <string name="theme_dark">Tối</string>
+    <string name="widget_all_caught_up">Đã xem hết</string>
+    <plurals name="widget_unread">
+        <item quantity="other">%d chưa đọc</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · bản sao lưu ngày %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="other">%d phút đọc</item>
+    </plurals>
+    <string name="quick_change_reminder">Đổi lời nhắc</string>
+    <string name="quick_copy_link">Sao chép liên kết</string>
+    <string name="quick_copy_note">Sao chép ghi chú</string>
+    <string name="quick_note_copied">Đã sao chép ghi chú</string>
+    <string name="quick_move_collection">Chuyển sang bộ sưu tập</string>
+    <string name="card_open_quick_actions">Mở thao tác nhanh</string>
+    <string name="card_archived">Đã lưu trữ</string>
+    <string name="card_reminder">Lời nhắc</string>
+    <string name="collection_new_collection">Bộ sưu tập mới</string>
+    <string name="collection_collection_name">Tên bộ sưu tập</string>
+    <string name="collection_emoji">Biểu tượng cảm xúc</string>
+    <string name="collection_color">Màu</string>
+    <string name="collection_lock_collection">Khóa bộ sưu tập này</string>
+    <string name="collection_hidden_home_search_everywhere_else">Ẩn khỏi Trang chủ, tìm kiếm và mọi nơi khác cho đến khi bạn mở khóa bằng vân tay, khuôn mặt hoặc mã PIN điện thoại.</string>
+    <string name="collection_set_screen_lock_phone_use">Hãy đặt khóa màn hình trên điện thoại để dùng tính năng này.</string>
+    <string name="collection_name_e_g_weekend_reads">Đặt tên (vd: Đọc cuối tuần)</string>
+    <string name="collection_pick_emoji">Chọn biểu tượng</string>
+    <string name="collection_pick_color">Chọn màu</string>
+    <string name="collection_create">Tạo</string>
+    <string name="help_i_keep_links_screenshots_pdfs">Mình lưu liên kết, ảnh chụp màn hình, PDF và ghi chú trong PettiBox: lưu từ mọi ứng dụng, đọc bài viết khi offline và tìm chữ trong ảnh. Miễn phí: %1$s</string>
+    <string name="help_share_pettibox">Chia sẻ PettiBox</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s — câu hỏi hoặc sự cố</string>
+    <string name="help_please_keep_part_helps_me">——— Vui lòng giữ phần này, nó giúp mình hỗ trợ bạn ———</string>
+    <string name="sync_edited_2_devices_needs_choice">Đã sửa trên 2 thiết bị: cần bạn chọn</string>
+    <string name="lock_unlock_locked_collections">Mở khóa bộ sưu tập đã khóa</string>
+    <string name="lock_unlock_pettibox">Mở khóa PettiBox</string>
+    <string name="lock_use_fingerprint_face_phone_pin">Dùng vân tay, khuôn mặt hoặc mã PIN điện thoại</string>
+    <string name="lock_pettibox_locked">PettiBox đang khóa</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">Mở khóa bằng vân tay, khuôn mặt hoặc mã PIN điện thoại.</string>
+    <string name="lock_unlock">Mở khóa</string>
+    <string name="lock_save_locked_collection">Mục này nằm trong bộ sưu tập đã khóa</string>
+    <string name="lock_go_back">Quay lại</string>
+    <string name="nav_settings">Cài đặt</string>
+    <string name="nav_not_selected">Chưa chọn</string>
+    <string name="widget_pettibox_locked">PettiBox đang khóa 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">Mở khóa PettiBox để xem các mục ở đây.</string>
+    <string name="widget_nothing_waiting">Không có gì đang chờ ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">Chia sẻ liên kết hoặc ảnh vào PettiBox, nó sẽ nằm ở đây đến khi bạn mở.</string>
+    <string name="nav_home">Trang chủ</string>
+    <string name="nav_search">Tìm kiếm</string>
+    <string name="nav_browse">Khám phá</string>
+</resources>

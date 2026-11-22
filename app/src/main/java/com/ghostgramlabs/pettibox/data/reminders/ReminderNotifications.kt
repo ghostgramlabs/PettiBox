@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.data.reminders
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -23,10 +27,10 @@ object ReminderNotifications {
         if (manager.getNotificationChannel(CHANNEL_ID) != null) return
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Save reminders",
+            AppText.getString(R.string.reminder_save_reminders),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = "Nudges for things you asked PettiBox to remind you about."
+            description = AppText.getString(R.string.reminder_nudges_things_asked_pettibox_remind)
             setShowBadge(true)
         }
         manager.createNotificationChannel(channel)

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">PettiBox に保存</string>
+    <string name="widget_description">未読のアイテムにワンタップで</string>
+    <string name="shortcut_note_short">新しいメモ</string>
+    <string name="shortcut_note_long">新しいメモを書く</string>
+    <string name="shortcut_link_short">リンクを追加</string>
+    <string name="shortcut_link_long">リンクを保存</string>
+    <string name="shortcut_search_short">検索</string>
+    <string name="shortcut_search_long">保存したアイテムを検索</string>
+    <string name="shortcut_unread_short">未読</string>
+    <string name="shortcut_unread_long">まだ開いていないアイテム</string>
+</resources>

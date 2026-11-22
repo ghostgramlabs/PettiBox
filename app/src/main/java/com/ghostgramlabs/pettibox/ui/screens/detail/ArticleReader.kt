@@ -1,5 +1,11 @@
 package com.ghostgramlabs.pettibox.ui.screens.detail
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import androidx.compose.ui.res.stringResource
+
+import com.ghostgramlabs.pettibox.R
+
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
@@ -116,14 +122,14 @@ fun OfflineCopyCard(
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             val (title, subtitle) = when (status) {
-                ArticleCopyStatus.READY -> "Read offline" to
-                    "${readingTime(copy!!.wordCount)} · copy saved ${shortDate(copy.fetchedAt)}"
-                ArticleCopyStatus.PENDING -> "Saving a copy to read offline…" to
-                    "Happens in the background whenever you're online"
-                ArticleCopyStatus.FAILED -> "No offline copy" to
-                    (copy?.failureReason ?: "Couldn't save this page")
-                else -> "Read it later, even offline" to
-                    "Keep a copy of this article on your phone"
+                ArticleCopyStatus.READY -> stringResource(R.string.article_read_offline) to
+                    stringResource(R.string.article_ready_subtitle, readingTime(copy!!.wordCount), shortDate(copy.fetchedAt))
+                ArticleCopyStatus.PENDING -> stringResource(R.string.article_saving_copy_read_offline) to
+                    stringResource(R.string.article_happens_background_whenever_youre_online)
+                ArticleCopyStatus.FAILED -> stringResource(R.string.article_no_offline_copy) to
+                    (copy?.failureReason ?: stringResource(R.string.article_couldnt_save_page))
+                else -> stringResource(R.string.article_read_later_even_offline) to
+                    stringResource(R.string.article_keep_copy_article_phone)
             }
             Text(
                 title,
@@ -142,9 +148,9 @@ fun OfflineCopyCard(
             ArticleCopyStatus.READY -> Icon(
                 Icons.Rounded.ChevronRight, null, tint = accent, modifier = Modifier.padding(end = 6.dp)
             )
-            ArticleCopyStatus.FAILED -> TextButton(onClick = onRequest) { Text("Try again") }
+            ArticleCopyStatus.FAILED -> TextButton(onClick = onRequest) { Text(stringResource(R.string.ocr_try_again)) }
             ArticleCopyStatus.PENDING -> Unit
-            else -> TextButton(onClick = onRequest) { Text("Keep offline") }
+            else -> TextButton(onClick = onRequest) { Text(stringResource(R.string.article_keep_offline)) }
         }
     }
 }
@@ -214,10 +220,10 @@ fun ArticleReaderDialog(
                     .padding(horizontal = 4.dp, vertical = 4.dp)
             ) {
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Close")
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.detail_close))
                 }
                 Text(
-                    "Offline copy",
+                    stringResource(R.string.article_offline_copy),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = scheme.onSurface,
                     modifier = Modifier.weight(1f)
@@ -225,16 +231,16 @@ fun ArticleReaderDialog(
                 IconButton(
                     enabled = textZoom > ArticlePreferences.MIN_TEXT_ZOOM,
                     onClick = { onTextZoomChange(textZoom - ArticlePreferences.TEXT_ZOOM_STEP) }
-                ) { Icon(Icons.Rounded.TextDecrease, contentDescription = "Smaller text") }
+                ) { Icon(Icons.Rounded.TextDecrease, contentDescription = stringResource(R.string.article_smaller_text)) }
                 IconButton(
                     enabled = textZoom < ArticlePreferences.MAX_TEXT_ZOOM,
                     onClick = { onTextZoomChange(textZoom + ArticlePreferences.TEXT_ZOOM_STEP) }
-                ) { Icon(Icons.Rounded.TextIncrease, contentDescription = "Bigger text") }
+                ) { Icon(Icons.Rounded.TextIncrease, contentDescription = stringResource(R.string.article_bigger_text)) }
                 IconButton(onClick = onUpdateCopy) {
-                    Icon(Icons.Rounded.Refresh, contentDescription = "Update the saved copy")
+                    Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.article_update_saved_copy))
                 }
                 IconButton(onClick = onOpenOriginal) {
-                    Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = "Open original", tint = scheme.primary)
+                    Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = stringResource(R.string.detail_open_original), tint = scheme.primary)
                 }
             }
             HorizontalDivider(color = scheme.outlineVariant.copy(alpha = 0.5f))
@@ -404,10 +410,10 @@ private fun Color.css(): String = String.format("#%06X", toArgb() and 0xFFFFFF)
 private fun hostOf(url: String): String? =
     runCatching { URI(url).host?.removePrefix("www.") }.getOrNull()
 
-private fun readingTime(words: Int): String = "${(words / 220).coerceAtLeast(1)} min read"
+private fun readingTime(words: Int): String = (words / 220).coerceAtLeast(1).let { AppText.plural(R.plurals.article_min_read, it) }
 
 private fun shortDate(millis: Long): String =
-    DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(millis))
+    DateFormat.getDateInstance(DateFormat.MEDIUM, java.util.Locale.getDefault()).format(Date(millis))
 
 /** Opens a URL in the browser; false when nothing can handle it. */
 internal fun openInBrowser(context: android.content.Context, url: String): Boolean =

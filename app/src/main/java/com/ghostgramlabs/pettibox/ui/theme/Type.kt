@@ -14,6 +14,33 @@ import androidx.compose.ui.unit.sp
 private val Display = FontFamily.Serif
 private val Body = FontFamily.SansSerif
 
+// Languages whose letters can take the headlines' tightened (negative)
+// letter spacing. Indic, Arabic and CJK text is shaped in joined clusters;
+// squeezing it breaks the shaping and even lets a heading such as Hindi
+// "ब्राउज़" wrap mid-word, so those languages get normal spacing.
+private val TIGHT_SPACING_LANGUAGES = setOf(
+    "en", "es", "de", "fr", "in", "id", "tr", "pt", "vi", "ru", "el"
+)
+
+/** The app typography for the given language (see [TIGHT_SPACING_LANGUAGES]). */
+fun pettiBoxTypography(language: String): Typography {
+    if (language in TIGHT_SPACING_LANGUAGES) return PettiBoxTypography
+    val t = PettiBoxTypography
+    fun TextStyle.plain() = copy(letterSpacing = 0.sp)
+    return t.copy(
+        displayLarge = t.displayLarge.plain(),
+        displayMedium = t.displayMedium.plain(),
+        displaySmall = t.displaySmall.plain(),
+        headlineLarge = t.headlineLarge.plain(),
+        headlineMedium = t.headlineMedium.plain(),
+        headlineSmall = t.headlineSmall.plain(),
+        titleLarge = t.titleLarge.plain(),
+        labelLarge = t.labelLarge.plain(),
+        labelMedium = t.labelMedium.plain(),
+        labelSmall = t.labelSmall.plain()
+    )
+}
+
 val PettiBoxTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = Display, fontWeight = FontWeight.Black,

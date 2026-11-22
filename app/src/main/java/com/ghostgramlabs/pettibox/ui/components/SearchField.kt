@@ -1,5 +1,8 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,7 +32,7 @@ import com.ghostgramlabs.pettibox.ui.theme.isLightTheme
 @Composable
 fun SearchField(
     value: String,
-    placeholder: String = "What are you looking for?",
+    placeholder: String = stringResource(R.string.search_what_looking),
     onValueChange: (String) -> Unit,
     onClear: () -> Unit = { onValueChange("") },
     modifier: Modifier = Modifier
@@ -75,7 +78,7 @@ fun SearchField(
         if (value.isNotEmpty()) {
             Icon(
                 Icons.Rounded.Close,
-                contentDescription = "Clear",
+                contentDescription = stringResource(R.string.search_clear),
                 tint = scheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(start = 8.dp)

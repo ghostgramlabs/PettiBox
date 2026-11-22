@@ -93,6 +93,10 @@ SYNC BETWEEN YOUR PHONES AND TABLETS
 
 Turn on sync to keep the same library on your Android phones and tablets. Saves, collections, tags, notes, photos and files stay in step through a PettiBox folder in your own Google Drive. There are no PettiBox servers, and we can't see your saves.
 
+PETTIBOX SPEAKS YOUR LANGUAGE
+
+Use the app in English or 16 other languages, including Spanish, German, French, Hindi, Arabic and Japanese.
+
 Great for saving:
 
 - Recipes and meal ideas
@@ -100,13 +104,12 @@ Great for saving:
 - Study materials and class notes
 - Shopping ideas and wish lists
 - Travel plans and places
-- Work links and documents
 - Screenshots with important text
 - PDFs and reference material
 
 PettiBox helps you save now and find later.
 
-Character count: 3863 / 4000
+Character count: 3977 / 4000
 
 ## ASO Diagnosis And Launch Plan
 
@@ -148,6 +151,7 @@ After publishing the revised metadata:
 - Optional sync between your Android phones and tablets through your own Google Drive.
 - Link previews and YouTube thumbnail previews.
 - Offline-first design with no login required.
+- The app itself in 17 languages, switchable anytime in Settings.
 
 ## Screenshot Captions
 
@@ -208,6 +212,18 @@ Data safety positioning:
 - Google Drive backup is optional and opt-in: backups upload to the user's own Drive under the drive.file scope (the app can only access files it created). No data is sent to the developer; disconnecting stops uploads and leaves existing copies in the user's Drive.
 - Sync is optional and opt-in: the library and its files go to a "PettiBox" folder in the user's own Drive (drive.file scope), and devices exchange changes only through it. No data is sent to the developer.
 
+## Release Notes (What's New) — next version (17 languages)
+
+Versions in every listing language are in PLAY_STORE_LISTING_TRANSLATIONS.md.
+
+```
+NEW: PettiBox speaks your language. Use it in English, Spanish, German, French, Indonesian, Turkish, Japanese, Hindi, Arabic, Portuguese, Russian, Vietnamese, Bengali, Telugu, Tamil, Greek or Malayalam. Change it anytime in Settings › Language.
+IMPROVED: When you save something into a new collection, the Create button stays in view while you type.
+FIXED: Headings and names no longer break mid-word in some languages.
+```
+
+Character count: 419 / 500
+
 ## Release Notes (What's New) — 2.0.13
 
 What's new since 2.0.12. Keep under Play's 500-character limit; Spanish and Hindi
@@ -257,7 +273,7 @@ IMPROVED: Text recognition on large photos uses far less memory, so saving big s
 Bug fixes and polish.
 ```
 
-Character count: 366 / 500
+Character count: 334 / 500
 
 ## Release Notes (What's New) — 2.0.4
 

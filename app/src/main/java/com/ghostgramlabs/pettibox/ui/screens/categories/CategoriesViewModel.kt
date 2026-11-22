@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.ui.screens.categories
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -89,11 +93,13 @@ sealed interface BrowseDestination {
     }
 }
 
-enum class BrowseSort(val label: String) {
-    NEWEST("Newest"),
-    OLDEST("Oldest"),
-    UPDATED("Recently edited"),
-    REMINDER("Reminder time")
+enum class BrowseSort(private val labelRes: Int) {
+    NEWEST(R.string.search_sort_newest),
+    OLDEST(R.string.search_sort_oldest),
+    UPDATED(R.string.search_sort_updated),
+    REMINDER(R.string.search_sort_reminder);
+
+    val label: String get() = AppText.getString(labelRes)
 }
 
 data class CategoriesState(

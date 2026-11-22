@@ -1,5 +1,8 @@
 package com.ghostgramlabs.pettibox.ui.screens.settings
 
+import com.ghostgramlabs.pettibox.R
+import com.ghostgramlabs.pettibox.util.localized
+
 import android.accounts.Account
 import android.content.Context
 import android.content.Intent
@@ -201,7 +204,7 @@ class SettingsViewModel @Inject constructor(
     suspend fun sendFilesNow() {
         syncPreferences.setFilesProblem("")
         syncPreferences.setFilesWaiting("")
-        syncPreferences.setFilesStatus("Sending photos and files to Google Drive…")
+        syncPreferences.setFilesStatus(appContext.localized().getString(R.string.sync_sending_photos_files_google_drive))
         com.ghostgramlabs.pettibox.data.sync.FileSyncWorker.sendNow(appContext)
     }
 

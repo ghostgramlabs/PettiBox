@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">", "</string>
+    <plurals name="count_saves">
+        <item quantity="one">%d ఐటెమ్</item>
+        <item quantity="other">%d ఐటెమ్‌లు</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="one">%d ఫైల్</item>
+        <item quantity="other">%d ఫైల్‌లు</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="one">%d ఇష్టమైనది</item>
+        <item quantity="other">%d ఇష్టమైనవి</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="one">%d ఆర్కైవ్</item>
+        <item quantity="other">%d ఆర్కైవ్</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="one">%d ట్యాగ్</item>
+        <item quantity="other">%d ట్యాగ్‌లు</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="one">%d కలెక్షన్</item>
+        <item quantity="other">%d కలెక్షన్‌లు</item>
+    </plurals>
+    <string name="source_web">వెబ్</string>
+    <string name="source_maps">Maps</string>
+    <string name="source_files">Files</string>
+    <string name="source_clipboard">క్లిప్‌బోర్డ్</string>
+    <string name="source_other">ఇతర</string>
+    <plurals name="count_items">
+        <item quantity="one">%d ఐటెమ్</item>
+        <item quantity="other">%d ఐటెమ్‌లు</item>
+    </plurals>
+    <string name="untitled">పేరులేనిది</string>
+    <string name="starter_recipes">వంటకాలు</string>
+    <string name="starter_travel">ప్రయాణం</string>
+    <string name="starter_fitness">ఫిట్‌నెస్</string>
+    <string name="starter_style">స్టైల్</string>
+    <string name="starter_home">ఇల్లు</string>
+    <string name="starter_beauty">అందం</string>
+    <string name="starter_read_later">తర్వాత చదవాలి</string>
+    <string name="starter_finance">ఆర్థికం</string>
+    <string name="starter_music">సంగీతం</string>
+    <string name="starter_books">పుస్తకాలు</string>
+    <string name="starter_food_spots">తినే చోట్లు</string>
+    <string name="starter_shopping">షాపింగ్</string>
+    <string name="starter_work">పని</string>
+    <string name="starter_ideas">ఐడియాలు</string>
+    <string name="starter_watch">చూడాలి</string>
+    <string name="starter_learning">నేర్చుకోవడం</string>
+    <string name="starter_health">ఆరోగ్యం</string>
+    <string name="starter_docs">డాక్యుమెంట్‌లు</string>
+    <string name="starter_personal">వ్యక్తిగతం</string>
+    <string name="starter_tech">టెక్</string>
+    <string name="starter_design">డిజైన్</string>
+    <string name="starter_gifts">బహుమతులు</string>
+    <string name="starter_places">ప్రదేశాలు</string>
+    <string name="starter_kids">పిల్లలు</string>
+    <string name="theme_system">సిస్టమ్</string>
+    <string name="theme_light">లైట్</string>
+    <string name="theme_dark">డార్క్</string>
+    <string name="widget_all_caught_up">అన్నీ చూసేశారు</string>
+    <plurals name="widget_unread">
+        <item quantity="one">%d చదవనిది</item>
+        <item quantity="other">%d చదవనివి</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · కాపీ సేవ్ అయింది %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="one">%d నిమిషం చదువు</item>
+        <item quantity="other">%d నిమిషాల చదువు</item>
+    </plurals>
+    <string name="quick_change_reminder">రిమైండర్ మార్చండి</string>
+    <string name="quick_copy_link">లింక్ కాపీ చేయండి</string>
+    <string name="quick_copy_note">నోట్ కాపీ చేయండి</string>
+    <string name="quick_note_copied">నోట్ కాపీ అయింది</string>
+    <string name="quick_move_collection">కలెక్షన్‌కు తరలించండి</string>
+    <string name="card_open_quick_actions">క్విక్ యాక్షన్‌లు తెరవండి</string>
+    <string name="card_archived">ఆర్కైవ్ చేశారు</string>
+    <string name="card_reminder">రిమైండర్</string>
+    <string name="collection_new_collection">కొత్త కలెక్షన్</string>
+    <string name="collection_collection_name">కలెక్షన్ పేరు</string>
+    <string name="collection_emoji">ఎమోజీ</string>
+    <string name="collection_color">రంగు</string>
+    <string name="collection_lock_collection">ఈ కలెక్షన్‌ను లాక్ చేయండి</string>
+    <string name="collection_hidden_home_search_everywhere_else">మీ వేలిముద్ర, ముఖం లేదా ఫోన్ PINతో అన్‌లాక్ చేసే వరకు హోమ్, శోధన మరియు మిగతా అన్ని చోట్ల నుండి దాచబడుతుంది.</string>
+    <string name="collection_set_screen_lock_phone_use">దీన్ని వాడడానికి మీ ఫోన్‌లో స్క్రీన్ లాక్ సెట్ చేయండి.</string>
+    <string name="collection_name_e_g_weekend_reads">పేరు పెట్టండి (ఉదా. వారాంతపు చదువులు)</string>
+    <string name="collection_pick_emoji">ఎమోజీ ఎంచుకోండి</string>
+    <string name="collection_pick_color">రంగు ఎంచుకోండి</string>
+    <string name="collection_create">సృష్టించండి</string>
+    <string name="help_i_keep_links_screenshots_pdfs">నేను లింక్‌లు, స్క్రీన్‌షాట్‌లు, PDFలు, నోట్‌లు PettiBox‌లో ఉంచుతాను — ఏ యాప్ నుండైనా సేవ్ చేయండి, వ్యాసాలు ఆఫ్‌లైన్‌లో చదవండి, ఫోటోల్లోని అక్షరాలు వెతకండి. ఉచితం: %1$s</string>
+    <string name="help_share_pettibox">PettiBox షేర్ చేయండి</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s — ప్రశ్న లేదా సమస్య</string>
+    <string name="help_please_keep_part_helps_me">——— దయచేసి ఈ భాగాన్ని ఉంచండి, మీకు సహాయం చేయడానికి ఇది ఉపయోగపడుతుంది ———</string>
+    <string name="sync_edited_2_devices_needs_choice">2 పరికరాల్లో ఎడిట్ అయింది: మీరు ఎంచుకోవాలి</string>
+    <string name="lock_unlock_locked_collections">లాక్ చేసిన కలెక్షన్‌లను అన్‌లాక్ చేయండి</string>
+    <string name="lock_unlock_pettibox">PettiBox అన్‌లాక్ చేయండి</string>
+    <string name="lock_use_fingerprint_face_phone_pin">మీ వేలిముద్ర, ముఖం లేదా ఫోన్ PIN వాడండి</string>
+    <string name="lock_pettibox_locked">PettiBox లాక్ అయి ఉంది</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">మీ వేలిముద్ర, ముఖం లేదా ఫోన్ PINతో అన్‌లాక్ చేయండి.</string>
+    <string name="lock_unlock">అన్‌లాక్ చేయండి</string>
+    <string name="lock_save_locked_collection">ఈ ఐటెమ్ లాక్ చేసిన కలెక్షన్‌లో ఉంది</string>
+    <string name="lock_go_back">వెనక్కి వెళ్లండి</string>
+    <string name="nav_settings">సెట్టింగ్స్</string>
+    <string name="nav_not_selected">ఎంచుకోలేదు</string>
+    <string name="widget_pettibox_locked">PettiBox లాక్ అయి ఉంది 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">మీ ఐటెమ్‌లను ఇక్కడ చూడడానికి PettiBox అన్‌లాక్ చేయండి.</string>
+    <string name="widget_nothing_waiting">ఏదీ ఎదురుచూడడం లేదు ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">PettiBox‌కు లింక్ లేదా ఫోటో షేర్ చేయండి, మీరు తెరిచే వరకు అది ఇక్కడే ఉంటుంది.</string>
+    <string name="nav_home">హోమ్</string>
+    <string name="nav_search">శోధన</string>
+    <string name="nav_browse">బ్రౌజ్</string>
+</resources>

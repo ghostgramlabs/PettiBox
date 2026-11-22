@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browse_deleted_one_for_good">Endgültig gelöscht</string>
+    <string name="browse_moved_one_to_trash">In „Zuletzt gelöscht“ verschoben</string>
+    <string name="browse_restored_one">Wiederhergestellt</string>
+    <string name="browse_empty">Leer</string>
+    <string name="browse_empty_collection_named">Speichere etwas über das Teilen-Menü in %1$s, dann erscheint es hier.</string>
+    <string name="browse_empty_collection">Speichere etwas über das Teilen-Menü in dieser Sammlung, dann erscheint es hier.</string>
+    <plurals name="browse_deleted_for_good">
+        <item quantity="one">%d Eintrag endgültig gelöscht</item>
+        <item quantity="other">%d Einträge endgültig gelöscht</item>
+    </plurals>
+    <plurals name="browse_moved_to_trash">
+        <item quantity="one">%d Eintrag in „Zuletzt gelöscht“ verschoben</item>
+        <item quantity="other">%d Einträge in „Zuletzt gelöscht“ verschoben</item>
+    </plurals>
+    <plurals name="browse_restored">
+        <item quantity="one">%d Eintrag wiederhergestellt</item>
+        <item quantity="other">%d Einträge wiederhergestellt</item>
+    </plurals>
+    <plurals name="browse_delete_n_for_good">
+        <item quantity="one">%d endgültig löschen?</item>
+        <item quantity="other">%d endgültig löschen?</item>
+    </plurals>
+    <plurals name="browse_delete_n_selected">
+        <item quantity="one">%d ausgewählten löschen?</item>
+        <item quantity="other">%d ausgewählte löschen?</item>
+    </plurals>
+    <plurals name="browse_n_selected">
+        <item quantity="one">%d ausgewählt</item>
+        <item quantity="other">%d ausgewählt</item>
+    </plurals>
+    <string name="browse_saves_collection_will_stay_pettibox">Die Einträge dieser Sammlung bleiben in PettiBox, aber die Sammlung wird entfernt.</string>
+    <string name="browse_locked_find_under_browse_locked">Gesperrt. Du findest sie unter Entdecken › Gesperrt.</string>
+    <string name="browse_locked_open_settings_privacy">Gesperrt. Öffne sie unter Einstellungen › Datenschutz.</string>
+    <string name="browse_put_back_where_was_delete">Zurücklegen, wo es war, oder endgültig löschen?</string>
+    <string name="browse_delete_good">Endgültig löschen</string>
+    <string name="browse_empty_recently_deleted">„Zuletzt gelöscht“ leeren?</string>
+    <string name="browse_everything_here_removed_good_including">Alles hier wird endgültig entfernt, auch die Dateien. Das kann nicht rückgängig gemacht werden.</string>
+    <string name="browse_favorites">Favoriten</string>
+    <string name="browse_recently_deleted">Zuletzt gelöscht</string>
+    <string name="browse_find_collection">Sammlung suchen</string>
+    <string name="browse_clear_collection_search">Sammlungssuche löschen</string>
+    <string name="browse_cross_cutting_labels_youve_added">Schlagwörter, die du deinen Einträgen gegeben hast</string>
+    <string name="browse_no_tags_yet">Noch keine Tags</string>
+    <string name="browse_tags_short_labels_urgent_read">Tags sind kurze Schlagwörter (#dringend, #später-lesen), die du einem Eintrag geben kannst. Sie gelten über Sammlungen hinweg – ein Eintrag kann viele Tags haben. Füge beim nächsten Speichern Tags im Speichern-Fenster hinzu.</string>
+    <string name="browse_saves_marked_heart">Einträge, die du mit einem Herz markiert hast</string>
+    <string name="browse_everything_youve_tucked_away">Alles, was du archiviert hast</string>
+    <string name="browse_upcoming_nudges_sorted_time">Anstehende Erinnerungen, nach Zeit sortiert</string>
+    <string name="browse_saved_but_not_opened_yet">Gespeichert, aber noch nicht geöffnet</string>
+    <string name="browse_kept_30_days_then_removed">Wird 30 Tage aufbewahrt und dann endgültig entfernt. Tippe auf einen Eintrag, um ihn wiederherzustellen.</string>
+    <string name="browse_saves_carrying_tag">Einträge mit diesem Tag</string>
+    <string name="browse_archived_saves">Archivierte Einträge</string>
+    <string name="browse_show_active">Aktive zeigen</string>
+    <string name="browse_show_archived">Archivierte zeigen</string>
+    <string name="browse_edit_collection">Sammlung bearbeiten</string>
+    <string name="browse_delete_collection">Sammlung löschen</string>
+    <string name="browse_theyre_removed_good_including_their">Sie werden endgültig entfernt, auch ihre Dateien. Das kann nicht rückgängig gemacht werden.</string>
+    <string name="browse_they_move_recently_deleted_browse">Sie kommen 30 Tage lang in „Zuletzt gelöscht“ (unter Entdecken), damit du sie noch zurückholen kannst.</string>
+    <string name="browse_no_favorites_yet">Noch keine Favoriten</string>
+    <string name="browse_tap_heart_save_long_press">Tippe bei einem Eintrag auf das Herz (Karte lange drücken → ❤️), dann landet er hier.</string>
+    <string name="browse_nothing_archived">Nichts archiviert</string>
+    <string name="browse_archive_save_long_press_archive">Archiviere einen Eintrag (lange drücken → Archivieren), um ihn wegzulegen, ohne ihn zu löschen.</string>
+    <string name="browse_no_reminders_waiting">Keine Erinnerungen offen</string>
+    <string name="browse_set_reminder_save_card_save">Stelle eine Erinnerung auf einer Karte oder im Speichern-Fenster ein, dann sammeln sich anstehende Erinnerungen hier.</string>
+    <string name="browse_all_caught_up">Alles erledigt</string>
+    <string name="browse_youve_opened_everything_saved_new">Du hast alles geöffnet, was du gespeichert hast. Neue Einträge warten hier, bis du sie öffnest.</string>
+    <string name="browse_nothing_deleted">Nichts gelöscht</string>
+    <string name="browse_deleted_saves_stay_here_30">Gelöschte Einträge bleiben 30 Tage hier, falls du es dir anders überlegst.</string>
+    <string name="browse_no_saves">Keine Einträge mit #%1$s</string>
+    <string name="browse_items_tagged_will_appear_here">Einträge mit #%1$s erscheinen hier.</string>
+    <string name="browse_no_archived_saves">Keine archivierten Einträge</string>
+    <string name="browse_nothing_here_yet">Hier ist noch nichts</string>
+    <string name="browse_archived_items_appear_here_toggle">Archivierte Einträge erscheinen hier. Schalte es aus, um deine aktiven Einträge zu sehen.</string>
+    <string name="browse_select">Auswählen</string>
+    <string name="browse_selected">Ausgewählt</string>
+    <string name="browse_exit_selection">Auswahl beenden</string>
+    <string name="browse_tap_saves_select">Tippe auf Einträge, um sie auszuwählen</string>
+    <string name="browse_clear_selection">Auswahl aufheben</string>
+    <string name="browse_locked">Gesperrt</string>
+    <string name="browse_hide_locked_collections">Gesperrte Sammlungen ausblenden</string>
+    <string name="browse_archive_title">Archiv</string>
+    <string name="browse_empty_action">Leeren</string>
+</resources>

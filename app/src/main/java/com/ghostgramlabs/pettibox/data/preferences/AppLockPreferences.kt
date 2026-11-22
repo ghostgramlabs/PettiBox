@@ -1,6 +1,7 @@
 package com.ghostgramlabs.pettibox.data.preferences
 
 import android.content.Context
+import com.ghostgramlabs.pettibox.R
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -64,12 +65,12 @@ class AppLockPreferences @Inject constructor(
     companion object {
         const val DEFAULT_LOCK_AFTER_MS = 60_000L
 
-        /** Label → delay. "Immediately" still survives the unlock prompt itself. */
-        val LOCK_AFTER_OPTIONS: List<Pair<String, Long>> = listOf(
-            "Immediately" to 0L,
-            "1 min" to 60_000L,
-            "5 min" to 5 * 60_000L,
-            "15 min" to 15 * 60_000L
+        /** Label (a string resource) → delay. "Immediately" still survives the unlock prompt itself. */
+        val LOCK_AFTER_OPTIONS: List<Pair<Int, Long>> = listOf(
+            R.string.lock_after_immediately to 0L,
+            R.string.lock_after_1_min to 60_000L,
+            R.string.lock_after_5_min to 5 * 60_000L,
+            R.string.lock_after_15_min to 15 * 60_000L
         )
     }
 }

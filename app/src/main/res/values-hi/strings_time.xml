@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">अभी-अभी</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d मिनट पहले</item>
+        <item quantity="other">%d मिनट पहले</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d घंटे पहले</item>
+        <item quantity="other">%d घंटे पहले</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%d दिन पहले</item>
+        <item quantity="other">%d दिन पहले</item>
+    </plurals>
+    <string name="reminder_preset_tonight">आज रात</string>
+    <string name="reminder_preset_tomorrow">कल</string>
+    <string name="reminder_preset_weekend">वीकेंड</string>
+    <string name="reminder_preset_next_week">अगले हफ़्ते</string>
+    <string name="reminder_preset_custom">समय चुनें…</string>
+    <string name="reminder_today">आज</string>
+    <string name="reminder_tomorrow">कल</string>
+    <string name="reminder_today_at">आज %1$s</string>
+    <string name="reminder_tomorrow_at">कल %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">अभी %1$s के लिए सेट है</string>
+    <string name="reminder_nudge_at">हम आपको %1$s याद दिलाएँगे</string>
+    <string name="reminder_remind_at">हम आपको %1$s याद दिलाएँगे</string>
+    <string name="reminder_remind_me">याद दिलाएँ</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">ज़रूरत होने पर PettiBox सूचनाओं की अनुमति माँगेगा। अगर सटीक अलार्म बंद हैं, तो रिमाइंडर थोड़ी देर से आ सकते हैं।</string>
+    <string name="reminder_choose_date_time">तारीख और समय चुनें</string>
+    <string name="reminder_clear_reminder">रिमाइंडर हटाएँ</string>
+    <string name="reminder_custom_reminder">कस्टम रिमाइंडर</string>
+    <string name="reminder_pick_time_below_enable_set">सेट करें चालू करने के लिए नीचे समय चुनें</string>
+    <string name="reminder_pick_date_time">तारीख और समय चुनें</string>
+    <string name="reminder_moment_has_already_passed_pick">वह समय निकल चुका है — आगे का कोई समय चुनें</string>
+    <string name="reminder_date">तारीख</string>
+    <string name="reminder_tap_pick">चुनने के लिए टैप करें</string>
+    <string name="reminder_time">समय</string>
+    <string name="reminder_tap_set">सेट करने के लिए टैप करें</string>
+    <string name="reminder_set_reminder">रिमाइंडर सेट करें</string>
+    <string name="reminder_done">हो गया</string>
+    <string name="reminder_pick_time">समय चुनें</string>
+    <string name="reminder_set_time">समय सेट करें</string>
+</resources>

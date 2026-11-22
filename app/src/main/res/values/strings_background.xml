@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">Something on your shelf is waiting</string>
+    <string name="nudge_title">From your shelf</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">You have %d unread save.</item>
+        <item quantity="other">You have %d unread saves.</item>
+    </plurals>
+    <!-- %1$s: the save's title, %2$s: when ("3d ago") -->
+    <string name="nudge_body_one">“%1$s” — saved %2$s.</string>
+    <!-- %1$s: title, %2$s: when, %3$d: how many more unread -->
+    <plurals name="nudge_body_more">
+        <item quantity="one">“%1$s” — saved %2$s. Plus %3$d more unread.</item>
+        <item quantity="other">“%1$s” — saved %2$s. Plus %3$d more unread.</item>
+    </plurals>
+
+    <plurals name="files_missing">
+        <item quantity="one">%d file is missing on this phone, so it can\'t be sent. Open the save and add the file again.</item>
+        <item quantity="other">%d files are missing on this phone, so they can\'t be sent. Open the save and add the file again.</item>
+    </plurals>
+    <!-- %1$d: how many files, %2$s: a time ("9:41 PM") -->
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">Library synced · %1$d file waiting for another device to send it · checked %2$s</item>
+        <item quantity="other">Library synced · %1$d files waiting for another device to send them · checked %2$s</item>
+    </plurals>
+    <string name="files_all_in_drive">All photos and files are in Google Drive · checked %1$s</string>
+    <string name="files_checked">Photos and files checked %1$s</string>
+    <!-- %1$s: Drive's error code, or "no connection" -->
+    <string name="files_unreachable">Couldn\'t reach Google Drive while sending photos and files (%1$s). Trying again by itself shortly.</string>
+    <string name="files_no_connection">no connection</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d file can\'t be read on this phone any more (the app it came from no longer allows it), so it can\'t be sent.</item>
+        <item quantity="other">%d files can\'t be read on this phone any more (the app they came from no longer allows it), so they can\'t be sent.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">Sending %d photo and files to Google Drive…</item>
+        <item quantity="other">Sending %d photos and files to Google Drive…</item>
+    </plurals>
+    <string name="files_sending_progress">Sending photos and files to Google Drive… %1$d of %2$d</string>
+
+    <string name="sync_step_connecting">connecting</string>
+    <string name="sync_unreachable">Couldn\'t reach Google Drive</string>
+    <string name="sync_drive_error">Google Drive answered with an error (%1$d)</string>
+    <!-- %1$s: what went wrong, %2$s: the step it was on ("receiving changes") -->
+    <string name="sync_failed_while">%1$s while %2$s.</string>
+    <string name="sync_retrying">Trying again by itself shortly.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">Skipped %d damaged file from another device; nothing from it was applied</item>
+        <item quantity="other">Skipped %d damaged files from another device; nothing from them was applied</item>
+    </plurals>
+    <string name="sync_every_15_min">15 min</string>
+    <string name="sync_every_30_min">30 min</string>
+    <string name="sync_every_hour">1 hour</string>
+    <string name="sync_every_3_hours">3 hours</string>
+    <string name="sync_daily">Daily</string>
+    <string name="sync_weekly">Weekly</string>
+    <string name="sync_only_in_use">Only while in use</string>
+    <string name="reminder_save_locked_collection">A save in a locked collection</string>
+    <string name="reminder_saved_item">Saved item</string>
+    <string name="reminder_snooze_1h">Snooze 1h</string>
+    <string name="reminder_evening">This evening</string>
+    <string name="nudge_see_all_unread">See all unread</string>
+    <string name="nudge_once_week_one_thing_saved">Once a week, one thing you saved but haven\'t opened yet.</string>
+    <string name="reminder_save_reminders">Save reminders</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">Nudges for things you asked PettiBox to remind you about.</string>
+    <string name="files_photos_files_waiting_reconnect_google">Photos and files are waiting: reconnect Google Drive in Settings.</string>
+    <string name="files_photos_files_sent_once_first">Photos and files are sent once the first sync has finished.</string>
+    <string name="files_photos_files_arent_sent_google">Photos and files aren\'t sent: Google Drive is signed in as %1$s, not %2$s.</string>
+    <string name="files_photos_files_couldnt_sent_tap">Photos and files couldn\'t be sent: %1$s. Tap Sync now to try again.</string>
+    <string name="files_photos_files_stopped_sending_trying">Photos and files stopped sending: %1$s. Trying again shortly.</string>
+    <string name="sync_sync_stopped">Sync stopped: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">Sync was turned off because the synced data was deleted from Google Drive on another device. Everything on this phone is still here; turn sync on again to start over.</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive needs reconnecting</string>
+    <string name="sync_google_drive_didnt_say_which">Google Drive didn\'t say which account this is</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive is signed in as %1$s, but this library syncs with %2$s. Switch back to %3$s, or turn sync off and on again to sync with %4$s.</string>
+    <string name="sync_couldnt_save_safety_copy_library">Couldn\'t save a safety copy of your library before syncing. It will be tried again next time.</string>
+    <string name="sync_checking_google_drive">Checking Google Drive…</string>
+    <string name="sync_receiving_changes">Receiving changes…</string>
+    <string name="sync_another_device_uses_newer_version">Another device uses a newer version of PettiBox. Update this app to see everything it saved.</string>
+    <string name="sync_preparing_changes">Preparing your changes…</string>
+    <string name="sync_updating_library">Updating your library…</string>
+    <string name="sync_couldnt_save_safety_copy_before">Couldn\'t save a safety copy before removing saves, so nothing was removed. Free some space and choose again.</string>
+    <string name="sync_sending_changes">Sending your changes…</string>
+    <string name="article_page_no_longer_exists">The page no longer exists</string>
+    <string name="article_site_doesnt_allow_saving_copy">This site doesn\'t allow saving a copy</string>
+    <string name="article_site_answered_error">The site answered with an error (%1$s)</string>
+    <string name="article_couldnt_find_article_page">Couldn\'t find an article on this page</string>
+    <string name="article_page_too_long_keep_copy">This page is too long to keep a copy of</string>
+    <string name="article_couldnt_reach_page_check_connection">Couldn\'t reach the page. Check your connection and try again.</string>
+</resources>

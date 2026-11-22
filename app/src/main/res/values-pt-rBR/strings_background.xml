@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">Tem algo esperando na sua estante</string>
+    <string name="nudge_title">Da sua estante</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">Você tem %d item não lido.</item>
+        <item quantity="many">Você tem %d itens não lidos.</item>
+        <item quantity="other">Você tem %d itens não lidos.</item>
+    </plurals>
+    <string name="nudge_body_one">“%1$s” — salvo %2$s.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">“%1$s” — salvo %2$s. E mais %3$d não lido.</item>
+        <item quantity="many">“%1$s” — salvo %2$s. E mais %3$d não lidos.</item>
+        <item quantity="other">“%1$s” — salvo %2$s. E mais %3$d não lidos.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">%d arquivo está faltando neste celular, então não pode ser enviado. Abra o item e adicione o arquivo de novo.</item>
+        <item quantity="many">%d arquivos estão faltando neste celular, então não podem ser enviados. Abra o item e adicione os arquivos de novo.</item>
+        <item quantity="other">%d arquivos estão faltando neste celular, então não podem ser enviados. Abra o item e adicione os arquivos de novo.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">Biblioteca sincronizada · %1$d arquivo esperando outro dispositivo enviá-lo · verificado às %2$s</item>
+        <item quantity="many">Biblioteca sincronizada · %1$d arquivos esperando outro dispositivo enviá-los · verificado às %2$s</item>
+        <item quantity="other">Biblioteca sincronizada · %1$d arquivos esperando outro dispositivo enviá-los · verificado às %2$s</item>
+    </plurals>
+    <string name="files_all_in_drive">Todas as fotos e arquivos estão no Google Drive · verificado às %1$s</string>
+    <string name="files_checked">Fotos e arquivos verificados às %1$s</string>
+    <string name="files_unreachable">Não foi possível acessar o Google Drive ao enviar fotos e arquivos (%1$s). Uma nova tentativa será feita em breve.</string>
+    <string name="files_no_connection">sem conexão</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d arquivo não pode mais ser lido neste celular (o app de onde ele veio não permite mais), então não pode ser enviado.</item>
+        <item quantity="many">%d arquivos não podem mais ser lidos neste celular (o app de onde vieram não permite mais), então não podem ser enviados.</item>
+        <item quantity="other">%d arquivos não podem mais ser lidos neste celular (o app de onde vieram não permite mais), então não podem ser enviados.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">Enviando %d foto e arquivos para o Google Drive…</item>
+        <item quantity="many">Enviando %d fotos e arquivos para o Google Drive…</item>
+        <item quantity="other">Enviando %d fotos e arquivos para o Google Drive…</item>
+    </plurals>
+    <string name="files_sending_progress">Enviando fotos e arquivos para o Google Drive… %1$d de %2$d</string>
+    <string name="sync_step_connecting">ao conectar</string>
+    <string name="sync_unreachable">Não foi possível acessar o Google Drive</string>
+    <string name="sync_drive_error">O Google Drive respondeu com um erro (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">Uma nova tentativa será feita em breve.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">%d arquivo danificado de outro dispositivo foi ignorado; nada dele foi aplicado</item>
+        <item quantity="many">%d arquivos danificados de outro dispositivo foram ignorados; nada deles foi aplicado</item>
+        <item quantity="other">%d arquivos danificados de outro dispositivo foram ignorados; nada deles foi aplicado</item>
+    </plurals>
+    <string name="sync_every_15_min">15 min</string>
+    <string name="sync_every_30_min">30 min</string>
+    <string name="sync_every_hour">1 hora</string>
+    <string name="sync_every_3_hours">3 horas</string>
+    <string name="sync_daily">Diariamente</string>
+    <string name="sync_weekly">Semanalmente</string>
+    <string name="sync_only_in_use">Só enquanto estiver em uso</string>
+    <string name="reminder_save_locked_collection">Um item em uma coleção bloqueada</string>
+    <string name="reminder_saved_item">Item salvo</string>
+    <string name="reminder_snooze_1h">Adiar 1 h</string>
+    <string name="reminder_evening">Hoje à noite</string>
+    <string name="nudge_see_all_unread">Ver todos os não lidos</string>
+    <string name="nudge_once_week_one_thing_saved">Uma vez por semana, algo que você salvou mas ainda não abriu.</string>
+    <string name="reminder_save_reminders">Lembretes de itens</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">Avisos sobre o que você pediu ao PettiBox para lembrar.</string>
+    <string name="files_photos_files_waiting_reconnect_google">Fotos e arquivos estão esperando: reconecte o Google Drive nas Configurações.</string>
+    <string name="files_photos_files_sent_once_first">Fotos e arquivos são enviados quando a primeira sincronização terminar.</string>
+    <string name="files_photos_files_arent_sent_google">Fotos e arquivos não são enviados: o Google Drive está conectado como %1$s, não como %2$s.</string>
+    <string name="files_photos_files_couldnt_sent_tap">Não foi possível enviar fotos e arquivos: %1$s. Toque em Sincronizar agora para tentar de novo.</string>
+    <string name="files_photos_files_stopped_sending_trying">O envio de fotos e arquivos parou: %1$s. Uma nova tentativa será feita em breve.</string>
+    <string name="sync_sync_stopped">Sincronização interrompida: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">A sincronização foi desativada porque os dados sincronizados foram excluídos do Google Drive em outro dispositivo. Tudo neste celular continua aqui; ative a sincronização de novo para recomeçar.</string>
+    <string name="sync_google_drive_needs_reconnecting">O Google Drive precisa ser reconectado</string>
+    <string name="sync_google_drive_didnt_say_which">O Google Drive não informou qual é a conta</string>
+    <string name="sync_google_drive_signed_but_library">O Google Drive está conectado como %1$s, mas esta biblioteca sincroniza com %2$s. Volte para %3$s, ou desative e ative a sincronização de novo para sincronizar com %4$s.</string>
+    <string name="sync_couldnt_save_safety_copy_library">Não foi possível salvar uma cópia de segurança da sua biblioteca antes de sincronizar. Uma nova tentativa será feita na próxima vez.</string>
+    <string name="sync_checking_google_drive">Verificando o Google Drive…</string>
+    <string name="sync_receiving_changes">Recebendo alterações…</string>
+    <string name="sync_another_device_uses_newer_version">Outro dispositivo usa uma versão mais nova do PettiBox. Atualize este app para ver tudo o que ele salvou.</string>
+    <string name="sync_preparing_changes">Preparando suas alterações…</string>
+    <string name="sync_updating_library">Atualizando sua biblioteca…</string>
+    <string name="sync_couldnt_save_safety_copy_before">Não foi possível salvar uma cópia de segurança antes de remover itens, então nada foi removido. Libere espaço e escolha de novo.</string>
+    <string name="sync_sending_changes">Enviando suas alterações…</string>
+    <string name="article_page_no_longer_exists">A página não existe mais</string>
+    <string name="article_site_doesnt_allow_saving_copy">Este site não permite salvar uma cópia</string>
+    <string name="article_site_answered_error">O site respondeu com um erro (%1$s)</string>
+    <string name="article_couldnt_find_article_page">Nenhum artigo encontrado nesta página</string>
+    <string name="article_page_too_long_keep_copy">Esta página é longa demais para guardar uma cópia</string>
+    <string name="article_couldnt_reach_page_check_connection">Não foi possível acessar a página. Verifique sua conexão e tente de novo.</string>
+</resources>

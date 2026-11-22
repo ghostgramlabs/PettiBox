@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browse_deleted_one_for_good">Supprimé définitivement</string>
+    <string name="browse_moved_one_to_trash">Déplacé dans Supprimés récemment</string>
+    <string name="browse_restored_one">Restauré</string>
+    <string name="browse_empty">Vide</string>
+    <string name="browse_empty_collection_named">Enregistrez quelque chose dans %1$s depuis le menu Partager, et il apparaîtra ici.</string>
+    <string name="browse_empty_collection">Enregistrez quelque chose dans cette collection depuis le menu Partager, et il apparaîtra ici.</string>
+    <plurals name="browse_deleted_for_good">
+        <item quantity="one">%d élément supprimé définitivement</item>
+        <item quantity="many">%d éléments supprimés définitivement</item>
+        <item quantity="other">%d éléments supprimés définitivement</item>
+    </plurals>
+    <plurals name="browse_moved_to_trash">
+        <item quantity="one">%d élément déplacé dans Supprimés récemment</item>
+        <item quantity="many">%d éléments déplacés dans Supprimés récemment</item>
+        <item quantity="other">%d éléments déplacés dans Supprimés récemment</item>
+    </plurals>
+    <plurals name="browse_restored">
+        <item quantity="one">%d élément restauré</item>
+        <item quantity="many">%d éléments restaurés</item>
+        <item quantity="other">%d éléments restaurés</item>
+    </plurals>
+    <plurals name="browse_delete_n_for_good">
+        <item quantity="one">Supprimer %d définitivement ?</item>
+        <item quantity="many">Supprimer %d définitivement ?</item>
+        <item quantity="other">Supprimer %d définitivement ?</item>
+    </plurals>
+    <plurals name="browse_delete_n_selected">
+        <item quantity="one">Supprimer %d élément sélectionné ?</item>
+        <item quantity="many">Supprimer %d éléments sélectionnés ?</item>
+        <item quantity="other">Supprimer %d éléments sélectionnés ?</item>
+    </plurals>
+    <plurals name="browse_n_selected">
+        <item quantity="one">%d sélectionné</item>
+        <item quantity="many">%d sélectionnés</item>
+        <item quantity="other">%d sélectionnés</item>
+    </plurals>
+    <string name="browse_saves_collection_will_stay_pettibox">Les éléments de cette collection restent dans PettiBox, mais la collection sera supprimée.</string>
+    <string name="browse_locked_find_under_browse_locked">Verrouillée. Retrouvez-la dans Explorer › Verrouillées.</string>
+    <string name="browse_locked_open_settings_privacy">Verrouillée. Ouvrez-la depuis Paramètres › Confidentialité.</string>
+    <string name="browse_put_back_where_was_delete">Le remettre à sa place ou le supprimer définitivement ?</string>
+    <string name="browse_delete_good">Supprimer définitivement</string>
+    <string name="browse_empty_recently_deleted">Vider Supprimés récemment ?</string>
+    <string name="browse_everything_here_removed_good_including">Tout ce qui est ici est supprimé définitivement, fichiers compris. Cette action est irréversible.</string>
+    <string name="browse_favorites">Favoris</string>
+    <string name="browse_recently_deleted">Supprimés récemment</string>
+    <string name="browse_find_collection">Trouver une collection</string>
+    <string name="browse_clear_collection_search">Effacer la recherche de collection</string>
+    <string name="browse_cross_cutting_labels_youve_added">Les étiquettes que vous avez ajoutées à vos éléments</string>
+    <string name="browse_no_tags_yet">Pas encore de tags</string>
+    <string name="browse_tags_short_labels_urgent_read">Les tags sont de courtes étiquettes (#urgent, #à-lire) que vous pouvez ajouter à un élément. Ils traversent les collections : un élément peut avoir plusieurs tags. Ajoutez-en depuis la fenêtre d’enregistrement la prochaine fois que vous rangez quelque chose.</string>
+    <string name="browse_saves_marked_heart">Les éléments marqués d’un cœur</string>
+    <string name="browse_everything_youve_tucked_away">Tout ce que vous avez mis de côté</string>
+    <string name="browse_upcoming_nudges_sorted_time">Rappels à venir, triés par heure</string>
+    <string name="browse_saved_but_not_opened_yet">Enregistrés, mais pas encore ouverts</string>
+    <string name="browse_kept_30_days_then_removed">Conservés 30 jours, puis supprimés définitivement. Touchez-en un pour le restaurer.</string>
+    <string name="browse_saves_carrying_tag">Éléments portant ce tag</string>
+    <string name="browse_archived_saves">Éléments archivés</string>
+    <string name="browse_show_active">Afficher les actifs</string>
+    <string name="browse_show_archived">Afficher les archivés</string>
+    <string name="browse_edit_collection">Modifier la collection</string>
+    <string name="browse_delete_collection">Supprimer la collection</string>
+    <string name="browse_theyre_removed_good_including_their">Ils sont supprimés définitivement, fichiers compris. Cette action est irréversible.</string>
+    <string name="browse_they_move_recently_deleted_browse">Ils passent dans Supprimés récemment (dans Explorer) pendant 30 jours, vous pouvez donc encore les récupérer.</string>
+    <string name="browse_no_favorites_yet">Pas encore de favoris</string>
+    <string name="browse_tap_heart_save_long_press">Touchez le cœur d’un élément (appui long sur une carte → ❤️) et il s’installera ici.</string>
+    <string name="browse_nothing_archived">Rien d’archivé</string>
+    <string name="browse_archive_save_long_press_archive">Archivez un élément (appui long → archiver) pour le mettre de côté sans le supprimer.</string>
+    <string name="browse_no_reminders_waiting">Aucun rappel en attente</string>
+    <string name="browse_set_reminder_save_card_save">Définissez un rappel depuis une carte ou la fenêtre d’enregistrement, et les rappels à venir se regrouperont ici.</string>
+    <string name="browse_all_caught_up">Tout est à jour</string>
+    <string name="browse_youve_opened_everything_saved_new">Vous avez ouvert tout ce que vous avez enregistré. Les nouveaux éléments attendent ici jusqu’à ce que vous les ouvriez.</string>
+    <string name="browse_nothing_deleted">Rien de supprimé</string>
+    <string name="browse_deleted_saves_stay_here_30">Les éléments supprimés restent ici 30 jours, au cas où vous changeriez d’avis.</string>
+    <string name="browse_no_saves">Aucun élément avec #%1$s</string>
+    <string name="browse_items_tagged_will_appear_here">Les éléments portant le tag #%1$s apparaîtront ici.</string>
+    <string name="browse_no_archived_saves">Aucun élément archivé</string>
+    <string name="browse_nothing_here_yet">Rien ici pour l’instant</string>
+    <string name="browse_archived_items_appear_here_toggle">Les éléments archivés apparaissent ici. Désactivez l’option pour voir vos éléments actifs.</string>
+    <string name="browse_select">Sélectionner</string>
+    <string name="browse_selected">Sélectionné</string>
+    <string name="browse_exit_selection">Quitter la sélection</string>
+    <string name="browse_tap_saves_select">Touchez des éléments pour les sélectionner</string>
+    <string name="browse_clear_selection">Désélectionner</string>
+    <string name="browse_locked">Verrouillées</string>
+    <string name="browse_hide_locked_collections">Masquer les collections verrouillées</string>
+    <string name="browse_archive_title">Archives</string>
+    <string name="browse_empty_action">Vider</string>
+</resources>

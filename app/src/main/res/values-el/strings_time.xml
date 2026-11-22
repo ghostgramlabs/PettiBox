@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">μόλις τώρα</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">πριν από %d λεπτό</item>
+        <item quantity="other">πριν από %d λεπτά</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">πριν από %d ώρα</item>
+        <item quantity="other">πριν από %d ώρες</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">πριν από %d ημέρα</item>
+        <item quantity="other">πριν από %d ημέρες</item>
+    </plurals>
+    <string name="reminder_preset_tonight">Απόψε</string>
+    <string name="reminder_preset_tomorrow">Αύριο</string>
+    <string name="reminder_preset_weekend">Σαββατοκύριακο</string>
+    <string name="reminder_preset_next_week">Επόμενη εβδομάδα</string>
+    <string name="reminder_preset_custom">Επιλογή ώρας…</string>
+    <string name="reminder_today">Σήμερα</string>
+    <string name="reminder_tomorrow">Αύριο</string>
+    <string name="reminder_today_at">Σήμερα %1$s</string>
+    <string name="reminder_tomorrow_at">Αύριο %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">Ορισμένη για %1$s</string>
+    <string name="reminder_nudge_at">Θα σας το θυμίσουμε %1$s</string>
+    <string name="reminder_remind_at">Θα σας το θυμίσουμε %1$s</string>
+    <string name="reminder_remind_me">Υπενθύμιση</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">Το PettiBox θα ζητήσει άδεια ειδοποιήσεων όταν χρειαστεί. Αν τα ακριβή ξυπνητήρια είναι ανενεργά, οι υπενθυμίσεις μπορεί να έρθουν λίγο αργότερα.</string>
+    <string name="reminder_choose_date_time">Επιλογή ημερομηνίας και ώρας</string>
+    <string name="reminder_clear_reminder">Αφαίρεση υπενθύμισης</string>
+    <string name="reminder_custom_reminder">Προσαρμοσμένη υπενθύμιση</string>
+    <string name="reminder_pick_time_below_enable_set">Επιλέξτε ώρα παρακάτω για να ενεργοποιηθεί το Ορισμός</string>
+    <string name="reminder_pick_date_time">Επιλέξτε ημερομηνία και ώρα</string>
+    <string name="reminder_moment_has_already_passed_pick">Αυτή η στιγμή έχει ήδη περάσει — επιλέξτε μελλοντική ώρα</string>
+    <string name="reminder_date">Ημερομηνία</string>
+    <string name="reminder_tap_pick">Πατήστε για επιλογή</string>
+    <string name="reminder_time">Ώρα</string>
+    <string name="reminder_tap_set">Πατήστε για ορισμό</string>
+    <string name="reminder_set_reminder">Ορισμός υπενθύμισης</string>
+    <string name="reminder_done">Τέλος</string>
+    <string name="reminder_pick_time">Επιλογή ώρας</string>
+    <string name="reminder_set_time">Ορισμός ώρας</string>
+</resources>

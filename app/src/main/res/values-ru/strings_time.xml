@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">только что</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d мин назад</item>
+        <item quantity="few">%d мин назад</item>
+        <item quantity="many">%d мин назад</item>
+        <item quantity="other">%d мин назад</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d ч назад</item>
+        <item quantity="few">%d ч назад</item>
+        <item quantity="many">%d ч назад</item>
+        <item quantity="other">%d ч назад</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%d день назад</item>
+        <item quantity="few">%d дня назад</item>
+        <item quantity="many">%d дней назад</item>
+        <item quantity="other">%d дня назад</item>
+    </plurals>
+    <string name="reminder_preset_tonight">Сегодня вечером</string>
+    <string name="reminder_preset_tomorrow">Завтра</string>
+    <string name="reminder_preset_weekend">В выходные</string>
+    <string name="reminder_preset_next_week">На следующей неделе</string>
+    <string name="reminder_preset_custom">Своё время…</string>
+    <string name="reminder_today">Сегодня</string>
+    <string name="reminder_tomorrow">Завтра</string>
+    <string name="reminder_today_at">Сегодня, %1$s</string>
+    <string name="reminder_tomorrow_at">Завтра, %1$s</string>
+    <string name="reminder_day_at">%1$s, %2$s</string>
+    <string name="reminder_currently_set_for">Сейчас: %1$s</string>
+    <string name="reminder_nudge_at">Напомним: %1$s</string>
+    <string name="reminder_remind_at">Напомним: %1$s</string>
+    <string name="reminder_remind_me">Напомнить</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">PettiBox попросит разрешение на уведомления, когда оно понадобится. Если точные будильники выключены, напоминания могут приходить чуть позже.</string>
+    <string name="reminder_choose_date_time">Выберите дату и время</string>
+    <string name="reminder_clear_reminder">Убрать напоминание</string>
+    <string name="reminder_custom_reminder">Своё напоминание</string>
+    <string name="reminder_pick_time_below_enable_set">Выберите время ниже, чтобы включить «Готово»</string>
+    <string name="reminder_pick_date_time">Выберите дату и время</string>
+    <string name="reminder_moment_has_already_passed_pick">Этот момент уже прошёл — выберите время в будущем</string>
+    <string name="reminder_date">Дата</string>
+    <string name="reminder_tap_pick">Нажмите, чтобы выбрать</string>
+    <string name="reminder_time">Время</string>
+    <string name="reminder_tap_set">Нажмите, чтобы задать</string>
+    <string name="reminder_set_reminder">Поставить напоминание</string>
+    <string name="reminder_done">Готово</string>
+    <string name="reminder_pick_time">Выберите время</string>
+    <string name="reminder_set_time">Задать время</string>
+</resources>

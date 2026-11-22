@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browse_deleted_one_for_good">நிரந்தரமாக நீக்கப்பட்டது</string>
+    <string name="browse_moved_one_to_trash">சமீபத்தில் நீக்கியவைக்கு நகர்த்தப்பட்டது</string>
+    <string name="browse_restored_one">மீட்டெடுக்கப்பட்டது</string>
+    <string name="browse_empty">காலி</string>
+    <string name="browse_empty_collection_named">பகிர்வு மெனுவிலிருந்து %1$s-இல் ஏதாவது சேமியுங்கள், அது இங்கே தோன்றும்.</string>
+    <string name="browse_empty_collection">பகிர்வு மெனுவிலிருந்து இந்த கலெக்ஷனில் ஏதாவது சேமியுங்கள், அது இங்கே தோன்றும்.</string>
+    <plurals name="browse_deleted_for_good">
+        <item quantity="one">%d ஐட்டம் நிரந்தரமாக நீக்கப்பட்டது</item>
+        <item quantity="other">%d ஐட்டங்கள் நிரந்தரமாக நீக்கப்பட்டன</item>
+    </plurals>
+    <plurals name="browse_moved_to_trash">
+        <item quantity="one">%d ஐட்டம் சமீபத்தில் நீக்கியவைக்கு நகர்த்தப்பட்டது</item>
+        <item quantity="other">%d ஐட்டங்கள் சமீபத்தில் நீக்கியவைக்கு நகர்த்தப்பட்டன</item>
+    </plurals>
+    <plurals name="browse_restored">
+        <item quantity="one">%d ஐட்டம் மீட்டெடுக்கப்பட்டது</item>
+        <item quantity="other">%d ஐட்டங்கள் மீட்டெடுக்கப்பட்டன</item>
+    </plurals>
+    <plurals name="browse_delete_n_for_good">
+        <item quantity="one">%d-ஐ நிரந்தரமாக நீக்கவா?</item>
+        <item quantity="other">%d-ஐ நிரந்தரமாக நீக்கவா?</item>
+    </plurals>
+    <plurals name="browse_delete_n_selected">
+        <item quantity="one">தேர்ந்தெடுத்த %d-ஐ நீக்கவா?</item>
+        <item quantity="other">தேர்ந்தெடுத்த %d-ஐ நீக்கவா?</item>
+    </plurals>
+    <plurals name="browse_n_selected">
+        <item quantity="one">%d தேர்ந்தெடுக்கப்பட்டது</item>
+        <item quantity="other">%d தேர்ந்தெடுக்கப்பட்டன</item>
+    </plurals>
+    <string name="browse_saves_collection_will_stay_pettibox">இந்த கலெக்ஷனில் உள்ள ஐட்டங்கள் PettiBox-இலேயே இருக்கும், ஆனால் கலெக்ஷன் நீக்கப்படும்.</string>
+    <string name="browse_locked_find_under_browse_locked">பூட்டப்பட்டது. உலாவு › பூட்டியவை என்பதில் இதைக் காணலாம்.</string>
+    <string name="browse_locked_open_settings_privacy">பூட்டப்பட்டது. அமைப்புகள் › தனியுரிமை என்பதிலிருந்து திறங்கள்.</string>
+    <string name="browse_put_back_where_was_delete">இருந்த இடத்திலேயே திரும்ப வைக்கவா, அல்லது நிரந்தரமாக நீக்கவா?</string>
+    <string name="browse_delete_good">நிரந்தரமாக நீக்கு</string>
+    <string name="browse_empty_recently_deleted">சமீபத்தில் நீக்கியவையைக் காலி செய்யவா?</string>
+    <string name="browse_everything_here_removed_good_including">இங்குள்ள அனைத்தும் அவற்றின் கோப்புகளுடன் நிரந்தரமாக நீக்கப்படும். இதைச் செயல்தவிர்க்க முடியாது.</string>
+    <string name="browse_favorites">பிடித்தவை</string>
+    <string name="browse_recently_deleted">சமீபத்தில் நீக்கியவை</string>
+    <string name="browse_find_collection">கலெக்ஷனைத் தேடு</string>
+    <string name="browse_clear_collection_search">கலெக்ஷன் தேடலை அழி</string>
+    <string name="browse_cross_cutting_labels_youve_added">நீங்கள் ஐட்டங்களில் சேர்த்த லேபிள்கள்</string>
+    <string name="browse_no_tags_yet">இன்னும் டேக்குகள் இல்லை</string>
+    <string name="browse_tags_short_labels_urgent_read">டேக்குகள் என்பவை எந்த ஐட்டத்திலும் சேர்க்கக்கூடிய சிறு லேபிள்கள் (#அவசரம், #பிறகு-படிக்க). இவை கலெக்ஷன்களைத் தாண்டிச் செயல்படும் — ஒரு ஐட்டத்துக்குப் பல டேக்குகள் இருக்கலாம். அடுத்த முறை எதையாவது சேமிக்கும்போது சேமிப்புத் தாளிலிருந்து டேக்குகளைச் சேருங்கள்.</string>
+    <string name="browse_saves_marked_heart">நீங்கள் ஹார்ட் கொடுத்த ஐட்டங்கள்</string>
+    <string name="browse_everything_youve_tucked_away">நீங்கள் காப்பகப்படுத்திய அனைத்தும்</string>
+    <string name="browse_upcoming_nudges_sorted_time">வரவிருக்கும் நினைவூட்டல்கள், நேரப்படி</string>
+    <string name="browse_saved_but_not_opened_yet">சேமித்தது, ஆனால் இன்னும் திறக்கவில்லை</string>
+    <string name="browse_kept_30_days_then_removed">30 நாட்கள் வைக்கப்பட்டு, பிறகு நிரந்தரமாக நீக்கப்படும். மீட்டெடுக்க ஏதாவது ஒன்றைத் தட்டுங்கள்.</string>
+    <string name="browse_saves_carrying_tag">இந்த டேக் உள்ள ஐட்டங்கள்</string>
+    <string name="browse_archived_saves">காப்பகப்படுத்திய ஐட்டங்கள்</string>
+    <string name="browse_show_active">செயலில் உள்ள ஐட்டங்களைக் காட்டு</string>
+    <string name="browse_show_archived">காப்பகத்தைக் காட்டு</string>
+    <string name="browse_edit_collection">கலெக்ஷனைத் திருத்து</string>
+    <string name="browse_delete_collection">கலெக்ஷனை நீக்கு</string>
+    <string name="browse_theyre_removed_good_including_their">இவை அவற்றின் கோப்புகளுடன் நிரந்தரமாக நீக்கப்படும். இதைச் செயல்தவிர்க்க முடியாது.</string>
+    <string name="browse_they_move_recently_deleted_browse">இவை 30 நாட்களுக்கு சமீபத்தில் நீக்கியவை (உலாவு-இல்) க்குச் செல்லும், அதனால் இன்னும் திரும்பப் பெறலாம்.</string>
+    <string name="browse_no_favorites_yet">இன்னும் பிடித்தவை இல்லை</string>
+    <string name="browse_tap_heart_save_long_press">எந்த ஐட்டத்திலும் ஹார்ட்டைத் தட்டுங்கள் (கார்டை அழுத்திப் பிடியுங்கள் → ❤️), அது இங்கே இருக்கும்.</string>
+    <string name="browse_nothing_archived">எதுவும் காப்பகப்படுத்தப்படவில்லை</string>
+    <string name="browse_archive_save_long_press_archive">ஐட்டத்தை நீக்காமல் ஒதுக்கி வைக்கக் காப்பகப்படுத்துங்கள் (அழுத்திப் பிடியுங்கள் → காப்பகம்).</string>
+    <string name="browse_no_reminders_waiting">காத்திருக்கும் நினைவூட்டல்கள் இல்லை</string>
+    <string name="browse_set_reminder_save_card_save">ஐட்டம் கார்டு அல்லது சேமிப்புத் தாளிலிருந்து நினைவூட்டலை அமையுங்கள், வரவிருப்பவை இங்கே தோன்றும்.</string>
+    <string name="browse_all_caught_up">எல்லாம் பார்த்தாகிவிட்டது</string>
+    <string name="browse_youve_opened_everything_saved_new">சேமித்த அனைத்தையும் திறந்துவிட்டீர்கள். புதிய ஐட்டங்கள் நீங்கள் திறக்கும் வரை இங்கே காத்திருக்கும்.</string>
+    <string name="browse_nothing_deleted">எதுவும் நீக்கப்படவில்லை</string>
+    <string name="browse_deleted_saves_stay_here_30">மனம் மாறினால் உதவும் என்பதால் நீக்கிய ஐட்டங்கள் 30 நாட்கள் இங்கே இருக்கும்.</string>
+    <string name="browse_no_saves">#%1$s உள்ள ஐட்டங்கள் இல்லை</string>
+    <string name="browse_items_tagged_will_appear_here">#%1$s டேக் உள்ள ஐட்டங்கள் இங்கே தோன்றும்.</string>
+    <string name="browse_no_archived_saves">காப்பகப்படுத்திய ஐட்டங்கள் இல்லை</string>
+    <string name="browse_nothing_here_yet">இங்கே இன்னும் எதுவும் இல்லை</string>
+    <string name="browse_archived_items_appear_here_toggle">காப்பகப்படுத்திய ஐட்டங்கள் இங்கே தோன்றும். செயலில் உள்ள ஐட்டங்களைப் பார்க்க இதை அணையுங்கள்.</string>
+    <string name="browse_select">தேர்ந்தெடு</string>
+    <string name="browse_selected">தேர்ந்தெடுத்தவை</string>
+    <string name="browse_exit_selection">தேர்வை விட்டு வெளியேறு</string>
+    <string name="browse_tap_saves_select">தேர்ந்தெடுக்க ஐட்டங்களைத் தட்டுங்கள்</string>
+    <string name="browse_clear_selection">தேர்வை அழி</string>
+    <string name="browse_locked">பூட்டியவை</string>
+    <string name="browse_hide_locked_collections">பூட்டிய கலெக்ஷன்களை மறை</string>
+    <string name="browse_archive_title">காப்பகம்</string>
+    <string name="browse_empty_action">காலி செய்</string>
+</resources>

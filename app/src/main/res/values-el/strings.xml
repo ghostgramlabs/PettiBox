@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">Αποθήκευση στο PettiBox</string>
+    <string name="widget_description">Τα μη αναγνωσμένα σας, με ένα πάτημα</string>
+    <string name="shortcut_note_short">Νέα σημείωση</string>
+    <string name="shortcut_note_long">Γράψτε νέα σημείωση</string>
+    <string name="shortcut_link_short">Προσθήκη συνδέσμου</string>
+    <string name="shortcut_link_long">Αποθήκευση συνδέσμου</string>
+    <string name="shortcut_search_short">Αναζήτηση</string>
+    <string name="shortcut_search_long">Αναζήτηση στα αποθηκευμένα</string>
+    <string name="shortcut_unread_short">Μη αναγνωσμένα</string>
+    <string name="shortcut_unread_long">Στοιχεία που δεν έχετε ανοίξει ακόμη</string>
+</resources>

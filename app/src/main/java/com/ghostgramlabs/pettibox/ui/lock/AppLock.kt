@@ -1,5 +1,10 @@
 package com.ghostgramlabs.pettibox.ui.lock
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -149,7 +154,7 @@ object AppLockSession {
             onSuccess()
             return
         }
-        prompt(activity, title = "Unlock locked collections", onSuccess = {
+        prompt(activity, title = AppText.getString(R.string.lock_unlock_locked_collections), onSuccess = {
             LockedCollections.setUnlocked(true)
             onSuccess()
         })
@@ -184,7 +189,7 @@ object AppLockSession {
      */
     fun prompt(
         activity: FragmentActivity,
-        title: String = "Unlock PettiBox",
+        title: String = AppText.getString(R.string.lock_unlock_pettibox),
         onSuccess: () -> Unit,
         onFailure: () -> Unit = {}
     ) {
@@ -202,7 +207,7 @@ object AppLockSession {
         }
         val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
-            .setSubtitle("Use your fingerprint, face, or phone PIN")
+            .setSubtitle(AppText.getString(R.string.lock_use_fingerprint_face_phone_pin))
             .setAllowedAuthenticators(BIOMETRIC_WEAK or DEVICE_CREDENTIAL)
             .build()
         prompting = true
@@ -272,13 +277,13 @@ private fun LockScreen(onUnlock: () -> Unit) {
         KeeperMascot(pose = KeeperPose.Welcome, badgeIcon = Icons.Rounded.Lock)
         Spacer(Modifier.height(20.dp))
         Text(
-            "PettiBox is locked",
+            stringResource(R.string.lock_pettibox_locked),
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold),
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            "Unlock with your fingerprint, face, or phone PIN.",
+            stringResource(R.string.lock_unlock_fingerprint_face_phone_pin),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -287,7 +292,7 @@ private fun LockScreen(onUnlock: () -> Unit) {
         Button(onClick = onUnlock, shape = RoundedCornerShape(16.dp)) {
             Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.size(8.dp))
-            Text("Unlock", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.lock_unlock), fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -318,14 +323,14 @@ fun LockedCollectionPanel(onBack: () -> Unit, modifier: Modifier = Modifier) {
         KeeperMascot(pose = KeeperPose.Welcome, badgeIcon = Icons.Rounded.Lock)
         Spacer(Modifier.height(20.dp))
         Text(
-            "This save is in a locked collection",
+            stringResource(R.string.lock_save_locked_collection),
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold),
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            "Unlock with your fingerprint, face, or phone PIN.",
+            stringResource(R.string.lock_unlock_fingerprint_face_phone_pin),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -337,8 +342,8 @@ fun LockedCollectionPanel(onBack: () -> Unit, modifier: Modifier = Modifier) {
         ) {
             Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.size(8.dp))
-            Text("Unlock", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.lock_unlock), fontWeight = FontWeight.Bold)
         }
-        TextButton(onClick = onBack) { Text("Go back") }
+        TextButton(onClick = onBack) { Text(stringResource(R.string.lock_go_back)) }
     }
 }

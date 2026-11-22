@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">Ada sesuatu yang menunggu di rakmu</string>
+    <string name="nudge_title">Dari rakmu</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="other">Kamu punya %d simpanan yang belum dibaca.</item>
+    </plurals>
+    <string name="nudge_body_one">“%1$s” — disimpan %2$s.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="other">“%1$s” — disimpan %2$s. Plus %3$d lagi yang belum dibaca.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="other">%d file tidak ada di ponsel ini, jadi tidak bisa dikirim. Buka simpanannya dan tambahkan file-nya lagi.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="other">Pustaka tersinkron · %1$d file menunggu dikirim dari perangkat lain · dicek %2$s</item>
+    </plurals>
+    <string name="files_all_in_drive">Semua foto dan file sudah ada di Google Drive · dicek %1$s</string>
+    <string name="files_checked">Foto dan file dicek %1$s</string>
+    <string name="files_unreachable">Tidak bisa menghubungi Google Drive saat mengirim foto dan file (%1$s). Akan dicoba lagi sebentar lagi.</string>
+    <string name="files_no_connection">tidak ada koneksi</string>
+    <plurals name="files_unreadable">
+        <item quantity="other">%d file tidak bisa dibaca lagi di ponsel ini (aplikasi asalnya tidak mengizinkan lagi), jadi tidak bisa dikirim.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="other">Mengirim %d foto dan file ke Google Drive…</item>
+    </plurals>
+    <string name="files_sending_progress">Mengirim foto dan file ke Google Drive… %1$d dari %2$d</string>
+    <string name="sync_step_connecting">saat menghubungkan</string>
+    <string name="sync_unreachable">Tidak bisa menghubungi Google Drive</string>
+    <string name="sync_drive_error">Google Drive menjawab dengan error (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">Akan dicoba lagi sebentar lagi.</string>
+    <plurals name="sync_damaged">
+        <item quantity="other">%d file rusak dari perangkat lain dilewati; tidak ada isinya yang diterapkan</item>
+    </plurals>
+    <string name="sync_every_15_min">15 mnt</string>
+    <string name="sync_every_30_min">30 mnt</string>
+    <string name="sync_every_hour">1 jam</string>
+    <string name="sync_every_3_hours">3 jam</string>
+    <string name="sync_daily">Setiap hari</string>
+    <string name="sync_weekly">Setiap minggu</string>
+    <string name="sync_only_in_use">Hanya saat dipakai</string>
+    <string name="reminder_save_locked_collection">Simpanan di koleksi terkunci</string>
+    <string name="reminder_saved_item">Item tersimpan</string>
+    <string name="reminder_snooze_1h">Tunda 1 jam</string>
+    <string name="reminder_evening">Nanti malam</string>
+    <string name="nudge_see_all_unread">Lihat semua yang belum dibaca</string>
+    <string name="nudge_once_week_one_thing_saved">Seminggu sekali, satu hal yang kamu simpan tapi belum dibuka.</string>
+    <string name="reminder_save_reminders">Pengingat simpanan</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">Pengingat untuk hal-hal yang kamu minta PettiBox ingatkan.</string>
+    <string name="files_photos_files_waiting_reconnect_google">Foto dan file menunggu: hubungkan ulang Google Drive di Setelan.</string>
+    <string name="files_photos_files_sent_once_first">Foto dan file dikirim setelah sinkronisasi pertama selesai.</string>
+    <string name="files_photos_files_arent_sent_google">Foto dan file tidak dikirim: Google Drive masuk sebagai %1$s, bukan %2$s.</string>
+    <string name="files_photos_files_couldnt_sent_tap">Foto dan file tidak bisa dikirim: %1$s. Ketuk Sinkronkan sekarang untuk mencoba lagi.</string>
+    <string name="files_photos_files_stopped_sending_trying">Pengiriman foto dan file berhenti: %1$s. Akan dicoba lagi sebentar lagi.</string>
+    <string name="sync_sync_stopped">Sinkronisasi berhenti: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">Sinkronisasi dimatikan karena data yang disinkronkan dihapus dari Google Drive di perangkat lain. Semua yang ada di ponsel ini masih ada; nyalakan sinkronisasi lagi untuk mulai dari awal.</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive perlu dihubungkan ulang</string>
+    <string name="sync_google_drive_didnt_say_which">Google Drive tidak menyebutkan akun mana ini</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive masuk sebagai %1$s, tapi pustaka ini sinkron dengan %2$s. Beralih kembali ke %3$s, atau matikan lalu nyalakan sinkronisasi untuk sinkron dengan %4$s.</string>
+    <string name="sync_couldnt_save_safety_copy_library">Tidak bisa menyimpan salinan pengaman pustakamu sebelum sinkronisasi. Akan dicoba lagi lain kali.</string>
+    <string name="sync_checking_google_drive">Mengecek Google Drive…</string>
+    <string name="sync_receiving_changes">Menerima perubahan…</string>
+    <string name="sync_another_device_uses_newer_version">Perangkat lain memakai versi PettiBox yang lebih baru. Perbarui aplikasi ini untuk melihat semua yang disimpannya.</string>
+    <string name="sync_preparing_changes">Menyiapkan perubahanmu…</string>
+    <string name="sync_updating_library">Memperbarui pustakamu…</string>
+    <string name="sync_couldnt_save_safety_copy_before">Tidak bisa menyimpan salinan pengaman sebelum menghapus simpanan, jadi tidak ada yang dihapus. Kosongkan sedikit ruang lalu pilih lagi.</string>
+    <string name="sync_sending_changes">Mengirim perubahanmu…</string>
+    <string name="article_page_no_longer_exists">Halaman ini sudah tidak ada</string>
+    <string name="article_site_doesnt_allow_saving_copy">Situs ini tidak mengizinkan menyimpan salinan</string>
+    <string name="article_site_answered_error">Situs menjawab dengan error (%1$s)</string>
+    <string name="article_couldnt_find_article_page">Tidak ada artikel yang ditemukan di halaman ini</string>
+    <string name="article_page_too_long_keep_copy">Halaman ini terlalu panjang untuk disimpan salinannya</string>
+    <string name="article_couldnt_reach_page_check_connection">Tidak bisa membuka halaman. Cek koneksimu lalu coba lagi.</string>
+</resources>

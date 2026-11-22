@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Between items of a list in a sentence: "3 saves, 2 files". Quoted to keep its space. -->
+    <string name="list_separator">", "</string>
+
+    <plurals name="count_saves">
+        <item quantity="one">%d save</item>
+        <item quantity="other">%d saves</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d files</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="one">%d favorite</item>
+        <item quantity="other">%d favorites</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="one">%d archived</item>
+        <item quantity="other">%d archived</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="one">%d tag</item>
+        <item quantity="other">%d tags</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="one">%d collection</item>
+        <item quantity="other">%d collections</item>
+    </plurals>
+
+    <string name="source_web">Web</string>
+    <string name="source_maps">Maps</string>
+    <string name="source_files">Files</string>
+    <string name="source_clipboard">Clipboard</string>
+    <string name="source_other">Other</string>
+    <plurals name="count_items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <string name="untitled">Untitled</string>
+    <string name="starter_recipes">Recipes</string>
+    <string name="starter_travel">Travel</string>
+    <string name="starter_fitness">Fitness</string>
+    <string name="starter_style">Style</string>
+    <string name="starter_home">Home</string>
+    <string name="starter_beauty">Beauty</string>
+    <string name="starter_read_later">Read Later</string>
+    <string name="starter_finance">Finance</string>
+    <string name="starter_music">Music</string>
+    <string name="starter_books">Books</string>
+    <string name="starter_food_spots">Food Spots</string>
+    <string name="starter_shopping">Shopping</string>
+    <string name="starter_work">Work</string>
+    <string name="starter_ideas">Ideas</string>
+    <string name="starter_watch">Watch</string>
+    <string name="starter_learning">Learning</string>
+    <string name="starter_health">Health</string>
+    <string name="starter_docs">Docs</string>
+    <string name="starter_personal">Personal</string>
+    <string name="starter_tech">Tech</string>
+    <string name="starter_design">Design</string>
+    <string name="starter_gifts">Gifts</string>
+    <string name="starter_places">Places</string>
+    <string name="starter_kids">Kids</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="widget_all_caught_up">All caught up</string>
+    <plurals name="widget_unread">
+        <item quantity="one">%d unread</item>
+        <item quantity="other">%d unread</item>
+    </plurals>
+    <!-- %1$s: "4 min read", %2$s: a date -->
+    <string name="article_ready_subtitle">%1$s · copy saved %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="one">%d min read</item>
+        <item quantity="other">%d min read</item>
+    </plurals>
+    <string name="quick_change_reminder">Change reminder</string>
+    <string name="quick_copy_link">Copy link</string>
+    <string name="quick_copy_note">Copy note</string>
+    <string name="quick_note_copied">Note copied</string>
+    <string name="quick_move_collection">Move to collection</string>
+    <string name="card_open_quick_actions">Open quick actions</string>
+    <string name="card_archived">Archived</string>
+    <string name="card_reminder">Reminder</string>
+    <string name="collection_new_collection">New collection</string>
+    <string name="collection_collection_name">Collection name</string>
+    <string name="collection_emoji">Emoji</string>
+    <string name="collection_color">Color</string>
+    <string name="collection_lock_collection">Lock this collection</string>
+    <string name="collection_hidden_home_search_everywhere_else">Hidden from Home, search, and everywhere else until you unlock it with your fingerprint, face, or phone PIN.</string>
+    <string name="collection_set_screen_lock_phone_use">Set a screen lock on your phone to use this.</string>
+    <string name="collection_name_e_g_weekend_reads">Name it (e.g. Weekend reads)</string>
+    <string name="collection_pick_emoji">Pick an emoji</string>
+    <string name="collection_pick_color">Pick a color</string>
+    <string name="collection_create">Create</string>
+    <string name="help_i_keep_links_screenshots_pdfs">I keep links, screenshots, PDFs and notes in PettiBox — save from any app, read articles offline, and find text inside pictures. Free: %1$s</string>
+    <string name="help_share_pettibox">Share PettiBox</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s — question or problem</string>
+    <string name="help_please_keep_part_helps_me">——— Please keep this part, it helps me help you ———</string>
+    <string name="sync_edited_2_devices_needs_choice">Edited on 2 devices: needs your choice</string>
+    <string name="lock_unlock_locked_collections">Unlock locked collections</string>
+    <string name="lock_unlock_pettibox">Unlock PettiBox</string>
+    <string name="lock_use_fingerprint_face_phone_pin">Use your fingerprint, face, or phone PIN</string>
+    <string name="lock_pettibox_locked">PettiBox is locked</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">Unlock with your fingerprint, face, or phone PIN.</string>
+    <string name="lock_unlock">Unlock</string>
+    <string name="lock_save_locked_collection">This save is in a locked collection</string>
+    <string name="lock_go_back">Go back</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_not_selected">Not selected</string>
+    <string name="widget_pettibox_locked">PettiBox is locked 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">Unlock PettiBox to see your saves here.</string>
+    <string name="widget_nothing_waiting">Nothing waiting ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">Share a link or photo to PettiBox and it lands here until you open it.</string>
+    <!-- Bottom bar tabs -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_browse">Browse</string>
+</resources>

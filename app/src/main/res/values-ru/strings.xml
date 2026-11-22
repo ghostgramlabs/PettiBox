@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">Сохранить в PettiBox</string>
+    <string name="widget_description">Непрочитанные записи — в одно касание</string>
+    <string name="shortcut_note_short">Новая заметка</string>
+    <string name="shortcut_note_long">Написать новую заметку</string>
+    <string name="shortcut_link_short">Добавить ссылку</string>
+    <string name="shortcut_link_long">Сохранить ссылку</string>
+    <string name="shortcut_search_short">Поиск</string>
+    <string name="shortcut_search_long">Искать по записям</string>
+    <string name="shortcut_unread_short">Непрочитанное</string>
+    <string name="shortcut_unread_long">Записи, которые вы ещё не открывали</string>
+</resources>

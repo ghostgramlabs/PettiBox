@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.data.sync
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import android.os.Build
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -24,15 +28,17 @@ import javax.inject.Singleton
  * syncs only on "Sync now". Whatever the choice, the app also syncs every
  * minute while it's open, and about a minute after an edit.
  */
-enum class SyncInterval(val label: String, val minutes: Long) {
-    MINUTES_15("15 min", 15),
-    MINUTES_30("30 min", 30),
-    HOUR_1("1 hour", 60),
-    HOURS_3("3 hours", 180),
-    DAILY("Daily", 24 * 60),
-    WEEKLY("Weekly", 7 * 24 * 60),
+enum class SyncInterval(private val labelRes: Int, val minutes: Long) {
+    MINUTES_15(R.string.sync_every_15_min, 15),
+    MINUTES_30(R.string.sync_every_30_min, 30),
+    HOUR_1(R.string.sync_every_hour, 60),
+    HOURS_3(R.string.sync_every_3_hours, 180),
+    DAILY(R.string.sync_daily, 24 * 60),
+    WEEKLY(R.string.sync_weekly, 7 * 24 * 60),
     // No background syncing; the app still syncs while open and after edits.
-    MANUAL("Only while in use", 0);
+    MANUAL(R.string.sync_only_in_use, 0);
+
+    val label: String get() = AppText.getString(labelRes)
 }
 
 data class SyncStatus(

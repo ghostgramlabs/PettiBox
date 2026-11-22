@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">Relevantes</string>
+    <string name="search_sort_newest">Mais recentes</string>
+    <string name="search_sort_oldest">Mais antigos</string>
+    <string name="search_sort_updated">Editados recentemente</string>
+    <string name="search_sort_reminder">Horário do lembrete</string>
+    <plurals name="search_n_found">
+        <item quantity="one">%d encontrado</item>
+        <item quantity="many">%d encontrados</item>
+        <item quantity="other">%d encontrados</item>
+    </plurals>
+    <string name="search_look_up">Procure</string>
+    <string name="search_titles_notes_saved_articles_text">Títulos, notas, artigos salvos e texto dentro de imagens.</string>
+    <string name="search_search_anything_saved">Busque qualquer coisa que você salvou</string>
+    <string name="search_matches">Resultados</string>
+    <string name="search_start_anywhere">Comece por onde quiser</string>
+    <string name="search_use_type_source_tag_when">Use um tipo, uma origem ou uma tag quando não lembrar as palavras exatas</string>
+    <string name="search_types">Tipos</string>
+    <string name="search_sources">Origens</string>
+    <string name="search_find_anything_stashed">Encontre qualquer coisa que você guardou</string>
+    <string name="search_search_titles_notes_links_sources">Busque em títulos, notas, links, origens, tags, texto dentro de imagens ou PDFs e artigos salvos para ler offline. O Arquivo está incluído, então itens arquivados também aparecem.</string>
+    <string name="search_screenshots">Prints</string>
+    <string name="search_links">Links</string>
+    <string name="search_pdfs">PDFs</string>
+    <string name="search_upcoming_reminders">Próximos lembretes</string>
+    <string name="search_notes">Notas</string>
+    <string name="search_nothing_matched">Nenhum resultado</string>
+    <string name="search_some_saved_images_pdfs_still">Algumas imagens e PDFs salvos ainda estão sendo lidos, então podem aparecer em breve. Enquanto isso, tente uma palavra mais curta ou remova um filtro.</string>
+    <string name="search_try_shorter_word_remove_filter">Tente uma palavra mais curta, remova um filtro ou busque em outra origem. Para texto em outro idioma, ative-o em Configurações › Reconhecimento de texto.</string>
+    <string name="search_clear_filters">Limpar filtros</string>
+    <string name="search_clear_search">Limpar busca</string>
+    <string name="search_change_filters">Alterar filtros</string>
+    <string name="search_open_filters">Abrir filtros</string>
+    <string name="search_filters">Filtros · %1$s</string>
+    <string name="search_filters_2">Filtros</string>
+    <string name="search_clear">Limpar</string>
+    <string name="search_clear_all">Limpar tudo</string>
+    <string name="search_type">Tipo</string>
+    <string name="search_source">Origem</string>
+    <string name="search_images">Imagens</string>
+    <string name="search_what_looking">O que você está procurando?</string>
+</resources>

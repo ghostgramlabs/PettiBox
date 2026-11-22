@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">Enregistrer dans PettiBox</string>
+    <string name="widget_description">Vos éléments non lus, à portée de doigt</string>
+    <string name="shortcut_note_short">Nouvelle note</string>
+    <string name="shortcut_note_long">Écrire une nouvelle note</string>
+    <string name="shortcut_link_short">Ajouter un lien</string>
+    <string name="shortcut_link_long">Enregistrer un lien</string>
+    <string name="shortcut_search_short">Rechercher</string>
+    <string name="shortcut_search_long">Rechercher dans vos éléments</string>
+    <string name="shortcut_unread_short">Non lus</string>
+    <string name="shortcut_unread_long">Éléments pas encore ouverts</string>
+</resources>

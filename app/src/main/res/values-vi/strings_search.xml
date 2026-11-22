@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">Liên quan</string>
+    <string name="search_sort_newest">Mới nhất</string>
+    <string name="search_sort_oldest">Cũ nhất</string>
+    <string name="search_sort_updated">Mới sửa</string>
+    <string name="search_sort_reminder">Giờ nhắc</string>
+    <plurals name="search_n_found">
+        <item quantity="other">Tìm thấy %d</item>
+    </plurals>
+    <string name="search_look_up">Tra cứu</string>
+    <string name="search_titles_notes_saved_articles_text">Tiêu đề, ghi chú, bài viết đã lưu và chữ trong ảnh.</string>
+    <string name="search_search_anything_saved">Tìm mọi thứ bạn đã lưu</string>
+    <string name="search_matches">Kết quả</string>
+    <string name="search_start_anywhere">Bắt đầu từ đâu cũng được</string>
+    <string name="search_use_type_source_tag_when">Dùng loại, nguồn hoặc thẻ khi bạn không nhớ chính xác từ khóa</string>
+    <string name="search_types">Loại</string>
+    <string name="search_sources">Nguồn</string>
+    <string name="search_find_anything_stashed">Tìm mọi thứ bạn đã cất</string>
+    <string name="search_search_titles_notes_links_sources">Tìm trong tiêu đề, ghi chú, liên kết, nguồn, thẻ, chữ trong ảnh hoặc PDF và các bài viết lưu để đọc offline. Bao gồm cả Lưu trữ, nên các mục đã cất vẫn hiện ra.</string>
+    <string name="search_screenshots">Ảnh chụp màn hình</string>
+    <string name="search_links">Liên kết</string>
+    <string name="search_pdfs">PDF</string>
+    <string name="search_upcoming_reminders">Lời nhắc sắp tới</string>
+    <string name="search_notes">Ghi chú</string>
+    <string name="search_nothing_matched">Không có kết quả</string>
+    <string name="search_some_saved_images_pdfs_still">Một số ảnh và PDF đã lưu vẫn đang được đọc, nên có thể sớm khớp. Trong lúc chờ, hãy thử từ ngắn hơn hoặc bỏ bớt bộ lọc.</string>
+    <string name="search_try_shorter_word_remove_filter">Thử từ ngắn hơn, bỏ bớt bộ lọc hoặc tìm ở nguồn khác. Với chữ ở ngôn ngữ khác, hãy bật ngôn ngữ đó trong Cài đặt › Nhận dạng văn bản.</string>
+    <string name="search_clear_filters">Xóa bộ lọc</string>
+    <string name="search_clear_search">Xóa tìm kiếm</string>
+    <string name="search_change_filters">Đổi bộ lọc</string>
+    <string name="search_open_filters">Mở bộ lọc</string>
+    <string name="search_filters">Bộ lọc · %1$s</string>
+    <string name="search_filters_2">Bộ lọc</string>
+    <string name="search_clear">Xóa</string>
+    <string name="search_clear_all">Xóa tất cả</string>
+    <string name="search_type">Loại</string>
+    <string name="search_source">Nguồn</string>
+    <string name="search_images">Ảnh</string>
+    <string name="search_what_looking">Bạn đang tìm gì?</string>
+</resources>

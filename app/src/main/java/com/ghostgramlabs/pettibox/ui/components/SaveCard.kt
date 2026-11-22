@@ -1,5 +1,10 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -131,7 +136,7 @@ private fun Modifier.cardClickable(
     this.combinedClickable(
         onClick = onClick,
         onLongClick = onLongClick,
-        onLongClickLabel = "Open quick actions"
+        onLongClickLabel = AppText.getString(R.string.card_open_quick_actions)
     )
 } else {
     this.clickable(onClick = onClick)
@@ -510,7 +515,7 @@ private fun CardActionButton(onClick: () -> Unit, modifier: Modifier = Modifier)
         ) {
             Icon(
                 Icons.Rounded.MoreHoriz,
-                contentDescription = "Open quick actions",
+                contentDescription = stringResource(R.string.card_open_quick_actions),
                 tint = scheme.onSurfaceVariant,
                 modifier = Modifier.size(16.dp)
             )
@@ -588,7 +593,7 @@ private fun FooterMeta(
 @Composable
 private fun ArchivedPill(accent: Color) {
     Text(
-        "Archived",
+        stringResource(R.string.card_archived),
         style = MaterialTheme.typography.labelSmall,
         color = accent,
         fontWeight = FontWeight.SemiBold,
@@ -608,7 +613,7 @@ private fun ReminderPill(remindAt: Long, accent: Color) {
     ) {
         Icon(
             Icons.Rounded.AccessTime,
-            contentDescription = "Reminder",
+            contentDescription = stringResource(R.string.card_reminder),
             tint = accent,
             modifier = Modifier.size(11.dp)
         )

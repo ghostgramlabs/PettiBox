@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">たった今</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="other">%d 分前</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="other">%d 時間前</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="other">%d 日前</item>
+    </plurals>
+    <string name="reminder_preset_tonight">今晩</string>
+    <string name="reminder_preset_tomorrow">明日</string>
+    <string name="reminder_preset_weekend">週末</string>
+    <string name="reminder_preset_next_week">来週</string>
+    <string name="reminder_preset_custom">時刻を選ぶ…</string>
+    <string name="reminder_today">今日</string>
+    <string name="reminder_tomorrow">明日</string>
+    <string name="reminder_today_at">今日 %1$s</string>
+    <string name="reminder_tomorrow_at">明日 %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">現在の設定：%1$s</string>
+    <string name="reminder_nudge_at">%1$s にお知らせします</string>
+    <string name="reminder_remind_at">%1$s にリマインドします</string>
+    <string name="reminder_remind_me">リマインド</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">必要なときに PettiBox が通知の許可をお願いします。正確なアラームがオフの場合、リマインダーが少し遅れることがあります。</string>
+    <string name="reminder_choose_date_time">日時を選ぶ</string>
+    <string name="reminder_clear_reminder">リマインダーを解除</string>
+    <string name="reminder_custom_reminder">カスタムリマインダー</string>
+    <string name="reminder_pick_time_below_enable_set">下で時刻を選ぶと「設定」を押せます</string>
+    <string name="reminder_pick_date_time">日付と時刻を選んでください</string>
+    <string name="reminder_moment_has_already_passed_pick">その時刻はもう過ぎています。これからの時刻を選んでください</string>
+    <string name="reminder_date">日付</string>
+    <string name="reminder_tap_pick">タップして選択</string>
+    <string name="reminder_time">時刻</string>
+    <string name="reminder_tap_set">タップして設定</string>
+    <string name="reminder_set_reminder">リマインダーを設定</string>
+    <string name="reminder_done">完了</string>
+    <string name="reminder_pick_time">時刻を選ぶ</string>
+    <string name="reminder_set_time">時刻を設定</string>
+</resources>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">விரைவுச் சேமிப்பு</string>
+    <string name="save_saved_image">சேமித்த படம்</string>
+    <string name="save_saved_pdf">சேமித்த PDF</string>
+    <string name="save_saved_file">சேமித்த கோப்பு</string>
+    <string name="save_saved_when">%1$s சேமிக்கப்பட்டது</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d படம்</item>
+        <item quantity="other">%d படங்கள்</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="other">%d PDF-கள்</item>
+    </plurals>
+    <string name="save_discard_what_typed">நீங்கள் தட்டச்சு செய்ததை நிராகரிக்கவா?</string>
+    <string name="save_note_tags_havent_been_saved">உங்கள் குறிப்பும் டேக்குகளும் இன்னும் சேமிக்கப்படவில்லை.</string>
+    <string name="save_discard">நிராகரி</string>
+    <string name="save_keep_editing">தொடர்ந்து திருத்து</string>
+    <string name="save_save">இதைச் சேமிக்கவா?</string>
+    <string name="save_save_2">எங்கே சேமிப்பது</string>
+    <string name="save_no_collection_called_yet">“%1$s” என்ற பெயரில் இன்னும் கலெக்ஷன் இல்லை</string>
+    <string name="save_want_start_one">உருவாக்கவா?</string>
+    <string name="save_create">“%1$s”-ஐ உருவாக்கு</string>
+    <string name="save_new">புதியது</string>
+    <string name="save_remove_favorites">பிடித்தவையிலிருந்து அகற்று</string>
+    <string name="save_add_favorites">பிடித்தவையில் சேர்</string>
+    <string name="save_write_note_save">சேமிக்க ஒரு குறிப்பை எழுதுங்கள்</string>
+    <string name="save_save_3">%1$s-இல் சேமி</string>
+    <string name="save_save_without_collection">கலெக்ஷன் இல்லாமல் சேமி</string>
+    <string name="save_selected">தேர்ந்தெடுத்தது: %1$s</string>
+    <string name="save_add_which_save">எந்த ஐட்டத்தில் சேர்ப்பது?</string>
+    <string name="save_add_note">குறிப்பு சேர்</string>
+    <string name="save_add_tags">டேக்குகளைச் சேர்</string>
+    <string name="save_add_note_2">ஒரு குறிப்பைச் சேருங்கள்</string>
+    <string name="save_tags_comma_separated">டேக்குகள், காற்புள்ளியால் பிரித்து</string>
+    <string name="save_tucked_away">சேமிக்கப்பட்டது!</string>
+    <string name="save_find_home_screen_anytime">எப்போது வேண்டுமானாலும் முகப்புத் திரையில் காணலாம்.</string>
+    <string name="save_append_save">ஒரு ஐட்டத்தில் சேர்</string>
+    <string name="save_already_saved">இதை ஏற்கனவே சேமித்துவிட்டீர்கள்</string>
+    <string name="save_open">திற</string>
+    <string name="save_save_anyway">இருந்தாலும் சேமி</string>
+    <string name="save_suggested">பரிந்துரைக்கப்பட்டவை</string>
+    <string name="save_recently_used">சமீபத்தில் பயன்படுத்தியவை</string>
+    <string name="save_collections">உங்கள் கலெக்ஷன்கள்</string>
+    <string name="save_starter_collections">தொடக்க கலெக்ஷன்கள்</string>
+</resources>

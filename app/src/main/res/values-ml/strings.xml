@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">PettiBox-ൽ സേവ് ചെയ്യുക</string>
+    <string name="widget_description">വായിക്കാത്ത ഇനങ്ങൾ, ഒറ്റ ടാപ്പിൽ</string>
+    <string name="shortcut_note_short">പുതിയ കുറിപ്പ്</string>
+    <string name="shortcut_note_long">പുതിയ കുറിപ്പ് എഴുതുക</string>
+    <string name="shortcut_link_short">ലിങ്ക് ചേർക്കുക</string>
+    <string name="shortcut_link_long">ലിങ്ക് സേവ് ചെയ്യുക</string>
+    <string name="shortcut_search_short">തിരയുക</string>
+    <string name="shortcut_search_long">നിങ്ങളുടെ ഇനങ്ങളിൽ തിരയുക</string>
+    <string name="shortcut_unread_short">വായിക്കാത്തവ</string>
+    <string name="shortcut_unread_long">നിങ്ങൾ ഇതുവരെ തുറക്കാത്ത ഇനങ്ങൾ</string>
+</resources>

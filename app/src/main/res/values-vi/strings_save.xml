@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">Lưu nhanh</string>
+    <string name="save_saved_image">Ảnh đã lưu</string>
+    <string name="save_saved_pdf">PDF đã lưu</string>
+    <string name="save_saved_file">Tệp đã lưu</string>
+    <string name="save_saved_when">đã lưu %1$s</string>
+    <plurals name="save_n_images">
+        <item quantity="other">%d ảnh</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="other">%d PDF</item>
+    </plurals>
+    <string name="save_discard_what_typed">Bỏ nội dung bạn đã nhập?</string>
+    <string name="save_note_tags_havent_been_saved">Ghi chú và thẻ của bạn chưa được lưu.</string>
+    <string name="save_discard">Bỏ</string>
+    <string name="save_keep_editing">Tiếp tục sửa</string>
+    <string name="save_save">Lưu mục này?</string>
+    <string name="save_save_2">Lưu vào</string>
+    <string name="save_no_collection_called_yet">Chưa có bộ sưu tập tên “%1$s”</string>
+    <string name="save_want_start_one">Muốn tạo mới không?</string>
+    <string name="save_create">Tạo “%1$s”</string>
+    <string name="save_new">Mới</string>
+    <string name="save_remove_favorites">Bỏ khỏi yêu thích</string>
+    <string name="save_add_favorites">Thêm vào yêu thích</string>
+    <string name="save_write_note_save">Viết ghi chú để lưu</string>
+    <string name="save_save_3">Lưu vào %1$s</string>
+    <string name="save_save_without_collection">Lưu không vào bộ sưu tập</string>
+    <string name="save_selected">Đã chọn: %1$s</string>
+    <string name="save_add_which_save">Thêm vào mục nào?</string>
+    <string name="save_add_note">Thêm ghi chú</string>
+    <string name="save_add_tags">Thêm thẻ</string>
+    <string name="save_add_note_2">Thêm ghi chú</string>
+    <string name="save_tags_comma_separated">Thẻ, cách nhau bằng dấu phẩy</string>
+    <string name="save_tucked_away">Đã cất!</string>
+    <string name="save_find_home_screen_anytime">Tìm lại trên màn hình chính bất cứ lúc nào.</string>
+    <string name="save_append_save">Thêm vào một mục</string>
+    <string name="save_already_saved">Bạn đã lưu mục này rồi</string>
+    <string name="save_open">Mở</string>
+    <string name="save_save_anyway">Vẫn lưu</string>
+    <string name="save_suggested">Gợi ý</string>
+    <string name="save_recently_used">Dùng gần đây</string>
+    <string name="save_collections">Bộ sưu tập của bạn</string>
+    <string name="save_starter_collections">Bộ sưu tập có sẵn</string>
+</resources>

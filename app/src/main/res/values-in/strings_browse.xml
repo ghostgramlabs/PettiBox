@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browse_deleted_one_for_good">Dihapus permanen</string>
+    <string name="browse_moved_one_to_trash">Dipindahkan ke Baru dihapus</string>
+    <string name="browse_restored_one">Dipulihkan</string>
+    <string name="browse_empty">Kosong</string>
+    <string name="browse_empty_collection_named">Simpan sesuatu ke %1$s dari menu Bagikan, nanti akan muncul di sini.</string>
+    <string name="browse_empty_collection">Simpan sesuatu ke koleksi ini dari menu Bagikan, nanti akan muncul di sini.</string>
+    <plurals name="browse_deleted_for_good">
+        <item quantity="other">%d simpanan dihapus permanen</item>
+    </plurals>
+    <plurals name="browse_moved_to_trash">
+        <item quantity="other">%d simpanan dipindahkan ke Baru dihapus</item>
+    </plurals>
+    <plurals name="browse_restored">
+        <item quantity="other">%d simpanan dipulihkan</item>
+    </plurals>
+    <plurals name="browse_delete_n_for_good">
+        <item quantity="other">Hapus %d secara permanen?</item>
+    </plurals>
+    <plurals name="browse_delete_n_selected">
+        <item quantity="other">Hapus %d yang dipilih?</item>
+    </plurals>
+    <plurals name="browse_n_selected">
+        <item quantity="other">%d dipilih</item>
+    </plurals>
+    <string name="browse_saves_collection_will_stay_pettibox">Simpanan di koleksi ini tetap ada di PettiBox, tapi koleksinya akan dihapus.</string>
+    <string name="browse_locked_find_under_browse_locked">Terkunci. Ada di Jelajah › Terkunci.</string>
+    <string name="browse_locked_open_settings_privacy">Terkunci. Buka dari Setelan › Privasi.</string>
+    <string name="browse_put_back_where_was_delete">Kembalikan ke tempat semula, atau hapus permanen?</string>
+    <string name="browse_delete_good">Hapus permanen</string>
+    <string name="browse_empty_recently_deleted">Kosongkan Baru dihapus?</string>
+    <string name="browse_everything_here_removed_good_including">Semua di sini dihapus permanen, termasuk file-nya. Ini tidak bisa dibatalkan.</string>
+    <string name="browse_favorites">Favorit</string>
+    <string name="browse_recently_deleted">Baru dihapus</string>
+    <string name="browse_find_collection">Cari koleksi</string>
+    <string name="browse_clear_collection_search">Hapus pencarian koleksi</string>
+    <string name="browse_cross_cutting_labels_youve_added">Label yang kamu tambahkan ke simpanan</string>
+    <string name="browse_no_tags_yet">Belum ada tag</string>
+    <string name="browse_tags_short_labels_urgent_read">Tag adalah label pendek (#penting, #baca-nanti) yang bisa kamu tambahkan ke simpanan. Tag melintasi koleksi: satu simpanan bisa punya banyak tag. Tambahkan tag dari lembar simpan saat menyimpan sesuatu berikutnya.</string>
+    <string name="browse_saves_marked_heart">Simpanan yang kamu tandai dengan hati</string>
+    <string name="browse_everything_youve_tucked_away">Semua yang sudah kamu arsipkan</string>
+    <string name="browse_upcoming_nudges_sorted_time">Pengingat mendatang, urut berdasarkan waktu</string>
+    <string name="browse_saved_but_not_opened_yet">Disimpan, tapi belum dibuka</string>
+    <string name="browse_kept_30_days_then_removed">Disimpan 30 hari, lalu dihapus permanen. Ketuk salah satu untuk memulihkannya.</string>
+    <string name="browse_saves_carrying_tag">Simpanan dengan tag ini</string>
+    <string name="browse_archived_saves">Simpanan yang diarsipkan</string>
+    <string name="browse_show_active">Tampilkan yang aktif</string>
+    <string name="browse_show_archived">Tampilkan arsip</string>
+    <string name="browse_edit_collection">Edit koleksi</string>
+    <string name="browse_delete_collection">Hapus koleksi</string>
+    <string name="browse_theyre_removed_good_including_their">Semuanya dihapus permanen, termasuk file-nya. Ini tidak bisa dibatalkan.</string>
+    <string name="browse_they_move_recently_deleted_browse">Semuanya dipindahkan ke Baru dihapus (di Jelajah) selama 30 hari, jadi masih bisa kamu kembalikan.</string>
+    <string name="browse_no_favorites_yet">Belum ada favorit</string>
+    <string name="browse_tap_heart_save_long_press">Ketuk ikon hati di simpanan (tekan lama kartu → ❤️) dan simpanan itu akan ada di sini.</string>
+    <string name="browse_nothing_archived">Tidak ada yang diarsipkan</string>
+    <string name="browse_archive_save_long_press_archive">Arsipkan simpanan (tekan lama → arsipkan) untuk menyingkirkannya tanpa menghapus.</string>
+    <string name="browse_no_reminders_waiting">Tidak ada pengingat yang menunggu</string>
+    <string name="browse_set_reminder_save_card_save">Pasang pengingat dari kartu simpanan atau lembar simpan, dan pengingat mendatang akan berkumpul di sini.</string>
+    <string name="browse_all_caught_up">Semua sudah dibaca</string>
+    <string name="browse_youve_opened_everything_saved_new">Kamu sudah membuka semua yang kamu simpan. Simpanan baru menunggu di sini sampai kamu buka.</string>
+    <string name="browse_nothing_deleted">Tidak ada yang dihapus</string>
+    <string name="browse_deleted_saves_stay_here_30">Simpanan yang dihapus tetap di sini 30 hari, kalau-kalau kamu berubah pikiran.</string>
+    <string name="browse_no_saves">Tidak ada simpanan dengan #%1$s</string>
+    <string name="browse_items_tagged_will_appear_here">Item dengan tag #%1$s akan muncul di sini.</string>
+    <string name="browse_no_archived_saves">Tidak ada simpanan yang diarsipkan</string>
+    <string name="browse_nothing_here_yet">Belum ada apa-apa di sini</string>
+    <string name="browse_archived_items_appear_here_toggle">Item yang diarsipkan muncul di sini. Matikan untuk melihat simpanan aktifmu.</string>
+    <string name="browse_select">Pilih</string>
+    <string name="browse_selected">Dipilih</string>
+    <string name="browse_exit_selection">Keluar dari pilihan</string>
+    <string name="browse_tap_saves_select">Ketuk simpanan untuk memilih</string>
+    <string name="browse_clear_selection">Hapus pilihan</string>
+    <string name="browse_locked">Terkunci</string>
+    <string name="browse_hide_locked_collections">Sembunyikan koleksi terkunci</string>
+    <string name="browse_archive_title">Arsip</string>
+    <string name="browse_empty_action">Kosongkan</string>
+</resources>

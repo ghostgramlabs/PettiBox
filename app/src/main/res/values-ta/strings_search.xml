@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">மிகவும் தொடர்புடையவை</string>
+    <string name="search_sort_newest">புதியவை முதலில்</string>
+    <string name="search_sort_oldest">பழையவை முதலில்</string>
+    <string name="search_sort_updated">சமீபத்தில் திருத்தியவை</string>
+    <string name="search_sort_reminder">நினைவூட்டல் நேரம்</string>
+    <plurals name="search_n_found">
+        <item quantity="one">%d கிடைத்தது</item>
+        <item quantity="other">%d கிடைத்தன</item>
+    </plurals>
+    <string name="search_look_up">தேடு</string>
+    <string name="search_titles_notes_saved_articles_text">தலைப்புகள், குறிப்புகள், சேமித்த கட்டுரைகள், படங்களுக்குள் உள்ள உரை.</string>
+    <string name="search_search_anything_saved">நீங்கள் சேமித்த எதிலும் தேடுங்கள்</string>
+    <string name="search_matches">முடிவுகள்</string>
+    <string name="search_start_anywhere">எங்கிருந்தும் தொடங்குங்கள்</string>
+    <string name="search_use_type_source_tag_when">சரியான சொல் நினைவில் இல்லாதபோது வகை, மூலம் அல்லது டேக்கைப் பயன்படுத்துங்கள்</string>
+    <string name="search_types">வகைகள்</string>
+    <string name="search_sources">மூலங்கள்</string>
+    <string name="search_find_anything_stashed">நீங்கள் சேர்த்து வைத்த எதையும் கண்டுபிடியுங்கள்</string>
+    <string name="search_search_titles_notes_links_sources">தலைப்புகள், குறிப்புகள், இணைப்புகள், மூலங்கள், டேக்குகள், படங்கள் அல்லது PDF-களில் உள்ள உரை, ஆஃப்லைனில் படிக்கச் சேமித்த கட்டுரைகளில் தேடுங்கள். காப்பகமும் இதில் அடங்கும், அதனால் காப்பகப்படுத்திய ஐட்டங்களும் தோன்றும்.</string>
+    <string name="search_screenshots">ஸ்கிரீன்ஷாட்கள்</string>
+    <string name="search_links">இணைப்புகள்</string>
+    <string name="search_pdfs">PDF-கள்</string>
+    <string name="search_upcoming_reminders">வரவிருக்கும் நினைவூட்டல்கள்</string>
+    <string name="search_notes">குறிப்புகள்</string>
+    <string name="search_nothing_matched">எதுவும் பொருந்தவில்லை</string>
+    <string name="search_some_saved_images_pdfs_still">சேமித்த சில படங்களும் PDF-களும் இன்னும் படிக்கப்படுகின்றன, அதனால் விரைவில் பொருந்தலாம். அதுவரை சிறிய சொல்லை முயற்சியுங்கள் அல்லது ஒரு வடிகட்டியை அகற்றுங்கள்.</string>
+    <string name="search_try_shorter_word_remove_filter">சிறிய சொல்லை முயற்சியுங்கள், ஒரு வடிகட்டியை அகற்றுங்கள், அல்லது வேறு மூலத்தில் தேடுங்கள். மற்ற மொழி உரைக்கு, அமைப்புகள் › உரை அங்கீகாரம் என்பதில் அதை இயக்குங்கள்.</string>
+    <string name="search_clear_filters">வடிகட்டிகளை அழி</string>
+    <string name="search_clear_search">தேடலை அழி</string>
+    <string name="search_change_filters">வடிகட்டிகளை மாற்று</string>
+    <string name="search_open_filters">வடிகட்டிகளைத் திற</string>
+    <string name="search_filters">வடிகட்டிகள் · %1$s</string>
+    <string name="search_filters_2">வடிகட்டிகள்</string>
+    <string name="search_clear">அழி</string>
+    <string name="search_clear_all">அனைத்தையும் அழி</string>
+    <string name="search_type">வகை</string>
+    <string name="search_source">மூலம்</string>
+    <string name="search_images">படங்கள்</string>
+    <string name="search_what_looking">நீங்கள் எதைத் தேடுகிறீர்கள்?</string>
+</resources>

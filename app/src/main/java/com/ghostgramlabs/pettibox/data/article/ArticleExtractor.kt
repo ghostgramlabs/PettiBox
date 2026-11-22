@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.data.article
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.dankito.readability4j.Readability4J
@@ -48,10 +52,10 @@ class ArticleExtractor @Inject constructor() {
 
         when (val code = response.statusCode()) {
             in 200..299 -> Unit
-            404, 410 -> return@withContext Outcome.Failed("The page no longer exists")
-            401, 402, 403, 451 -> return@withContext Outcome.Failed("This site doesn't allow saving a copy")
+            404, 410 -> return@withContext Outcome.Failed(AppText.getString(R.string.article_page_no_longer_exists))
+            401, 402, 403, 451 -> return@withContext Outcome.Failed(AppText.getString(R.string.article_site_doesnt_allow_saving_copy))
             429, in 500..599 -> return@withContext Outcome.TryLater
-            else -> return@withContext Outcome.Failed("The site answered with an error ($code)")
+            else -> return@withContext Outcome.Failed(AppText.getString(R.string.article_site_answered_error, code))
         }
         val contentType = response.contentType().orEmpty().lowercase()
         if (contentType.isNotEmpty() && "html" !in contentType) return@withContext Outcome.Unsupported
@@ -60,11 +64,11 @@ class ArticleExtractor @Inject constructor() {
         // runCatching also traps Errors (e.g. a jsoup API mismatch or OOM on
         // a monster page), which must degrade to "no copy", never a crash.
         val article = runCatching { Readability4J(finalUrl, response.body()).parse() }.getOrNull()
-            ?: return@withContext Outcome.Failed("Couldn't find an article on this page")
+            ?: return@withContext Outcome.Failed(AppText.getString(R.string.article_couldnt_find_article_page))
         val rawHtml = article.content
         val text = article.textContent?.trim().orEmpty()
         if (rawHtml.isNullOrBlank() || text.length < MIN_ARTICLE_CHARS) {
-            return@withContext Outcome.Failed("Couldn't find an article on this page")
+            return@withContext Outcome.Failed(AppText.getString(R.string.article_couldnt_find_article_page))
         }
 
         // Absolute links (so they still open from the reader), text markup
@@ -75,7 +79,7 @@ class ArticleExtractor @Inject constructor() {
         // copy that big is a book, not an article. Refuse rather than store
         // something that could crash the screen that opens it.
         if (clean.utf8Size() > MAX_HTML_BYTES || text.utf8Size() > MAX_TEXT_BYTES) {
-            return@withContext Outcome.Failed("This page is too long to keep a copy of")
+            return@withContext Outcome.Failed(AppText.getString(R.string.article_page_too_long_keep_copy))
         }
         Outcome.Article(
             html = clean,
@@ -87,8 +91,7 @@ class ArticleExtractor @Inject constructor() {
 
     companion object {
         private const val USER_AGENT =
-            "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/128.0.0.0 Mobile Safari/537.36"
+            "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
         private const val MAX_PAGE_BYTES = 3 * 1024 * 1024
         private const val MAX_HTML_BYTES = 512 * 1024
         private const val MAX_TEXT_BYTES = 256 * 1024

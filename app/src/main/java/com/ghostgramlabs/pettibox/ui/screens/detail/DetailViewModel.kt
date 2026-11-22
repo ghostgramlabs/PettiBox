@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.ui.screens.detail
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -284,7 +288,7 @@ class DetailViewModel @Inject constructor(
     }
     fun updateTitle(title: String) = viewModelScope.launch {
         val it = state.value.item ?: return@launch
-        val clean = title.trim().ifBlank { "Untitled" }
+        val clean = title.trim().ifBlank { AppText.getString(R.string.untitled) }
         if (clean == it.title) return@launch
         repo.update(it.copy(title = clean, updatedAt = System.currentTimeMillis()))
     }
@@ -336,10 +340,11 @@ class DetailViewModel @Inject constructor(
 }
 
 /** A field edited on two devices: what's shown now, and the other value(s) kept. */
-data class SyncConflict(val field: String, val label: String, val shown: String?, val others: List<String>)
+/** [label]: a string resource, "Title edited on 2 devices". */
+data class SyncConflict(val field: String, val label: Int, val shown: String?, val others: List<String>)
 
 private val CONFLICT_FIELDS = listOf(
-    SyncRecord.F_TITLE to "Title",
-    SyncRecord.F_NOTES to "Note",
-    SyncRecord.F_URL to "Link"
+    SyncRecord.F_TITLE to R.string.detail_conflict_title,
+    SyncRecord.F_NOTES to R.string.detail_conflict_note,
+    SyncRecord.F_URL to R.string.detail_conflict_link
 )

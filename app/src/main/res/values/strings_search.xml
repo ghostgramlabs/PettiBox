@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">Relevant</string>
+    <string name="search_sort_newest">Newest</string>
+    <string name="search_sort_oldest">Oldest</string>
+    <string name="search_sort_updated">Recently edited</string>
+    <string name="search_sort_reminder">Reminder time</string>
+    <plurals name="search_n_found">
+        <item quantity="one">%d found</item>
+        <item quantity="other">%d found</item>
+    </plurals>
+    <string name="search_look_up">Look it up</string>
+    <string name="search_titles_notes_saved_articles_text">Titles, notes, saved articles, and text inside images.</string>
+    <string name="search_search_anything_saved">Search anything you saved</string>
+    <string name="search_matches">Matches</string>
+    <string name="search_start_anywhere">Start anywhere</string>
+    <string name="search_use_type_source_tag_when">Use a type, source, or tag when you don\'t remember the exact words</string>
+    <string name="search_types">Types</string>
+    <string name="search_sources">Sources</string>
+    <string name="search_find_anything_stashed">Find anything you stashed</string>
+    <string name="search_search_titles_notes_links_sources">Search titles, notes, links, sources, tags, text inside images or PDFs, and articles saved for offline reading. Archive is included, so tucked-away saves still show up.</string>
+    <string name="search_screenshots">Screenshots</string>
+    <string name="search_links">Links</string>
+    <string name="search_pdfs">PDFs</string>
+    <string name="search_upcoming_reminders">Upcoming reminders</string>
+    <string name="search_notes">Notes</string>
+    <string name="search_nothing_matched">Nothing matched</string>
+    <string name="search_some_saved_images_pdfs_still">Some saved images and PDFs are still being read, so they may match soon. Meanwhile, try a shorter word or remove a filter.</string>
+    <string name="search_try_shorter_word_remove_filter">Try a shorter word, remove a filter, or search another source. For text in another language, turn it on in Settings › Text recognition.</string>
+    <string name="search_clear_filters">Clear filters</string>
+    <string name="search_clear_search">Clear search</string>
+    <string name="search_change_filters">Change filters</string>
+    <string name="search_open_filters">Open filters</string>
+    <string name="search_filters">Filters · %1$s</string>
+    <string name="search_filters_2">Filters</string>
+    <string name="search_clear">Clear</string>
+    <string name="search_clear_all">Clear all</string>
+    <string name="search_type">Type</string>
+    <string name="search_source">Source</string>
+    <string name="search_images">Images</string>
+    <string name="search_what_looking">What are you looking for?</string>
+</resources>

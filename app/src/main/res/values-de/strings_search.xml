@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">Relevant</string>
+    <string name="search_sort_newest">Neueste</string>
+    <string name="search_sort_oldest">Älteste</string>
+    <string name="search_sort_updated">Zuletzt bearbeitet</string>
+    <string name="search_sort_reminder">Erinnerungszeit</string>
+    <plurals name="search_n_found">
+        <item quantity="one">%d gefunden</item>
+        <item quantity="other">%d gefunden</item>
+    </plurals>
+    <string name="search_look_up">Nachschlagen</string>
+    <string name="search_titles_notes_saved_articles_text">Titel, Notizen, gespeicherte Artikel und Text in Bildern.</string>
+    <string name="search_search_anything_saved">Durchsuche alles, was du gespeichert hast</string>
+    <string name="search_matches">Treffer</string>
+    <string name="search_start_anywhere">Fang irgendwo an</string>
+    <string name="search_use_type_source_tag_when">Nutze einen Typ, eine Herkunft oder ein Tag, wenn dir die genauen Wörter nicht einfallen</string>
+    <string name="search_types">Typen</string>
+    <string name="search_sources">Herkunft</string>
+    <string name="search_find_anything_stashed">Finde alles, was du aufgehoben hast</string>
+    <string name="search_search_titles_notes_links_sources">Durchsuche Titel, Notizen, Links, Herkunft, Tags, Text in Bildern oder PDFs und zum Offline-Lesen gespeicherte Artikel. Das Archiv ist dabei, also tauchen auch weggelegte Einträge auf.</string>
+    <string name="search_screenshots">Screenshots</string>
+    <string name="search_links">Links</string>
+    <string name="search_pdfs">PDFs</string>
+    <string name="search_upcoming_reminders">Anstehende Erinnerungen</string>
+    <string name="search_notes">Notizen</string>
+    <string name="search_nothing_matched">Keine Treffer</string>
+    <string name="search_some_saved_images_pdfs_still">Einige gespeicherte Bilder und PDFs werden noch gelesen und passen vielleicht bald. Versuche es solange mit einem kürzeren Wort oder entferne einen Filter.</string>
+    <string name="search_try_shorter_word_remove_filter">Versuche ein kürzeres Wort, entferne einen Filter oder suche in einer anderen Herkunft. Für Text in einer anderen Sprache schalte sie unter Einstellungen › Texterkennung ein.</string>
+    <string name="search_clear_filters">Filter entfernen</string>
+    <string name="search_clear_search">Suche löschen</string>
+    <string name="search_change_filters">Filter ändern</string>
+    <string name="search_open_filters">Filter öffnen</string>
+    <string name="search_filters">Filter · %1$s</string>
+    <string name="search_filters_2">Filter</string>
+    <string name="search_clear">Löschen</string>
+    <string name="search_clear_all">Alle entfernen</string>
+    <string name="search_type">Typ</string>
+    <string name="search_source">Herkunft</string>
+    <string name="search_images">Bilder</string>
+    <string name="search_what_looking">Wonach suchst du?</string>
+</resources>

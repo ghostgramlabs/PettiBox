@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">Simpan cepat</string>
+    <string name="save_saved_image">Gambar tersimpan</string>
+    <string name="save_saved_pdf">PDF tersimpan</string>
+    <string name="save_saved_file">File tersimpan</string>
+    <string name="save_saved_when">disimpan %1$s</string>
+    <plurals name="save_n_images">
+        <item quantity="other">%d gambar</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="other">%d PDF</item>
+    </plurals>
+    <string name="save_discard_what_typed">Buang yang sudah kamu ketik?</string>
+    <string name="save_note_tags_havent_been_saved">Catatan dan tag-mu belum disimpan.</string>
+    <string name="save_discard">Buang</string>
+    <string name="save_keep_editing">Lanjut mengedit</string>
+    <string name="save_save">Simpan ini?</string>
+    <string name="save_save_2">Simpan ke</string>
+    <string name="save_no_collection_called_yet">Belum ada koleksi bernama “%1$s”</string>
+    <string name="save_want_start_one">Mau membuatnya?</string>
+    <string name="save_create">Buat “%1$s”</string>
+    <string name="save_new">Baru</string>
+    <string name="save_remove_favorites">Hapus dari favorit</string>
+    <string name="save_add_favorites">Tambah ke favorit</string>
+    <string name="save_write_note_save">Tulis catatan untuk disimpan</string>
+    <string name="save_save_3">Simpan ke %1$s</string>
+    <string name="save_save_without_collection">Simpan tanpa koleksi</string>
+    <string name="save_selected">Dipilih: %1$s</string>
+    <string name="save_add_which_save">Tambahkan ke simpanan mana?</string>
+    <string name="save_add_note">Tambah catatan</string>
+    <string name="save_add_tags">Tambah tag</string>
+    <string name="save_add_note_2">Tambahkan catatan</string>
+    <string name="save_tags_comma_separated">Tag, pisahkan dengan koma</string>
+    <string name="save_tucked_away">Tersimpan!</string>
+    <string name="save_find_home_screen_anytime">Temukan di layar beranda kapan saja.</string>
+    <string name="save_append_save">Tambahkan ke simpanan</string>
+    <string name="save_already_saved">Kamu sudah menyimpan ini</string>
+    <string name="save_open">Buka</string>
+    <string name="save_save_anyway">Tetap simpan</string>
+    <string name="save_suggested">Disarankan</string>
+    <string name="save_recently_used">Baru dipakai</string>
+    <string name="save_collections">Koleksimu</string>
+    <string name="save_starter_collections">Koleksi awal</string>
+</resources>

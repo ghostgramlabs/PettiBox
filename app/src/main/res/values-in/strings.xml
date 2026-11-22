@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">Simpan ke PettiBox</string>
+    <string name="widget_description">Simpananmu yang belum dibaca, sekali ketuk</string>
+    <string name="shortcut_note_short">Catatan baru</string>
+    <string name="shortcut_note_long">Tulis catatan baru</string>
+    <string name="shortcut_link_short">Tambah link</string>
+    <string name="shortcut_link_long">Simpan link</string>
+    <string name="shortcut_search_short">Cari</string>
+    <string name="shortcut_search_long">Cari simpananmu</string>
+    <string name="shortcut_unread_short">Belum dibaca</string>
+    <string name="shortcut_unread_long">Simpanan yang belum dibuka</string>
+</resources>

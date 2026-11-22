@@ -1,5 +1,13 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import androidx.compose.ui.res.stringResource
+
+import com.ghostgramlabs.pettibox.data.util.TimeFormat
+
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -72,12 +80,14 @@ import java.util.TimeZone
  * "now." Calendar handles DST transitions for us — these all resolve at
  * the moment the user taps, not at app start.
  */
-enum class ReminderPreset(val label: String) {
-    TONIGHT("Tonight"),
-    TOMORROW("Tomorrow"),
-    WEEKEND("Weekend"),
-    NEXT_WEEK("Next week"),
-    CUSTOM("Pick a time…")
+enum class ReminderPreset(private val labelRes: Int) {
+    TONIGHT(R.string.reminder_preset_tonight),
+    TOMORROW(R.string.reminder_preset_tomorrow),
+    WEEKEND(R.string.reminder_preset_weekend),
+    NEXT_WEEK(R.string.reminder_preset_next_week),
+    CUSTOM(R.string.reminder_preset_custom);
+
+    val label: String get() = AppText.getString(labelRes)
 }
 
 /**
@@ -162,15 +172,15 @@ fun formatReminderCompact(epochMillis: Long, now: Long = System.currentTimeMilli
         cal.get(Calendar.DAY_OF_YEAR) == tomorrowCal.get(Calendar.DAY_OF_YEAR)
     val withinWeek = (epochMillis - now) in 0..(7L * 24 * 3600 * 1000)
     val minutes = cal.get(Calendar.MINUTE)
-    val timeFmt = SimpleDateFormat(if (minutes == 0) "h a" else "h:mm a", Locale.getDefault())
-    val timeStr = timeFmt.format(Date(epochMillis))
-        .replace(" AM", "am")
-        .replace(" PM", "pm")
+    val locale = Locale.getDefault()
+    var timeStr = TimeFormat.date(epochMillis, if (minutes == 0) "j" else "jmm")
+    // English reads tighter as "9am" than "9 AM".
+    if (locale.language == "en") timeStr = timeStr.replace(" AM", "am").replace(" PM", "pm")
     return when {
         sameDay -> timeStr
-        isTomorrow -> "Tomorrow $timeStr"
-        withinWeek -> SimpleDateFormat("EEE", Locale.getDefault()).format(Date(epochMillis)) + " $timeStr"
-        else -> SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(epochMillis)) + " $timeStr"
+        isTomorrow -> AppText.getString(R.string.reminder_tomorrow_at, timeStr)
+        withinWeek -> AppText.getString(R.string.reminder_day_at, TimeFormat.date(epochMillis, "EEE"), timeStr)
+        else -> AppText.getString(R.string.reminder_day_at, TimeFormat.date(epochMillis, "MMMd"), timeStr)
     }
 }
 
@@ -187,12 +197,12 @@ fun formatReminderAt(epochMillis: Long, now: Long = System.currentTimeMillis()):
     val isTomorrow = cal.get(Calendar.YEAR) == tomorrowCal.get(Calendar.YEAR) &&
         cal.get(Calendar.DAY_OF_YEAR) == tomorrowCal.get(Calendar.DAY_OF_YEAR)
     val withinWeek = (epochMillis - now) in 0..(7L * 24 * 3600 * 1000)
-    val timeFmt = SimpleDateFormat("h:mm a", Locale.getDefault())
+    val time = TimeFormat.date(epochMillis, "jmm")
     return when {
-        sameDay -> "Today " + timeFmt.format(Date(epochMillis))
-        isTomorrow -> "Tomorrow " + timeFmt.format(Date(epochMillis))
-        withinWeek -> SimpleDateFormat("EEE h:mm a", Locale.getDefault()).format(Date(epochMillis))
-        else -> SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(Date(epochMillis))
+        sameDay -> AppText.getString(R.string.reminder_today_at, time)
+        isTomorrow -> AppText.getString(R.string.reminder_tomorrow_at, time)
+        withinWeek -> TimeFormat.date(epochMillis, "EEEjmm")
+        else -> TimeFormat.date(epochMillis, "MMMdjmm")
     }
 }
 
@@ -205,9 +215,9 @@ private fun formatDateOnly(epochMillis: Long, now: Long = System.currentTimeMill
     val isTomorrow = cal.get(Calendar.YEAR) == tomorrowCal.get(Calendar.YEAR) &&
         cal.get(Calendar.DAY_OF_YEAR) == tomorrowCal.get(Calendar.DAY_OF_YEAR)
     return when {
-        sameDay -> "Today"
-        isTomorrow -> "Tomorrow"
-        else -> SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(Date(epochMillis))
+        sameDay -> AppText.getString(R.string.reminder_today)
+        isTomorrow -> AppText.getString(R.string.reminder_tomorrow)
+        else -> TimeFormat.date(epochMillis, "EEEMMMd")
     }
 }
 
@@ -216,7 +226,7 @@ private fun formatTimeOnly(hour: Int, minute: Int): String {
         set(Calendar.HOUR_OF_DAY, hour)
         set(Calendar.MINUTE, minute)
     }
-    return SimpleDateFormat("h:mm a", Locale.getDefault()).format(cal.time)
+    return TimeFormat.date(cal.timeInMillis, "jmm")
 }
 
 private fun sameDay(a: Long, b: Long): Boolean {
@@ -278,19 +288,19 @@ fun ReminderPickerSheet(
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Text(
-                "Remind me",
+                stringResource(R.string.reminder_remind_me),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold)
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "PettiBox will ask for notification permission when needed. If exact alarms are off, reminders may arrive a little later.",
+                stringResource(R.string.reminder_pettibox_will_ask_notification_permission),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (currentRemindAt != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    "Currently set for " + formatReminderAt(currentRemindAt),
+                    stringResource(R.string.reminder_currently_set_for, formatReminderAt(currentRemindAt)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -320,7 +330,7 @@ fun ReminderPickerSheet(
                 val isCustom = preset == ReminderPreset.CUSTOM
                 ReminderRow(
                     label = preset.label,
-                    subtitle = previewMillis?.let { formatReminderAt(it) } ?: "Choose a date & time",
+                    subtitle = previewMillis?.let { formatReminderAt(it) } ?: stringResource(R.string.reminder_choose_date_time),
                     isCustom = isCustom,
                     onClick = {
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -334,7 +344,7 @@ fun ReminderPickerSheet(
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     onPick(null)
                 }) {
-                    Text("Clear reminder", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.reminder_clear_reminder), color = MaterialTheme.colorScheme.error)
                 }
             }
             Spacer(Modifier.height(12.dp))
@@ -505,7 +515,7 @@ fun ReminderCustomSheet(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                "Custom reminder",
+                stringResource(R.string.reminder_custom_reminder),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -514,10 +524,10 @@ fun ReminderCustomSheet(
             // AND in the future. When the time is missing, the message is
             // explicit so the user can't accidentally proceed.
             val previewText = when {
-                !timeConfirmed -> "Pick a time below to enable Set"
-                combined == null -> "Pick a date and time"
-                !isFuture -> "That moment has already passed — pick a future time"
-                else -> "We'll nudge you " + formatReminderAt(combined!!)
+                !timeConfirmed -> stringResource(R.string.reminder_pick_time_below_enable_set)
+                combined == null -> stringResource(R.string.reminder_pick_date_time)
+                !isFuture -> stringResource(R.string.reminder_moment_has_already_passed_pick)
+                else -> stringResource(R.string.reminder_nudge_at, formatReminderAt(combined!!))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (!timeConfirmed || !isFuture) {
@@ -543,7 +553,7 @@ fun ReminderCustomSheet(
 
             FieldRow(
                 icon = Icons.Rounded.CalendarMonth,
-                label = "Date",
+                label = stringResource(R.string.reminder_date),
                 value = dateState.selectedDateMillis?.let {
                     // Display the picked day in the user's local calendar.
                     val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
@@ -559,7 +569,7 @@ fun ReminderCustomSheet(
                         set(Calendar.MILLISECOND, 0)
                     }
                     formatDateOnly(localShown.timeInMillis)
-                } ?: "Tap to pick",
+                } ?: stringResource(R.string.reminder_tap_pick),
                 placeholderMissing = false,
                 onClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -569,9 +579,9 @@ fun ReminderCustomSheet(
             Spacer(Modifier.height(10.dp))
             FieldRow(
                 icon = Icons.Rounded.AccessTime,
-                label = "Time",
+                label = stringResource(R.string.reminder_time),
                 value = if (timeConfirmed) formatTimeOnly(timeState.hour, timeState.minute)
-                    else "Tap to set",
+                    else stringResource(R.string.reminder_tap_set),
                 placeholderMissing = !timeConfirmed,
                 onClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -585,7 +595,7 @@ fun ReminderCustomSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) }
                 Spacer(Modifier.width(8.dp))
                 Button(
                     enabled = timeConfirmed && isFuture,
@@ -594,7 +604,7 @@ fun ReminderCustomSheet(
                         combined?.let(onConfirm)
                     },
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Set reminder", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.reminder_set_reminder), fontWeight = FontWeight.Bold) }
             }
             Spacer(Modifier.navigationBarsPadding())
         }
@@ -604,10 +614,10 @@ fun ReminderCustomSheet(
         DatePickerDialog(
             onDismissRequest = { showDateDialog = false },
             confirmButton = {
-                TextButton(onClick = { showDateDialog = false }) { Text("Done") }
+                TextButton(onClick = { showDateDialog = false }) { Text(stringResource(R.string.reminder_done)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDateDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showDateDialog = false }) { Text(stringResource(R.string.settings_cancel)) }
             }
         ) {
             DatePicker(state = dateState, showModeToggle = false)
@@ -638,7 +648,7 @@ fun ReminderCustomSheet(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    "Pick a time",
+                    stringResource(R.string.reminder_pick_time),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold)
                 )
                 Spacer(Modifier.height(12.dp))
@@ -653,7 +663,7 @@ fun ReminderCustomSheet(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    TextButton(onClick = { showTimeDialog = false }) { Text("Cancel") }
+                    TextButton(onClick = { showTimeDialog = false }) { Text(stringResource(R.string.settings_cancel)) }
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = {
@@ -661,7 +671,7 @@ fun ReminderCustomSheet(
                             showTimeDialog = false
                         },
                         shape = RoundedCornerShape(12.dp)
-                    ) { Text("Set time", fontWeight = FontWeight.Bold) }
+                    ) { Text(stringResource(R.string.reminder_set_time), fontWeight = FontWeight.Bold) }
                 }
                 Spacer(Modifier.navigationBarsPadding())
             }

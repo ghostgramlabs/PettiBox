@@ -1,5 +1,10 @@
 package com.ghostgramlabs.pettibox.ui.nav
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -78,15 +83,16 @@ object Routes {
 private data class TopTab(
     val route: String,
     val baseRoute: String,
-    val label: String,
+    /** A string resource: read at draw time, so a language change shows at once. */
+    val label: Int,
     val icon: ImageVector
 )
 
 private val topTabs = listOf(
-    TopTab(Routes.Home, "home", "Home", Icons.Rounded.Home),
-    TopTab(Routes.search(), "search", "Search", Icons.Rounded.Search),
-    TopTab(Routes.categories(), "categories", "Browse", Icons.Rounded.GridView),
-    TopTab(Routes.Settings, "settings", "Settings", Icons.Rounded.Settings)
+    TopTab(Routes.Home, "home", R.string.nav_home, Icons.Rounded.Home),
+    TopTab(Routes.search(), "search", R.string.nav_search, Icons.Rounded.Search),
+    TopTab(Routes.categories(), "categories", R.string.nav_browse, Icons.Rounded.GridView),
+    TopTab(Routes.Settings, "settings", R.string.nav_settings, Icons.Rounded.Settings)
 )
 
 @Composable
@@ -261,14 +267,14 @@ private fun BottomNavItem(
             .semantics {
                 role = Role.Tab
                 this.selected = selected
-                stateDescription = if (selected) "Selected" else "Not selected"
+                stateDescription = if (selected) AppText.getString(R.string.browse_selected) else AppText.getString(R.string.nav_not_selected)
             }
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 6.dp)
     ) {
         Icon(
             tab.icon,
-            contentDescription = tab.label,
+            contentDescription = stringResource(tab.label),
             tint = tint,
             modifier = Modifier.size(22.dp)
         )
@@ -279,7 +285,7 @@ private fun BottomNavItem(
             // hand-drawn motif with the onboarding dots and section
             // header squiggles elsewhere in the app.
             Text(
-                tab.label,
+                stringResource(tab.label),
                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                 color = scheme.primary
             )

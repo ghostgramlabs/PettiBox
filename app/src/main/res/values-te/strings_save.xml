@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">క్విక్ సేవ్</string>
+    <string name="save_saved_image">సేవ్ చేసిన ఫోటో</string>
+    <string name="save_saved_pdf">సేవ్ చేసిన PDF</string>
+    <string name="save_saved_file">సేవ్ చేసిన ఫైల్</string>
+    <string name="save_saved_when">%1$s సేవ్ చేశారు</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d ఫోటో</item>
+        <item quantity="other">%d ఫోటోలు</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="other">%d PDFలు</item>
+    </plurals>
+    <string name="save_discard_what_typed">మీరు రాసినది వదిలేయాలా?</string>
+    <string name="save_note_tags_havent_been_saved">మీ నోట్, ట్యాగ్‌లు ఇంకా సేవ్ కాలేదు.</string>
+    <string name="save_discard">వదిలేయండి</string>
+    <string name="save_keep_editing">ఎడిట్ కొనసాగించండి</string>
+    <string name="save_save">దీన్ని సేవ్ చేయాలా?</string>
+    <string name="save_save_2">ఎక్కడ సేవ్ చేయాలి</string>
+    <string name="save_no_collection_called_yet">“%1$s” పేరుతో ఇంకా కలెక్షన్ లేదు</string>
+    <string name="save_want_start_one">సృష్టించాలా?</string>
+    <string name="save_create">“%1$s” సృష్టించండి</string>
+    <string name="save_new">కొత్తది</string>
+    <string name="save_remove_favorites">ఇష్టమైనవి నుండి తీసేయండి</string>
+    <string name="save_add_favorites">ఇష్టమైనవిలో జోడించండి</string>
+    <string name="save_write_note_save">సేవ్ చేయడానికి నోట్ రాయండి</string>
+    <string name="save_save_3">%1$sలో సేవ్ చేయండి</string>
+    <string name="save_save_without_collection">కలెక్షన్ లేకుండా సేవ్ చేయండి</string>
+    <string name="save_selected">ఎంచుకున్నది: %1$s</string>
+    <string name="save_add_which_save">ఏ ఐటెమ్‌కు జోడించాలి?</string>
+    <string name="save_add_note">నోట్ జోడించండి</string>
+    <string name="save_add_tags">ట్యాగ్‌లు జోడించండి</string>
+    <string name="save_add_note_2">ఒక నోట్ జోడించండి</string>
+    <string name="save_tags_comma_separated">ట్యాగ్‌లు, కామాతో వేరు చేయండి</string>
+    <string name="save_tucked_away">సేవ్ అయింది!</string>
+    <string name="save_find_home_screen_anytime">ఎప్పుడైనా హోమ్ స్క్రీన్‌లో చూడొచ్చు.</string>
+    <string name="save_append_save">ఒక ఐటెమ్‌కు జోడించండి</string>
+    <string name="save_already_saved">మీరు దీన్ని ఇప్పటికే సేవ్ చేశారు</string>
+    <string name="save_open">తెరవండి</string>
+    <string name="save_save_anyway">అయినా సేవ్ చేయండి</string>
+    <string name="save_suggested">సూచించినవి</string>
+    <string name="save_recently_used">ఇటీవల వాడినవి</string>
+    <string name="save_collections">మీ కలెక్షన్‌లు</string>
+    <string name="save_starter_collections">ప్రారంభ కలెక్షన్‌లు</string>
+</resources>

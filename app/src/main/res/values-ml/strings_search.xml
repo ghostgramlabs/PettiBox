@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">ഏറ്റവും പ്രസക്തം</string>
+    <string name="search_sort_newest">ഏറ്റവും പുതിയത്</string>
+    <string name="search_sort_oldest">ഏറ്റവും പഴയത്</string>
+    <string name="search_sort_updated">അടുത്തിടെ എഡിറ്റ് ചെയ്തവ</string>
+    <string name="search_sort_reminder">റിമൈൻഡർ സമയം</string>
+    <plurals name="search_n_found">
+        <item quantity="one">%d കണ്ടെത്തി</item>
+        <item quantity="other">%d കണ്ടെത്തി</item>
+    </plurals>
+    <string name="search_look_up">തിരയുക</string>
+    <string name="search_titles_notes_saved_articles_text">തലക്കെട്ടുകൾ, കുറിപ്പുകൾ, സേവ് ചെയ്ത ലേഖനങ്ങൾ, ഫോട്ടോകളിലെ ടെക്സ്റ്റ്.</string>
+    <string name="search_search_anything_saved">സേവ് ചെയ്ത എന്തിലും തിരയൂ</string>
+    <string name="search_matches">ഫലങ്ങൾ</string>
+    <string name="search_start_anywhere">എവിടെ നിന്നും തുടങ്ങൂ</string>
+    <string name="search_use_type_source_tag_when">കൃത്യമായ വാക്ക് ഓർമ്മയില്ലാത്തപ്പോൾ തരം, ഉറവിടം അല്ലെങ്കിൽ ടാഗ് ഉപയോഗിക്കൂ</string>
+    <string name="search_types">തരങ്ങൾ</string>
+    <string name="search_sources">ഉറവിടങ്ങൾ</string>
+    <string name="search_find_anything_stashed">നിങ്ങൾ കരുതിവച്ച എന്തും കണ്ടെത്തൂ</string>
+    <string name="search_search_titles_notes_links_sources">തലക്കെട്ടുകൾ, കുറിപ്പുകൾ, ലിങ്കുകൾ, ഉറവിടങ്ങൾ, ടാഗുകൾ, ഫോട്ടോകളിലെയോ PDF-കളിലെയോ ടെക്സ്റ്റ്, ഓഫ്‌ലൈൻ വായനയ്ക്ക് സേവ് ചെയ്ത ലേഖനങ്ങൾ എന്നിവയിൽ തിരയൂ. ആർക്കൈവും ഉൾപ്പെടും, അതിനാൽ ആർക്കൈവ് ചെയ്ത ഇനങ്ങളും കാണാം.</string>
+    <string name="search_screenshots">സ്ക്രീൻഷോട്ടുകൾ</string>
+    <string name="search_links">ലിങ്കുകൾ</string>
+    <string name="search_pdfs">PDF-കൾ</string>
+    <string name="search_upcoming_reminders">വരാനിരിക്കുന്ന റിമൈൻഡറുകൾ</string>
+    <string name="search_notes">കുറിപ്പുകൾ</string>
+    <string name="search_nothing_matched">ഒന്നും പൊരുത്തപ്പെട്ടില്ല</string>
+    <string name="search_some_saved_images_pdfs_still">സേവ് ചെയ്ത ചില ഫോട്ടോകളും PDF-കളും ഇപ്പോഴും വായിക്കുന്നു, അതിനാൽ ഉടൻ പൊരുത്തപ്പെട്ടേക്കാം. അതുവരെ ചെറിയ വാക്ക് ശ്രമിക്കൂ അല്ലെങ്കിൽ ഒരു ഫിൽട്ടർ നീക്കൂ.</string>
+    <string name="search_try_shorter_word_remove_filter">ചെറിയ വാക്ക് ശ്രമിക്കൂ, ഒരു ഫിൽട്ടർ നീക്കൂ, അല്ലെങ്കിൽ മറ്റൊരു ഉറവിടത്തിൽ തിരയൂ. മറ്റ് ഭാഷകളിലെ ടെക്സ്റ്റിന്, ക്രമീകരണം › ടെക്സ്റ്റ് തിരിച്ചറിയൽ എന്നതിൽ അത് ഓണാക്കൂ.</string>
+    <string name="search_clear_filters">ഫിൽട്ടറുകൾ മായ്ക്കുക</string>
+    <string name="search_clear_search">തിരയൽ മായ്ക്കുക</string>
+    <string name="search_change_filters">ഫിൽട്ടറുകൾ മാറ്റുക</string>
+    <string name="search_open_filters">ഫിൽട്ടറുകൾ തുറക്കുക</string>
+    <string name="search_filters">ഫിൽട്ടറുകൾ · %1$s</string>
+    <string name="search_filters_2">ഫിൽട്ടറുകൾ</string>
+    <string name="search_clear">മായ്ക്കുക</string>
+    <string name="search_clear_all">എല്ലാം മായ്ക്കുക</string>
+    <string name="search_type">തരം</string>
+    <string name="search_source">ഉറവിടം</string>
+    <string name="search_images">ഫോട്ടോകൾ</string>
+    <string name="search_what_looking">നിങ്ങൾ എന്താണ് തിരയുന്നത്?</string>
+</resources>

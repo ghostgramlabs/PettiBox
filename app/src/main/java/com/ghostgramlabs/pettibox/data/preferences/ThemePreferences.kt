@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.data.preferences
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -13,11 +17,13 @@ import javax.inject.Singleton
 enum class ThemeMode {
     SYSTEM, LIGHT, DARK;
 
-    fun label(): String = when (this) {
-        SYSTEM -> "System"
-        LIGHT -> "Light"
-        DARK -> "Dark"
-    }
+    fun label(): String = AppText.getString(
+        when (this) {
+            SYSTEM -> R.string.theme_system
+            LIGHT -> R.string.theme_light
+            DARK -> R.string.theme_dark
+        }
+    )
 }
 
 private val Context.themeDataStore by preferencesDataStore(name = "theme_preferences")

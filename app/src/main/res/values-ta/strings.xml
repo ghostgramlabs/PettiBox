@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">PettiBox-இல் சேமியுங்கள்</string>
+    <string name="widget_description">படிக்காத ஐட்டங்கள், ஒரே தட்டலில்</string>
+    <string name="shortcut_note_short">புதிய குறிப்பு</string>
+    <string name="shortcut_note_long">புதிய குறிப்பு எழுதுங்கள்</string>
+    <string name="shortcut_link_short">இணைப்பைச் சேர்</string>
+    <string name="shortcut_link_long">இணைப்பைச் சேமியுங்கள்</string>
+    <string name="shortcut_search_short">தேடு</string>
+    <string name="shortcut_search_long">உங்கள் ஐட்டங்களில் தேடுங்கள்</string>
+    <string name="shortcut_unread_short">படிக்காதவை</string>
+    <string name="shortcut_unread_long">நீங்கள் இன்னும் திறக்காத ஐட்டங்கள்</string>
+</resources>

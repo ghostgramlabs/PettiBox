@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">Σχετικότητα</string>
+    <string name="search_sort_newest">Νεότερα</string>
+    <string name="search_sort_oldest">Παλαιότερα</string>
+    <string name="search_sort_updated">Πρόσφατα επεξεργασμένα</string>
+    <string name="search_sort_reminder">Ώρα υπενθύμισης</string>
+    <plurals name="search_n_found">
+        <item quantity="one">Βρέθηκε %d</item>
+        <item quantity="other">Βρέθηκαν %d</item>
+    </plurals>
+    <string name="search_look_up">Αναζητήστε</string>
+    <string name="search_titles_notes_saved_articles_text">Τίτλοι, σημειώσεις, αποθηκευμένα άρθρα και κείμενο μέσα σε εικόνες.</string>
+    <string name="search_search_anything_saved">Αναζητήστε ό,τι αποθηκεύσατε</string>
+    <string name="search_matches">Αποτελέσματα</string>
+    <string name="search_start_anywhere">Ξεκινήστε από όπου θέλετε</string>
+    <string name="search_use_type_source_tag_when">Χρησιμοποιήστε τύπο, προέλευση ή ετικέτα όταν δεν θυμάστε τις ακριβείς λέξεις</string>
+    <string name="search_types">Τύποι</string>
+    <string name="search_sources">Προελεύσεις</string>
+    <string name="search_find_anything_stashed">Βρείτε ό,τι έχετε φυλάξει</string>
+    <string name="search_search_titles_notes_links_sources">Αναζήτηση σε τίτλους, σημειώσεις, συνδέσμους, προελεύσεις, ετικέτες, κείμενο μέσα σε εικόνες ή PDF και άρθρα αποθηκευμένα για ανάγνωση εκτός σύνδεσης. Περιλαμβάνεται και το Αρχείο, οπότε εμφανίζονται και τα αρχειοθετημένα.</string>
+    <string name="search_screenshots">Στιγμιότυπα</string>
+    <string name="search_links">Σύνδεσμοι</string>
+    <string name="search_pdfs">PDF</string>
+    <string name="search_upcoming_reminders">Επερχόμενες υπενθυμίσεις</string>
+    <string name="search_notes">Σημειώσεις</string>
+    <string name="search_nothing_matched">Κανένα αποτέλεσμα</string>
+    <string name="search_some_saved_images_pdfs_still">Κάποιες αποθηκευμένες εικόνες και PDF διαβάζονται ακόμη, οπότε μπορεί να ταιριάξουν σύντομα. Στο μεταξύ, δοκιμάστε μικρότερη λέξη ή αφαιρέστε ένα φίλτρο.</string>
+    <string name="search_try_shorter_word_remove_filter">Δοκιμάστε μικρότερη λέξη, αφαιρέστε ένα φίλτρο ή αναζητήστε σε άλλη προέλευση. Για κείμενο σε άλλη γλώσσα, ενεργοποιήστε τη στις Ρυθμίσεις › Αναγνώριση κειμένου.</string>
+    <string name="search_clear_filters">Εκκαθάριση φίλτρων</string>
+    <string name="search_clear_search">Εκκαθάριση αναζήτησης</string>
+    <string name="search_change_filters">Αλλαγή φίλτρων</string>
+    <string name="search_open_filters">Άνοιγμα φίλτρων</string>
+    <string name="search_filters">Φίλτρα · %1$s</string>
+    <string name="search_filters_2">Φίλτρα</string>
+    <string name="search_clear">Εκκαθάριση</string>
+    <string name="search_clear_all">Εκκαθάριση όλων</string>
+    <string name="search_type">Τύπος</string>
+    <string name="search_source">Προέλευση</string>
+    <string name="search_images">Εικόνες</string>
+    <string name="search_what_looking">Τι ψάχνετε;</string>
+</resources>

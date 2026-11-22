@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">По релевантности</string>
+    <string name="search_sort_newest">Сначала новые</string>
+    <string name="search_sort_oldest">Сначала старые</string>
+    <string name="search_sort_updated">Недавно изменённые</string>
+    <string name="search_sort_reminder">По времени напоминания</string>
+    <plurals name="search_n_found">
+        <item quantity="one">Найдена %d</item>
+        <item quantity="few">Найдено %d</item>
+        <item quantity="many">Найдено %d</item>
+        <item quantity="other">Найдено %d</item>
+    </plurals>
+    <string name="search_look_up">Найдите</string>
+    <string name="search_titles_notes_saved_articles_text">Названия, заметки, сохранённые статьи и текст на изображениях.</string>
+    <string name="search_search_anything_saved">Ищите по всему сохранённому</string>
+    <string name="search_matches">Совпадения</string>
+    <string name="search_start_anywhere">Начните с чего угодно</string>
+    <string name="search_use_type_source_tag_when">Используйте тип, источник или тег, если не помните точных слов</string>
+    <string name="search_types">Типы</string>
+    <string name="search_sources">Источники</string>
+    <string name="search_find_anything_stashed">Найдите всё, что отложили</string>
+    <string name="search_search_titles_notes_links_sources">Ищите по названиям, заметкам, ссылкам, источникам, тегам, тексту на изображениях и в PDF, а также по статьям, сохранённым для чтения офлайн. Архив тоже участвует, так что убранные записи найдутся.</string>
+    <string name="search_screenshots">Скриншоты</string>
+    <string name="search_links">Ссылки</string>
+    <string name="search_pdfs">PDF</string>
+    <string name="search_upcoming_reminders">Предстоящие напоминания</string>
+    <string name="search_notes">Заметки</string>
+    <string name="search_nothing_matched">Ничего не найдено</string>
+    <string name="search_some_saved_images_pdfs_still">Часть сохранённых изображений и PDF ещё читается, так что они могут скоро найтись. А пока попробуйте слово покороче или уберите фильтр.</string>
+    <string name="search_try_shorter_word_remove_filter">Попробуйте слово покороче, уберите фильтр или поищите в другом источнике. Для текста на другом языке включите его в Настройках › Распознавание текста.</string>
+    <string name="search_clear_filters">Сбросить фильтры</string>
+    <string name="search_clear_search">Очистить поиск</string>
+    <string name="search_change_filters">Изменить фильтры</string>
+    <string name="search_open_filters">Открыть фильтры</string>
+    <string name="search_filters">Фильтры · %1$s</string>
+    <string name="search_filters_2">Фильтры</string>
+    <string name="search_clear">Очистить</string>
+    <string name="search_clear_all">Сбросить всё</string>
+    <string name="search_type">Тип</string>
+    <string name="search_source">Источник</string>
+    <string name="search_images">Изображения</string>
+    <string name="search_what_looking">Что вы ищете?</string>
+</resources>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">Quelque chose vous attend sur votre étagère</string>
+    <string name="nudge_title">Depuis votre étagère</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">Vous avez %d élément non lu.</item>
+        <item quantity="many">Vous avez %d éléments non lus.</item>
+        <item quantity="other">Vous avez %d éléments non lus.</item>
+    </plurals>
+    <string name="nudge_body_one">« %1$s », enregistré %2$s.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">« %1$s », enregistré %2$s. Et %3$d autre non lu.</item>
+        <item quantity="many">« %1$s », enregistré %2$s. Et %3$d autres non lus.</item>
+        <item quantity="other">« %1$s », enregistré %2$s. Et %3$d autres non lus.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">%d fichier manque sur ce téléphone, il ne peut donc pas être envoyé. Ouvrez l’élément et ajoutez à nouveau le fichier.</item>
+        <item quantity="many">%d fichiers manquent sur ce téléphone, ils ne peuvent donc pas être envoyés. Ouvrez l’élément et ajoutez à nouveau les fichiers.</item>
+        <item quantity="other">%d fichiers manquent sur ce téléphone, ils ne peuvent donc pas être envoyés. Ouvrez l’élément et ajoutez à nouveau les fichiers.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">Bibliothèque synchronisée · %1$d fichier attend qu’un autre appareil l’envoie · vérifié à %2$s</item>
+        <item quantity="many">Bibliothèque synchronisée · %1$d fichiers attendent qu’un autre appareil les envoie · vérifié à %2$s</item>
+        <item quantity="other">Bibliothèque synchronisée · %1$d fichiers attendent qu’un autre appareil les envoie · vérifié à %2$s</item>
+    </plurals>
+    <string name="files_all_in_drive">Toutes les photos et tous les fichiers sont dans Google Drive · vérifié à %1$s</string>
+    <string name="files_checked">Photos et fichiers vérifiés à %1$s</string>
+    <string name="files_unreachable">Impossible de joindre Google Drive pendant l’envoi des photos et fichiers (%1$s). Nouvel essai automatique d’ici peu.</string>
+    <string name="files_no_connection">pas de connexion</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d fichier ne peut plus être lu sur ce téléphone (l’app d’où il vient ne l’autorise plus), il ne peut donc pas être envoyé.</item>
+        <item quantity="many">%d fichiers ne peuvent plus être lus sur ce téléphone (l’app d’où ils viennent ne l’autorise plus), ils ne peuvent donc pas être envoyés.</item>
+        <item quantity="other">%d fichiers ne peuvent plus être lus sur ce téléphone (l’app d’où ils viennent ne l’autorise plus), ils ne peuvent donc pas être envoyés.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">Envoi de %d photo et de fichiers vers Google Drive…</item>
+        <item quantity="many">Envoi de %d photos et de fichiers vers Google Drive…</item>
+        <item quantity="other">Envoi de %d photos et de fichiers vers Google Drive…</item>
+    </plurals>
+    <string name="files_sending_progress">Envoi des photos et fichiers vers Google Drive… %1$d sur %2$d</string>
+    <string name="sync_step_connecting">connexion</string>
+    <string name="sync_unreachable">Impossible de joindre Google Drive</string>
+    <string name="sync_drive_error">Google Drive a répondu par une erreur (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">Nouvel essai automatique d’ici peu.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">%d fichier endommagé d’un autre appareil ignoré ; rien n’en a été appliqué</item>
+        <item quantity="many">%d fichiers endommagés d’un autre appareil ignorés ; rien n’en a été appliqué</item>
+        <item quantity="other">%d fichiers endommagés d’un autre appareil ignorés ; rien n’en a été appliqué</item>
+    </plurals>
+    <string name="sync_every_15_min">15 min</string>
+    <string name="sync_every_30_min">30 min</string>
+    <string name="sync_every_hour">1 heure</string>
+    <string name="sync_every_3_hours">3 heures</string>
+    <string name="sync_daily">Tous les jours</string>
+    <string name="sync_weekly">Toutes les semaines</string>
+    <string name="sync_only_in_use">Seulement pendant l’utilisation</string>
+    <string name="reminder_save_locked_collection">Un élément d’une collection verrouillée</string>
+    <string name="reminder_saved_item">Élément enregistré</string>
+    <string name="reminder_snooze_1h">Reporter d’1 h</string>
+    <string name="reminder_evening">Ce soir</string>
+    <string name="nudge_see_all_unread">Voir tous les non lus</string>
+    <string name="nudge_once_week_one_thing_saved">Une fois par semaine, une chose que vous avez enregistrée sans l’avoir encore ouverte.</string>
+    <string name="reminder_save_reminders">Rappels d’éléments</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">Rappels de ce que vous avez demandé à PettiBox de vous rappeler.</string>
+    <string name="files_photos_files_waiting_reconnect_google">Les photos et fichiers sont en attente : reconnectez Google Drive dans les Paramètres.</string>
+    <string name="files_photos_files_sent_once_first">Les photos et fichiers sont envoyés une fois la première synchronisation terminée.</string>
+    <string name="files_photos_files_arent_sent_google">Les photos et fichiers ne sont pas envoyés : Google Drive est connecté en tant que %1$s, et non %2$s.</string>
+    <string name="files_photos_files_couldnt_sent_tap">Impossible d’envoyer les photos et fichiers : %1$s. Touchez Synchroniser pour réessayer.</string>
+    <string name="files_photos_files_stopped_sending_trying">L’envoi des photos et fichiers s’est arrêté : %1$s. Nouvel essai d’ici peu.</string>
+    <string name="sync_sync_stopped">Synchronisation arrêtée : %1$s</string>
+    <string name="sync_sync_was_turned_off_because">La synchronisation a été désactivée, car les données synchronisées ont été supprimées de Google Drive depuis un autre appareil. Tout ce qui est sur ce téléphone est toujours là ; réactivez la synchronisation pour recommencer.</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive doit être reconnecté</string>
+    <string name="sync_google_drive_didnt_say_which">Google Drive n’a pas indiqué de quel compte il s’agit</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive est connecté en tant que %1$s, mais cette bibliothèque se synchronise avec %2$s. Revenez à %3$s, ou désactivez puis réactivez la synchronisation pour synchroniser avec %4$s.</string>
+    <string name="sync_couldnt_save_safety_copy_library">Impossible d’enregistrer une copie de sécurité de votre bibliothèque avant la synchronisation. Nouvel essai la prochaine fois.</string>
+    <string name="sync_checking_google_drive">Vérification de Google Drive…</string>
+    <string name="sync_receiving_changes">Réception des modifications…</string>
+    <string name="sync_another_device_uses_newer_version">Un autre appareil utilise une version plus récente de PettiBox. Mettez à jour cette app pour voir tout ce qu’il a enregistré.</string>
+    <string name="sync_preparing_changes">Préparation de vos modifications…</string>
+    <string name="sync_updating_library">Mise à jour de votre bibliothèque…</string>
+    <string name="sync_couldnt_save_safety_copy_before">Impossible d’enregistrer une copie de sécurité avant de retirer des éléments, donc rien n’a été retiré. Libérez de l’espace et choisissez à nouveau.</string>
+    <string name="sync_sending_changes">Envoi de vos modifications…</string>
+    <string name="article_page_no_longer_exists">La page n’existe plus</string>
+    <string name="article_site_doesnt_allow_saving_copy">Ce site n’autorise pas l’enregistrement d’une copie</string>
+    <string name="article_site_answered_error">Le site a répondu par une erreur (%1$s)</string>
+    <string name="article_couldnt_find_article_page">Aucun article trouvé sur cette page</string>
+    <string name="article_page_too_long_keep_copy">Cette page est trop longue pour en garder une copie</string>
+    <string name="article_couldnt_reach_page_check_connection">Impossible d’accéder à la page. Vérifiez votre connexion et réessayez.</string>
+</resources>

@@ -1,5 +1,7 @@
 package com.ghostgramlabs.pettibox.data.reminders
 
+import com.ghostgramlabs.pettibox.util.AppText
+
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -102,12 +104,11 @@ class ShelfNudgeWorker @AssistedInject constructor(
         ensureChannel(ctx)
         // With App lock on, never put a save's title on the lock screen.
         val locked = appLockPreferences.enabled.first()
-        val title = if (locked) "Something on your shelf is waiting" else "From your shelf"
+        val title = AppText.getString(if (locked) R.string.nudge_title_locked else R.string.nudge_title)
         val body = when {
-            locked -> "You have ${othersUnread + 1} unread save${if (othersUnread == 0) "" else "s"}."
-            othersUnread == 0 -> "“${pick.title}” — saved ${TimeFormat.relative(pick.createdAt)}."
-            else -> "“${pick.title}” — saved ${TimeFormat.relative(pick.createdAt)}. " +
-                "Plus $othersUnread more unread."
+            locked -> AppText.plural(R.plurals.nudge_body_locked, othersUnread + 1)
+            othersUnread == 0 -> AppText.getString(R.string.nudge_body_one, pick.title, TimeFormat.relative(pick.createdAt))
+            else -> AppText.plural(R.plurals.nudge_body_more, othersUnread, pick.title, TimeFormat.relative(pick.createdAt), othersUnread)
         }
         val open = PendingIntent.getActivity(
             ctx, NOTIFICATION_ID,
@@ -126,7 +127,7 @@ class ShelfNudgeWorker @AssistedInject constructor(
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(open)
             .setAutoCancel(true)
-            .apply { if (!locked && othersUnread > 0) addAction(0, "See all unread", seeAll) }
+            .apply { if (!locked && othersUnread > 0) addAction(0, AppText.getString(R.string.nudge_see_all_unread), seeAll) }
             .build()
         runCatching {
             @SuppressLint("MissingPermission")
@@ -192,8 +193,8 @@ class ShelfNudgeWorker @AssistedInject constructor(
             val manager = ContextCompat.getSystemService(context, NotificationManager::class.java) ?: return
             if (manager.getNotificationChannel(CHANNEL_ID) != null) return
             manager.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "Weekly shelf nudge", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "Once a week, one thing you saved but haven't opened yet."
+                NotificationChannel(CHANNEL_ID, AppText.getString(R.string.settings_weekly_shelf_nudge), NotificationManager.IMPORTANCE_LOW).apply {
+                    description = AppText.getString(R.string.nudge_once_week_one_thing_saved)
                 }
             )
         }

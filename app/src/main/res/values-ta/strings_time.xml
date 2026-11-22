@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="time_just_now">இப்போதுதான்</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d நிமிடத்துக்கு முன்</item>
+        <item quantity="other">%d நிமிடங்களுக்கு முன்</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d மணிநேரத்துக்கு முன்</item>
+        <item quantity="other">%d மணிநேரங்களுக்கு முன்</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%d நாளுக்கு முன்</item>
+        <item quantity="other">%d நாட்களுக்கு முன்</item>
+    </plurals>
+    <string name="reminder_preset_tonight">இன்றிரவு</string>
+    <string name="reminder_preset_tomorrow">நாளை</string>
+    <string name="reminder_preset_weekend">இந்த வார இறுதி</string>
+    <string name="reminder_preset_next_week">அடுத்த வாரம்</string>
+    <string name="reminder_preset_custom">நேரத்தைத் தேர்ந்தெடு…</string>
+    <string name="reminder_today">இன்று</string>
+    <string name="reminder_tomorrow">நாளை</string>
+    <string name="reminder_today_at">இன்று %1$s</string>
+    <string name="reminder_tomorrow_at">நாளை %1$s</string>
+    <string name="reminder_day_at">%1$s %2$s</string>
+    <string name="reminder_currently_set_for">தற்போது %1$s-க்கு அமைக்கப்பட்டுள்ளது</string>
+    <string name="reminder_nudge_at">உங்களுக்கு %1$s நினைவூட்டுவோம்</string>
+    <string name="reminder_remind_at">உங்களுக்கு %1$s நினைவூட்டுவோம்</string>
+    <string name="reminder_remind_me">நினைவூட்டு</string>
+    <string name="reminder_pettibox_will_ask_notification_permission">தேவைப்பட்டால் PettiBox அறிவிப்பு அனுமதியைக் கேட்கும். துல்லிய அலாரங்கள் அணைக்கப்பட்டிருந்தால் நினைவூட்டல்கள் சற்றுத் தாமதமாக வரலாம்.</string>
+    <string name="reminder_choose_date_time">தேதி, நேரத்தைத் தேர்ந்தெடு</string>
+    <string name="reminder_clear_reminder">நினைவூட்டலை அழி</string>
+    <string name="reminder_custom_reminder">தனிப்பயன் நினைவூட்டல்</string>
+    <string name="reminder_pick_time_below_enable_set">அமை என்பதை இயக்க கீழே நேரத்தைத் தேர்ந்தெடுங்கள்</string>
+    <string name="reminder_pick_date_time">தேதி, நேரத்தைத் தேர்ந்தெடுங்கள்</string>
+    <string name="reminder_moment_has_already_passed_pick">அந்த நேரம் ஏற்கனவே கடந்துவிட்டது — எதிர்கால நேரத்தைத் தேர்ந்தெடுங்கள்</string>
+    <string name="reminder_date">தேதி</string>
+    <string name="reminder_tap_pick">தேர்ந்தெடுக்கத் தட்டுங்கள்</string>
+    <string name="reminder_time">நேரம்</string>
+    <string name="reminder_tap_set">அமைக்கத் தட்டுங்கள்</string>
+    <string name="reminder_set_reminder">நினைவூட்டலை அமை</string>
+    <string name="reminder_done">முடிந்தது</string>
+    <string name="reminder_pick_time">நேரத்தைத் தேர்ந்தெடு</string>
+    <string name="reminder_set_time">நேரத்தை அமை</string>
+</resources>

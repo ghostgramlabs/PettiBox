@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.domain.model
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.ui.graphics.Color
 import com.ghostgramlabs.pettibox.ui.theme.BeautyPink
 import com.ghostgramlabs.pettibox.ui.theme.FinanceEmerald
@@ -57,7 +61,51 @@ object CategoryPalette {
     )
 
     fun colorOf(hex: Long): Color = Color(hex)
+
+    /** Each starter's name as a string resource, by id. */
+    private val nameRes: Map<String, Int> = mapOf(
+        "recipes" to R.string.starter_recipes,
+        "travel" to R.string.starter_travel,
+        "fitness" to R.string.starter_fitness,
+        "style" to R.string.starter_style,
+        "home" to R.string.starter_home,
+        "beauty" to R.string.starter_beauty,
+        "read_later" to R.string.starter_read_later,
+        "finance" to R.string.starter_finance,
+        "music" to R.string.starter_music,
+        "books" to R.string.starter_books,
+        "food_spots" to R.string.starter_food_spots,
+        "shopping" to R.string.starter_shopping,
+        "work" to R.string.starter_work,
+        "ideas" to R.string.starter_ideas,
+        "watch" to R.string.starter_watch,
+        "learning" to R.string.starter_learning,
+        "health" to R.string.starter_health,
+        "docs" to R.string.starter_docs,
+        "personal" to R.string.starter_personal,
+        "tech" to R.string.starter_tech,
+        "design" to R.string.starter_design,
+        "gifts" to R.string.starter_gifts,
+        "places" to R.string.starter_places,
+        "kids" to R.string.starter_kids
+    )
+
+    /**
+     * A collection's name as shown: a starter still called what it came with
+     * is said in the app's language; a renamed or user-made one as written.
+     * The stored name is never changed, so phones in different languages
+     * syncing the same library don't keep renaming it for each other.
+     */
+    fun displayName(id: String, name: String): String {
+        val preset = Defaults.firstOrNull { it.id == id } ?: return name
+        if (name != preset.name) return name
+        return nameRes[id]?.let { AppText.getString(it) } ?: name
+    }
 }
+
+/** This collection's name in the app's language (see [CategoryPalette.displayName]). */
+val com.ghostgramlabs.pettibox.data.local.CategoryEntity.displayName: String
+    get() = CategoryPalette.displayName(id, name)
 
 private fun Color.toLongHex(): Long {
     val a = (alpha * 255).toInt() and 0xFF

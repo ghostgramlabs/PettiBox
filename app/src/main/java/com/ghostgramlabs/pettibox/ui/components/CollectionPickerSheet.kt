@@ -1,5 +1,10 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
+import com.ghostgramlabs.pettibox.domain.model.displayName
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,7 +60,10 @@ const val COLLECTION_FINDER_THRESHOLD = 8
 /** Name or emoji match, the same rule the Save sheet and Browse use. */
 fun CategoryEntity.matchesCollectionQuery(query: String): Boolean {
     val q = query.trim()
-    return q.isBlank() || name.contains(q, ignoreCase = true) || emoji.contains(q)
+    // The shown (possibly translated) name first; the stored name still
+    // matches, so typing a starter's English name keeps working.
+    return q.isBlank() || displayName.contains(q, ignoreCase = true) ||
+        name.contains(q, ignoreCase = true) || emoji.contains(q)
 }
 
 /**
@@ -73,7 +81,7 @@ fun CollectionPickerSheet(
     currentCategoryId: String?,
     onPick: (String?) -> Unit,
     onDismiss: () -> Unit,
-    title: String = "Move to collection",
+    title: String = stringResource(R.string.quick_move_collection),
     onCreate: ((NewCollection) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -86,7 +94,7 @@ fun CollectionPickerSheet(
                 compareBy(
                     { if (it.id == currentCategoryId) 0 else 1 },
                     { if (it.userCreated) 0 else 1 },
-                    { it.name.lowercase() }
+                    { it.displayName.lowercase() }
                 )
             )
     }
@@ -104,8 +112,8 @@ fun CollectionPickerSheet(
     }
     // Named from the search when no collection is called that yet.
     val createLabel = query.trim().let { q ->
-        if (q.isEmpty() || categories.any { it.name.equals(q, ignoreCase = true) }) "New collection"
-        else "Create \"$q\""
+        if (q.isEmpty() || categories.any { it.name.equals(q, ignoreCase = true) || it.displayName.equals(q, ignoreCase = true) }) stringResource(R.string.collection_new_collection)
+        else stringResource(R.string.save_create, q)
     }
 
     ModalBottomSheet(
@@ -131,7 +139,7 @@ fun CollectionPickerSheet(
                 value = query,
                 onValueChange = { query = it },
                 singleLine = true,
-                placeholder = { Text("Find collection") },
+                placeholder = { Text(stringResource(R.string.home_find_collection)) },
                 leadingIcon = {
                     Icon(
                         Icons.Rounded.Search,
@@ -142,7 +150,7 @@ fun CollectionPickerSheet(
                 trailingIcon = {
                     if (query.isNotBlank()) {
                         IconButton(onClick = { query = "" }) {
-                            Icon(Icons.Rounded.Close, contentDescription = "Clear collection filter")
+                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.home_clear_collection_filter))
                         }
                     }
                 },
@@ -152,7 +160,7 @@ fun CollectionPickerSheet(
             Spacer(Modifier.height(10.dp))
             if (visible.isEmpty()) {
                 Text(
-                    "No collection matches \"${query.trim()}\"",
+                    stringResource(R.string.home_no_collection_matches, query.trim()),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 16.dp)
@@ -171,7 +179,7 @@ fun CollectionPickerSheet(
                 items(visible, key = { it.id }) { c ->
                     val selected = c.id == currentCategoryId
                     CollectionRow(
-                        name = c.name,
+                        name = c.displayName,
                         emoji = c.emoji,
                         color = Color(c.colorHex),
                         selected = selected,
@@ -249,13 +257,13 @@ fun CollectionRow(
         if (selected) {
             Icon(
                 Icons.Rounded.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.browse_selected),
                 tint = color,
                 modifier = Modifier.size(20.dp)
             )
         } else if (suggested) {
             Text(
-                "Suggested",
+                stringResource(R.string.save_suggested),
                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                 color = scheme.primary
             )

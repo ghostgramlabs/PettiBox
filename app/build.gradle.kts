@@ -82,6 +82,12 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+    // The in-app language picker can switch to a language the phone isn't set
+    // to, so every translation must ship in the base APK rather than in
+    // per-language Play splits that would only download the phone's languages.
+    bundle {
+        language { enableSplit = false }
+    }
 }
 
 // The sync simulation runs 1,500 random scenarios by default; raise it with

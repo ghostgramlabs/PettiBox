@@ -1,5 +1,10 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.ghostgramlabs.pettibox.R
+
+import com.ghostgramlabs.pettibox.domain.model.displayName
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -68,7 +73,7 @@ fun EditCollectionDialog(
     lockAvailable: Boolean = false,
     onLockedChange: ((Boolean) -> Unit)? = null
 ) {
-    var name by remember(category.id) { mutableStateOf(category.name) }
+    var name by remember(category.id) { mutableStateOf(category.displayName) }
     var emoji by remember(category.id) { mutableStateOf(category.emoji) }
     var color by remember(category.id) { mutableStateOf(Color(category.colorHex)) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -88,7 +93,7 @@ fun EditCollectionDialog(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                "Edit collection",
+                stringResource(R.string.browse_edit_collection),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -96,13 +101,13 @@ fun EditCollectionDialog(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it.take(28) },
-                placeholder = { Text("Collection name") },
+                placeholder = { Text(stringResource(R.string.collection_collection_name)) },
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(16.dp))
-            Text("Emoji", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.collection_emoji), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(6.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(CollectionEmojiSeeds) { e ->
@@ -122,7 +127,7 @@ fun EditCollectionDialog(
                 }
             }
             Spacer(Modifier.height(12.dp))
-            Text("Color", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.collection_color), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(6.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(CollectionColorSeeds) { c ->
@@ -157,12 +162,12 @@ fun EditCollectionDialog(
             ) {
                 if (onDelete != null) {
                     TextButton(onClick = onDelete) {
-                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.settings_delete_2), color = MaterialTheme.colorScheme.error)
                     }
                 }
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.settings_cancel))
                 }
                 Spacer(Modifier.width(8.dp))
                 Button(
@@ -173,7 +178,7 @@ fun EditCollectionDialog(
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Save", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.settings_save), fontWeight = FontWeight.Bold) }
             }
         }
     }
@@ -199,16 +204,15 @@ private fun LockRow(locked: Boolean, enabled: Boolean, onLockedChange: (Boolean)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                "Lock this collection",
+                stringResource(R.string.collection_lock_collection),
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 if (enabled) {
-                    "Hidden from Home, search, and everywhere else until you unlock it " +
-                        "with your fingerprint, face, or phone PIN."
+                    stringResource(R.string.collection_hidden_home_search_everywhere_else)
                 } else {
-                    "Set a screen lock on your phone to use this."
+                    stringResource(R.string.collection_set_screen_lock_phone_use)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant

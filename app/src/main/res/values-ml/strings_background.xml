@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">നിങ്ങളുടെ ഷെൽഫിൽ എന്തോ കാത്തിരിക്കുന്നു</string>
+    <string name="nudge_title">നിങ്ങളുടെ ഷെൽഫിൽ നിന്ന്</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">നിങ്ങൾക്ക് വായിക്കാത്ത %d ഇനമുണ്ട്.</item>
+        <item quantity="other">നിങ്ങൾക്ക് വായിക്കാത്ത %d ഇനങ്ങളുണ്ട്.</item>
+    </plurals>
+    <string name="nudge_body_one">“%1$s” — %2$s സേവ് ചെയ്തു.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">“%1$s” — %2$s സേവ് ചെയ്തു. വായിക്കാത്ത %3$d എണ്ണം കൂടിയുണ്ട്.</item>
+        <item quantity="other">“%1$s” — %2$s സേവ് ചെയ്തു. വായിക്കാത്ത %3$d എണ്ണം കൂടിയുണ്ട്.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">%d ഫയൽ ഈ ഫോണിൽ ഇല്ലാത്തതിനാൽ അയയ്ക്കാനാകില്ല. ഇനം തുറന്ന് ഫയൽ വീണ്ടും ചേർക്കൂ.</item>
+        <item quantity="other">%d ഫയലുകൾ ഈ ഫോണിൽ ഇല്ലാത്തതിനാൽ അയയ്ക്കാനാകില്ല. ഇനം തുറന്ന് ഫയലുകൾ വീണ്ടും ചേർക്കൂ.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">ലൈബ്രറി സിങ്ക് ചെയ്തു · %1$d ഫയൽ മറ്റൊരു ഉപകരണം അയയ്ക്കാൻ കാത്തിരിക്കുന്നു · %2$s പരിശോധിച്ചു</item>
+        <item quantity="other">ലൈബ്രറി സിങ്ക് ചെയ്തു · %1$d ഫയലുകൾ മറ്റൊരു ഉപകരണം അയയ്ക്കാൻ കാത്തിരിക്കുന്നു · %2$s പരിശോധിച്ചു</item>
+    </plurals>
+    <string name="files_all_in_drive">എല്ലാ ഫോട്ടോകളും ഫയലുകളും Google Drive-ൽ ഉണ്ട് · %1$s പരിശോധിച്ചു</string>
+    <string name="files_checked">ഫോട്ടോകളും ഫയലുകളും %1$s പരിശോധിച്ചു</string>
+    <string name="files_unreachable">ഫോട്ടോകളും ഫയലുകളും അയയ്ക്കുമ്പോൾ Google Drive-ൽ എത്താനായില്ല (%1$s). ഉടൻ തനിയെ വീണ്ടും ശ്രമിക്കും.</string>
+    <string name="files_no_connection">കണക്ഷനില്ല</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d ഫയൽ ഈ ഫോണിൽ ഇനി വായിക്കാനാകില്ല (അത് വന്ന ആപ്പ് ഇനി അനുവദിക്കുന്നില്ല), അതിനാൽ അയയ്ക്കാനാകില്ല.</item>
+        <item quantity="other">%d ഫയലുകൾ ഈ ഫോണിൽ ഇനി വായിക്കാനാകില്ല (അവ വന്ന ആപ്പ് ഇനി അനുവദിക്കുന്നില്ല), അതിനാൽ അയയ്ക്കാനാകില്ല.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">%d ഫോട്ടോ അല്ലെങ്കിൽ ഫയൽ Google Drive-ലേക്ക് അയയ്ക്കുന്നു…</item>
+        <item quantity="other">%d ഫോട്ടോകളും ഫയലുകളും Google Drive-ലേക്ക് അയയ്ക്കുന്നു…</item>
+    </plurals>
+    <string name="files_sending_progress">ഫോട്ടോകളും ഫയലുകളും Google Drive-ലേക്ക് അയയ്ക്കുന്നു… %2$d-ൽ %1$d</string>
+    <string name="sync_step_connecting">കണക്റ്റ് ചെയ്യുമ്പോൾ</string>
+    <string name="sync_unreachable">Google Drive-ൽ എത്താനായില്ല</string>
+    <string name="sync_drive_error">Google Drive ഒരു പ്രശ്നത്തോടെ മറുപടി നൽകി (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">ഉടൻ തനിയെ വീണ്ടും ശ്രമിക്കും.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">മറ്റൊരു ഉപകരണത്തിൽ നിന്നുള്ള കേടായ %d ഫയൽ ഒഴിവാക്കി; അതിലെ ഒന്നും പ്രയോഗിച്ചില്ല</item>
+        <item quantity="other">മറ്റൊരു ഉപകരണത്തിൽ നിന്നുള്ള കേടായ %d ഫയലുകൾ ഒഴിവാക്കി; അവയിലെ ഒന്നും പ്രയോഗിച്ചില്ല</item>
+    </plurals>
+    <string name="sync_every_15_min">15 മിനിറ്റ്</string>
+    <string name="sync_every_30_min">30 മിനിറ്റ്</string>
+    <string name="sync_every_hour">1 മണിക്കൂർ</string>
+    <string name="sync_every_3_hours">3 മണിക്കൂർ</string>
+    <string name="sync_daily">ദിവസവും</string>
+    <string name="sync_weekly">ആഴ്ചതോറും</string>
+    <string name="sync_only_in_use">ഉപയോഗിക്കുമ്പോൾ മാത്രം</string>
+    <string name="reminder_save_locked_collection">ലോക്ക് ചെയ്ത കളക്ഷനിലെ ഒരു ഇനം</string>
+    <string name="reminder_saved_item">സേവ് ചെയ്ത ഇനം</string>
+    <string name="reminder_snooze_1h">1 മണിക്കൂറിൽ ഓർമ്മിപ്പിക്കുക</string>
+    <string name="reminder_evening">ഇന്ന് വൈകുന്നേരം</string>
+    <string name="nudge_see_all_unread">വായിക്കാത്തവയെല്ലാം കാണുക</string>
+    <string name="nudge_once_week_one_thing_saved">ആഴ്ചയിൽ ഒരിക്കൽ, നിങ്ങൾ സേവ് ചെയ്‌തിട്ടും ഇതുവരെ തുറക്കാത്ത ഒന്ന്.</string>
+    <string name="reminder_save_reminders">ഇന റിമൈൻഡറുകൾ</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">PettiBox-നോട് ഓർമ്മിപ്പിക്കാൻ പറഞ്ഞ കാര്യങ്ങൾക്കുള്ള അറിയിപ്പുകൾ.</string>
+    <string name="files_photos_files_waiting_reconnect_google">ഫോട്ടോകളും ഫയലുകളും കാത്തിരിക്കുന്നു: ക്രമീകരണത്തിൽ Google Drive വീണ്ടും കണക്റ്റ് ചെയ്യൂ.</string>
+    <string name="files_photos_files_sent_once_first">ആദ്യ സിങ്ക് പൂർത്തിയായാൽ ഫോട്ടോകളും ഫയലുകളും അയയ്ക്കും.</string>
+    <string name="files_photos_files_arent_sent_google">ഫോട്ടോകളും ഫയലുകളും അയയ്ക്കുന്നില്ല: Google Drive-ൽ %1$s ആയാണ് സൈൻ ഇൻ ചെയ്തിരിക്കുന്നത്, %2$s ആയല്ല.</string>
+    <string name="files_photos_files_couldnt_sent_tap">ഫോട്ടോകളും ഫയലുകളും അയയ്ക്കാനായില്ല: %1$s. വീണ്ടും ശ്രമിക്കാൻ ഇപ്പോൾ സിങ്ക് ചെയ്യുക ടാപ്പ് ചെയ്യൂ.</string>
+    <string name="files_photos_files_stopped_sending_trying">ഫോട്ടോകളും ഫയലുകളും അയയ്ക്കുന്നത് നിന്നു: %1$s. ഉടൻ വീണ്ടും ശ്രമിക്കും.</string>
+    <string name="sync_sync_stopped">സിങ്ക് നിന്നു: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">മറ്റൊരു ഉപകരണത്തിൽ നിന്ന് Google Drive-ലെ സിങ്ക് ഡാറ്റ ഇല്ലാതാക്കിയതിനാൽ സിങ്ക് ഓഫാക്കി. ഈ ഫോണിൽ എല്ലാം അതേപടിയുണ്ട്; പുതുതായി തുടങ്ങാൻ സിങ്ക് വീണ്ടും ഓണാക്കൂ.</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive വീണ്ടും കണക്റ്റ് ചെയ്യണം</string>
+    <string name="sync_google_drive_didnt_say_which">ഇത് ഏത് അക്കൗണ്ടാണെന്ന് Google Drive പറഞ്ഞില്ല</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive-ൽ %1$s ആയി സൈൻ ഇൻ ചെയ്തിരിക്കുന്നു, എന്നാൽ ഈ ലൈബ്രറി %2$s-മായാണ് സിങ്ക് ചെയ്യുന്നത്. %3$s-ലേക്ക് തിരികെ മാറൂ, അല്ലെങ്കിൽ %4$s-മായി സിങ്ക് ചെയ്യാൻ സിങ്ക് ഓഫാക്കി വീണ്ടും ഓണാക്കൂ.</string>
+    <string name="sync_couldnt_save_safety_copy_library">സിങ്ക് ചെയ്യുന്നതിന് മുമ്പ് ലൈബ്രറിയുടെ സുരക്ഷാ പകർപ്പ് സേവ് ചെയ്യാനായില്ല. അടുത്ത തവണ വീണ്ടും ശ്രമിക്കും.</string>
+    <string name="sync_checking_google_drive">Google Drive പരിശോധിക്കുന്നു…</string>
+    <string name="sync_receiving_changes">മാറ്റങ്ങൾ സ്വീകരിക്കുന്നു…</string>
+    <string name="sync_another_device_uses_newer_version">മറ്റൊരു ഉപകരണം PettiBox-ന്റെ പുതിയ പതിപ്പ് ഉപയോഗിക്കുന്നു. അത് സേവ് ചെയ്തതെല്ലാം കാണാൻ ഈ ആപ്പ് അപ്‌ഡേറ്റ് ചെയ്യൂ.</string>
+    <string name="sync_preparing_changes">നിങ്ങളുടെ മാറ്റങ്ങൾ തയ്യാറാക്കുന്നു…</string>
+    <string name="sync_updating_library">നിങ്ങളുടെ ലൈബ്രറി അപ്‌ഡേറ്റ് ചെയ്യുന്നു…</string>
+    <string name="sync_couldnt_save_safety_copy_before">ഇനങ്ങൾ നീക്കുന്നതിന് മുമ്പ് സുരക്ഷാ പകർപ്പ് സേവ് ചെയ്യാനായില്ല, അതിനാൽ ഒന്നും നീക്കിയില്ല. കുറച്ച് സ്ഥലം ഒഴിവാക്കി വീണ്ടും തിരഞ്ഞെടുക്കൂ.</string>
+    <string name="sync_sending_changes">നിങ്ങളുടെ മാറ്റങ്ങൾ അയയ്ക്കുന്നു…</string>
+    <string name="article_page_no_longer_exists">ആ പേജ് ഇനി നിലവിലില്ല</string>
+    <string name="article_site_doesnt_allow_saving_copy">ഈ സൈറ്റ് പകർപ്പ് സേവ് ചെയ്യാൻ അനുവദിക്കുന്നില്ല</string>
+    <string name="article_site_answered_error">സൈറ്റ് ഒരു പ്രശ്നത്തോടെ മറുപടി നൽകി (%1$s)</string>
+    <string name="article_couldnt_find_article_page">ഈ പേജിൽ ലേഖനം കണ്ടെത്താനായില്ല</string>
+    <string name="article_page_too_long_keep_copy">പകർപ്പ് സൂക്ഷിക്കാൻ ഈ പേജ് വളരെ വലുതാണ്</string>
+    <string name="article_couldnt_reach_page_check_connection">പേജിൽ എത്താനായില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കൂ.</string>
+</resources>

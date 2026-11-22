@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.ui.components
 
+import androidx.compose.ui.res.stringResource
+
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,7 +32,7 @@ import com.ghostgramlabs.pettibox.ui.theme.isLightTheme
  */
 @Composable
 fun SearchPill(
-    placeholder: String = "Search anything you saved",
+    placeholder: String = stringResource(R.string.search_search_anything_saved),
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {

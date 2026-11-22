@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">", "</string>
+    <plurals name="count_saves">
+        <item quantity="one">%d Eintrag</item>
+        <item quantity="other">%d Einträge</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="one">%d Datei</item>
+        <item quantity="other">%d Dateien</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="one">%d Favorit</item>
+        <item quantity="other">%d Favoriten</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="one">%d archiviert</item>
+        <item quantity="other">%d archiviert</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="one">%d Tag</item>
+        <item quantity="other">%d Tags</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="one">%d Sammlung</item>
+        <item quantity="other">%d Sammlungen</item>
+    </plurals>
+    <string name="source_web">Web</string>
+    <string name="source_maps">Maps</string>
+    <string name="source_files">Dateien</string>
+    <string name="source_clipboard">Zwischenablage</string>
+    <string name="source_other">Sonstiges</string>
+    <plurals name="count_items">
+        <item quantity="one">%d Element</item>
+        <item quantity="other">%d Elemente</item>
+    </plurals>
+    <string name="untitled">Ohne Titel</string>
+    <string name="starter_recipes">Rezepte</string>
+    <string name="starter_travel">Reisen</string>
+    <string name="starter_fitness">Fitness</string>
+    <string name="starter_style">Stil</string>
+    <string name="starter_home">Zuhause</string>
+    <string name="starter_beauty">Beauty</string>
+    <string name="starter_read_later">Später lesen</string>
+    <string name="starter_finance">Finanzen</string>
+    <string name="starter_music">Musik</string>
+    <string name="starter_books">Bücher</string>
+    <string name="starter_food_spots">Restaurants</string>
+    <string name="starter_shopping">Shopping</string>
+    <string name="starter_work">Arbeit</string>
+    <string name="starter_ideas">Ideen</string>
+    <string name="starter_watch">Zum Anschauen</string>
+    <string name="starter_learning">Lernen</string>
+    <string name="starter_health">Gesundheit</string>
+    <string name="starter_docs">Dokumente</string>
+    <string name="starter_personal">Persönlich</string>
+    <string name="starter_tech">Technik</string>
+    <string name="starter_design">Design</string>
+    <string name="starter_gifts">Geschenke</string>
+    <string name="starter_places">Orte</string>
+    <string name="starter_kids">Kinder</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
+    <string name="widget_all_caught_up">Alles erledigt</string>
+    <plurals name="widget_unread">
+        <item quantity="one">%d ungelesen</item>
+        <item quantity="other">%d ungelesen</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · Kopie gespeichert am %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="one">%d Min. Lesezeit</item>
+        <item quantity="other">%d Min. Lesezeit</item>
+    </plurals>
+    <string name="quick_change_reminder">Erinnerung ändern</string>
+    <string name="quick_copy_link">Link kopieren</string>
+    <string name="quick_copy_note">Notiz kopieren</string>
+    <string name="quick_note_copied">Notiz kopiert</string>
+    <string name="quick_move_collection">In Sammlung verschieben</string>
+    <string name="card_open_quick_actions">Schnellaktionen öffnen</string>
+    <string name="card_archived">Archiviert</string>
+    <string name="card_reminder">Erinnerung</string>
+    <string name="collection_new_collection">Neue Sammlung</string>
+    <string name="collection_collection_name">Name der Sammlung</string>
+    <string name="collection_emoji">Emoji</string>
+    <string name="collection_color">Farbe</string>
+    <string name="collection_lock_collection">Diese Sammlung sperren</string>
+    <string name="collection_hidden_home_search_everywhere_else">Auf der Startseite, in der Suche und überall sonst ausgeblendet, bis du sie mit Fingerabdruck, Gesicht oder Telefon-PIN entsperrst.</string>
+    <string name="collection_set_screen_lock_phone_use">Richte dafür eine Displaysperre auf deinem Telefon ein.</string>
+    <string name="collection_name_e_g_weekend_reads">Gib ihr einen Namen (z. B. Wochenendlektüre)</string>
+    <string name="collection_pick_emoji">Emoji wählen</string>
+    <string name="collection_pick_color">Farbe wählen</string>
+    <string name="collection_create">Erstellen</string>
+    <string name="help_i_keep_links_screenshots_pdfs">Ich sammle Links, Screenshots, PDFs und Notizen in PettiBox – aus jeder App speichern, Artikel offline lesen und Text in Bildern finden. Kostenlos: %1$s</string>
+    <string name="help_share_pettibox">PettiBox teilen</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s – Frage oder Problem</string>
+    <string name="help_please_keep_part_helps_me">——— Bitte lass diesen Teil stehen, er hilft mir, dir zu helfen ———</string>
+    <string name="sync_edited_2_devices_needs_choice">Auf 2 Geräten bearbeitet: bitte auswählen</string>
+    <string name="lock_unlock_locked_collections">Gesperrte Sammlungen entsperren</string>
+    <string name="lock_unlock_pettibox">PettiBox entsperren</string>
+    <string name="lock_use_fingerprint_face_phone_pin">Fingerabdruck, Gesicht oder Telefon-PIN verwenden</string>
+    <string name="lock_pettibox_locked">PettiBox ist gesperrt</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">Entsperre mit Fingerabdruck, Gesicht oder Telefon-PIN.</string>
+    <string name="lock_unlock">Entsperren</string>
+    <string name="lock_save_locked_collection">Dieser Eintrag liegt in einer gesperrten Sammlung</string>
+    <string name="lock_go_back">Zurück</string>
+    <string name="nav_settings">Einstellungen</string>
+    <string name="nav_not_selected">Nicht ausgewählt</string>
+    <string name="widget_pettibox_locked">PettiBox ist gesperrt 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">Entsperre PettiBox, um deine Einträge hier zu sehen.</string>
+    <string name="widget_nothing_waiting">Nichts offen ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">Teile einen Link oder ein Foto mit PettiBox, dann liegt es hier, bis du es öffnest.</string>
+    <string name="nav_home">Start</string>
+    <string name="nav_search">Suchen</string>
+    <string name="nav_browse">Entdecken</string>
+</resources>

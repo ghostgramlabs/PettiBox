@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.ui.widget
 
+import com.ghostgramlabs.pettibox.util.localized
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -149,11 +153,8 @@ private fun WidgetContent(context: Context, total: Int, items: List<SaveItemEnti
                     style = TextStyle(color = InkText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 )
                 Text(
-                    when (total) {
-                        0 -> "All caught up"
-                        1 -> "1 unread"
-                        else -> "$total unread"
-                    },
+                    if (total == 0) context.localized().getString(R.string.widget_all_caught_up)
+                    else context.localized().resources.getQuantityString(R.plurals.widget_unread, total, total),
                     style = TextStyle(color = MutedText, fontSize = 12.sp)
                 )
             }
@@ -172,13 +173,13 @@ private fun WidgetContent(context: Context, total: Int, items: List<SaveItemEnti
         when {
             locked -> Message(
                 context,
-                "PettiBox is locked 🔒",
-                "Unlock PettiBox to see your saves here."
+                context.localized().getString(R.string.widget_pettibox_locked),
+                context.localized().getString(R.string.widget_unlock_pettibox_see_saves_here)
             )
             items.isEmpty() -> Message(
                 context,
-                "Nothing waiting ✨",
-                "Share a link or photo to PettiBox and it lands here until you open it."
+                context.localized().getString(R.string.widget_nothing_waiting),
+                context.localized().getString(R.string.widget_share_link_photo_pettibox_lands)
             )
             else -> LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
                 items(items, itemId = { it.id }) { item ->
@@ -196,12 +197,12 @@ private fun WidgetContent(context: Context, total: Int, items: List<SaveItemEnti
                             Spacer(GlanceModifier.size(8.dp))
                             Column(modifier = GlanceModifier.defaultWeight()) {
                                 Text(
-                                    item.title.ifBlank { "Untitled save" },
+                                    item.title.ifBlank { context.localized().getString(R.string.detail_untitled_save) },
                                     maxLines = 2,
                                     style = TextStyle(color = InkText, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                                 )
                                 Text(
-                                    "saved ${TimeFormat.relative(item.createdAt)}",
+                                    context.localized().getString(R.string.save_saved_when, TimeFormat.relative(item.createdAt)),
                                     style = TextStyle(color = MutedText, fontSize = 11.sp)
                                 )
                             }

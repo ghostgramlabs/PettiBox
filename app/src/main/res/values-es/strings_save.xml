@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">Guardado rápido</string>
+    <string name="save_saved_image">Imagen guardada</string>
+    <string name="save_saved_pdf">PDF guardado</string>
+    <string name="save_saved_file">Archivo guardado</string>
+    <string name="save_saved_when">guardado %1$s</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d imagen</item>
+        <item quantity="many">%d imágenes</item>
+        <item quantity="other">%d imágenes</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="many">%d PDF</item>
+        <item quantity="other">%d PDF</item>
+    </plurals>
+    <string name="save_discard_what_typed">¿Descartar lo que escribiste?</string>
+    <string name="save_note_tags_havent_been_saved">Tu nota y tus etiquetas aún no se han guardado.</string>
+    <string name="save_discard">Descartar</string>
+    <string name="save_keep_editing">Seguir editando</string>
+    <string name="save_save">¿Guardar esto?</string>
+    <string name="save_save_2">Guardar en</string>
+    <string name="save_no_collection_called_yet">Aún no hay ninguna colección llamada «%1$s»</string>
+    <string name="save_want_start_one">¿Quieres crearla?</string>
+    <string name="save_create">Crear «%1$s»</string>
+    <string name="save_new">Nueva</string>
+    <string name="save_remove_favorites">Quitar de favoritos</string>
+    <string name="save_add_favorites">Añadir a favoritos</string>
+    <string name="save_write_note_save">Escribe una nota para guardar</string>
+    <string name="save_save_3">Guardar en %1$s</string>
+    <string name="save_save_without_collection">Guardar sin colección</string>
+    <string name="save_selected">Seleccionado: %1$s</string>
+    <string name="save_add_which_save">¿A qué guardado lo añades?</string>
+    <string name="save_add_note">Añadir nota</string>
+    <string name="save_add_tags">Añadir etiquetas</string>
+    <string name="save_add_note_2">Añade una nota</string>
+    <string name="save_tags_comma_separated">Etiquetas, separadas por comas</string>
+    <string name="save_tucked_away">¡Guardado!</string>
+    <string name="save_find_home_screen_anytime">Lo encontrarás en la pantalla de inicio cuando quieras.</string>
+    <string name="save_append_save">Añadir a un guardado</string>
+    <string name="save_already_saved">Ya guardaste esto</string>
+    <string name="save_open">Abrirlo</string>
+    <string name="save_save_anyway">Guardar igualmente</string>
+    <string name="save_suggested">Sugerida</string>
+    <string name="save_recently_used">Usadas recientemente</string>
+    <string name="save_collections">Tus colecciones</string>
+    <string name="save_starter_collections">Colecciones iniciales</string>
+</resources>

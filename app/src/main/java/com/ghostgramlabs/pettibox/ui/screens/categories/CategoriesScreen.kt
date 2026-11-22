@@ -1,5 +1,15 @@
 package com.ghostgramlabs.pettibox.ui.screens.categories
 
+import com.ghostgramlabs.pettibox.ui.components.KeeperPose
+
+import com.ghostgramlabs.pettibox.domain.model.displayName
+
+import androidx.compose.ui.res.pluralStringResource
+
+import androidx.compose.ui.res.stringResource
+
+import com.ghostgramlabs.pettibox.R
+
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -123,16 +133,16 @@ fun CategoriesScreen(
     if (showDeleteCategory && selectedCategory != null) {
         AlertDialog(
             onDismissRequest = { showDeleteCategory = false },
-            title = { Text("Delete ${selectedCategory.name}?") },
-            text = { Text("Saves in this collection will stay in PettiBox, but the collection will be removed.") },
+            title = { Text(stringResource(R.string.settings_delete, selectedCategory.displayName)) },
+            text = { Text(stringResource(R.string.browse_saves_collection_will_stay_pettibox)) },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteCategory = false
                     viewModel.deleteSelectedCategory()
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.settings_delete_2), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteCategory = false }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteCategory = false }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -165,8 +175,8 @@ fun CategoriesScreen(
                         viewModel.setSelectedCategoryLocked(true)
                         Toast.makeText(
                             ctx,
-                            if (state.showLockedTile) "Locked. Find it under Browse › Locked."
-                            else "Locked. Open it from Settings › Privacy.",
+                            if (state.showLockedTile) ctx.getString(R.string.browse_locked_find_under_browse_locked)
+                            else ctx.getString(R.string.browse_locked_open_settings_privacy),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -186,23 +196,23 @@ fun CategoriesScreen(
     trashPromptItem?.let { item ->
         AlertDialog(
             onDismissRequest = { trashPromptItem = null },
-            title = { Text(item.title.ifBlank { "Untitled save" }) },
-            text = { Text("Put it back where it was, or delete it for good?") },
+            title = { Text(item.title.ifBlank { stringResource(R.string.detail_untitled_save) }) },
+            text = { Text(stringResource(R.string.browse_put_back_where_was_delete)) },
             confirmButton = {
                 TextButton(onClick = {
                     trashPromptItem = null
                     viewModel.restore(listOf(item))
-                    scope.launch { snackbarHostState.showSnackbar("Restored") }
-                }) { Text("Restore") }
+                    scope.launch { snackbarHostState.showSnackbar(ctx.getString(R.string.browse_restored_one)) }
+                }) { Text(stringResource(R.string.settings_restore)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     trashPromptItem = null
                     scope.launch {
                         viewModel.deletePermanently(item)
-                        snackbarHostState.showSnackbar("Deleted for good")
+                        snackbarHostState.showSnackbar(ctx.getString(R.string.browse_deleted_one_for_good))
                     }
-                }) { Text("Delete for good", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.browse_delete_good), color = MaterialTheme.colorScheme.error) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -210,21 +220,21 @@ fun CategoriesScreen(
     if (showEmptyTrash) {
         AlertDialog(
             onDismissRequest = { showEmptyTrash = false },
-            title = { Text("Empty Recently deleted?") },
-            text = { Text("Everything here is removed for good, including its files. This can't be undone.") },
+            title = { Text(stringResource(R.string.browse_empty_recently_deleted)) },
+            text = { Text(stringResource(R.string.browse_everything_here_removed_good_including)) },
             confirmButton = {
                 TextButton(onClick = {
                     showEmptyTrash = false
                     scope.launch {
                         val n = viewModel.emptyTrash()
                         snackbarHostState.showSnackbar(
-                            if (n == 1) "1 save deleted for good" else "$n saves deleted for good"
+                            ctx.resources.getQuantityString(R.plurals.browse_deleted_for_good, n, n)
                         )
                     }
-                }) { Text("Empty", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.browse_empty_action), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showEmptyTrash = false }) { Text("Cancel") }
+                TextButton(onClick = { showEmptyTrash = false }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -240,14 +250,14 @@ fun CategoriesScreen(
             if (destination == BrowseDestination.Trash) {
                 // Already in Recently deleted: this is the for-good delete.
                 viewModel.deletePermanently(item)
-                snackbarHostState.showSnackbar("Deleted for good")
+                snackbarHostState.showSnackbar(ctx.getString(R.string.browse_deleted_one_for_good))
             } else {
                 // Everywhere else a delete lands in Recently deleted for 30
                 // days — archived or not — so Undo is just the fast path.
                 viewModel.stageDelete(item)
                 val result = snackbarHostState.showSnackbar(
-                    message = "Moved to Recently deleted",
-                    actionLabel = "Undo",
+                    message = ctx.getString(R.string.browse_moved_one_to_trash),
+                    actionLabel = ctx.getString(R.string.detail_undo),
                     duration = SnackbarDuration.Long
                 )
                 if (result == SnackbarResult.ActionPerformed) viewModel.undoStagedDelete(item)
@@ -356,15 +366,15 @@ fun CategoriesScreen(
                             if (destination == BrowseDestination.Trash) {
                                 viewModel.deleteItemsPermanently(items)
                                 snackbarHostState.showSnackbar(
-                                    if (items.size == 1) "Deleted for good"
-                                    else "${items.size} saves deleted for good"
+                                    if (items.size == 1) ctx.getString(R.string.browse_deleted_one_for_good)
+                                    else ctx.resources.getQuantityString(R.plurals.browse_deleted_for_good, items.size, items.size)
                                 )
                             } else {
                                 viewModel.stageDeleteItems(items)
                                 val result = snackbarHostState.showSnackbar(
-                                    message = if (items.size == 1) "Moved to Recently deleted"
-                                    else "${items.size} saves moved to Recently deleted",
-                                    actionLabel = "Undo",
+                                    message = if (items.size == 1) ctx.getString(R.string.browse_moved_one_to_trash)
+                                    else ctx.resources.getQuantityString(R.plurals.browse_moved_to_trash, items.size, items.size),
+                                    actionLabel = ctx.getString(R.string.detail_undo),
                                     duration = SnackbarDuration.Long
                                 )
                                 if (result == SnackbarResult.ActionPerformed) {
@@ -379,7 +389,8 @@ fun CategoriesScreen(
                         viewModel.restore(items)
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                if (items.size == 1) "Restored" else "${items.size} saves restored"
+                                if (items.size == 1) ctx.getString(R.string.browse_restored_one)
+                                else ctx.resources.getQuantityString(R.plurals.browse_restored, items.size, items.size)
                             )
                         }
                     },
@@ -416,13 +427,13 @@ private fun BrowseGrid(
             state.categories
         } else {
             state.categories.filter { category ->
-                category.name.contains(query, ignoreCase = true) ||
+                category.displayName.contains(query, ignoreCase = true) ||
                     category.emoji.contains(query)
             }
         }
     }
     ScreenHeading(
-        title = "Browse"
+        title = stringResource(R.string.home_browse)
     )
     // A staggered grid would be wrong here — the special row needs a
     // full-line span so the three pills always sit on one row and the
@@ -445,35 +456,35 @@ private fun BrowseGrid(
                     items = listOfNotNull(
                         SpecialEntry(
                             icon = Icons.Rounded.AutoStories,
-                            label = "Unread",
+                            label = stringResource(R.string.shortcut_unread_short),
                             count = state.unreadCount,
                             accent = UnreadAccent,
                             onClick = onOpenUnread
                         ),
                         SpecialEntry(
                             icon = Icons.Rounded.Favorite,
-                            label = "Favorites",
+                            label = stringResource(R.string.browse_favorites),
                             count = state.favoriteCount,
                             accent = Color(0xFFE85A6E),
                             onClick = onOpenFavorites
                         ),
                         SpecialEntry(
                             icon = Icons.Rounded.Archive,
-                            label = "Archive",
+                            label = stringResource(R.string.browse_archive_title),
                             count = state.archivedCount,
                             accent = Color(0xFF8B7355),
                             onClick = onOpenArchive
                         ),
                         SpecialEntry(
                             icon = Icons.Rounded.AccessTime,
-                            label = "Reminders",
+                            label = stringResource(R.string.settings_reminders),
                             count = state.reminderCount,
                             accent = Color(0xFF2F9B8F),
                             onClick = onOpenReminders
                         ),
                         SpecialEntry(
                             icon = Icons.Rounded.LocalOffer,
-                            label = "Tags",
+                            label = stringResource(R.string.detail_tags),
                             count = state.topTags.size,
                             accent = Color(0xFF5B7BC9),
                             onClick = onOpenTags
@@ -481,7 +492,7 @@ private fun BrowseGrid(
                         // Only worth a pill while there's something to restore.
                         if (state.trashCount > 0) SpecialEntry(
                             icon = Icons.Rounded.RestoreFromTrash,
-                            label = "Recently deleted",
+                            label = stringResource(R.string.browse_recently_deleted),
                             count = state.trashCount,
                             accent = TrashAccent,
                             onClick = onOpenTrash
@@ -490,7 +501,7 @@ private fun BrowseGrid(
                 )
                 Spacer(Modifier.height(20.dp))
                 Text(
-                    "Collections",
+                    stringResource(R.string.settings_collections),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
@@ -537,7 +548,7 @@ private fun BrowseGrid(
         if (visibleCategories.isEmpty() && collectionQuery.isNotBlank()) {
             item(span = StaggeredGridItemSpan.FullLine) {
                 Text(
-                    "No collection matches \"$collectionQuery\"",
+                    stringResource(R.string.home_no_collection_matches, collectionQuery),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 12.dp)
@@ -557,7 +568,7 @@ private fun CollectionFinder(
         value = query,
         onValueChange = onQueryChange,
         singleLine = true,
-        placeholder = { Text("Find a collection") },
+        placeholder = { Text(stringResource(R.string.browse_find_collection)) },
         leadingIcon = {
             Icon(
                 Icons.Rounded.Search,
@@ -568,7 +579,7 @@ private fun CollectionFinder(
         trailingIcon = {
             if (query.isNotBlank()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Clear collection search")
+                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.browse_clear_collection_search))
                 }
             }
         },
@@ -646,7 +657,7 @@ private fun SpecialPill(entry: SpecialEntry) {
                 color = scheme.onSurface
             )
             Text(
-                if (entry.count == 0) "Empty" else entry.count.toString(),
+                if (entry.count == 0) stringResource(R.string.browse_empty) else entry.count.toString(),
                 maxLines = 1,
                 style = MaterialTheme.typography.labelSmall,
                 color = scheme.onSurfaceVariant
@@ -662,19 +673,20 @@ private fun TagListView(
     onPickTag: (String) -> Unit
 ) {
     ScreenHeading(
-        title = "Tags",
-        subtitle = "Cross-cutting labels you've added to saves",
+        title = stringResource(R.string.detail_tags),
+        subtitle = stringResource(R.string.browse_cross_cutting_labels_youve_added),
         leading = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.detail_back))
             }
         }
     )
     if (tags.isEmpty()) {
         EmptyState(
             emoji = "🏷",
-            headline = "No tags yet",
-            body = "Tags are short labels (#urgent, #read-later) you can add to a save. They cut across collections — one save can have many tags. Add tags from the save sheet next time you stash something."
+            headline = stringResource(R.string.browse_no_tags_yet),
+            body = stringResource(R.string.browse_tags_short_labels_urgent_read),
+            pose = KeeperPose.Search
         )
         return
     }
@@ -723,7 +735,7 @@ private fun TagRow(name: String, count: Int, onClick: () -> Unit) {
                 color = scheme.onSurface
             )
             Text(
-                "$count save${if (count == 1) "" else "s"}",
+                pluralStringResource(R.plurals.count_saves, count, count),
                 style = MaterialTheme.typography.labelSmall,
                 color = scheme.onSurfaceVariant
             )
@@ -767,25 +779,25 @@ private fun DrillView(
     var showBulkDeleteConfirm by remember { mutableStateOf(false) }
     val inTrash = destination == BrowseDestination.Trash
     val title = when (destination) {
-        BrowseDestination.Favorites -> "Favorites"
-        BrowseDestination.Archive -> "Archive"
-        BrowseDestination.Reminders -> "Reminders"
-        BrowseDestination.Unread -> "Unread"
-        BrowseDestination.Trash -> "Recently deleted"
+        BrowseDestination.Favorites -> stringResource(R.string.browse_favorites)
+        BrowseDestination.Archive -> stringResource(R.string.browse_archive_title)
+        BrowseDestination.Reminders -> stringResource(R.string.settings_reminders)
+        BrowseDestination.Unread -> stringResource(R.string.shortcut_unread_short)
+        BrowseDestination.Trash -> stringResource(R.string.browse_recently_deleted)
         is BrowseDestination.Tag -> "#${destination.name}"
         is BrowseDestination.Category ->
-            if (selectedCategory != null) "${selectedCategory.emoji} ${selectedCategory.name}"
-            else "Collection"
+            if (selectedCategory != null) "${selectedCategory.emoji} ${selectedCategory.displayName}"
+            else stringResource(R.string.detail_collection)
         else -> ""
     }
     val subtitle = when (destination) {
-        BrowseDestination.Favorites -> "Saves you marked with a heart"
-        BrowseDestination.Archive -> "Everything you've tucked away"
-        BrowseDestination.Reminders -> "Upcoming nudges, sorted by time"
-        BrowseDestination.Unread -> "Saved, but not opened yet"
-        BrowseDestination.Trash -> "Kept for 30 days, then removed for good. Tap one to restore it."
-        is BrowseDestination.Tag -> "Saves carrying this tag"
-        is BrowseDestination.Category -> if (showArchived) "Archived saves" else null
+        BrowseDestination.Favorites -> stringResource(R.string.browse_saves_marked_heart)
+        BrowseDestination.Archive -> stringResource(R.string.browse_everything_youve_tucked_away)
+        BrowseDestination.Reminders -> stringResource(R.string.browse_upcoming_nudges_sorted_time)
+        BrowseDestination.Unread -> stringResource(R.string.browse_saved_but_not_opened_yet)
+        BrowseDestination.Trash -> stringResource(R.string.browse_kept_30_days_then_removed)
+        is BrowseDestination.Tag -> stringResource(R.string.browse_saves_carrying_tag)
+        is BrowseDestination.Category -> if (showArchived) stringResource(R.string.browse_archived_saves) else null
         else -> null
     }
     val defaultAccent = MaterialTheme.colorScheme.primary
@@ -804,7 +816,7 @@ private fun DrillView(
         subtitle = subtitle,
         leading = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.detail_back))
             }
         },
         trailing = {
@@ -816,18 +828,18 @@ private fun DrillView(
                     IconButton(onClick = onToggleArchived) {
                         Icon(
                             if (showArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
-                            contentDescription = if (showArchived) "Show active" else "Show archived",
+                            contentDescription = if (showArchived) stringResource(R.string.browse_show_active) else stringResource(R.string.browse_show_archived),
                             tint = if (showArchived) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     IconButton(onClick = onEditCategory) {
-                        Icon(Icons.Rounded.Edit, contentDescription = "Edit collection")
+                        Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.browse_edit_collection))
                     }
                     IconButton(onClick = onDeleteCategory) {
                         Icon(
                             Icons.Rounded.Delete,
-                            contentDescription = "Delete collection",
+                            contentDescription = stringResource(R.string.browse_delete_collection),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -835,7 +847,7 @@ private fun DrillView(
             }
             if (inTrash && canEmptyTrash) {
                 TextButton(onClick = onEmptyTrash) {
-                    Text("Empty", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.browse_empty_action), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -853,14 +865,14 @@ private fun DrillView(
             onDismissRequest = { showBulkDeleteConfirm = false },
             title = {
                 Text(
-                    if (inTrash) "Delete ${selectedVisibleItems.size} for good?"
-                    else "Delete ${selectedVisibleItems.size} selected?"
+                    if (inTrash) pluralStringResource(R.plurals.browse_delete_n_for_good, selectedVisibleItems.size, selectedVisibleItems.size)
+                    else pluralStringResource(R.plurals.browse_delete_n_selected, selectedVisibleItems.size, selectedVisibleItems.size)
                 )
             },
             text = {
                 Text(
-                    if (inTrash) "They're removed for good, including their files. This can't be undone."
-                    else "They move to Recently deleted (in Browse) for 30 days, so you can still bring them back."
+                    if (inTrash) stringResource(R.string.browse_theyre_removed_good_including_their)
+                    else stringResource(R.string.browse_they_move_recently_deleted_browse)
                 )
             },
             confirmButton = {
@@ -869,13 +881,13 @@ private fun DrillView(
                     onDeleteSelected(selectedVisibleItems)
                 }) {
                     Text(
-                        if (inTrash) "Delete for good" else "Delete",
+                        if (inTrash) stringResource(R.string.browse_delete_good) else stringResource(R.string.settings_delete_2),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showBulkDeleteConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showBulkDeleteConfirm = false }) { Text(stringResource(R.string.settings_cancel)) }
             },
             shape = RoundedCornerShape(24.dp)
         )
@@ -885,42 +897,50 @@ private fun DrillView(
         val (emoji, headline, body) = when (destination) {
             BrowseDestination.Favorites -> Triple(
                 "❤️",
-                "No favorites yet",
-                "Tap the heart on a save (long-press a card → ❤️) and it'll live here."
+                stringResource(R.string.browse_no_favorites_yet),
+                stringResource(R.string.browse_tap_heart_save_long_press)
             )
             BrowseDestination.Archive -> Triple(
                 "🗃",
-                "Nothing archived",
-                "Archive a save (long-press → archive) to tuck it away without deleting it."
+                stringResource(R.string.browse_nothing_archived),
+                stringResource(R.string.browse_archive_save_long_press_archive)
             )
             BrowseDestination.Reminders -> Triple(
                 "⏰",
-                "No reminders waiting",
-                "Set a reminder from a save card or the save sheet, and upcoming nudges will gather here."
+                stringResource(R.string.browse_no_reminders_waiting),
+                stringResource(R.string.browse_set_reminder_save_card_save)
             )
             BrowseDestination.Unread -> Triple(
                 "📭",
-                "All caught up",
-                "You've opened everything you saved. New saves wait here until you open them."
+                stringResource(R.string.browse_all_caught_up),
+                stringResource(R.string.browse_youve_opened_everything_saved_new)
             )
             BrowseDestination.Trash -> Triple(
                 "🧺",
-                "Nothing deleted",
-                "Deleted saves stay here for 30 days so you can change your mind."
+                stringResource(R.string.browse_nothing_deleted),
+                stringResource(R.string.browse_deleted_saves_stay_here_30)
             )
             is BrowseDestination.Tag -> Triple(
                 "🏷",
-                "No saves with #${destination.name}",
-                "Items tagged #${destination.name} will appear here."
+                stringResource(R.string.browse_no_saves, destination.name),
+                stringResource(R.string.browse_items_tagged_will_appear_here, destination.name)
             )
             else -> Triple(
                 "📬",
-                if (showArchived) "No archived saves" else "Nothing here yet",
-                if (showArchived) "Archived items appear here. Toggle off to see your active saves."
-                else "Save something into ${selectedCategory?.name ?: "this"} from the share sheet, then it'll show up."
+                if (showArchived) stringResource(R.string.browse_no_archived_saves) else stringResource(R.string.browse_nothing_here_yet),
+                if (showArchived) stringResource(R.string.browse_archived_items_appear_here_toggle)
+                else selectedCategory?.displayName?.let { stringResource(R.string.browse_empty_collection_named, it) }
+                    ?: stringResource(R.string.browse_empty_collection)
             )
         }
-        EmptyState(emoji = emoji, headline = headline, body = body, accent = accent)
+        val pose = when (destination) {
+            BrowseDestination.Favorites -> KeeperPose.SaveSuccess
+            BrowseDestination.Archive -> KeeperPose.Archive
+            BrowseDestination.Reminders -> KeeperPose.Reminder
+            is BrowseDestination.Tag -> KeeperPose.Search
+            else -> if (showArchived) KeeperPose.Archive else KeeperPose.EmptyShelf
+        }
+        EmptyState(emoji = emoji, headline = headline, body = body, accent = accent, pose = pose)
         return
     }
 
@@ -943,7 +963,7 @@ private fun DrillView(
                         BulkActionBar(
                             count = selectedIds.size,
                             onClear = onClearSelection,
-                            primaryLabel = if (inTrash) "Restore" else "Archive",
+                            primaryLabel = if (inTrash) stringResource(R.string.settings_restore) else stringResource(R.string.detail_archive),
                             onPrimary = {
                                 if (inTrash) onRestoreSelected(selectedVisibleItems)
                                 else onArchiveSelected(selectedVisibleItems)
@@ -954,7 +974,7 @@ private fun DrillView(
                 } else {
                     Spacer(Modifier.height(8.dp))
                     TextButton(onClick = onStartSelection) {
-                        Text("Select")
+                        Text(stringResource(R.string.browse_select))
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -977,7 +997,7 @@ private fun DrillView(
                     item = item,
                     accent = perItemAccent,
                     categoryEmoji = perItemCategory?.emoji,
-                    categoryName = perItemCategory?.name,
+                    categoryName = perItemCategory?.displayName,
                     onClick = {
                         when {
                             selectionMode -> onToggleSelect(item)
@@ -994,7 +1014,7 @@ private fun DrillView(
                 if (item.id in selectedIds) {
                     Icon(
                         Icons.Rounded.CheckCircle,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.browse_selected),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
@@ -1062,10 +1082,10 @@ private fun SelectionHintBar(onClear: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onClear, modifier = Modifier.size(40.dp)) {
-            Icon(Icons.Rounded.Close, contentDescription = "Exit selection")
+            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.browse_exit_selection))
         }
         Text(
-            "Tap saves to select",
+            stringResource(R.string.browse_tap_saves_select),
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
             color = scheme.primary
         )
@@ -1089,17 +1109,17 @@ private fun BulkActionBar(
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
         IconButton(onClick = onClear) {
-            Icon(Icons.Rounded.Close, contentDescription = "Clear selection")
+            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.browse_clear_selection))
         }
         Text(
-            "$count selected",
+            pluralStringResource(R.plurals.browse_n_selected, count, count),
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
         TextButton(onClick = onPrimary) { Text(primaryLabel) }
         TextButton(onClick = onDelete) {
-            Text("Delete", color = MaterialTheme.colorScheme.error)
+            Text(stringResource(R.string.settings_delete_2), color = MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -1127,7 +1147,7 @@ private fun CategoryTile(c: CategoryEntity, count: Int, tilt: Float, onClick: ()
         ) { Text(c.emoji, style = MaterialTheme.typography.displaySmall) }
         Column {
             Text(
-                c.name,
+                c.displayName,
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -1135,13 +1155,13 @@ private fun CategoryTile(c: CategoryEntity, count: Int, tilt: Float, onClick: ()
                 if (c.isLocked) {
                     Icon(
                         Icons.Rounded.Lock,
-                        contentDescription = "Locked",
+                        contentDescription = stringResource(R.string.browse_locked),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(end = 4.dp).size(14.dp)
                     )
                 }
                 Text(
-                    if (count == 0) "Empty" else "$count item${if (count == 1) "" else "s"}",
+                    if (count == 0) stringResource(R.string.browse_empty) else pluralStringResource(R.plurals.count_items, count, count),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1181,13 +1201,13 @@ private fun LockedTile(lockedCount: Int, unlocked: Boolean, onClick: () -> Unit)
         }
         Column {
             Text(
-                if (unlocked) "Lock again" else "Locked",
+                if (unlocked) stringResource(R.string.settings_lock_again) else stringResource(R.string.browse_locked),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                 color = scheme.onSurface
             )
             Text(
-                if (unlocked) "Hide locked collections"
-                else "$lockedCount collection${if (lockedCount == 1) "" else "s"}",
+                if (unlocked) stringResource(R.string.browse_hide_locked_collections)
+                else pluralStringResource(R.plurals.count_collections, lockedCount, lockedCount),
                 style = MaterialTheme.typography.labelMedium,
                 color = scheme.onSurfaceVariant
             )

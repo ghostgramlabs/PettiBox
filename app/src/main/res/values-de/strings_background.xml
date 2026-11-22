@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">In deinem Regal wartet etwas</string>
+    <string name="nudge_title">Aus deinem Regal</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">Du hast %d ungelesenen Eintrag.</item>
+        <item quantity="other">Du hast %d ungelesene Einträge.</item>
+    </plurals>
+    <string name="nudge_body_one">„%1$s“ – gespeichert %2$s.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">„%1$s“ – gespeichert %2$s. Dazu %3$d weiterer ungelesener.</item>
+        <item quantity="other">„%1$s“ – gespeichert %2$s. Dazu %3$d weitere ungelesene.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">%d Datei fehlt auf diesem Telefon und kann daher nicht gesendet werden. Öffne den Eintrag und füge die Datei erneut hinzu.</item>
+        <item quantity="other">%d Dateien fehlen auf diesem Telefon und können daher nicht gesendet werden. Öffne den Eintrag und füge die Dateien erneut hinzu.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">Bibliothek synchronisiert · %1$d Datei wartet darauf, dass ein anderes Gerät sie sendet · geprüft um %2$s</item>
+        <item quantity="other">Bibliothek synchronisiert · %1$d Dateien warten darauf, dass ein anderes Gerät sie sendet · geprüft um %2$s</item>
+    </plurals>
+    <string name="files_all_in_drive">Alle Fotos und Dateien sind in Google Drive · geprüft um %1$s</string>
+    <string name="files_checked">Fotos und Dateien geprüft um %1$s</string>
+    <string name="files_unreachable">Google Drive war beim Senden von Fotos und Dateien nicht erreichbar (%1$s). Es wird gleich automatisch erneut versucht.</string>
+    <string name="files_no_connection">keine Verbindung</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d Datei kann auf diesem Telefon nicht mehr gelesen werden (die App, aus der sie stammt, erlaubt es nicht mehr) und kann daher nicht gesendet werden.</item>
+        <item quantity="other">%d Dateien können auf diesem Telefon nicht mehr gelesen werden (die App, aus der sie stammen, erlaubt es nicht mehr) und können daher nicht gesendet werden.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">%d Foto und Dateien werden an Google Drive gesendet…</item>
+        <item quantity="other">%d Fotos und Dateien werden an Google Drive gesendet…</item>
+    </plurals>
+    <string name="files_sending_progress">Fotos und Dateien werden an Google Drive gesendet… %1$d von %2$d</string>
+    <string name="sync_step_connecting">Verbindungsaufbau</string>
+    <string name="sync_unreachable">Google Drive nicht erreichbar</string>
+    <string name="sync_drive_error">Google Drive hat mit einem Fehler geantwortet (%1$d)</string>
+    <string name="sync_failed_while">%1$s (%2$s).</string>
+    <string name="sync_retrying">Es wird gleich automatisch erneut versucht.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">%d beschädigte Datei von einem anderen Gerät übersprungen; nichts davon wurde übernommen</item>
+        <item quantity="other">%d beschädigte Dateien von einem anderen Gerät übersprungen; nichts davon wurde übernommen</item>
+    </plurals>
+    <string name="sync_every_15_min">15 Min.</string>
+    <string name="sync_every_30_min">30 Min.</string>
+    <string name="sync_every_hour">1 Stunde</string>
+    <string name="sync_every_3_hours">3 Stunden</string>
+    <string name="sync_daily">Täglich</string>
+    <string name="sync_weekly">Wöchentlich</string>
+    <string name="sync_only_in_use">Nur bei Nutzung</string>
+    <string name="reminder_save_locked_collection">Ein Eintrag in einer gesperrten Sammlung</string>
+    <string name="reminder_saved_item">Gespeicherter Eintrag</string>
+    <string name="reminder_snooze_1h">1 Std. später</string>
+    <string name="reminder_evening">Heute Abend</string>
+    <string name="nudge_see_all_unread">Alle ungelesenen ansehen</string>
+    <string name="nudge_once_week_one_thing_saved">Einmal pro Woche etwas, das du gespeichert, aber noch nicht geöffnet hast.</string>
+    <string name="reminder_save_reminders">Erinnerungen an Einträge</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">Hinweise auf Dinge, an die PettiBox dich erinnern soll.</string>
+    <string name="files_photos_files_waiting_reconnect_google">Fotos und Dateien warten: Verbinde Google Drive in den Einstellungen erneut.</string>
+    <string name="files_photos_files_sent_once_first">Fotos und Dateien werden gesendet, sobald die erste Synchronisierung fertig ist.</string>
+    <string name="files_photos_files_arent_sent_google">Fotos und Dateien werden nicht gesendet: Google Drive ist als %1$s angemeldet, nicht als %2$s.</string>
+    <string name="files_photos_files_couldnt_sent_tap">Fotos und Dateien konnten nicht gesendet werden: %1$s. Tippe auf „Jetzt synchronisieren“, um es erneut zu versuchen.</string>
+    <string name="files_photos_files_stopped_sending_trying">Das Senden von Fotos und Dateien wurde unterbrochen: %1$s. Es wird gleich erneut versucht.</string>
+    <string name="sync_sync_stopped">Synchronisierung angehalten: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">Die Synchronisierung wurde ausgeschaltet, weil die synchronisierten Daten auf einem anderen Gerät aus Google Drive gelöscht wurden. Alles auf diesem Telefon ist noch da; schalte die Synchronisierung wieder ein, um neu zu beginnen.</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Drive muss neu verbunden werden</string>
+    <string name="sync_google_drive_didnt_say_which">Google Drive hat nicht angegeben, welches Konto das ist</string>
+    <string name="sync_google_drive_signed_but_library">Google Drive ist als %1$s angemeldet, aber diese Bibliothek wird mit %2$s synchronisiert. Wechsle zurück zu %3$s oder schalte die Synchronisierung aus und wieder ein, um mit %4$s zu synchronisieren.</string>
+    <string name="sync_couldnt_save_safety_copy_library">Vor dem Synchronisieren konnte keine Sicherheitskopie deiner Bibliothek gespeichert werden. Beim nächsten Mal wird es erneut versucht.</string>
+    <string name="sync_checking_google_drive">Google Drive wird geprüft…</string>
+    <string name="sync_receiving_changes">Änderungen werden empfangen…</string>
+    <string name="sync_another_device_uses_newer_version">Ein anderes Gerät nutzt eine neuere Version von PettiBox. Aktualisiere diese App, um alles zu sehen, was dort gespeichert wurde.</string>
+    <string name="sync_preparing_changes">Deine Änderungen werden vorbereitet…</string>
+    <string name="sync_updating_library">Deine Bibliothek wird aktualisiert…</string>
+    <string name="sync_couldnt_save_safety_copy_before">Vor dem Entfernen von Einträgen konnte keine Sicherheitskopie gespeichert werden, daher wurde nichts entfernt. Gib etwas Speicherplatz frei und wähle erneut.</string>
+    <string name="sync_sending_changes">Deine Änderungen werden gesendet…</string>
+    <string name="article_page_no_longer_exists">Die Seite existiert nicht mehr</string>
+    <string name="article_site_doesnt_allow_saving_copy">Diese Website erlaubt keine Kopie</string>
+    <string name="article_site_answered_error">Die Website hat mit einem Fehler geantwortet (%1$s)</string>
+    <string name="article_couldnt_find_article_page">Auf dieser Seite wurde kein Artikel gefunden</string>
+    <string name="article_page_too_long_keep_copy">Diese Seite ist zu lang für eine Kopie</string>
+    <string name="article_couldnt_reach_page_check_connection">Die Seite ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.</string>
+</resources>

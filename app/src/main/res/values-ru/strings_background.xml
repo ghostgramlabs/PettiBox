@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_title_locked">Кое-что ждёт вас на полке</string>
+    <string name="nudge_title">С вашей полки</string>
+    <plurals name="nudge_body_locked">
+        <item quantity="one">У вас %d непрочитанная запись.</item>
+        <item quantity="few">У вас %d непрочитанные записи.</item>
+        <item quantity="many">У вас %d непрочитанных записей.</item>
+        <item quantity="other">У вас %d непрочитанной записи.</item>
+    </plurals>
+    <string name="nudge_body_one">«%1$s» — сохранено %2$s.</string>
+    <plurals name="nudge_body_more">
+        <item quantity="one">«%1$s» — сохранено %2$s. И ещё %3$d непрочитанная.</item>
+        <item quantity="few">«%1$s» — сохранено %2$s. И ещё %3$d непрочитанные.</item>
+        <item quantity="many">«%1$s» — сохранено %2$s. И ещё %3$d непрочитанных.</item>
+        <item quantity="other">«%1$s» — сохранено %2$s. И ещё %3$d непрочитанной.</item>
+    </plurals>
+    <plurals name="files_missing">
+        <item quantity="one">%d файла нет на этом телефоне, поэтому его нельзя отправить. Откройте запись и добавьте файл заново.</item>
+        <item quantity="few">%d файлов нет на этом телефоне, поэтому их нельзя отправить. Откройте запись и добавьте файлы заново.</item>
+        <item quantity="many">%d файлов нет на этом телефоне, поэтому их нельзя отправить. Откройте запись и добавьте файлы заново.</item>
+        <item quantity="other">%d файла нет на этом телефоне, поэтому их нельзя отправить. Откройте запись и добавьте файлы заново.</item>
+    </plurals>
+    <plurals name="files_waiting_other_device">
+        <item quantity="one">Библиотека синхронизирована · %1$d файл ждёт отправки с другого устройства · проверено в %2$s</item>
+        <item quantity="few">Библиотека синхронизирована · %1$d файла ждут отправки с другого устройства · проверено в %2$s</item>
+        <item quantity="many">Библиотека синхронизирована · %1$d файлов ждут отправки с другого устройства · проверено в %2$s</item>
+        <item quantity="other">Библиотека синхронизирована · %1$d файла ждут отправки с другого устройства · проверено в %2$s</item>
+    </plurals>
+    <string name="files_all_in_drive">Все фото и файлы уже в Google Диске · проверено в %1$s</string>
+    <string name="files_checked">Фото и файлы проверены в %1$s</string>
+    <string name="files_unreachable">Не удалось связаться с Google Диском при отправке фото и файлов (%1$s). Скоро будет новая попытка.</string>
+    <string name="files_no_connection">нет соединения</string>
+    <plurals name="files_unreadable">
+        <item quantity="one">%d файл больше нельзя прочитать на этом телефоне (приложение, из которого он пришёл, больше не разрешает), поэтому его нельзя отправить.</item>
+        <item quantity="few">%d файла больше нельзя прочитать на этом телефоне (приложение, из которого они пришли, больше не разрешает), поэтому их нельзя отправить.</item>
+        <item quantity="many">%d файлов больше нельзя прочитать на этом телефоне (приложение, из которого они пришли, больше не разрешает), поэтому их нельзя отправить.</item>
+        <item quantity="other">%d файла больше нельзя прочитать на этом телефоне (приложение, из которого они пришли, больше не разрешает), поэтому их нельзя отправить.</item>
+    </plurals>
+    <plurals name="files_sending">
+        <item quantity="one">Отправка фото и файлов в Google Диск: %d…</item>
+        <item quantity="few">Отправка фото и файлов в Google Диск: %d…</item>
+        <item quantity="many">Отправка фото и файлов в Google Диск: %d…</item>
+        <item quantity="other">Отправка фото и файлов в Google Диск: %d…</item>
+    </plurals>
+    <string name="files_sending_progress">Отправка фото и файлов в Google Диск… %1$d из %2$d</string>
+    <string name="sync_step_connecting">подключение</string>
+    <string name="sync_unreachable">Не удалось связаться с Google Диском</string>
+    <string name="sync_drive_error">Google Диск ответил ошибкой (%1$d)</string>
+    <string name="sync_failed_while">%1$s (этап: %2$s).</string>
+    <string name="sync_retrying">Скоро будет новая попытка.</string>
+    <plurals name="sync_damaged">
+        <item quantity="one">Пропущен %d повреждённый файл с другого устройства; из него ничего не применено</item>
+        <item quantity="few">Пропущено %d повреждённых файла с другого устройства; из них ничего не применено</item>
+        <item quantity="many">Пропущено %d повреждённых файлов с другого устройства; из них ничего не применено</item>
+        <item quantity="other">Пропущено %d повреждённого файла с другого устройства; из них ничего не применено</item>
+    </plurals>
+    <string name="sync_every_15_min">15 мин</string>
+    <string name="sync_every_30_min">30 мин</string>
+    <string name="sync_every_hour">1 час</string>
+    <string name="sync_every_3_hours">3 часа</string>
+    <string name="sync_daily">Ежедневно</string>
+    <string name="sync_weekly">Еженедельно</string>
+    <string name="sync_only_in_use">Только при использовании</string>
+    <string name="reminder_save_locked_collection">Запись в заблокированной коллекции</string>
+    <string name="reminder_saved_item">Сохранённая запись</string>
+    <string name="reminder_snooze_1h">Отложить на 1 ч</string>
+    <string name="reminder_evening">Сегодня вечером</string>
+    <string name="nudge_see_all_unread">Всё непрочитанное</string>
+    <string name="nudge_once_week_one_thing_saved">Раз в неделю — одна запись, которую вы сохранили, но ещё не открыли.</string>
+    <string name="reminder_save_reminders">Напоминания о записях</string>
+    <string name="reminder_nudges_things_asked_pettibox_remind">Напоминания о том, что вы попросили PettiBox напомнить.</string>
+    <string name="files_photos_files_waiting_reconnect_google">Фото и файлы ждут: заново подключите Google Диск в настройках.</string>
+    <string name="files_photos_files_sent_once_first">Фото и файлы отправятся после первой синхронизации.</string>
+    <string name="files_photos_files_arent_sent_google">Фото и файлы не отправляются: в Google Диске выполнен вход как %1$s, а не %2$s.</string>
+    <string name="files_photos_files_couldnt_sent_tap">Не удалось отправить фото и файлы: %1$s. Нажмите «Синхронизировать», чтобы повторить.</string>
+    <string name="files_photos_files_stopped_sending_trying">Отправка фото и файлов прервалась: %1$s. Скоро будет новая попытка.</string>
+    <string name="sync_sync_stopped">Синхронизация остановлена: %1$s</string>
+    <string name="sync_sync_was_turned_off_because">Синхронизация выключена, потому что синхронизированные данные удалили из Google Диска на другом устройстве. Всё на этом телефоне на месте; включите синхронизацию снова, чтобы начать заново.</string>
+    <string name="sync_google_drive_needs_reconnecting">Google Диск нужно подключить заново</string>
+    <string name="sync_google_drive_didnt_say_which">Google Диск не сообщил, какой это аккаунт</string>
+    <string name="sync_google_drive_signed_but_library">В Google Диске выполнен вход как %1$s, но эта библиотека синхронизируется с %2$s. Вернитесь к %3$s или выключите и снова включите синхронизацию, чтобы синхронизировать с %4$s.</string>
+    <string name="sync_couldnt_save_safety_copy_library">Не удалось сохранить резервную копию библиотеки перед синхронизацией. Попробуем в следующий раз.</string>
+    <string name="sync_checking_google_drive">Проверка Google Диска…</string>
+    <string name="sync_receiving_changes">Получение изменений…</string>
+    <string name="sync_another_device_uses_newer_version">На другом устройстве более новая версия PettiBox. Обновите приложение, чтобы увидеть всё, что там сохранено.</string>
+    <string name="sync_preparing_changes">Подготовка ваших изменений…</string>
+    <string name="sync_updating_library">Обновление библиотеки…</string>
+    <string name="sync_couldnt_save_safety_copy_before">Не удалось сохранить резервную копию перед удалением записей, поэтому ничего не удалено. Освободите место и выберите снова.</string>
+    <string name="sync_sending_changes">Отправка ваших изменений…</string>
+    <string name="article_page_no_longer_exists">Страница больше не существует</string>
+    <string name="article_site_doesnt_allow_saving_copy">Сайт не разрешает сохранять копию</string>
+    <string name="article_site_answered_error">Сайт ответил ошибкой (%1$s)</string>
+    <string name="article_couldnt_find_article_page">На этой странице не найдена статья</string>
+    <string name="article_page_too_long_keep_copy">Страница слишком длинная, чтобы сохранить копию</string>
+    <string name="article_couldnt_reach_page_check_connection">Не удалось открыть страницу. Проверьте соединение и попробуйте снова.</string>
+</resources>

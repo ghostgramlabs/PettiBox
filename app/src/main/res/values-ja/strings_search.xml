@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">関連度</string>
+    <string name="search_sort_newest">新しい順</string>
+    <string name="search_sort_oldest">古い順</string>
+    <string name="search_sort_updated">最近編集</string>
+    <string name="search_sort_reminder">リマインダーの時刻</string>
+    <plurals name="search_n_found">
+        <item quantity="other">%d 件</item>
+    </plurals>
+    <string name="search_look_up">探す</string>
+    <string name="search_titles_notes_saved_articles_text">タイトル、メモ、保存した記事、画像内の文字。</string>
+    <string name="search_search_anything_saved">保存したものを検索</string>
+    <string name="search_matches">検索結果</string>
+    <string name="search_start_anywhere">どこからでも</string>
+    <string name="search_use_type_source_tag_when">言葉を正確に覚えていないときは、種類、保存元、タグで探せます</string>
+    <string name="search_types">種類</string>
+    <string name="search_sources">保存元</string>
+    <string name="search_find_anything_stashed">取っておいたものを見つけよう</string>
+    <string name="search_search_titles_notes_links_sources">タイトル、メモ、リンク、保存元、タグ、画像や PDF 内の文字、オフライン用に保存した記事を検索します。アーカイブも含まれるので、片付けたアイテムも表示されます。</string>
+    <string name="search_screenshots">スクリーンショット</string>
+    <string name="search_links">リンク</string>
+    <string name="search_pdfs">PDF</string>
+    <string name="search_upcoming_reminders">予定のリマインダー</string>
+    <string name="search_notes">メモ</string>
+    <string name="search_nothing_matched">一致するものはありません</string>
+    <string name="search_some_saved_images_pdfs_still">保存した画像や PDF の一部はまだ読み取り中なので、まもなく一致するかもしれません。それまでは、短い言葉で試すか、絞り込みを外してください。</string>
+    <string name="search_try_shorter_word_remove_filter">短い言葉で試す、絞り込みを外す、または別の保存元で検索してください。別の言語の文字は、設定 › テキスト認識 でその言語をオンにしてください。</string>
+    <string name="search_clear_filters">絞り込みを解除</string>
+    <string name="search_clear_search">検索をクリア</string>
+    <string name="search_change_filters">絞り込みを変更</string>
+    <string name="search_open_filters">絞り込みを開く</string>
+    <string name="search_filters">絞り込み · %1$s</string>
+    <string name="search_filters_2">絞り込み</string>
+    <string name="search_clear">クリア</string>
+    <string name="search_clear_all">すべてクリア</string>
+    <string name="search_type">種類</string>
+    <string name="search_source">保存元</string>
+    <string name="search_images">画像</string>
+    <string name="search_what_looking">何を探していますか？</string>
+</resources>

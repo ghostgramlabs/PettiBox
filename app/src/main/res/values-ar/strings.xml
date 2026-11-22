@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">الحفظ في PettiBox</string>
+    <string name="widget_description">عناصرك غير المقروءة على بُعد نقرة</string>
+    <string name="shortcut_note_short">ملاحظة جديدة</string>
+    <string name="shortcut_note_long">كتابة ملاحظة جديدة</string>
+    <string name="shortcut_link_short">إضافة رابط</string>
+    <string name="shortcut_link_long">حفظ رابط</string>
+    <string name="shortcut_search_short">بحث</string>
+    <string name="shortcut_search_long">البحث في عناصرك</string>
+    <string name="shortcut_unread_short">غير مقروءة</string>
+    <string name="shortcut_unread_long">عناصر لم تفتحها بعد</string>
+</resources>

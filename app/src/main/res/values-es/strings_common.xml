@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">", "</string>
+    <plurals name="count_saves">
+        <item quantity="one">%d guardado</item>
+        <item quantity="many">%d guardados</item>
+        <item quantity="other">%d guardados</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="one">%d archivo</item>
+        <item quantity="many">%d archivos</item>
+        <item quantity="other">%d archivos</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="one">%d favorito</item>
+        <item quantity="many">%d favoritos</item>
+        <item quantity="other">%d favoritos</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="one">%d archivado</item>
+        <item quantity="many">%d archivados</item>
+        <item quantity="other">%d archivados</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="one">%d etiqueta</item>
+        <item quantity="many">%d etiquetas</item>
+        <item quantity="other">%d etiquetas</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="one">%d colección</item>
+        <item quantity="many">%d colecciones</item>
+        <item quantity="other">%d colecciones</item>
+    </plurals>
+    <string name="source_web">Web</string>
+    <string name="source_maps">Mapas</string>
+    <string name="source_files">Archivos</string>
+    <string name="source_clipboard">Portapapeles</string>
+    <string name="source_other">Otro</string>
+    <plurals name="count_items">
+        <item quantity="one">%d elemento</item>
+        <item quantity="many">%d elementos</item>
+        <item quantity="other">%d elementos</item>
+    </plurals>
+    <string name="untitled">Sin título</string>
+    <string name="starter_recipes">Recetas</string>
+    <string name="starter_travel">Viajes</string>
+    <string name="starter_fitness">Ejercicio</string>
+    <string name="starter_style">Estilo</string>
+    <string name="starter_home">Hogar</string>
+    <string name="starter_beauty">Belleza</string>
+    <string name="starter_read_later">Leer después</string>
+    <string name="starter_finance">Finanzas</string>
+    <string name="starter_music">Música</string>
+    <string name="starter_books">Libros</string>
+    <string name="starter_food_spots">Sitios para comer</string>
+    <string name="starter_shopping">Compras</string>
+    <string name="starter_work">Trabajo</string>
+    <string name="starter_ideas">Ideas</string>
+    <string name="starter_watch">Para ver</string>
+    <string name="starter_learning">Aprender</string>
+    <string name="starter_health">Salud</string>
+    <string name="starter_docs">Documentos</string>
+    <string name="starter_personal">Personal</string>
+    <string name="starter_tech">Tecnología</string>
+    <string name="starter_design">Diseño</string>
+    <string name="starter_gifts">Regalos</string>
+    <string name="starter_places">Lugares</string>
+    <string name="starter_kids">Niños</string>
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="widget_all_caught_up">Todo al día</string>
+    <plurals name="widget_unread">
+        <item quantity="one">%d sin leer</item>
+        <item quantity="many">%d sin leer</item>
+        <item quantity="other">%d sin leer</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · copia guardada el %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="one">%d min de lectura</item>
+        <item quantity="many">%d min de lectura</item>
+        <item quantity="other">%d min de lectura</item>
+    </plurals>
+    <string name="quick_change_reminder">Cambiar recordatorio</string>
+    <string name="quick_copy_link">Copiar enlace</string>
+    <string name="quick_copy_note">Copiar nota</string>
+    <string name="quick_note_copied">Nota copiada</string>
+    <string name="quick_move_collection">Mover a una colección</string>
+    <string name="card_open_quick_actions">Abrir acciones rápidas</string>
+    <string name="card_archived">Archivado</string>
+    <string name="card_reminder">Recordatorio</string>
+    <string name="collection_new_collection">Nueva colección</string>
+    <string name="collection_collection_name">Nombre de la colección</string>
+    <string name="collection_emoji">Emoji</string>
+    <string name="collection_color">Color</string>
+    <string name="collection_lock_collection">Bloquear esta colección</string>
+    <string name="collection_hidden_home_search_everywhere_else">Oculta en Inicio, la búsqueda y todo lo demás hasta que la desbloquees con tu huella, tu cara o el PIN del teléfono.</string>
+    <string name="collection_set_screen_lock_phone_use">Configura un bloqueo de pantalla en el teléfono para usar esto.</string>
+    <string name="collection_name_e_g_weekend_reads">Ponle nombre (p. ej., Lecturas del finde)</string>
+    <string name="collection_pick_emoji">Elige un emoji</string>
+    <string name="collection_pick_color">Elige un color</string>
+    <string name="collection_create">Crear</string>
+    <string name="help_i_keep_links_screenshots_pdfs">Guardo enlaces, capturas, PDF y notas en PettiBox: guarda desde cualquier app, lee artículos sin conexión y encuentra texto dentro de las imágenes. Gratis: %1$s</string>
+    <string name="help_share_pettibox">Compartir PettiBox</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s: pregunta o problema</string>
+    <string name="help_please_keep_part_helps_me">——— Por favor, conserva esta parte, me ayuda a ayudarte ———</string>
+    <string name="sync_edited_2_devices_needs_choice">Editado en 2 dispositivos: elige una versión</string>
+    <string name="lock_unlock_locked_collections">Desbloquear colecciones bloqueadas</string>
+    <string name="lock_unlock_pettibox">Desbloquear PettiBox</string>
+    <string name="lock_use_fingerprint_face_phone_pin">Usa tu huella, tu cara o el PIN del teléfono</string>
+    <string name="lock_pettibox_locked">PettiBox está bloqueado</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">Desbloquea con tu huella, tu cara o el PIN del teléfono.</string>
+    <string name="lock_unlock">Desbloquear</string>
+    <string name="lock_save_locked_collection">Este guardado está en una colección bloqueada</string>
+    <string name="lock_go_back">Volver</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="nav_not_selected">No seleccionado</string>
+    <string name="widget_pettibox_locked">PettiBox está bloqueado 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">Desbloquea PettiBox para ver tus guardados aquí.</string>
+    <string name="widget_nothing_waiting">Nada pendiente ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">Comparte un enlace o una foto con PettiBox y aparecerá aquí hasta que lo abras.</string>
+    <string name="nav_home">Inicio</string>
+    <string name="nav_search">Buscar</string>
+    <string name="nav_browse">Explorar</string>
+</resources>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_sort_relevant">Relevan</string>
+    <string name="search_sort_newest">Terbaru</string>
+    <string name="search_sort_oldest">Terlama</string>
+    <string name="search_sort_updated">Baru diedit</string>
+    <string name="search_sort_reminder">Waktu pengingat</string>
+    <plurals name="search_n_found">
+        <item quantity="other">%d ditemukan</item>
+    </plurals>
+    <string name="search_look_up">Cari</string>
+    <string name="search_titles_notes_saved_articles_text">Judul, catatan, artikel tersimpan, dan teks di dalam gambar.</string>
+    <string name="search_search_anything_saved">Cari apa pun yang kamu simpan</string>
+    <string name="search_matches">Hasil</string>
+    <string name="search_start_anywhere">Mulai dari mana saja</string>
+    <string name="search_use_type_source_tag_when">Pakai jenis, sumber, atau tag kalau kamu lupa kata persisnya</string>
+    <string name="search_types">Jenis</string>
+    <string name="search_sources">Sumber</string>
+    <string name="search_find_anything_stashed">Temukan apa pun yang kamu simpan</string>
+    <string name="search_search_titles_notes_links_sources">Cari judul, catatan, link, sumber, tag, teks di dalam gambar atau PDF, dan artikel yang disimpan untuk dibaca offline. Arsip ikut dicari, jadi simpanan yang diarsipkan tetap muncul.</string>
+    <string name="search_screenshots">Screenshot</string>
+    <string name="search_links">Link</string>
+    <string name="search_pdfs">PDF</string>
+    <string name="search_upcoming_reminders">Pengingat mendatang</string>
+    <string name="search_notes">Catatan</string>
+    <string name="search_nothing_matched">Tidak ada yang cocok</string>
+    <string name="search_some_saved_images_pdfs_still">Beberapa gambar dan PDF tersimpan masih dibaca, jadi mungkin akan cocok sebentar lagi. Sementara itu, coba kata yang lebih pendek atau hapus filter.</string>
+    <string name="search_try_shorter_word_remove_filter">Coba kata yang lebih pendek, hapus filter, atau cari di sumber lain. Untuk teks dalam bahasa lain, nyalakan bahasanya di Setelan › Pengenalan teks.</string>
+    <string name="search_clear_filters">Hapus filter</string>
+    <string name="search_clear_search">Hapus pencarian</string>
+    <string name="search_change_filters">Ubah filter</string>
+    <string name="search_open_filters">Buka filter</string>
+    <string name="search_filters">Filter · %1$s</string>
+    <string name="search_filters_2">Filter</string>
+    <string name="search_clear">Hapus</string>
+    <string name="search_clear_all">Hapus semua</string>
+    <string name="search_type">Jenis</string>
+    <string name="search_source">Sumber</string>
+    <string name="search_images">Gambar</string>
+    <string name="search_what_looking">Kamu cari apa?</string>
+</resources>

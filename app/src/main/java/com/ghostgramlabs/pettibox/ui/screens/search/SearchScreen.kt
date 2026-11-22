@@ -1,5 +1,15 @@
 ﻿package com.ghostgramlabs.pettibox.ui.screens.search
 
+import com.ghostgramlabs.pettibox.ui.components.KeeperPose
+
+import com.ghostgramlabs.pettibox.domain.model.displayName
+
+import com.ghostgramlabs.pettibox.util.AppText
+
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -105,8 +115,8 @@ fun SearchScreen(
             // days — archived or not — so Undo here is just the fast path.
             viewModel.stageDelete(item)
             val result = snackbarHostState.showSnackbar(
-                message = "Moved to Recently deleted",
-                actionLabel = "Undo",
+                message = AppText.getString(R.string.browse_moved_one_to_trash),
+                actionLabel = AppText.getString(R.string.detail_undo),
                 duration = SnackbarDuration.Long
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.undoStagedDelete(item)
@@ -192,12 +202,12 @@ fun SearchScreen(
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             ScreenHeading(
-                title = "Look it up",
-                subtitle = "Titles, notes, saved articles, and text inside images."
+                title = stringResource(R.string.search_look_up),
+                subtitle = stringResource(R.string.search_titles_notes_saved_articles_text)
             )
             SearchField(
                 value = state.query,
-                placeholder = "Search anything you saved",
+                placeholder = stringResource(R.string.search_search_anything_saved),
                 onValueChange = viewModel::onQuery,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
@@ -260,8 +270,8 @@ fun SearchScreen(
                             // section on Home and Browse, so the page
                             // reads as part of the same app.
                             SectionHeader(
-                                title = "Matches",
-                                subtitle = "${state.resultCount} found"
+                                title = stringResource(R.string.search_matches),
+                                subtitle = pluralStringResource(R.plurals.search_n_found, state.resultCount, state.resultCount)
                             )
                         }
                         items(
@@ -275,7 +285,7 @@ fun SearchScreen(
                                 item = item,
                                 accent = cat?.let { Color(it.colorHex) } ?: MaterialTheme.colorScheme.primary,
                                 categoryEmoji = cat?.emoji,
-                                categoryName = cat?.name,
+                                categoryName = cat?.displayName,
                                 onClick = { onOpenItem(item.id) },
                                 onLongClick = { quickActionItem = item }
                             )
@@ -322,30 +332,31 @@ private fun SearchDiscovery(
     ) {
         Spacer(Modifier.height(8.dp))
         SectionHeader(
-            title = "Start anywhere",
-            subtitle = "Use a type, source, or tag when you don't remember the exact words"
+            title = stringResource(R.string.search_start_anywhere),
+            subtitle = stringResource(R.string.search_use_type_source_tag_when)
         )
         Spacer(Modifier.height(8.dp))
-        SuggestionGroupTitle("Types")
+        SuggestionGroupTitle(stringResource(R.string.search_types))
         QuickTypeSuggestions(
             onToggleType = onToggleType,
             onToggleReminders = onToggleReminders
         )
         if (sources.isNotEmpty()) {
             Spacer(Modifier.height(12.dp))
-            SuggestionGroupTitle("Sources")
+            SuggestionGroupTitle(stringResource(R.string.search_sources))
             QuickSourceSuggestions(sources = sources, onToggleSource = onToggleSource)
         }
         if (tags.isNotEmpty()) {
             Spacer(Modifier.height(12.dp))
-            SuggestionGroupTitle("Tags")
+            SuggestionGroupTitle(stringResource(R.string.detail_tags))
             QuickTagSuggestions(tags = tags, onToggleTag = onToggleTag)
         }
         Spacer(Modifier.height(18.dp))
         EmptyState(
             emoji = "\uD83D\uDD0D",
-            headline = "Find anything you stashed",
-            body = "Search titles, notes, links, sources, tags, text inside images or PDFs, and articles saved for offline reading. Archive is included, so tucked-away saves still show up."
+            headline = stringResource(R.string.search_find_anything_stashed),
+            body = stringResource(R.string.search_search_titles_notes_links_sources),
+            pose = KeeperPose.Archive
         )
     }
 }
@@ -371,7 +382,7 @@ private fun QuickTypeSuggestions(
     ) {
         item {
             CategoryChip(
-                label = "Screenshots",
+                label = stringResource(R.string.search_screenshots),
                 emoji = "\uD83D\uDDBC",
                 color = MaterialTheme.colorScheme.primary,
                 selected = false,
@@ -381,7 +392,7 @@ private fun QuickTypeSuggestions(
         }
         item {
             CategoryChip(
-                label = "Links",
+                label = stringResource(R.string.search_links),
                 emoji = "\uD83D\uDD17",
                 color = MaterialTheme.colorScheme.secondary,
                 selected = false,
@@ -391,7 +402,7 @@ private fun QuickTypeSuggestions(
         }
         item {
             CategoryChip(
-                label = "PDFs",
+                label = stringResource(R.string.search_pdfs),
                 emoji = "\uD83D\uDCC4",
                 color = MaterialTheme.colorScheme.tertiary,
                 selected = false,
@@ -401,7 +412,7 @@ private fun QuickTypeSuggestions(
         }
         item {
             CategoryChip(
-                label = "Upcoming reminders",
+                label = stringResource(R.string.search_upcoming_reminders),
                 emoji = "\u23F0",
                 color = Color(0xFF2F9B8F),
                 selected = false,
@@ -411,7 +422,7 @@ private fun QuickTypeSuggestions(
         }
         item {
             CategoryChip(
-                label = "Notes",
+                label = stringResource(R.string.search_notes),
                 emoji = "\uD83D\uDDD2",
                 color = MaterialTheme.colorScheme.primary,
                 selected = false,
@@ -492,9 +503,10 @@ private fun NoResultsRecovery(
     ) {
         EmptyState(
             emoji = "\uD83E\uDD14",
-            headline = "Nothing matched",
-            body = if (reading) "Some saved images and PDFs are still being read, so they may match soon. Meanwhile, try a shorter word or remove a filter."
-            else "Try a shorter word, remove a filter, or search another source. For text in another language, turn it on in Settings › Text recognition."
+            headline = stringResource(R.string.search_nothing_matched),
+            pose = KeeperPose.Search,
+            body = if (reading) stringResource(R.string.search_some_saved_images_pdfs_still)
+            else stringResource(R.string.search_try_shorter_word_remove_filter)
         )
         Spacer(Modifier.height(8.dp))
         LazyRow(
@@ -504,7 +516,7 @@ private fun NoResultsRecovery(
             if (hasFilters) {
                 item {
                     CategoryChip(
-                        label = "Clear filters",
+                        label = stringResource(R.string.search_clear_filters),
                         emoji = "\u2715",
                         color = MaterialTheme.colorScheme.primary,
                         selected = false,
@@ -516,7 +528,7 @@ private fun NoResultsRecovery(
             if (query.isNotBlank()) {
                 item {
                     CategoryChip(
-                        label = "Clear search",
+                        label = stringResource(R.string.search_clear_search),
                         emoji = "\uD83D\uDD0D",
                         color = MaterialTheme.colorScheme.secondary,
                         selected = false,
@@ -527,7 +539,7 @@ private fun NoResultsRecovery(
             }
             item {
                 CategoryChip(
-                    label = "Change filters",
+                    label = stringResource(R.string.search_change_filters),
                     emoji = "\u2699",
                     color = MaterialTheme.colorScheme.tertiary,
                     selected = false,
@@ -576,13 +588,13 @@ private fun FilterToolbar(
         ) {
             Icon(
                 Icons.Rounded.Tune,
-                contentDescription = "Open filters",
+                contentDescription = stringResource(R.string.search_open_filters),
                 tint = if (activeFilterCount > 0) scheme.primary else scheme.onSurfaceVariant,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(Modifier.width(6.dp))
             Text(
-                if (activeFilterCount > 0) "Filters · $activeFilterCount" else "Filters",
+                if (activeFilterCount > 0) stringResource(R.string.search_filters, activeFilterCount) else stringResource(R.string.search_filters_2),
                 style = MaterialTheme.typography.labelLarge,
                 color = if (activeFilterCount > 0) scheme.primary else scheme.onSurface,
                 fontWeight = FontWeight.SemiBold
@@ -592,7 +604,7 @@ private fun FilterToolbar(
         if (activeFilterCount > 0) {
             Spacer(Modifier.width(8.dp))
             TextButton(onClick = onClear) {
-                Text("Clear", color = scheme.onSurfaceVariant)
+                Text(stringResource(R.string.search_clear), color = scheme.onSurfaceVariant)
             }
         }
 
@@ -609,7 +621,7 @@ private fun FilterToolbar(
             state.categoryFilter?.let { cid ->
                 val c = state.categories.firstOrNull { it.id == cid }
                 if (c != null) {
-                    item { ActivePill("${c.emoji} ${c.name}") { onToggleCategory(cid) } }
+                    item { ActivePill("${c.emoji} ${c.displayName}") { onToggleCategory(cid) } }
                 }
             }
             state.sourceFilter?.let { sf ->
@@ -622,7 +634,7 @@ private fun FilterToolbar(
                 item { ActivePill("#$tag") { onToggleTag(tag) } }
             }
             if (state.reminderFilter) {
-                item { ActivePill("Upcoming reminders") { onToggleReminders() } }
+                item { ActivePill(stringResource(R.string.search_upcoming_reminders)) { onToggleReminders() } }
             }
         }
     }
@@ -674,17 +686,17 @@ private fun FilterSheetBody(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "Filters",
+                stringResource(R.string.search_filters_2),
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(Modifier.weight(1f))
-            TextButton(onClick = onClear) { Text("Clear all") }
-            TextButton(onClick = onClose) { Text("Done") }
+            TextButton(onClick = onClear) { Text(stringResource(R.string.search_clear_all)) }
+            TextButton(onClick = onClose) { Text(stringResource(R.string.reminder_done)) }
         }
 
         Spacer(Modifier.height(16.dp))
-        FilterGroupTitle("Type")
+        FilterGroupTitle(stringResource(R.string.search_type))
         Spacer(Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             itemsIndexed(typeChoices()) { idx, triple ->
@@ -699,7 +711,7 @@ private fun FilterSheetBody(
             }
             item {
                 CategoryChip(
-                    label = "Upcoming reminders",
+                    label = stringResource(R.string.search_upcoming_reminders),
                     emoji = "\u23F0",
                     color = Color(0xFF2F9B8F),
                     selected = state.reminderFilter,
@@ -710,13 +722,13 @@ private fun FilterSheetBody(
         }
 
         Spacer(Modifier.height(20.dp))
-        FilterGroupTitle("Collection")
+        FilterGroupTitle(stringResource(R.string.detail_collection))
         Spacer(Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(state.categories, key = { it.id }) { c ->
                 val tilt = if (c.sortOrder % 2 == 0) -2f else 1.5f
                 CategoryChip(
-                    label = c.name, emoji = c.emoji,
+                    label = c.displayName, emoji = c.emoji,
                     color = Color(c.colorHex),
                     selected = state.categoryFilter == c.id,
                     tilt = tilt,
@@ -726,7 +738,7 @@ private fun FilterSheetBody(
         }
 
         Spacer(Modifier.height(20.dp))
-        FilterGroupTitle("Source")
+        FilterGroupTitle(stringResource(R.string.search_source))
         Spacer(Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(SourceApp.entries.toList(), key = { it.name }) { s ->
@@ -742,7 +754,7 @@ private fun FilterSheetBody(
 
         if (state.knownTags.isNotEmpty()) {
             Spacer(Modifier.height(20.dp))
-            FilterGroupTitle("Tags")
+            FilterGroupTitle(stringResource(R.string.detail_tags))
             Spacer(Modifier.height(8.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 itemsIndexed(state.knownTags, key = { _, t -> t }) { idx, t ->
@@ -770,11 +782,11 @@ private fun FilterGroupTitle(title: String) {
 }
 
 private fun typeChoices() = listOf(
-    Triple(ContentType.LINK, "Links", "\uD83D\uDD17"),
-    Triple(ContentType.IMAGE, "Images", "\uD83D\uDDBC"),
-    Triple(ContentType.PDF, "PDFs", "\uD83D\uDCC4"),
-    Triple(ContentType.TEXT, "Text", "\uD83D\uDCDD"),
-    Triple(ContentType.NOTE, "Notes", "\uD83D\uDDD2")
+    Triple(ContentType.LINK, AppText.getString(R.string.search_links), "\uD83D\uDD17"),
+    Triple(ContentType.IMAGE, AppText.getString(R.string.search_images), "\uD83D\uDDBC"),
+    Triple(ContentType.PDF, AppText.getString(R.string.search_pdfs), "\uD83D\uDCC4"),
+    Triple(ContentType.TEXT, AppText.getString(R.string.content_text), "\uD83D\uDCDD"),
+    Triple(ContentType.NOTE, AppText.getString(R.string.search_notes), "\uD83D\uDDD2")
 )
 
 private val SearchSort.emoji: String
@@ -796,10 +808,10 @@ private val SearchSort.accent: Color
     }
 
 private fun ContentType.label(): String = when (this) {
-    ContentType.LINK -> "Link"
-    ContentType.IMAGE -> "Image"
-    ContentType.PDF -> "PDF"
-    ContentType.TEXT -> "Text"
-    ContentType.NOTE -> "Note"
-    ContentType.FILE -> "File"
+    ContentType.LINK -> AppText.getString(R.string.content_link)
+    ContentType.IMAGE -> AppText.getString(R.string.content_image)
+    ContentType.PDF -> AppText.getString(R.string.content_pdf)
+    ContentType.TEXT -> AppText.getString(R.string.content_text)
+    ContentType.NOTE -> AppText.getString(R.string.content_note)
+    ContentType.FILE -> AppText.getString(R.string.content_file)
 }

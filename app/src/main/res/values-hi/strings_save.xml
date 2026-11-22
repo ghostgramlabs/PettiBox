@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="save_quick_save_title">क्विक सेव</string>
+    <string name="save_saved_image">सेव की गई तस्वीर</string>
+    <string name="save_saved_pdf">सेव किया गया PDF</string>
+    <string name="save_saved_file">सेव की गई फ़ाइल</string>
+    <string name="save_saved_when">%1$s सेव किया गया</string>
+    <plurals name="save_n_images">
+        <item quantity="one">%d तस्वीर</item>
+        <item quantity="other">%d तस्वीरें</item>
+    </plurals>
+    <plurals name="save_n_pdfs">
+        <item quantity="one">%d PDF</item>
+        <item quantity="other">%d PDF</item>
+    </plurals>
+    <string name="save_discard_what_typed">आपने जो लिखा उसे छोड़ दें?</string>
+    <string name="save_note_tags_havent_been_saved">आपका नोट और टैग अभी सेव नहीं हुए हैं।</string>
+    <string name="save_discard">छोड़ें</string>
+    <string name="save_keep_editing">बदलाव जारी रखें</string>
+    <string name="save_save">इसे सेव करें?</string>
+    <string name="save_save_2">इसमें सेव करें</string>
+    <string name="save_no_collection_called_yet">“%1$s” नाम का कोई कलेक्शन अभी नहीं है</string>
+    <string name="save_want_start_one">बनाना चाहेंगे?</string>
+    <string name="save_create">“%1$s” बनाएँ</string>
+    <string name="save_new">नया</string>
+    <string name="save_remove_favorites">पसंदीदा से हटाएँ</string>
+    <string name="save_add_favorites">पसंदीदा में जोड़ें</string>
+    <string name="save_write_note_save">सेव करने के लिए नोट लिखें</string>
+    <string name="save_save_3">%1$s में सेव करें</string>
+    <string name="save_save_without_collection">बिना कलेक्शन के सेव करें</string>
+    <string name="save_selected">चुना गया: %1$s</string>
+    <string name="save_add_which_save">किस आइटम में जोड़ें?</string>
+    <string name="save_add_note">नोट जोड़ें</string>
+    <string name="save_add_tags">टैग जोड़ें</string>
+    <string name="save_add_note_2">नोट जोड़ें</string>
+    <string name="save_tags_comma_separated">टैग, कॉमा से अलग करें</string>
+    <string name="save_tucked_away">सेव हो गया!</string>
+    <string name="save_find_home_screen_anytime">इसे कभी भी होम स्क्रीन पर ढूँढें।</string>
+    <string name="save_append_save">किसी आइटम में जोड़ें</string>
+    <string name="save_already_saved">आप इसे पहले ही सेव कर चुके हैं</string>
+    <string name="save_open">खोलें</string>
+    <string name="save_save_anyway">फिर भी सेव करें</string>
+    <string name="save_suggested">सुझाया गया</string>
+    <string name="save_recently_used">हाल में इस्तेमाल किए गए</string>
+    <string name="save_collections">आपके कलेक्शन</string>
+    <string name="save_starter_collections">शुरुआती कलेक्शन</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">PettiBox\'a kaydet</string>
+    <string name="widget_description">Okunmamış kayıtların, bir dokunuş uzakta</string>
+    <string name="shortcut_note_short">Yeni not</string>
+    <string name="shortcut_note_long">Yeni not yaz</string>
+    <string name="shortcut_link_short">Bağlantı ekle</string>
+    <string name="shortcut_link_long">Bağlantı kaydet</string>
+    <string name="shortcut_search_short">Ara</string>
+    <string name="shortcut_search_long">Kayıtlarında ara</string>
+    <string name="shortcut_unread_short">Okunmamış</string>
+    <string name="shortcut_unread_long">Henüz açılmamış kayıtlar</string>
+</resources>

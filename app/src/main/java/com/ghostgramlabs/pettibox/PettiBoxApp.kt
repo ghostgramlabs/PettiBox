@@ -57,6 +57,7 @@ class PettiBoxApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        com.ghostgramlabs.pettibox.util.AppText.init(this)
         // Register the notification channel up-front. Idempotent — the OS
         // ignores duplicate registrations after the first one took effect.
         ReminderNotifications.ensureChannel(this)

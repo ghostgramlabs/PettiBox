@@ -1,5 +1,9 @@
 package com.ghostgramlabs.pettibox.data.article
 
+import com.ghostgramlabs.pettibox.util.AppText
+
+import com.ghostgramlabs.pettibox.R
+
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
@@ -55,7 +59,7 @@ class ArticleCopyWorker @AssistedInject constructor(
                 if (hasCopy) null else failed(saveId, outcome.reason)
             ArticleExtractor.Outcome.TryLater -> {
                 if (runAttemptCount < MAX_ATTEMPTS - 1) return Result.retry()
-                if (hasCopy) null else failed(saveId, "Couldn't reach the page. Check your connection and try again.")
+                if (hasCopy) null else failed(saveId, AppText.getString(R.string.article_couldnt_reach_page_check_connection))
             }
         }
         // The save may have been deleted while we were downloading; the

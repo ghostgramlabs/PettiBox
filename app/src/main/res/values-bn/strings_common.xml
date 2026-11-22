@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_separator">", "</string>
+    <plurals name="count_saves">
+        <item quantity="one">%dটি আইটেম</item>
+        <item quantity="other">%dটি আইটেম</item>
+    </plurals>
+    <plurals name="count_files">
+        <item quantity="one">%dটি ফাইল</item>
+        <item quantity="other">%dটি ফাইল</item>
+    </plurals>
+    <plurals name="count_favorites">
+        <item quantity="one">%dটি পছন্দের</item>
+        <item quantity="other">%dটি পছন্দের</item>
+    </plurals>
+    <plurals name="count_archived">
+        <item quantity="one">%dটি আর্কাইভ</item>
+        <item quantity="other">%dটি আর্কাইভ</item>
+    </plurals>
+    <plurals name="count_tags">
+        <item quantity="one">%dটি ট্যাগ</item>
+        <item quantity="other">%dটি ট্যাগ</item>
+    </plurals>
+    <plurals name="count_collections">
+        <item quantity="one">%dটি কালেকশন</item>
+        <item quantity="other">%dটি কালেকশন</item>
+    </plurals>
+    <string name="source_web">ওয়েব</string>
+    <string name="source_maps">Maps</string>
+    <string name="source_files">Files</string>
+    <string name="source_clipboard">ক্লিপবোর্ড</string>
+    <string name="source_other">অন্যান্য</string>
+    <plurals name="count_items">
+        <item quantity="one">%dটি আইটেম</item>
+        <item quantity="other">%dটি আইটেম</item>
+    </plurals>
+    <string name="untitled">শিরোনামহীন</string>
+    <string name="starter_recipes">রেসিপি</string>
+    <string name="starter_travel">ভ্রমণ</string>
+    <string name="starter_fitness">ফিটনেস</string>
+    <string name="starter_style">স্টাইল</string>
+    <string name="starter_home">বাড়ি</string>
+    <string name="starter_beauty">রূপচর্চা</string>
+    <string name="starter_read_later">পরে পড়ব</string>
+    <string name="starter_finance">টাকাপয়সা</string>
+    <string name="starter_music">গান</string>
+    <string name="starter_books">বই</string>
+    <string name="starter_food_spots">খাবারের জায়গা</string>
+    <string name="starter_shopping">কেনাকাটা</string>
+    <string name="starter_work">কাজ</string>
+    <string name="starter_ideas">আইডিয়া</string>
+    <string name="starter_watch">দেখব</string>
+    <string name="starter_learning">শেখা</string>
+    <string name="starter_health">স্বাস্থ্য</string>
+    <string name="starter_docs">ডকুমেন্ট</string>
+    <string name="starter_personal">ব্যক্তিগত</string>
+    <string name="starter_tech">প্রযুক্তি</string>
+    <string name="starter_design">ডিজাইন</string>
+    <string name="starter_gifts">উপহার</string>
+    <string name="starter_places">জায়গা</string>
+    <string name="starter_kids">বাচ্চারা</string>
+    <string name="theme_system">সিস্টেম</string>
+    <string name="theme_light">লাইট</string>
+    <string name="theme_dark">ডার্ক</string>
+    <string name="widget_all_caught_up">সব দেখা হয়ে গেছে</string>
+    <plurals name="widget_unread">
+        <item quantity="one">%dটি না-পড়া</item>
+        <item quantity="other">%dটি না-পড়া</item>
+    </plurals>
+    <string name="article_ready_subtitle">%1$s · কপি সেভ হয়েছে %2$s</string>
+    <plurals name="article_min_read">
+        <item quantity="one">%d মিনিটে পড়া</item>
+        <item quantity="other">%d মিনিটে পড়া</item>
+    </plurals>
+    <string name="quick_change_reminder">রিমাইন্ডার বদলান</string>
+    <string name="quick_copy_link">লিংক কপি করুন</string>
+    <string name="quick_copy_note">নোট কপি করুন</string>
+    <string name="quick_note_copied">নোট কপি হয়েছে</string>
+    <string name="quick_move_collection">কালেকশনে সরান</string>
+    <string name="card_open_quick_actions">কুইক অ্যাকশন খুলুন</string>
+    <string name="card_archived">আর্কাইভ করা</string>
+    <string name="card_reminder">রিমাইন্ডার</string>
+    <string name="collection_new_collection">নতুন কালেকশন</string>
+    <string name="collection_collection_name">কালেকশনের নাম</string>
+    <string name="collection_emoji">ইমোজি</string>
+    <string name="collection_color">রং</string>
+    <string name="collection_lock_collection">এই কালেকশন লক করুন</string>
+    <string name="collection_hidden_home_search_everywhere_else">আঙুলের ছাপ, মুখ বা ফোনের পিন দিয়ে আনলক না করা পর্যন্ত হোম, খোঁজ এবং অন্য সব জায়গা থেকে লুকানো থাকবে।</string>
+    <string name="collection_set_screen_lock_phone_use">এটি ব্যবহার করতে আপনার ফোনে স্ক্রিন লক সেট করুন।</string>
+    <string name="collection_name_e_g_weekend_reads">নাম দিন (যেমন সপ্তাহান্তের পড়া)</string>
+    <string name="collection_pick_emoji">ইমোজি বেছে নিন</string>
+    <string name="collection_pick_color">রং বেছে নিন</string>
+    <string name="collection_create">তৈরি করুন</string>
+    <string name="help_i_keep_links_screenshots_pdfs">আমি লিংক, স্ক্রিনশট, PDF আর নোট PettiBox-এ রাখি — যেকোনো অ্যাপ থেকে সেভ করুন, লেখা অফলাইনে পড়ুন, আর ছবির ভেতরের লেখা খুঁজুন। বিনামূল্যে: %1$s</string>
+    <string name="help_share_pettibox">PettiBox শেয়ার করুন</string>
+    <string name="help_pettibox_question_problem">PettiBox %1$s — প্রশ্ন বা সমস্যা</string>
+    <string name="help_please_keep_part_helps_me">——— অনুগ্রহ করে এই অংশটি রাখুন, এটি আপনাকে সাহায্য করতে কাজে লাগে ———</string>
+    <string name="sync_edited_2_devices_needs_choice">২টি ডিভাইসে এডিট হয়েছে: আপনাকে বেছে নিতে হবে</string>
+    <string name="lock_unlock_locked_collections">লক করা কালেকশন আনলক করুন</string>
+    <string name="lock_unlock_pettibox">PettiBox আনলক করুন</string>
+    <string name="lock_use_fingerprint_face_phone_pin">আপনার আঙুলের ছাপ, মুখ বা ফোনের পিন ব্যবহার করুন</string>
+    <string name="lock_pettibox_locked">PettiBox লক করা আছে</string>
+    <string name="lock_unlock_fingerprint_face_phone_pin">আঙুলের ছাপ, মুখ বা ফোনের পিন দিয়ে আনলক করুন।</string>
+    <string name="lock_unlock">আনলক করুন</string>
+    <string name="lock_save_locked_collection">এই আইটেমটি লক করা কালেকশনে আছে</string>
+    <string name="lock_go_back">ফিরে যান</string>
+    <string name="nav_settings">সেটিংস</string>
+    <string name="nav_not_selected">বেছে নেওয়া হয়নি</string>
+    <string name="widget_pettibox_locked">PettiBox লক করা আছে 🔒</string>
+    <string name="widget_unlock_pettibox_see_saves_here">এখানে আপনার আইটেম দেখতে PettiBox আনলক করুন।</string>
+    <string name="widget_nothing_waiting">কিছু অপেক্ষায় নেই ✨</string>
+    <string name="widget_share_link_photo_pettibox_lands">PettiBox-এ কোনো লিংক বা ছবি শেয়ার করুন, খোলা পর্যন্ত সেটি এখানেই থাকবে।</string>
+    <string name="nav_home">হোম</string>
+    <string name="nav_search">খুঁজুন</string>
+    <string name="nav_browse">ব্রাউজ</string>
+</resources>

@@ -1,5 +1,15 @@
 package com.ghostgramlabs.pettibox.ui.screens.save
 
+import com.ghostgramlabs.pettibox.domain.model.displayName
+
+import com.ghostgramlabs.pettibox.util.AppText
+
+import androidx.compose.ui.res.pluralStringResource
+
+import androidx.compose.ui.res.stringResource
+
+import com.ghostgramlabs.pettibox.R
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -135,7 +145,7 @@ fun SaveSheet(
     val requestNotificationPermission = rememberNotificationPermissionRequester()
     val titleFocus = remember { FocusRequester() }
     val haptics = LocalHapticFeedback.current
-    val selectedCategoryName = state.categories.firstOrNull { it.id == state.selectedCategory }?.name
+    val selectedCategoryName = state.categories.firstOrNull { it.id == state.selectedCategory }?.displayName
         ?: if (state.selectedCategory != null) "collection" else null
 
     if (showReminderPicker) {
@@ -198,17 +208,17 @@ fun SaveSheet(
     if (confirmDiscard) {
         AlertDialog(
             onDismissRequest = { confirmDiscard = false },
-            title = { Text("Discard what you typed?") },
-            text = { Text("Your note and tags haven't been saved yet.") },
+            title = { Text(stringResource(R.string.save_discard_what_typed)) },
+            text = { Text(stringResource(R.string.save_note_tags_havent_been_saved)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmDiscard = false
                     viewModel.discardDraft()
                     onDismiss()
-                }) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.save_discard), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDiscard = false }) { Text("Keep editing") }
+                TextButton(onClick = { confirmDiscard = false }) { Text(stringResource(R.string.save_keep_editing)) }
             }
         )
     }
@@ -261,7 +271,7 @@ fun SaveSheet(
                 state.categories
             } else {
                 state.categories.filter { c ->
-                    c.name.contains(q, ignoreCase = true) || c.emoji.contains(q)
+                    c.displayName.contains(q, ignoreCase = true) || c.emoji.contains(q)
                 }
             }
             // Save is habit-driven: show the likely match first, then the
@@ -327,13 +337,13 @@ fun SaveSheet(
         ) {
             Spacer(Modifier.height(4.dp))
             Text(
-                "Save this?",
+                stringResource(R.string.save_save),
                 style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Black),
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 "${state.sourceApp.emoji} ${state.sourceApp.displayName}" +
-                    if (state.attachments.size > 1) " · ${state.attachments.size} items" else "",
+                    if (state.attachments.size > 1) " · " + pluralStringResource(R.plurals.count_items, state.attachments.size, state.attachments.size) else "",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -346,7 +356,7 @@ fun SaveSheet(
                 DuplicateBanner(
                     existing = dup,
                     categoryLabel = state.categories.firstOrNull { it.id == dup.categoryId }
-                        ?.let { "${it.emoji} ${it.name}" },
+                        ?.let { "${it.emoji} ${it.displayName}" },
                     onOpen = { onOpenExisting(dup.id) },
                     onDismiss = { viewModel.dismissDuplicate() }
                 )
@@ -389,7 +399,7 @@ fun SaveSheet(
             // Resolved title shown as compact text - display only by default,
             // editable on demand. Avoids popping the keyboard up just to view.
             Text(
-                state.title.ifBlank { "Untitled" },
+                state.title.ifBlank { stringResource(R.string.untitled) },
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 2,
@@ -408,7 +418,7 @@ fun SaveSheet(
             // Primary action: pick a collection.
             Spacer(Modifier.height(14.dp))
             Text(
-                "Save to",
+                stringResource(R.string.save_save_2),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -423,7 +433,7 @@ fun SaveSheet(
                 items(visibleCategories, key = { it.id }) { c ->
                     val tilt = if (c.sortOrder % 2 == 0) -2f else 1.5f
                     CategoryChip(
-                        label = c.name,
+                        label = c.displayName,
                         emoji = c.emoji,
                         color = Color(c.colorHex),
                         selected = state.selectedCategory == c.id,
@@ -547,7 +557,7 @@ private fun FinderPickerBody(
                         DuplicateBanner(
                             existing = dup,
                             categoryLabel = state.categories.firstOrNull { it.id == dup.categoryId }
-                                ?.let { "${it.emoji} ${it.name}" },
+                                ?.let { "${it.emoji} ${it.displayName}" },
                             onOpen = { onOpenExisting(dup.id) },
                             onDismiss = onDismissDuplicate
                         )
@@ -557,7 +567,7 @@ private fun FinderPickerBody(
                 CompactContext(state, dense = searching)
                 Spacer(Modifier.height(if (searching) 10.dp else 14.dp))
                 Text(
-                    "Save to",
+                    stringResource(R.string.save_save_2),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -579,33 +589,41 @@ private fun FinderPickerBody(
                 // In-character empty state: the Keeper went looking and came up
                 // empty, then offers to start the collection they searched for —
                 // instead of a bare line of grey text.
+                // While typing, the keyboard leaves only a sliver between the
+                // finder and the footer, so the mascot and the second line step
+                // aside: the Create button must be in view without scrolling.
+                val typing = finderFocused && imeVisible
                 Column(
                     Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                        .padding(horizontal = 20.dp, vertical = if (typing) 2.dp else 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(Modifier.height(8.dp))
-                    KeeperMascot(size = 92.dp, pose = KeeperPose.Search)
-                    Spacer(Modifier.height(12.dp))
+                    if (!typing) {
+                        Spacer(Modifier.height(8.dp))
+                        KeeperMascot(size = 92.dp, pose = KeeperPose.Search)
+                        Spacer(Modifier.height(12.dp))
+                    }
                     Text(
-                        "No collection called \"$query\" yet",
+                        stringResource(R.string.save_no_collection_called_yet, query),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        "Want to start one?",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                    Spacer(Modifier.height(14.dp))
+                    if (!typing) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.save_want_start_one),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                    Spacer(Modifier.height(if (typing) 8.dp else 14.dp))
                     NewCollectionChip(
-                        label = query.trim().takeIf { it.isNotBlank() }?.let { "Create \"$it\"" } ?: "New",
+                        label = query.trim().takeIf { it.isNotBlank() }?.let { stringResource(R.string.save_create, it) } ?: stringResource(R.string.save_new),
                         onClick = { onCreateCollection(query.trim().takeIf { it.isNotBlank() }) }
                     )
                 }
@@ -627,7 +645,7 @@ private fun FinderPickerBody(
                             CollectionGroupLabel(group)
                         }
                         CollectionRow(
-                            name = c.name,
+                            name = c.displayName,
                             emoji = c.emoji,
                             color = Color(c.colorHex),
                             selected = state.selectedCategory == c.id,
@@ -730,7 +748,7 @@ private fun CompactContext(state: SaveSheetState, dense: Boolean = false) {
         }
         Column(Modifier.weight(1f)) {
             Text(
-                state.title.ifBlank { "Untitled" },
+                state.title.ifBlank { stringResource(R.string.untitled) },
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = if (dense) 1 else 2,
@@ -738,7 +756,7 @@ private fun CompactContext(state: SaveSheetState, dense: Boolean = false) {
             )
             Text(
                 "${state.sourceApp.emoji} ${state.sourceApp.displayName}" +
-                    if (state.attachments.size > 1) " · ${state.attachments.size} items" else "",
+                    if (state.attachments.size > 1) " · " + pluralStringResource(R.plurals.count_items, state.attachments.size, state.attachments.size) else "",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
@@ -786,7 +804,7 @@ private fun SaveFooter(
         }) {
             Icon(
                 if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                contentDescription = if (isFavorite) stringResource(R.string.save_remove_favorites) else stringResource(R.string.save_add_favorites),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
@@ -806,9 +824,9 @@ private fun SaveFooter(
         ) {
             Text(
                 when {
-                    !canSave -> "Write a note to save"
-                    selectedCategoryName != null -> "Save to $selectedCategoryName"
-                    else -> "Save without collection"
+                    !canSave -> stringResource(R.string.save_write_note_save)
+                    selectedCategoryName != null -> stringResource(R.string.save_save_3, selectedCategoryName)
+                    else -> stringResource(R.string.save_save_without_collection)
                 },
                 fontWeight = FontWeight.SemiBold
             )
@@ -856,7 +874,7 @@ private fun SelectedCollectionPill(label: String) {
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            "Selected: $label",
+            stringResource(R.string.save_selected, label),
             style = MaterialTheme.typography.labelLarge,
             color = scheme.primary,
             fontWeight = FontWeight.SemiBold,
@@ -877,12 +895,12 @@ private fun PickExistingBody(
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "Add to which save?",
+                stringResource(R.string.save_add_which_save),
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.weight(1f)
             )
-            androidx.compose.material3.TextButton(onClick = onCancel) { Text("Back") }
+            androidx.compose.material3.TextButton(onClick = onCancel) { Text(stringResource(R.string.detail_back)) }
         }
         Spacer(Modifier.height(8.dp))
         LazyColumn(
@@ -893,7 +911,7 @@ private fun PickExistingBody(
                 val cat = categories.firstOrNull { it.id == item.categoryId }
                 PickRow(
                     title = item.title,
-                    subtitle = listOfNotNull(cat?.let { "${it.emoji} ${it.name}" }, item.url).joinToString(" · ").take(80),
+                    subtitle = listOfNotNull(cat?.let { "${it.emoji} ${it.displayName}" }, item.url).joinToString(" · ").take(80),
                     onClick = { onPick(item.id) }
                 )
             }
@@ -975,9 +993,9 @@ private fun OptionalDetails(
 
     if (!anyOpen || compact) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (!showTitle) AddChip("Edit title", onClick = revealTitle)
-            if (!showNotes) AddChip("Add note", onClick = revealNotes)
-            if (!showTags) AddChip("Add tags", onClick = revealTags)
+            if (!showTitle) AddChip(stringResource(R.string.detail_edit_title), onClick = revealTitle)
+            if (!showNotes) AddChip(stringResource(R.string.save_add_note), onClick = revealNotes)
+            if (!showTags) AddChip(stringResource(R.string.save_add_tags), onClick = revealTags)
         }
         return
     }
@@ -986,7 +1004,7 @@ private fun OptionalDetails(
         TextField(
             value = title,
             onValueChange = onTitleChange,
-            placeholder = { Text("Title") },
+            placeholder = { Text(stringResource(R.string.detail_title)) },
             singleLine = false,
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -1012,7 +1030,7 @@ private fun OptionalDetails(
         OutlinedTextField(
             value = notes,
             onValueChange = onNotesChange,
-            placeholder = { Text("Add a note") },
+            placeholder = { Text(stringResource(R.string.save_add_note_2)) },
             shape = RoundedCornerShape(18.dp),
             modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp).focusRequester(notesFocus)
         )
@@ -1029,7 +1047,7 @@ private fun OptionalDetails(
         OutlinedTextField(
             value = tagsInput,
             onValueChange = onTagsChange,
-            placeholder = { Text("Tags, comma-separated") },
+            placeholder = { Text(stringResource(R.string.save_tags_comma_separated)) },
             singleLine = true,
             shape = RoundedCornerShape(18.dp),
             modifier = Modifier.fillMaxWidth().focusRequester(tagsFocus)
@@ -1046,9 +1064,9 @@ private fun OptionalDetails(
 
     // Let the user reveal whichever fields they didn't open yet.
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (!showTitle) AddChip("Edit title", onClick = revealTitle)
-        if (!showNotes) AddChip("Add note", onClick = revealNotes)
-        if (!showTags) AddChip("Add tags", onClick = revealTags)
+        if (!showTitle) AddChip(stringResource(R.string.detail_edit_title), onClick = revealTitle)
+        if (!showNotes) AddChip(stringResource(R.string.save_add_note), onClick = revealNotes)
+        if (!showTags) AddChip(stringResource(R.string.save_add_tags), onClick = revealTags)
     }
 }
 
@@ -1090,7 +1108,7 @@ private fun SuccessPanel(remindAt: Long? = null) {
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            "Tucked away!",
+            stringResource(R.string.save_tucked_away),
             style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Black),
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -1101,9 +1119,9 @@ private fun SuccessPanel(remindAt: Long? = null) {
         // confidence in the reminder feature drops to zero.
         Text(
             if (remindAt != null && remindAt > System.currentTimeMillis())
-                "We'll nudge you " + formatReminderAt(remindAt)
+                stringResource(R.string.reminder_nudge_at, formatReminderAt(remindAt))
             else
-                "Find it from the home screen anytime.",
+                stringResource(R.string.save_find_home_screen_anytime),
             style = MaterialTheme.typography.bodyLarge,
             color = if (remindAt != null && remindAt > System.currentTimeMillis())
                 accent else MaterialTheme.colorScheme.onSurfaceVariant
@@ -1136,7 +1154,7 @@ private fun RemindMeChip(remindAt: Long?, onClick: () -> Unit) {
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            if (remindAt != null) formatReminderAt(remindAt) else "Remind me",
+            if (remindAt != null) formatReminderAt(remindAt) else stringResource(R.string.reminder_remind_me),
             style = MaterialTheme.typography.labelLarge,
             color = if (active) scheme.primary else scheme.onSurface,
             fontWeight = FontWeight.SemiBold
@@ -1157,7 +1175,7 @@ private fun AddToExistingChip(onClick: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 9.dp)
     ) {
         Text(
-            "Append to a save",
+            stringResource(R.string.save_append_save),
             style = MaterialTheme.typography.labelLarge,
             color = scheme.onSurface,
             fontWeight = FontWeight.SemiBold
@@ -1183,16 +1201,18 @@ private fun DuplicateBanner(
             .padding(14.dp)
     ) {
         Text(
-            "You already saved this",
+            stringResource(R.string.save_already_saved),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = scheme.onSecondaryContainer
         )
         Spacer(Modifier.height(4.dp))
+        val untitled = stringResource(R.string.untitled)
+        val savedWhen = stringResource(R.string.save_saved_when, com.ghostgramlabs.pettibox.data.util.TimeFormat.relative(existing.createdAt))
         Text(
             buildString {
-                append(existing.title.ifBlank { "Untitled" })
-                append(" · saved ")
-                append(com.ghostgramlabs.pettibox.data.util.TimeFormat.relative(existing.createdAt))
+                append(existing.title.ifBlank { untitled })
+                append(" · ")
+                append(savedWhen)
                 categoryLabel?.let { append(" · "); append(it) }
             },
             style = MaterialTheme.typography.bodySmall,
@@ -1211,7 +1231,7 @@ private fun DuplicateBanner(
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             ) {
                 Text(
-                    "Open it",
+                    stringResource(R.string.save_open),
                     style = MaterialTheme.typography.labelLarge,
                     color = scheme.onPrimary,
                     fontWeight = FontWeight.SemiBold
@@ -1226,7 +1246,7 @@ private fun DuplicateBanner(
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             ) {
                 Text(
-                    "Save anyway",
+                    stringResource(R.string.save_save_anyway),
                     style = MaterialTheme.typography.labelLarge,
                     color = scheme.onSecondaryContainer,
                     fontWeight = FontWeight.SemiBold
@@ -1250,7 +1270,7 @@ private fun CollectionFinder(
         value = query,
         onValueChange = onQueryChange,
         singleLine = true,
-        placeholder = { Text("Find collection") },
+        placeholder = { Text(stringResource(R.string.home_find_collection)) },
         leadingIcon = {
             Icon(
                 Icons.Rounded.Search,
@@ -1261,7 +1281,7 @@ private fun CollectionFinder(
         trailingIcon = {
             if (query.isNotBlank()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Clear collection filter")
+                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.home_clear_collection_filter))
                 }
             }
         },
@@ -1302,9 +1322,9 @@ private fun collectionGroupLabel(
     suggestedCategory: String?,
     recentCategoryIds: List<String>
 ): String = when {
-    category.id == suggestedCategory -> "Suggested"
-    category.id in recentCategoryIds -> "Recently used"
-    category.userCreated -> "Your collections"
-    else -> "Starter collections"
+    category.id == suggestedCategory -> AppText.getString(R.string.save_suggested)
+    category.id in recentCategoryIds -> AppText.getString(R.string.save_recently_used)
+    category.userCreated -> AppText.getString(R.string.save_collections)
+    else -> AppText.getString(R.string.save_starter_collections)
 }
 
