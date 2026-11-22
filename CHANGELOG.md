@@ -3,8 +3,15 @@
 User-facing changes to PettiBox, newest first. Version numbers match the Google Play release
 (`versionName` in `app/build.gradle.kts`).
 
-## Unreleased
+## 2.0.15 - 2026-11-22
 
+- PettiBox is now in 17 languages: English, Spanish, German, French, Indonesian, Turkish,
+  Japanese, Hindi, Arabic, Portuguese (Brazil), Russian, Vietnamese, Bengali, Telugu, Tamil,
+  Greek and Malayalam, with a language picker in Settings.
+
+## 2.0.13 and 2.0.14 - 2026-11
+
+- Scanned Russian is read in Cyrillic and in the right order, and a PDF can be read whole.
 - Unused photos and files are only removed from Google Drive once every device listed in
   Settings shows it no longer uses them: first moved to a PettiBox "files-removed" folder for
   30 days (moved straight back if anything needs them), then deleted. A phone that was offline
