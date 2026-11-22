@@ -71,7 +71,7 @@
     <string name="home_choose_where_belongs_can_add">எங்கே சேர வேண்டும் எனத் தேர்ந்தெடுங்கள். குறிப்புகள், டேக்குகள் அல்லது நினைவூட்டல்களைப் பிறகு சேர்க்கலாம்.</string>
     <string name="home_search_words_source_type_tag">சொற்கள், மூலம், வகை, டேக், நினைவூட்டல், அல்லது படங்கள், PDF-களில் உள்ள உரை மூலம் தேடுங்கள்.</string>
     <string name="home_add_something_now">இப்போதே ஏதாவது சேருங்கள்</string>
-    <string name="home_whats_shelf">அலமாரியில் என்ன இருக்கிறது?</string>
+    <string name="home_whats_shelf">அலமாரியில் என்ன உள்ளது?</string>
     <string name="home_sync_paused_reconnect_google_drive">ஒத்திசைவு இடைநிறுத்தப்பட்டது: அமைப்புகளில் Google Drive-ஐ மீண்டும் இணையுங்கள்</string>
     <string name="home_sync_problem_see_settings">ஒத்திசைவுச் சிக்கல்: அமைப்புகளைப் பாருங்கள்</string>
     <string name="home_sync_waiting_choice">ஒத்திசைவு உங்கள் முடிவுக்காகக் காத்திருக்கிறது</string>

@@ -8,6 +8,8 @@ User-facing changes to PettiBox, newest first. Version numbers match the Google 
 - PettiBox is now in 17 languages: English, Spanish, German, French, Indonesian, Turkish,
   Japanese, Hindi, Arabic, Portuguese (Brazil), Russian, Vietnamese, Bengali, Telugu, Tamil,
   Greek and Malayalam, with a language picker in Settings.
+- Screen titles now shrink a little to fit on small phones and in longer languages, instead of
+  being cut off with "…". The Tamil home title is also shorter.
 
 ## 2.0.13 and 2.0.14 - 2026-11
 
