@@ -3,7 +3,9 @@
 User-facing changes to PettiBox, newest first. Version numbers match the Google Play release
 (`versionName` in `app/build.gradle.kts`).
 
-## 2.0.15 - 2026-11-22
+## 2.0.16 - 2026-11-22
+
+(2.0.15, build 30, was uploaded to Play but replaced by this build before release.)
 
 - PettiBox is now in 17 languages: English, Spanish, German, French, Indonesian, Turkish,
   Japanese, Hindi, Arabic, Portuguese (Brazil), Russian, Vietnamese, Bengali, Telugu, Tamil,
